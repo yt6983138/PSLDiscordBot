@@ -270,9 +270,6 @@ public class Program
 			async (arg) =>
 			{
 				await arg.DeferAsync(ephemeral: true);
-				if (!CheckHasRegisteredAndReply(arg, out ulong userId, out UserData userData))
-					return;
-
 				await arg.ModifyOriginalResponseAsync(
 					(msg) => {
 						msg.Content = File.ReadAllText(Manager.Config.HelpMDLocation).Replace("<br/>", "");
