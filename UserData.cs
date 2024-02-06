@@ -11,6 +11,7 @@ namespace PSLDiscordBot;
 public class UserData
 {
 	public string Token { get; set; }
+	public string ShowFormat { get; set; } = ".00";
 
 	[JsonIgnore]
 	public SaveHelper SaveHelperCache { get; init; }

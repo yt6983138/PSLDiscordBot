@@ -12,12 +12,18 @@ using System.Runtime.Loader;
 namespace PSLDiscordBot;
 public static class Manager
 {
+	private static volatile Dictionary<ulong, UserData> _registeredUsers;
+
 	public const string ConfigLocation = "./Config.json";
 	public static bool FirstStart { get; private set; }
 	public static Config Config { get; set; }
 	public static Logger Logger { get; set; }
 	public static DiscordSocketClient SocketClient { get; set; } = new();
-	public static Dictionary<ulong, UserData> RegisteredUsers { get; set; }
+	public static Dictionary<ulong, UserData> RegisteredUsers
+	{
+		get => _registeredUsers;
+		set => _registeredUsers = value;
+	}
 	public static IReadOnlyDictionary<string, float[]> Difficulties { get; set; }
 	public static IReadOnlyDictionary<string, string> Names { get; set; }
 	static Manager()
@@ -48,9 +54,12 @@ public static class Manager
 		}
 
 		Logger = new(Config.LogLocation, Config.Verbose);
-		AssemblyLoadContext.Default.Unloading += _ => { WriteEverything(); Console.WriteLine("Shutting down..."); };
-		
+		AppDomain.CurrentDomain.ProcessExit += (_, _2) => { WriteEverything(); Console.WriteLine("Shutting down..."); };
+#if DEBUG
+		if (true)
+#else
 		if (FirstStart)
+#endif
 		{
 			using (HttpClient client = new())
 			{
@@ -63,12 +72,24 @@ public static class Manager
 			}
 		}
 		ReadCsvs();
-		WriteEverything();
+		Task.Run(AutoSave);
 	}
 	public static void WriteEverything()
 	{
 		File.WriteAllText(ConfigLocation, JsonConvert.SerializeObject(Config));
 		File.WriteAllText(Config.UserDataLocation, JsonConvert.SerializeObject(RegisteredUsers));
+	}
+	private async static void AutoSave()
+	{
+		while (true)
+		{
+			lock (RegisteredUsers)
+			{
+				WriteEverything();
+			}
+			Logger.Log(LoggerType.Info, "Auto saved.");
+			await Task.Delay(Config.AutoSaveInterval);
+		}
 	}
 	private static void ReadCsvs()
 	{
