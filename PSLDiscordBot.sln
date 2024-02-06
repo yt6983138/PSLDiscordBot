@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.8.34525.116
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PSLDiscordBot", "PSLDiscordBot.csproj", "{CFBBD24B-F4D6-4534-A985-2675C9784F8E}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "yt6983138", "..\yt6983138\yt6983138.csproj", "{4C56ED84-FE45-458E-A73C-F09FC205BEC4}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{CFBBD24B-F4D6-4534-A985-2675C9784F8E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CFBBD24B-F4D6-4534-A985-2675C9784F8E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CFBBD24B-F4D6-4534-A985-2675C9784F8E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CFBBD24B-F4D6-4534-A985-2675C9784F8E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4C56ED84-FE45-458E-A73C-F09FC205BEC4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4C56ED84-FE45-458E-A73C-F09FC205BEC4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4C56ED84-FE45-458E-A73C-F09FC205BEC4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4C56ED84-FE45-458E-A73C-F09FC205BEC4}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {F7636601-8E14-48A4-A5DF-E8EFCDD1770A}
+	EndGlobalSection
+EndGlobal
