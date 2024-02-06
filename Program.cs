@@ -16,7 +16,7 @@ public class Program
 	public static Task Main(string[] args) => new Program().MainAsync(args);
 	public Dictionary<string, SlashCommandInfo> Commands { get; set; } = new()
 	{
-		{ "link-token", new(921676986739458099,
+		{ "link-token", new(null,
 			new SlashCommandBuilder()
 				.WithName("link-token")
 				.WithDescription("Link account by token")
@@ -56,7 +56,7 @@ public class Program
 			}
 		)
 		},
-		{ "get-all-scores", new(921676986739458099,
+		{ "get-all-scores", new(null,
 			new SlashCommandBuilder()
 				.WithName("get-all-scores")
 				.WithDescription("Get all scores. Returns: A csv file that includes all of your scores.")
@@ -96,7 +96,7 @@ public class Program
 			}
 		)
 		},
-		{ "get-b20", new(921676986739458099,
+		{ "get-b20", new(null,
 			new SlashCommandBuilder()
 				.WithName("get-b20")
 				.WithDescription("Get best 19 and 1 phi score.")
@@ -206,7 +206,7 @@ public class Program
 			}
 		)
 		},
-		{ "get-time-index", new(921676986739458099,
+		{ "get-time-index", new(null,
 			new SlashCommandBuilder()
 				.WithName("get-time-index")
 				.WithDescription("Get all indexes. Returns: A list of index/time table"),
@@ -235,7 +235,7 @@ public class Program
 			}
 		)
 		},
-		{ "set-precision", new(921676986739458099,
+		{ "set-precision", new(null,
 			new SlashCommandBuilder()
 				.WithName("set-precision")
 				.WithDescription("Set precision of value shown on /get-b20.")
@@ -259,6 +259,23 @@ public class Program
 				await arg.ModifyOriginalResponseAsync(
 					(msg) => {
 						msg.Content = "Operation done successfully.";
+					});
+			}
+		)
+		},
+		{ "help", new(null,
+			new SlashCommandBuilder()
+				.WithName("help")
+				.WithDescription("Show help."),
+			async (arg) =>
+			{
+				await arg.DeferAsync(ephemeral: true);
+				if (!CheckHasRegisteredAndReply(arg, out ulong userId, out UserData userData))
+					return;
+
+				await arg.ModifyOriginalResponseAsync(
+					(msg) => {
+						msg.Content = File.ReadAllText(Manager.Config.HelpMDLocation).Replace("<br/>", "");
 					});
 			}
 		)

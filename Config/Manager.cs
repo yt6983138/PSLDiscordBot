@@ -65,10 +65,13 @@ public static class Manager
 			{
 				Task<byte[]> diff = client.GetByteArrayAsync(@"https://yt6983138.github.io/Assets/RksReader/3.4.3/difficulty.csv");
 				Task<byte[]> name = client.GetByteArrayAsync(@"https://yt6983138.github.io/Assets/RksReader/3.4.3/info.csv");
+				Task<byte[]> help = client.GetByteArrayAsync(@"https://raw.githubusercontent.com/yt6983138/PSLDiscordBot/master/help.md");
 				diff.Wait(); // ^ no async constructor :(
 				name.Wait();
+				help.Wait();
 				File.WriteAllBytes(Config.DifficultyCsvLocation, diff.Result);
 				File.WriteAllBytes(Config.NameCsvLocation, name.Result);
+				File.WriteAllBytes(Config.HelpMDLocation, help.Result);
 			}
 		}
 		ReadCsvs();
