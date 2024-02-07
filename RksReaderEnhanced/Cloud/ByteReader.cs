@@ -113,7 +113,13 @@ public class ByteReader // fuck my brain is going to explode if i keep working o
 	}
 	public List<InternalScoreFormat> ReadAll(in IReadOnlyDictionary<string, float[]> difficulties)
 	{
-		this.ReadHeader(2);
+		int headerLength = Data[0] switch
+		{
+			0x9D => 2, // i have no idea what those are
+			0x7E => 1,
+			_ => 2
+		};
+		this.ReadHeader(headerLength);
 		List<InternalScoreFormat> scores = new();
 		while (this.Offset < this.Data.Length)
 		{
