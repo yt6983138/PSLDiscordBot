@@ -43,3 +43,6 @@ number = 1: acc: 99.1<br/>
 number = 2: acc: 99.12<br/>
 ...<br/>
 You also must do `/link-token` first.
+### /get-token
+Usage: `/get-token`<br/>
+Get your token. You must do `/link-token` first.

@@ -276,6 +276,23 @@ public class Program
 					});
 			}
 		)
+		},
+		{ "get-token", new(null,
+			new SlashCommandBuilder()
+				.WithName("get-token")
+				.WithDescription("Show your token."),
+			async (arg) =>
+			{
+				await arg.DeferAsync(ephemeral: true);
+				if (!CheckHasRegisteredAndReply(arg, out ulong userId, out UserData userData))
+					return;
+
+				await arg.ModifyOriginalResponseAsync(
+					(msg) => {
+						msg.Content = $"Your token: {userData.Token[0..4]}||{userData.Token[5..]}|| (Click to reveal, DO NOT show it to other people.)";
+					});
+			}
+		)
 		}
 	};
 	/// <summary>
@@ -300,6 +317,7 @@ public class Program
 		if (Manager.FirstStart)
 		{
 			Manager.Logger.Log(LoggerType.Error, $"Seems this is first start. Please enter token in {Manager.ConfigLocation} first.");
+			return;
 		}
 		Manager.SocketClient.Log += Log;
 		Manager.SocketClient.Ready += Client_Ready;
