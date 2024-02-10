@@ -49,4 +49,5 @@ Get your token. You must do `/link-token` first.
 ### /query
 Usage: `/query <index> <regex>` <br/>
 Example: `/query 0 volcanic` <br/>
-It searches all your scores with `regex` parameter by regex. You must do `/link-token` first.
+It searches all your scores with `regex` parameter by regex. You must do `/link-token` first. <br/>
+Hint: You can add `(?i)` before the regex string (ex. `(?i)igall`) to have case insensitive search.
