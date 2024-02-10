@@ -168,13 +168,12 @@ public class Program
 					return;
 
 				List<RawSave> saves = (await userData.SaveHelperCache.GetRawSaveFromCloud()).results;
-				StringBuilder sb = new("```\nIndex    | Date\n"); // cant use tabs
+				StringBuilder sb = new("```\nIndex | Date\n"); // cant use tabs
 				for (int i = 0; i < saves.Count; i++)
 				{
 					string j = i.ToString();
 					sb.Append(j);
-					for (int k = 0; k < Math.Max(8 - j.Length, 0); k++)
-						sb.Append(' ');
+					sb.Append(' ', 5 - j.Length);
 					sb.Append(" | ");
 					sb.AppendLine(saves[i].modifiedAt.iso.ToString());
 				}
@@ -269,14 +268,21 @@ public class Program
 					return;
 				Summary summary;
 				GameSave save; // had to double cast
+				Regex regex;
 				int index = (int)(long)arg.Data.Options.ElementAt(0).Value;
 				try
 				{
 					(summary, save) = await userData.SaveHelperCache.GetGameSave(Manager.Difficulties, index);
+					regex = new((string)arg.Data.Options.ElementAt(1));
 				}
 				catch (ArgumentOutOfRangeException ex)
 				{
 					await arg.ModifyOriginalResponseAsync(msg => msg.Content = $"Error: Expected index less than {ex.Message}, more or equal to 0. You entered {index}.");
+					return;
+				}
+				catch(RegexParseException ex)
+				{
+					await arg.ModifyOriginalResponseAsync(msg => msg.Content = $"Regex error: `{ex.Message}`");
 					return;
 				}
 				catch (Exception ex)
@@ -284,7 +290,6 @@ public class Program
 					await arg.ModifyOriginalResponseAsync(msg => msg.Content = $"Error: {ex.Message}\nYou may try again or report to author.");
 					return;
 				}
-				Regex regex = new((string)arg.Data.Options.ElementAt(1));
 				List<InternalScoreFormat> scoresToShow = new();
 				foreach (var score in save.Records)
 				{
@@ -332,8 +337,30 @@ public class Program
 	{
 		if (Manager.FirstStart)
 		{
-			Manager.Logger.Log(LoggerType.Error, $"Seems this is first start. Please enter token in {Manager.ConfigLocation} first.");
-			return;
+			if (!string.IsNullOrEmpty(args.ElementAtOrDefault(0)))
+			{
+				Manager.Config.Token = args.ElementAtOrDefault(0) ?? "";
+			}
+			else
+			{
+				Manager.Logger.Log(LoggerType.Error, $"Seems this is first start. Please enter token in {Manager.ConfigLocation} first.");
+				return;
+			}
+		}
+		if (args.ElementAtOrDefault(0) == "--update")
+		{
+			Manager.Logger.Log(LoggerType.Info, "Updating...");
+			using (HttpClient client = new())
+			{
+				byte[] diff = await client.GetByteArrayAsync(@"https://yt6983138.github.io/Assets/RksReader/3.4.3/difficulty.csv");
+				byte[] name = await client.GetByteArrayAsync(@"https://yt6983138.github.io/Assets/RksReader/3.4.3/info.csv");
+				byte[] help = await client.GetByteArrayAsync(@"https://raw.githubusercontent.com/yt6983138/PSLDiscordBot/master/help.md");
+				File.WriteAllBytes(Manager.Config.DifficultyCsvLocation, diff);
+				File.WriteAllBytes(Manager.Config.NameCsvLocation, name);
+				File.WriteAllBytes(Manager.Config.HelpMDLocation, help);
+			}
+			Manager.ReadCsvs();
+			Manager.Logger.Log(LoggerType.Info, "Updating done!");
 		}
 		Manager.SocketClient.Log += Log;
 		Manager.SocketClient.Ready += Client_Ready;

@@ -94,7 +94,7 @@ public static class Manager
 			await Task.Delay(Config.AutoSaveInterval);
 		}
 	}
-	private static void ReadCsvs()
+	public static void ReadCsvs()
 	{
 		string[] csvFile = File.ReadAllLines(Config.DifficultyCsvLocation);
 		Dictionary<string, float[]> diffculties = new();
