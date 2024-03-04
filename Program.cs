@@ -1,13 +1,10 @@
 ﻿using Discord;
-using Discord.Interactions;
-using Discord.Net;
 using Discord.WebSocket;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using yt6983138.Common;
-using yt6983138.github.io.RksReaderEnhanced;
+using PhigrosLibraryCSharp;
 
 namespace PSLDiscordBot;
 
@@ -40,7 +37,7 @@ public class Program
 				try
 				{
 					tmp = new(token);
-					_ = await tmp.SaveHelperCache.GetUserInfo();
+					_ = await tmp.SaveHelperCache.GetUserInfoAsync();
 					errors = "none";
 				}
 				catch
@@ -85,7 +82,7 @@ public class Program
 				int index = (int)(long)arg.Data.Options.ElementAt(0).Value;
 				try
 				{
-					(summary, save) = await userData.SaveHelperCache.GetGameSave(Manager.Difficulties, index);
+					(summary, save) = await userData.SaveHelperCache.GetGameSaveAsync(Manager.Difficulties, index);
 				}
 				catch (ArgumentOutOfRangeException ex)
 				{
@@ -134,7 +131,7 @@ public class Program
 				int index = (int)(long)arg.Data.Options.ElementAt(0).Value;
 				try
 				{
-					(summary, save) = await userData.SaveHelperCache.GetGameSave(Manager.Difficulties, index);
+					(summary, save) = await userData.SaveHelperCache.GetGameSaveAsync(Manager.Difficulties, index);
 				}
 				catch (ArgumentOutOfRangeException ex)
 				{
@@ -157,6 +154,66 @@ public class Program
 			}
 		)
 		},
+		{ "get-scores-by-token", new(null,
+			new SlashCommandBuilder()
+				.WithName("get-scores")
+				.WithDescription("Get scores.")
+				.AddOption(
+					"token",
+					ApplicationCommandOptionType.String,
+					"Token.",
+					isRequired: true,
+					minValue: 0
+				)
+				.AddOption(
+					"index",
+					ApplicationCommandOptionType.Integer,
+					"Save time converted to index, 0 is always latest. Do /get-time-index to get other index.",
+					isRequired: true,
+					minValue: 0
+				)
+				.AddOption(
+					"count",
+					ApplicationCommandOptionType.Integer,
+					"The count to show.",
+					isRequired: false,
+					minValue: 1,
+					maxValue: 114514
+				),
+			async (arg) =>
+			{
+				await arg.DeferAsync(ephemeral: true);
+				string token = (string)arg.Data.Options.ElementAt(0).Value;
+				ulong userId = arg.User.Id;
+				UserData userData = new(token);
+				Summary summary;
+				GameSave save; // had to double cast
+				int index = (int)(long)arg.Data.Options.ElementAt(1).Value;
+				try
+				{
+					(summary, save) = await userData.SaveHelperCache.GetGameSaveAsync(Manager.Difficulties, index);
+				}
+				catch (ArgumentOutOfRangeException ex)
+				{
+					await arg.ModifyOriginalResponseAsync(msg => msg.Content = $"Error: Expected index less than {ex.Message}, more or equal to 0. You entered {index}.");
+					return;
+				}
+				catch (Exception ex)
+				{
+					await arg.ModifyOriginalResponseAsync(msg => msg.Content = $"Error: {ex.Message}\nYou may try again or report to author.");
+					return;
+				}
+
+				string result = ScoresFormatter(save.Records, arg.Data.Options.Count > 1 ? (int)(long)arg.Data.Options.ElementAt(2).Value : 19, userData);
+
+				await arg.ModifyOriginalResponseAsync(
+					(msg) => {
+						msg.Content = $"Got score! Now showing for token ||{token}||...";
+						msg.Attachments = new List<FileAttachment>() { new(new MemoryStream(Encoding.UTF8.GetBytes(result)), "Scores.txt") };
+					});
+			}
+		)
+		},
 		{ "get-time-index", new(null,
 			new SlashCommandBuilder()
 				.WithName("get-time-index")
@@ -167,7 +224,7 @@ public class Program
 				if (!CheckHasRegisteredAndReply(arg, out ulong userId, out UserData userData))
 					return;
 
-				List<RawSave> saves = (await userData.SaveHelperCache.GetRawSaveFromCloud()).results;
+				List<RawSave> saves = (await userData.SaveHelperCache.GetRawSaveFromCloudAsync()).results;
 				StringBuilder sb = new("```\nIndex | Date\n"); // cant use tabs
 				for (int i = 0; i < saves.Count; i++)
 				{
@@ -272,7 +329,7 @@ public class Program
 				int index = (int)(long)arg.Data.Options.ElementAt(0).Value;
 				try
 				{
-					(summary, save) = await userData.SaveHelperCache.GetGameSave(Manager.Difficulties, index);
+					(summary, save) = await userData.SaveHelperCache.GetGameSaveAsync(Manager.Difficulties, index);
 					regex = new((string)arg.Data.Options.ElementAt(1));
 				}
 				catch (ArgumentOutOfRangeException ex)
@@ -352,8 +409,8 @@ public class Program
 			Manager.Logger.Log(LoggerType.Info, "Updating...");
 			using (HttpClient client = new())
 			{
-				byte[] diff = await client.GetByteArrayAsync(@"https://yt6983138.github.io/Assets/RksReader/3.4.3/difficulty.csv");
-				byte[] name = await client.GetByteArrayAsync(@"https://yt6983138.github.io/Assets/RksReader/3.4.3/info.csv");
+				byte[] diff = await client.GetByteArrayAsync(@"https://yt6983138.github.io/Assets/RksReader/Latest/difficulty.csv");
+				byte[] name = await client.GetByteArrayAsync(@"https://yt6983138.github.io/Assets/RksReader/Latest/info.csv");
 				byte[] help = await client.GetByteArrayAsync(@"https://raw.githubusercontent.com/yt6983138/PSLDiscordBot/master/help.md");
 				File.WriteAllBytes(Manager.Config.DifficultyCsvLocation, diff);
 				File.WriteAllBytes(Manager.Config.NameCsvLocation, name);

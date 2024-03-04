@@ -3,9 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.8.34525.116
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PSLDiscordBot", "PSLDiscordBot.csproj", "{CFBBD24B-F4D6-4534-A985-2675C9784F8E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PSLDiscordBot", "PSLDiscordBot.csproj", "{CFBBD24B-F4D6-4534-A985-2675C9784F8E}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "yt6983138", "..\yt6983138\yt6983138.csproj", "{4C56ED84-FE45-458E-A73C-F09FC205BEC4}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PhigrosLibraryCSharp", "..\PhigrosLibraryCSharp\PhigrosLibraryCSharp.csproj", "{0FB98D46-D135-459C-A248-48827891D0F9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{4C56ED84-FE45-458E-A73C-F09FC205BEC4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4C56ED84-FE45-458E-A73C-F09FC205BEC4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4C56ED84-FE45-458E-A73C-F09FC205BEC4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0FB98D46-D135-459C-A248-48827891D0F9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0FB98D46-D135-459C-A248-48827891D0F9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0FB98D46-D135-459C-A248-48827891D0F9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0FB98D46-D135-459C-A248-48827891D0F9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

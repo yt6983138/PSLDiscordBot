@@ -63,8 +63,8 @@ public static class Manager
 		{
 			using (HttpClient client = new())
 			{
-				Task<byte[]> diff = client.GetByteArrayAsync(@"https://yt6983138.github.io/Assets/RksReader/3.4.3/difficulty.csv");
-				Task<byte[]> name = client.GetByteArrayAsync(@"https://yt6983138.github.io/Assets/RksReader/3.4.3/info.csv");
+				Task<byte[]> diff = client.GetByteArrayAsync(@"https://yt6983138.github.io/Assets/RksReader/Latest/difficulty.csv");
+				Task<byte[]> name = client.GetByteArrayAsync(@"https://yt6983138.github.io/Assets/RksReader/Latest/info.csv");
 				Task<byte[]> help = client.GetByteArrayAsync(@"https://raw.githubusercontent.com/yt6983138/PSLDiscordBot/master/help.md");
 				diff.Wait(); // ^ no async constructor :(
 				name.Wait();

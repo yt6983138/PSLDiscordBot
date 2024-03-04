@@ -14,6 +14,6 @@ Index    | Date
 ...
 ```
 If you want to view save modified at 7/24/2023 12:38:04, remember index 1.<br/>
-4. Now, you can get your scores by using `/get-b20 <index>` or `/get-all-scores <index>`. remember, index 0 is always latest.
+4. Now, you can get your scores by using `/get-scores <index>` or `/get-all-scores <index>`. remember, index 0 is always latest.
 ## Command usage
 Please check the [github address](https://github.com/yt6983138/PSLDiscordBot/blob/master/usage.md), Recommend read them all before using. (I can't fit everything in a message with maximum length of 2000 :sob:)
