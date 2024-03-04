@@ -90,7 +90,7 @@ public static class Manager
 			{
 				WriteEverything();
 			}
-			Logger.Log(LoggerType.Info, "Auto saved.");
+			Logger.Log(LoggerType.Verbose, "Auto saved.");
 			await Task.Delay(Config.AutoSaveInterval);
 		}
 	}

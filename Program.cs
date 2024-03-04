@@ -543,7 +543,7 @@ public class Program
 	}
 	private Task SocketClient_SlashCommandExecuted(SocketSlashCommand arg)
 	{
-		Manager.Logger.Log(LoggerType.Verbose, $"Command received: {arg.CommandName}");
+		Manager.Logger.Log(LoggerType.Info, $"Command received: {arg.CommandName} from: {arg.User.Id}");
 		return Commands[arg.CommandName].CallBack(arg);
 	}
 
