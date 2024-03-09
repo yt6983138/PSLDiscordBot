@@ -5,12 +5,22 @@ using System.Text;
 using System.Text.RegularExpressions;
 using yt6983138.Common;
 using PhigrosLibraryCSharp;
+using CommandLine;
 
 namespace PSLDiscordBot;
 
 public record class SlashCommandInfo(ulong? GuildToApply, SlashCommandBuilder Builder, Func<SocketSlashCommand, Task> CallBack);
 public class Program
 {
+	private bool _shouldUpdateCommands = false;
+
+	class Options
+	{
+		[Option("update", Required = false, HelpText = "Update files.")]
+		public bool Update { get; set; }
+		[Option("updateCommands", Required = false, HelpText = "Update commands when new command releases.")]
+		public bool ShouldUpdateCommands { get; set; }
+	}
 	public static Task Main(string[] args) => new Program().MainAsync(args);
 	public Dictionary<string, SlashCommandInfo> Commands { get; set; } = new()
 	{
@@ -19,9 +29,9 @@ public class Program
 				.WithName("link-token")
 				.WithDescription("Link account by token")
 				.AddOption(
-					"token", 
-					ApplicationCommandOptionType.String, 
-					"Your Phigros token", 
+					"token",
+					ApplicationCommandOptionType.String,
+					"Your Phigros token",
 					isRequired: true,
 					maxLength: 25,
 					minLength: 25
@@ -55,6 +65,7 @@ public class Program
 				Manager.RegisteredUsers.Add(userId, tmp);
 				Manager.Logger.Log(LoggerType.Info, $"User {userId} registered. Token: {token}");
 				message = "Linked successfully.";
+				Manager.WriteEverything();
 			Final:
 				await arg.ModifyOriginalResponseAsync(msg => msg.Content = $"{message} Error: {errors}");
 				return;
@@ -156,7 +167,7 @@ public class Program
 		},
 		{ "get-scores-by-token", new(null,
 			new SlashCommandBuilder()
-				.WithName("get-scores")
+				.WithName("get-scores-by-token")
 				.WithDescription("Get scores.")
 				.AddOption(
 					"token",
@@ -247,9 +258,9 @@ public class Program
 				.WithName("set-precision")
 				.WithDescription("Set precision of value shown on /get-b20.")
 				.AddOption(
-					"precision", 
-					ApplicationCommandOptionType.Integer, 
-					"Precision. Put 1 to get acc like 99.1, 2 to get acc like 99.12, repeat.", 
+					"precision",
+					ApplicationCommandOptionType.Integer,
+					"Precision. Put 1 to get acc like 99.1, 2 to get acc like 99.12, repeat.",
 					isRequired: true,
 					maxValue: 16,
 					minValue: 1
@@ -350,23 +361,23 @@ public class Program
 				List<InternalScoreFormat> scoresToShow = new();
 				foreach (var score in save.Records)
 				{
-					if (regex.Match(score.Name).Success) 
+					if (regex.Match(score.Name).Success)
 						scoresToShow.Add(score);
 				}
 
 				await arg.ModifyOriginalResponseAsync(
 					(msg) => {
 						msg.Content = $"You queried `{(string)arg.Data.Options.ElementAt(1)}`, showing...";
-						msg.Attachments = new List<FileAttachment>() 
-						{ 
+						msg.Attachments = new List<FileAttachment>()
+						{
 							new(
 								new MemoryStream(
 									Encoding.UTF8.GetBytes(
 										ScoresFormatter(scoresToShow, int.MaxValue, userData, false, false)
 									)
-								), 
+								),
 								"Query.txt"
-							) 
+							)
 						};
 					});
 			}
@@ -394,31 +405,31 @@ public class Program
 	{
 		if (Manager.FirstStart)
 		{
-			if (!string.IsNullOrEmpty(args.ElementAtOrDefault(0)))
-			{
-				Manager.Config.Token = args.ElementAtOrDefault(0) ?? "";
-			}
-			else
-			{
-				Manager.Logger.Log(LoggerType.Error, $"Seems this is first start. Please enter token in {Manager.ConfigLocation} first.");
-				return;
-			}
+			Manager.Logger.Log(LoggerType.Error, $"Seems this is first start. Please enter token in {Manager.ConfigLocation} first.");
+			return;
 		}
-		if (args.ElementAtOrDefault(0) == "--update")
-		{
-			Manager.Logger.Log(LoggerType.Info, "Updating...");
-			using (HttpClient client = new())
+		Parser.Default.ParseArguments<Options>(args)
+			.WithParsed(async o =>
 			{
-				byte[] diff = await client.GetByteArrayAsync(@"https://yt6983138.github.io/Assets/RksReader/Latest/difficulty.csv");
-				byte[] name = await client.GetByteArrayAsync(@"https://yt6983138.github.io/Assets/RksReader/Latest/info.csv");
-				byte[] help = await client.GetByteArrayAsync(@"https://raw.githubusercontent.com/yt6983138/PSLDiscordBot/master/help.md");
-				File.WriteAllBytes(Manager.Config.DifficultyCsvLocation, diff);
-				File.WriteAllBytes(Manager.Config.NameCsvLocation, name);
-				File.WriteAllBytes(Manager.Config.HelpMDLocation, help);
-			}
-			Manager.ReadCsvs();
-			Manager.Logger.Log(LoggerType.Info, "Updating done!");
-		}
+				if (o.ShouldUpdateCommands)
+				{
+					this._shouldUpdateCommands = true;
+				}
+				if (o.Update)
+				{
+					Manager.Logger.Log(LoggerType.Info, "Updating...");
+					using (HttpClient client = new())
+					{
+						byte[] diff = await client.GetByteArrayAsync(@"https://yt6983138.github.io/Assets/RksReader/Latest/difficulty.csv");
+						byte[] name = await client.GetByteArrayAsync(@"https://yt6983138.github.io/Assets/RksReader/Latest/info.csv");
+						byte[] help = await client.GetByteArrayAsync(@"https://raw.githubusercontent.com/yt6983138/PSLDiscordBot/master/help.md");
+						File.WriteAllBytes(Manager.Config.DifficultyCsvLocation, diff);
+						File.WriteAllBytes(Manager.Config.NameCsvLocation, name);
+						File.WriteAllBytes(Manager.Config.HelpMDLocation, help);
+					}
+					Manager.ReadCsvs();
+				}
+			});
 		Manager.SocketClient.Log += Log;
 		Manager.SocketClient.Ready += Client_Ready;
 		Manager.SocketClient.SlashCommandExecuted += this.SocketClient_SlashCommandExecuted;
@@ -556,6 +567,8 @@ public class Program
 	{
 		Manager.Logger.Log(LoggerType.Info, "Bot started!");
 		List<ulong> serverChecked = new();
+
+		if (!_shouldUpdateCommands) return;
 
 		foreach (var command in await Manager.SocketClient.GetGlobalApplicationCommandsAsync())
 			if (!Commands.TryGetValue(command.Name, out var tmp) || tmp.GuildToApply == null)
