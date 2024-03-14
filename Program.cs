@@ -71,7 +71,7 @@ public class Program
 				return;
 			}
 		)
-		},
+		}, // link token
 		{ "export-scores", new(null,
 			new SlashCommandBuilder()
 				.WithName("export-scores")
@@ -112,7 +112,7 @@ public class Program
 					});
 			}
 		)
-		},
+		}, // export score
 		{ "get-scores", new(null,
 			new SlashCommandBuilder()
 				.WithName("get-scores")
@@ -164,7 +164,7 @@ public class Program
 					});
 			}
 		)
-		},
+		}, // get score
 		{ "get-scores-by-token", new(null,
 			new SlashCommandBuilder()
 				.WithName("get-scores-by-token")
@@ -224,7 +224,7 @@ public class Program
 					});
 			}
 		)
-		},
+		}, // get score token
 		{ "get-time-index", new(null,
 			new SlashCommandBuilder()
 				.WithName("get-time-index")
@@ -252,7 +252,7 @@ public class Program
 					});
 			}
 		)
-		},
+		}, // get time index
 		{ "set-precision", new(null,
 			new SlashCommandBuilder()
 				.WithName("set-precision")
@@ -280,7 +280,7 @@ public class Program
 					});
 			}
 		)
-		},
+		}, // set precision
 		{ "help", new(null,
 			new SlashCommandBuilder()
 				.WithName("help")
@@ -294,7 +294,7 @@ public class Program
 					});
 			}
 		)
-		},
+		}, // help
 		{ "get-token", new(null,
 			new SlashCommandBuilder()
 				.WithName("get-token")
@@ -311,7 +311,7 @@ public class Program
 					});
 			}
 		)
-		},
+		}, // get token
 		{ "query", new(null,
 			new SlashCommandBuilder()
 				.WithName("query")
@@ -382,7 +382,88 @@ public class Program
 					});
 			}
 		)
-		}
+		}, // query
+		{ "get-b20-photo", new(null,
+			new SlashCommandBuilder()
+				.WithName("get-b20-photo")
+				.WithDescription("Get best 19 + 1 Phi photo.")
+				.AddOption(
+					"index",
+					ApplicationCommandOptionType.Integer,
+					"Save time converted to index, 0 is always latest. Do /get-time-index to get other index.",
+					isRequired: true,
+					minValue: 0
+				),
+			async (arg) =>
+			{
+				await arg.DeferAsync(ephemeral: true);
+				if (!CheckHasRegisteredAndReply(arg, out ulong userId, out UserData userData))
+					return;
+				Summary summary;
+				GameSave save; // had to double cast
+				int index = (int)(long)arg.Data.Options.ElementAt(0).Value;
+				try
+				{
+					(summary, save) = await userData.SaveHelperCache.GetGameSaveAsync(Manager.Difficulties, index);
+				}
+				catch (ArgumentOutOfRangeException ex)
+				{
+					await arg.ModifyOriginalResponseAsync(msg => msg.Content = $"Error: Expected index less than {ex.Message}, more or equal to 0. You entered {index}.");
+					return;
+				}
+				catch (Exception ex)
+				{
+					await arg.ModifyOriginalResponseAsync(msg => msg.Content = $"Error: {ex.Message}\nYou may try again or report to author.");
+					return;
+				}
+				List<InternalScoreFormat> b20 = new(20);
+				List<string> realNames = new(20);
+				save.Records.Sort((x, y) => y.GetRksCalculated().CompareTo(x.GetRksCalculated()));
+				double rks = 0;
+				const string RealCoolName = "NULL";
+				InternalScoreFormat @default = new()
+				{
+					Acc = 0,
+					Score = 0,
+					ChartConstant = 0,
+					DifficultyName = "EZ",
+					Name = RealCoolName, // real cool name
+					Status = ScoreStatus.Bugged
+				};
+				for (int j = 0; j < 20; j++)
+				{
+					b20[j] = @default;
+					realNames[j] = RealCoolName;
+				}
+
+				for (int i = 0; i < save.Records.Count; i++)
+				{
+					var score = save.Records[i];
+					if (i < 19)
+					{
+						b20[i + 1] = score;
+						realNames[i + 1] = Manager.Names.TryGetValue(score.Name, out string? _val1) ? _val1 : score.Name;
+						rks += score.GetRksCalculated();
+					}
+					if (score.Acc == 100 && score.GetRksCalculated() > b20[0].GetRksCalculated())
+					{
+						b20[0] = score;
+						realNames[0] = Manager.Names.TryGetValue(score.Name, out string? _val2) ? _val2 : score.Name;
+					}
+				}
+				rks += b20[0].GetRksCalculated();
+				#region Photo generation
+				
+				#endregion
+
+				await arg.ModifyOriginalResponseAsync(
+					(msg) => {
+						msg.Content = "Got score! Now showing...";
+						// msg.Attachments = new List<FileAttachment>() { new(new MemoryStream(Encoding.UTF8.GetBytes(result)), "Scores.txt") };
+					});
+			}
+		)
+		} // get b19 photo
 	};
 	/// <summary>
 	/// 

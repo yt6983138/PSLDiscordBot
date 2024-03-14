@@ -15,4 +15,6 @@ public class Config
 	public string DifficultyCsvLocation { get; set; } = "./difficulty.csv";
 	public string NameCsvLocation { get; set; } = "./info.csv";
 	public string HelpMDLocation { get; set; } = "./help.md";
+	public string IllustrationZipPath { get; set; } = 
+		@"https://4tlrlz-my.sharepoint.com/personal/tgg_4tlrlz_onmicrosoft_com/_layouts/15/download.aspx?SourceUrl=%2Fpersonal%2Ftgg%5F4tlrlz%5Fonmicrosoft%5Fcom%2FDocuments%2FPhigros%20Data";
 }
