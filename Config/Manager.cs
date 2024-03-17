@@ -8,6 +8,7 @@ using yt6983138.Common;
 using Discord.Net;
 using Discord.WebSocket;
 using System.Runtime.Loader;
+using ICSharpCode.SharpZipLib.Zip;
 
 namespace PSLDiscordBot;
 public static class Manager
@@ -33,6 +34,9 @@ public static class Manager
 			file.Directory!.Create();
 		try
 		{
+#if DEBUG
+			throw null!;
+#endif
 			Config = JsonConvert.DeserializeObject<Config>(File.ReadAllText(ConfigLocation))!;
 			FirstStart = false;
 		}
@@ -66,12 +70,25 @@ public static class Manager
 				Task<byte[]> diff = client.GetByteArrayAsync(@"https://yt6983138.github.io/Assets/RksReader/Latest/difficulty.csv");
 				Task<byte[]> name = client.GetByteArrayAsync(@"https://yt6983138.github.io/Assets/RksReader/Latest/info.csv");
 				Task<byte[]> help = client.GetByteArrayAsync(@"https://raw.githubusercontent.com/yt6983138/PSLDiscordBot/master/help.md");
+				Task<byte[]> zip = client.GetByteArrayAsync(@"https://github.com/yt6983138/PSLDiscordBot/raw/master/Assets.zip");
 				diff.Wait(); // ^ no async constructor :(
 				name.Wait();
 				help.Wait();
+				zip.Wait();
 				File.WriteAllBytes(Config.DifficultyCsvLocation, diff.Result);
 				File.WriteAllBytes(Config.NameCsvLocation, name.Result);
 				File.WriteAllBytes(Config.HelpMDLocation, help.Result);
+#if DEBUG
+				var asset = new DirectoryInfo("./Assets");
+				Logger.Log(LoggerType.Verbose, "copying");
+				asset.Create();
+
+				new DirectoryInfo(Secret.AssetsFolder).CopyFilesRecursively(asset);
+#else
+				File.WriteAllBytes("./Assets.zip", zip.Result);
+				var fastZip = new FastZip();
+				fastZip.ExtractZip("./Assets.zip", ".", "");
+#endif
 			}
 		}
 		ReadCsvs();

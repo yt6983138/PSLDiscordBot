@@ -6,6 +6,12 @@ using System.Text.RegularExpressions;
 using yt6983138.Common;
 using PhigrosLibraryCSharp;
 using CommandLine;
+using ICSharpCode.SharpZipLib.Zip;
+using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp;
+using SixLabors.Fonts;
+using SixLabors.ImageSharp.Processing;
+using SixLabors.ImageSharp.Drawing.Processing;
 
 namespace PSLDiscordBot;
 
@@ -416,8 +422,8 @@ public class Program
 					await arg.ModifyOriginalResponseAsync(msg => msg.Content = $"Error: {ex.Message}\nYou may try again or report to author.");
 					return;
 				}
-				List<InternalScoreFormat> b20 = new(20);
-				List<string> realNames = new(20);
+				InternalScoreFormat[] b20 = new InternalScoreFormat[20];
+				string[] realNames = new string[20];
 				save.Records.Sort((x, y) => y.GetRksCalculated().CompareTo(x.GetRksCalculated()));
 				double rks = 0;
 				const string RealCoolName = "NULL";
@@ -443,7 +449,7 @@ public class Program
 					{
 						b20[i + 1] = score;
 						realNames[i + 1] = Manager.Names.TryGetValue(score.Name, out string? _val1) ? _val1 : score.Name;
-						rks += score.GetRksCalculated();
+						rks += score.GetRksCalculated() * 0.05;
 					}
 					if (score.Acc == 100 && score.GetRksCalculated() > b20[0].GetRksCalculated())
 					{
@@ -451,19 +457,21 @@ public class Program
 						realNames[0] = Manager.Names.TryGetValue(score.Name, out string? _val2) ? _val2 : score.Name;
 					}
 				}
-				rks += b20[0].GetRksCalculated();
-				#region Photo generation
-				
-				#endregion
+				rks += b20[0].GetRksCalculated() * 0.05;
+
+				var image = await ImageGenerator.GenerateB20Photo(b20, userData, summary, rks);
+				MemoryStream stream = new();
+
+				await image.SaveAsPngAsync(stream);
 
 				await arg.ModifyOriginalResponseAsync(
 					(msg) => {
 						msg.Content = "Got score! Now showing...";
-						// msg.Attachments = new List<FileAttachment>() { new(new MemoryStream(Encoding.UTF8.GetBytes(result)), "Scores.txt") };
+						msg.Attachments = new List<FileAttachment>() { new(stream, "Scores.png") };
 					});
 			}
 		)
-		} // get b19 photo
+		} // get b20 photo
 	};
 	/// <summary>
 	/// 
@@ -484,7 +492,11 @@ public class Program
 	}
 	public async Task MainAsync(string[] args)
 	{
+#if DEBUG
+		if (false)
+#else
 		if (Manager.FirstStart)
+#endif
 		{
 			Manager.Logger.Log(LoggerType.Error, $"Seems this is first start. Please enter token in {Manager.ConfigLocation} first.");
 			return;
@@ -492,7 +504,11 @@ public class Program
 		Parser.Default.ParseArguments<Options>(args)
 			.WithParsed(async o =>
 			{
+#if DEBUG
+				if (true)
+#else
 				if (o.ShouldUpdateCommands)
+#endif
 				{
 					this._shouldUpdateCommands = true;
 				}
@@ -504,16 +520,20 @@ public class Program
 						byte[] diff = await client.GetByteArrayAsync(@"https://yt6983138.github.io/Assets/RksReader/Latest/difficulty.csv");
 						byte[] name = await client.GetByteArrayAsync(@"https://yt6983138.github.io/Assets/RksReader/Latest/info.csv");
 						byte[] help = await client.GetByteArrayAsync(@"https://raw.githubusercontent.com/yt6983138/PSLDiscordBot/master/help.md");
+						byte[] zip = await client.GetByteArrayAsync(@"https://github.com/yt6983138/PSLDiscordBot/raw/master/Assets.zip");
 						File.WriteAllBytes(Manager.Config.DifficultyCsvLocation, diff);
 						File.WriteAllBytes(Manager.Config.NameCsvLocation, name);
 						File.WriteAllBytes(Manager.Config.HelpMDLocation, help);
+						File.WriteAllBytes("./Assets.zip", zip);
+						var fastZip = new FastZip();
+						fastZip.ExtractZip("./Assets.zip", ".", "");
 					}
 					Manager.ReadCsvs();
 				}
 			});
 		Manager.SocketClient.Log += Log;
 		Manager.SocketClient.Ready += Client_Ready;
-		Manager.SocketClient.SlashCommandExecuted += this.SocketClient_SlashCommandExecuted;
+		Manager.SocketClient.SlashCommandExecuted += SocketClient_SlashCommandExecuted;
 
 		await Manager.SocketClient.LoginAsync(TokenType.Bot, Manager.Config.Token);
 		await Manager.SocketClient.StartAsync();
@@ -642,6 +662,8 @@ public class Program
 	private Task Log(LogMessage msg)
 	{
 		Manager.Logger.Log(LoggerType.Verbose, msg.Message);
+		if (msg.Exception is not null)
+			Manager.Logger.Log(LoggerType.Error, msg.Exception);
 		return Task.CompletedTask;
 	}
 	private async Task Client_Ready()
@@ -649,7 +671,7 @@ public class Program
 		Manager.Logger.Log(LoggerType.Info, "Bot started!");
 		List<ulong> serverChecked = new();
 
-		if (!_shouldUpdateCommands) return;
+		if (!this._shouldUpdateCommands) return;
 
 		foreach (var command in await Manager.SocketClient.GetGlobalApplicationCommandsAsync())
 			if (!Commands.TryGetValue(command.Name, out var tmp) || tmp.GuildToApply == null)
