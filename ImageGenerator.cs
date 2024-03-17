@@ -70,10 +70,12 @@ public static class ImageGenerator
 		}
 		if (!SystemFonts.TryGet("Saira", out defaultFontFamily))
 			defaultFontFamily = SystemFonts.Collection.Families.ElementAt(0);
+		if (!SystemFonts.TryGet("Saira ExtraCondensed", out var family))
+			family = SystemFonts.Collection.Families.ElementAt(0);
 
 		defaultFont = defaultFontFamily.CreateFont(FontSize1, FontStyle.Regular);
-		defaultFontSmall = defaultFontFamily.CreateFont(FontSize2, FontStyle.Regular);
-		defaultFontMedium = defaultFontFamily.CreateFont(FontSize3, FontStyle.Regular);
+		defaultFontSmall = family.CreateFont(FontSize2, FontStyle.Regular);
+		defaultFontMedium = family.CreateFont(FontSize3, FontStyle.Regular);
 	}
 
 	public static async Task<Image> GenerateB20Photo(InternalScoreFormat[] scores, UserData userData, Summary summary, double rks)
@@ -124,7 +126,7 @@ public static class ImageGenerator
 
 		image.Mutate(x => x.DrawText(rks.ToString(userData.ShowFormat), defaultFont, whiteBrush, rksDrawnPos));
 		image.Mutate(x => x.DrawText(userInfo.NickName, defaultFont, whiteBrush, nameDrawnPos));
-		image.Mutate(x => x.DrawText(DateTime.Now.ToString(), defaultFont, whiteBrush, timeDrawnPos));
+		image.Mutate(x => x.DrawText(DateTime.Now.ToString(), defaultFontMedium, whiteBrush, timeDrawnPos));
 		image.Mutate(x => x.DrawImage(avatar, avatarDrawnPos.ToIntPoint(), 1));
 		image.Mutate(x => x.DrawImage(ChallengeRankImages.TryGetValue(rankType, out Image val) ? val : nullImage.Clone(x => x.Resize(challengeSize)), challengeDrawnPos.ToIntPoint(), 1));
 		image.Mutate(x => x.DrawText(challengeRankLevel, defaultFont, whiteBrush, challengeTextDrawnPos));
@@ -141,7 +143,7 @@ public static class ImageGenerator
 			FontRectangle sizeOfCCAndDifficulty = TextMeasurer.MeasureSize(ccAndDifficultyString, textOptions);
 			string rksString = score.GetRksCalculated().ToString(userData.ShowFormat);
 			FontRectangle sizeOfRks = TextMeasurer.MeasureSize(rksString, textOptions);
-			string number = $"#{(num == 0 ? "φ" : num.ToString())}";
+			string number = $"#{(num == 0 ? "Phi" : num.ToString())}"; // saira cant show phi symbol
 
 			var scoreDrawPos = new PointF(UnitSize - 0.5f * sizeOfScore.Width, 0);
 			scoreDrawPos.Offset(startPoint);

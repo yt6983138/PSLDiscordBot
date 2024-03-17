@@ -22,4 +22,5 @@ You may add your custom command by adding function in Dictionary Commands in Pro
 // .. other command
 ```
 When you publish: <br/>
-This is a cross platform project, just remember do not compile with "trim unused code", it will break json things.
+This is a cross platform project, just remember do not compile with "trim unused code", it will break json things. <br/>
+Also, remember to install `Saira` and `Saira ExtraCondensed` fonts (otherwise it will use whatever font the system has).
