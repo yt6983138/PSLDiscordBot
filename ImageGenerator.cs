@@ -4,11 +4,6 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Drawing.Processing;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PSLDiscordBot;
 public static class ImageGenerator
@@ -27,8 +22,8 @@ public static class ImageGenerator
 	private static readonly Font defaultFontSmall;
 	private static readonly Font defaultFontMedium;
 
-	private static readonly PointF rksDrawnPos = new(8 * UnitSize, 1 * UnitSize - 4);
-	private static readonly PointF nameDrawnPos = new(8 * UnitSize, 3 * UnitSize - 4);
+	private static readonly PointF rksDrawnPos = new(8 * UnitSize, (1 * UnitSize) - 4);
+	private static readonly PointF nameDrawnPos = new(8 * UnitSize, (3 * UnitSize) - 4);
 	private static readonly PointF avatarDrawnPos = new(1.25f * UnitSize, 1 * UnitSize);
 	private static readonly PointF challengeDrawnPos = new(UnitSize - 1, 4.5f * UnitSize);
 	private static readonly PointF timeDrawnPos = new(UnitSize * 8, 31.125f * UnitSize);
@@ -38,7 +33,7 @@ public static class ImageGenerator
 	private static readonly Image nullImageSmall = nullImage.Clone(x => x.Resize(128, 68));
 	private static readonly Image template = Image.Load("./Assets/Misc/Template.png");
 
-	private static readonly Point leftStartPos = new((int)UnitSize / 2 + 1, 7 * (int)UnitSize);
+	private static readonly Point leftStartPos = new(((int)UnitSize / 2) + 1, 7 * (int)UnitSize);
 	private static readonly Point leftIllustrationStartPos = leftStartPos + new Size((int)(1.5f * UnitSize), 0);
 	private static readonly Point rightStartPos = new((int)(UnitSize * 7.5f), (int)(UnitSize * 4.5f) + 1); // yes i fucked up while editing
 	private static readonly Point rightIllustrationStartPos = rightStartPos + new Size((int)(1.5f * UnitSize), 0);
@@ -52,7 +47,7 @@ public static class ImageGenerator
 		for (int i = 0; i < 6; i++)
 		{
 			using Stream stream = File.Open($"./Assets/Misc/{i}.png", FileMode.Open);
-			var image = Image.Load(stream);
+			Image image = Image.Load(stream);
 			image.Mutate(x => x.Resize(challengeSize));
 			ChallengeRankImages.Add(i.ToString(), image);
 		}
@@ -70,7 +65,7 @@ public static class ImageGenerator
 		}
 		if (!SystemFonts.TryGet("Saira", out defaultFontFamily))
 			defaultFontFamily = SystemFonts.Collection.Families.ElementAt(0);
-		if (!SystemFonts.TryGet("Saira ExtraCondensed", out var family))
+		if (!SystemFonts.TryGet("Saira ExtraCondensed", out FontFamily family))
 			family = SystemFonts.Collection.Families.ElementAt(0);
 
 		defaultFont = defaultFontFamily.CreateFont(FontSize1, FontStyle.Regular);
@@ -86,9 +81,9 @@ public static class ImageGenerator
 		string challengeRankLevel = challengeRank > 99 ? challengeRankString[^2..] : challengeRankString;
 
 		FontRectangle challengeTextRenderSize = TextMeasurer.MeasureSize(challengeRankLevel, new(defaultFont));
-		PointF challengeTextDrawnPos = new(3 * UnitSize - challengeTextRenderSize.Width / 2, 5 * UnitSize);
+		PointF challengeTextDrawnPos = new((3 * UnitSize) - (challengeTextRenderSize.Width / 2), 5 * UnitSize);
 
-		var image = new Image<Rgba32>(448, 1024);
+		Image<Rgba32> image = new(448, 1024);
 
 		if (!Avatars.TryGetValue(summary.Avatar, out Image avatar))
 		{
@@ -107,7 +102,7 @@ public static class ImageGenerator
 
 		for (int i = 0; i < 20; i++)
 		{
-			var currentScore = scores[i];
+			InternalScoreFormat currentScore = scores[i];
 			image.Mutate(x => x.DrawImage(
 				Utils.TryLoadImage($"./Assets/Tracks/{currentScore.Name}.0/IllustrationLowRes.png")?.MutateChain(x => x.Resize(128, 68)) ?? nullImageSmall,
 				(i % 2 == 0 ? rightIllustrationStartPos : leftIllustrationStartPos) + (i / 2 * offset),
@@ -119,10 +114,10 @@ public static class ImageGenerator
 
 		for (int i = 0; i < 20; i++)
 		{
-			var currentScore = scores[i];
+			InternalScoreFormat currentScore = scores[i];
 			DrawRecordInfo((i % 2 == 0 ? rightStartPos : leftStartPos) + (i / 2 * offset), defaultFontSmall, currentScore, i);
 		}
-		var userInfo = await userData.SaveHelperCache.GetUserInfoAsync();
+		UserInfo userInfo = await userData.SaveHelperCache.GetUserInfoAsync();
 
 		image.Mutate(x => x.DrawText(rks.ToString(userData.ShowFormat), defaultFont, whiteBrush, rksDrawnPos));
 		image.Mutate(x => x.DrawText(userInfo.NickName, defaultFont, whiteBrush, nameDrawnPos));
@@ -134,7 +129,7 @@ public static class ImageGenerator
 		return image;
 		void DrawRecordInfo(PointF startPoint, Font font, InternalScoreFormat score, int num)
 		{
-			var textOptions = new TextOptions(font);
+			TextOptions textOptions = new(font);
 			string scoreString = score.Score.ToString();
 			FontRectangle sizeOfScore = TextMeasurer.MeasureSize(scoreString, textOptions);
 			string accString = $"{score.Acc.ToString(userData.ShowFormat)}%";
@@ -145,17 +140,17 @@ public static class ImageGenerator
 			FontRectangle sizeOfRks = TextMeasurer.MeasureSize(rksString, textOptions);
 			string number = $"#{(num == 0 ? "Phi" : num.ToString())}"; // saira cant show phi symbol
 
-			var scoreDrawPos = new PointF(UnitSize - 0.5f * sizeOfScore.Width, 0);
+			PointF scoreDrawPos = new(UnitSize - (0.5f * sizeOfScore.Width), 0);
 			scoreDrawPos.Offset(startPoint);
-			var accDrawPos = new PointF(UnitSize - 0.5f * sizeOfAcc.Width, 0.5f * UnitSize);
+			PointF accDrawPos = new(UnitSize - (0.5f * sizeOfAcc.Width), 0.5f * UnitSize);
 			accDrawPos.Offset(startPoint);
-			var ccAndDiffDrawPos = new PointF(0.75f * UnitSize - 0.5f * sizeOfCCAndDifficulty.Width, 1.5f * UnitSize);
+			PointF ccAndDiffDrawPos = new((0.75f * UnitSize) - (0.5f * sizeOfCCAndDifficulty.Width), 1.5f * UnitSize);
 			ccAndDiffDrawPos.Offset(startPoint);
-			var rksDrawPos = new PointF(0.75f * UnitSize - 0.5f * sizeOfRks.Width, UnitSize);
+			PointF rksDrawPos = new((0.75f * UnitSize) - (0.5f * sizeOfRks.Width), UnitSize);
 			rksDrawPos.Offset(startPoint);
-			var numberDrawPos = new PointF(5 * UnitSize, 0);
+			PointF numberDrawPos = new(5 * UnitSize, 0);
 			numberDrawPos.Offset(startPoint);
-			var rankDrawPos = new PointF(5.5f * UnitSize, UnitSize);
+			PointF rankDrawPos = new(5.5f * UnitSize, UnitSize);
 			rankDrawPos.Offset(startPoint);
 
 			image.Mutate(x => x.DrawText(scoreString, font, blackBrush, scoreDrawPos));

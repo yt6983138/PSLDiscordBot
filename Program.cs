@@ -1,17 +1,13 @@
-﻿using Discord;
+﻿using CommandLine;
+using Discord;
 using Discord.WebSocket;
-using Newtonsoft.Json;
+using ICSharpCode.SharpZipLib.Zip;
+using Microsoft.Extensions.Logging;
+using PhigrosLibraryCSharp;
+using SixLabors.ImageSharp;
 using System.Text;
 using System.Text.RegularExpressions;
 using yt6983138.Common;
-using PhigrosLibraryCSharp;
-using CommandLine;
-using ICSharpCode.SharpZipLib.Zip;
-using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp;
-using SixLabors.Fonts;
-using SixLabors.ImageSharp.Processing;
-using SixLabors.ImageSharp.Drawing.Processing;
 
 namespace PSLDiscordBot;
 
@@ -19,8 +15,9 @@ public record class SlashCommandInfo(ulong? GuildToApply, SlashCommandBuilder Bu
 public class Program
 {
 	private bool _shouldUpdateCommands = false;
+	private static EventId EventId { get; } = new(114511, "Main");
 
-	class Options
+	private class Options
 	{
 		[Option("update", Required = false, HelpText = "Update files.")]
 		public bool Update { get; set; }
@@ -64,12 +61,12 @@ public class Program
 				if (Manager.RegisteredUsers.ContainsKey(userId))
 				{
 					message = "Warning: you already registered, now proceeding. ";
-					Manager.Logger.Log(LoggerType.Info, $"User {userId} tried to register again, old token: {Manager.RegisteredUsers[userId].Token}, new token: {token}");
+					Manager.Logger.Log<Program>(LogLevel.Information, $"User {userId} tried to register again, old token: {Manager.RegisteredUsers[userId].Token}, new token: {token}", EventId, null!);
 					Manager.RegisteredUsers[userId] = tmp;
 					goto Final;
 				}
 				Manager.RegisteredUsers.Add(userId, tmp);
-				Manager.Logger.Log(LoggerType.Info, $"User {userId} registered. Token: {token}");
+				Manager.Logger.Log(LogLevel.Information, EventId, "User {userId} registered. Token: {token}", userId, token);
 				message = "Linked successfully.";
 				Manager.WriteEverything();
 			Final:
@@ -365,7 +362,7 @@ public class Program
 					return;
 				}
 				List<InternalScoreFormat> scoresToShow = new();
-				foreach (var score in save.Records)
+				foreach (InternalScoreFormat score in save.Records)
 				{
 					if (regex.Match(score.Name).Success)
 						scoresToShow.Add(score);
@@ -444,7 +441,7 @@ public class Program
 
 				for (int i = 0; i < save.Records.Count; i++)
 				{
-					var score = save.Records[i];
+					InternalScoreFormat score = save.Records[i];
 					if (i < 19)
 					{
 						b20[i + 1] = score;
@@ -459,7 +456,7 @@ public class Program
 				}
 				rks += b20[0].GetRksCalculated() * 0.05;
 
-				var image = await ImageGenerator.GenerateB20Photo(b20, userData, summary, rks);
+				SixLabors.ImageSharp.Image image = await ImageGenerator.GenerateB20Photo(b20, userData, summary, rks);
 				MemoryStream stream = new();
 
 				await image.SaveAsPngAsync(stream);
@@ -498,7 +495,7 @@ public class Program
 		if (Manager.FirstStart)
 #endif
 		{
-			Manager.Logger.Log(LoggerType.Error, $"Seems this is first start. Please enter token in {Manager.ConfigLocation} first.");
+			Manager.Logger.Log(LogLevel.Error, $"Seems this is first start. Please enter token in {Manager.ConfigLocation} first.", EventId, this);
 			return;
 		}
 		Parser.Default.ParseArguments<Options>(args)
@@ -514,7 +511,7 @@ public class Program
 				}
 				if (o.Update)
 				{
-					Manager.Logger.Log(LoggerType.Info, "Updating...");
+					Manager.Logger.Log(LogLevel.Information, EventId, "Updating...");
 					using (HttpClient client = new())
 					{
 						byte[] diff = await client.GetByteArrayAsync(@"https://yt6983138.github.io/Assets/RksReader/Latest/difficulty.csv");
@@ -525,15 +522,15 @@ public class Program
 						File.WriteAllBytes(Manager.Config.NameCsvLocation, name);
 						File.WriteAllBytes(Manager.Config.HelpMDLocation, help);
 						File.WriteAllBytes("./Assets.zip", zip);
-						var fastZip = new FastZip();
+						FastZip fastZip = new();
 						fastZip.ExtractZip("./Assets.zip", ".", "");
 					}
 					Manager.ReadCsvs();
 				}
 			});
-		Manager.SocketClient.Log += Log;
-		Manager.SocketClient.Ready += Client_Ready;
-		Manager.SocketClient.SlashCommandExecuted += SocketClient_SlashCommandExecuted;
+		Manager.SocketClient.Log += this.Log;
+		Manager.SocketClient.Ready += this.Client_Ready;
+		Manager.SocketClient.SlashCommandExecuted += this.SocketClient_SlashCommandExecuted;
 
 		await Manager.SocketClient.LoginAsync(TokenType.Bot, Manager.Config.Token);
 		await Manager.SocketClient.StartAsync();
@@ -578,7 +575,7 @@ public class Program
 
 		for (int i = 0; i < scores.Count; i++)
 		{
-			var score = scores[i];
+			InternalScoreFormat score = scores[i];
 			if (score.Acc == 100 && score.GetRksCalculated() > highest.score.GetRksCalculated())
 			{
 				highest.index = i;
@@ -615,7 +612,7 @@ public class Program
 
 		for (int j = 0; j < realNames.Count; j++)
 		{
-			var score = scores[j];
+			InternalScoreFormat score = scores[j];
 			int showFormatLen = userData.ShowFormat.Length;
 			string jStr = j.ToString();
 			string statusStr = score.Status.ToString();
@@ -655,29 +652,29 @@ public class Program
 	}
 	private Task SocketClient_SlashCommandExecuted(SocketSlashCommand arg)
 	{
-		Manager.Logger.Log(LoggerType.Info, $"Command received: {arg.CommandName} from: {arg.User.Id}");
-		return Commands[arg.CommandName].CallBack(arg);
+		Manager.Logger.Log(LogLevel.Information, $"Command received: {arg.CommandName} from: {arg.User.Id}", EventId, this);
+		return this.Commands[arg.CommandName].CallBack(arg);
 	}
 
 	private Task Log(LogMessage msg)
 	{
-		Manager.Logger.Log(LoggerType.Verbose, msg.Message);
-		if (msg.Exception is not null)
-			Manager.Logger.Log(LoggerType.Error, msg.Exception);
+		Manager.Logger.Log(LogLevel.Debug, msg.Message, EventId, this);
+		if (msg.Exception is not null and not GatewayReconnectException)
+			Manager.Logger.Log(LogLevel.Error, EventId, this, msg.Exception);
 		return Task.CompletedTask;
 	}
 	private async Task Client_Ready()
 	{
-		Manager.Logger.Log(LoggerType.Info, "Bot started!");
+		Manager.Logger.Log(LogLevel.Information, "Bot started!", EventId, this);
 		List<ulong> serverChecked = new();
 
 		if (!this._shouldUpdateCommands) return;
 
-		foreach (var command in await Manager.SocketClient.GetGlobalApplicationCommandsAsync())
-			if (!Commands.TryGetValue(command.Name, out var tmp) || tmp.GuildToApply == null)
+		foreach (SocketApplicationCommand? command in await Manager.SocketClient.GetGlobalApplicationCommandsAsync())
+			if (!this.Commands.TryGetValue(command.Name, out SlashCommandInfo? tmp) || tmp.GuildToApply == null)
 				await command.DeleteAsync();
 
-		foreach (var item in Commands)
+		foreach (KeyValuePair<string, SlashCommandInfo> item in this.Commands)
 		{
 			try
 			{
@@ -691,8 +688,8 @@ public class Program
 					SocketGuild guild = Manager.SocketClient.GetGuild(id);
 					if (!serverChecked.Contains(id))
 					{
-						foreach (var command in await guild.GetApplicationCommandsAsync())
-							if (!Commands.TryGetValue(command.Name, out var tmp2) || tmp2.GuildToApply == null)
+						foreach (SocketApplicationCommand? command in await guild.GetApplicationCommandsAsync())
+							if (!this.Commands.TryGetValue(command.Name, out SlashCommandInfo? tmp2) || tmp2.GuildToApply == null)
 								await command.DeleteAsync();
 
 						serverChecked.Add(id);
@@ -702,7 +699,7 @@ public class Program
 			}
 			catch (Exception exception)
 			{
-				Manager.Logger.Log(LoggerType.Error, JsonConvert.SerializeObject(exception, Formatting.Indented));
+				Manager.Logger.Log(LogLevel.Error, EventId, this, exception);
 			}
 		}
 	}

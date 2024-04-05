@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace PSLDiscordBot;
+﻿namespace PSLDiscordBot;
 public class Config
 {
 	public int AutoSaveInterval { get; set; } = 20 * 1000 * 60; // 20min

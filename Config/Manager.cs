@@ -1,19 +1,14 @@
-﻿using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Discord.WebSocket;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using yt6983138.Common;
-using Discord.Net;
-using Discord.WebSocket;
-using System.Runtime.Loader;
-using ICSharpCode.SharpZipLib.Zip;
 
 namespace PSLDiscordBot;
 public static class Manager
 {
 	private static volatile Dictionary<ulong, UserData> _registeredUsers;
+	private static EventId EventId { get; } = new(114510, "Manager");
+	private static object FakeState { get => null!; }
 
 	public const string ConfigLocation = "./Config.json";
 	public static bool FirstStart { get; private set; }
@@ -57,7 +52,7 @@ public static class Manager
 			RegisteredUsers = new();
 		}
 
-		Logger = new(Config.LogLocation, Config.Verbose);
+		Logger = new(Config.LogLocation);
 		AppDomain.CurrentDomain.ProcessExit += (_, _2) => { WriteEverything(); Console.WriteLine("Shutting down..."); };
 #if DEBUG
 		if (true)
@@ -79,8 +74,8 @@ public static class Manager
 				File.WriteAllBytes(Config.NameCsvLocation, name.Result);
 				File.WriteAllBytes(Config.HelpMDLocation, help.Result);
 #if DEBUG
-				var asset = new DirectoryInfo("./Assets");
-				Logger.Log(LoggerType.Verbose, "copying");
+				DirectoryInfo asset = new("./Assets");
+				Logger.Log(LogLevel.Debug, "copying");
 				asset.Create();
 
 				new DirectoryInfo(Secret.AssetsFolder).CopyFilesRecursively(asset);
@@ -107,7 +102,7 @@ public static class Manager
 			{
 				WriteEverything();
 			}
-			Logger.Log(LoggerType.Verbose, "Auto saved.");
+			Logger.Log(LogLevel.Debug, "Auto saved.");
 			await Task.Delay(Config.AutoSaveInterval);
 		}
 	}
@@ -131,7 +126,7 @@ public static class Manager
 			}
 			catch (Exception ex)
 			{
-				Logger.Log(LoggerType.Error, ex);
+				Logger.Log(LogLevel.Error, EventId, FakeState, ex);
 			}
 		}
 		Difficulties = diffculties;
@@ -147,7 +142,7 @@ public static class Manager
 			}
 			catch (Exception ex)
 			{
-				Logger.Log(LoggerType.Error, ex);
+				Logger.Log(LogLevel.Error, EventId, FakeState, ex);
 			}
 		}
 		Names = names;

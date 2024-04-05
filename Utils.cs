@@ -1,10 +1,5 @@
 ﻿using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PSLDiscordBot;
 internal static class Utils
@@ -15,7 +10,7 @@ internal static class Utils
 	{
 		try
 		{
-			var i = Image.Load(path);
+			Image i = Image.Load(path);
 			return i;
 		}
 		catch
