@@ -81,7 +81,7 @@ public static class Manager
 				new DirectoryInfo(Secret.AssetsFolder).CopyFilesRecursively(asset);
 #else
 				File.WriteAllBytes("./Assets.zip", zip.Result);
-				var fastZip = new FastZip();
+				var fastZip = new ICSharpCode.SharpZipLib.Zip.FastZip();
 				fastZip.ExtractZip("./Assets.zip", ".", "");
 #endif
 			}
