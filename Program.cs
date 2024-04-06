@@ -58,15 +58,14 @@ public class Program
 					errors = "Invalid token.";
 					goto Final;
 				}
+				Manager.Logger.Log<Program>(LogLevel.Information, $"User {userId} registered. Token: {token}", EventId, null!);
 				if (Manager.RegisteredUsers.ContainsKey(userId))
 				{
 					message = "Warning: you already registered, now proceeding. ";
-					Manager.Logger.Log<Program>(LogLevel.Information, $"User {userId} tried to register again, old token: {Manager.RegisteredUsers[userId].Token}, new token: {token}", EventId, null!);
 					Manager.RegisteredUsers[userId] = tmp;
 					goto Final;
 				}
 				Manager.RegisteredUsers.Add(userId, tmp);
-				Manager.Logger.Log(LogLevel.Information, EventId, "User {userId} registered. Token: {token}", userId, token);
 				message = "Linked successfully.";
 				Manager.WriteEverything();
 			Final:
@@ -489,6 +488,7 @@ public class Program
 	}
 	public async Task MainAsync(string[] args)
 	{
+#pragma warning disable CS0162 // Unreachable code detected
 #if DEBUG
 		if (false)
 #else
@@ -498,6 +498,7 @@ public class Program
 			Manager.Logger.Log(LogLevel.Error, $"Seems this is first start. Please enter token in {Manager.ConfigLocation} first.", EventId, this);
 			return;
 		}
+#pragma warning restore CS0162 // Unreachable code detected
 		Parser.Default.ParseArguments<Options>(args)
 			.WithParsed(async o =>
 			{
@@ -652,7 +653,7 @@ public class Program
 	}
 	private Task SocketClient_SlashCommandExecuted(SocketSlashCommand arg)
 	{
-		Manager.Logger.Log(LogLevel.Information, $"Command received: {arg.CommandName} from: {arg.User.Id}", EventId, this);
+		Manager.Logger.Log(LogLevel.Information, $"Command received: {arg.CommandName} from: {arg.User.GlobalName}({arg.User.Id})", EventId, this);
 		return this.Commands[arg.CommandName].CallBack(arg);
 	}
 

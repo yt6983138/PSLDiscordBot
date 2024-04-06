@@ -22,11 +22,14 @@ public static class Manager
 	}
 	public static IReadOnlyDictionary<string, float[]> Difficulties { get; set; }
 	public static IReadOnlyDictionary<string, string> Names { get; set; }
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 	static Manager()
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 	{
 		FileInfo file = new(ConfigLocation);
 		if (!file.Directory!.Exists)
 			file.Directory!.Create();
+#pragma warning disable CS0162 // Unreachable code detected
 		try
 		{
 #if DEBUG
@@ -40,6 +43,7 @@ public static class Manager
 			Config = new();
 			FirstStart = true;
 		}
+#pragma warning restore CS0162 // Unreachable code detected
 		FileInfo user = new(Config.UserDataLocation);
 		if (!file.Directory!.Exists)
 			file.Directory!.Create();
@@ -53,6 +57,10 @@ public static class Manager
 		}
 
 		Logger = new(Config.LogLocation);
+		if (!Config.Verbose)
+		{
+			Logger.Disabled.Add(LogLevel.Debug);
+		}
 		AppDomain.CurrentDomain.ProcessExit += (_, _2) => { WriteEverything(); Console.WriteLine("Shutting down..."); };
 #if DEBUG
 		if (true)

@@ -85,6 +85,7 @@ public static class ImageGenerator
 
 		Image<Rgba32> image = new(448, 1024);
 
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
 		if (!Avatars.TryGetValue(summary.Avatar, out Image avatar))
 		{
 			try
@@ -99,6 +100,7 @@ public static class ImageGenerator
 				Avatars.Add(summary.Avatar, avatar);
 			}
 		}
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
 
 		for (int i = 0; i < 20; i++)
 		{
@@ -123,7 +125,11 @@ public static class ImageGenerator
 		image.Mutate(x => x.DrawText(userInfo.NickName, defaultFont, whiteBrush, nameDrawnPos));
 		image.Mutate(x => x.DrawText(DateTime.Now.ToString(), defaultFontMedium, whiteBrush, timeDrawnPos));
 		image.Mutate(x => x.DrawImage(avatar, avatarDrawnPos.ToIntPoint(), 1));
-		image.Mutate(x => x.DrawImage(ChallengeRankImages.TryGetValue(rankType, out Image val) ? val : nullImage.Clone(x => x.Resize(challengeSize)), challengeDrawnPos.ToIntPoint(), 1));
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
+		image.Mutate(x => x.DrawImage(ChallengeRankImages.TryGetValue(rankType, out Image val)
+			? val :
+			nullImage.Clone(x => x.Resize(challengeSize)), challengeDrawnPos.ToIntPoint(), 1));
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
 		image.Mutate(x => x.DrawText(challengeRankLevel, defaultFont, whiteBrush, challengeTextDrawnPos));
 
 		return image;
