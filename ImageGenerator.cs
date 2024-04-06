@@ -1,4 +1,5 @@
-﻿using PhigrosLibraryCSharp;
+﻿using Microsoft.Extensions.Logging;
+using PhigrosLibraryCSharp;
 using SixLabors.Fonts;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Drawing.Processing;
@@ -11,6 +12,8 @@ public static class ImageGenerator
 	private static Dictionary<string, Image> ChallengeRankImages { get; } = new();
 	private static Dictionary<ScoreStatus, Image> RankImages { get; } = new();
 	private static Dictionary<string, Image> Avatars { get; } = new();
+
+	private static EventId EventId { get; } = new(114512, "ImageGenerator");
 
 	private const float UnitSize = 32;
 	private const int FontSize1 = 30;
@@ -105,11 +108,14 @@ public static class ImageGenerator
 		for (int i = 0; i < 20; i++)
 		{
 			InternalScoreFormat currentScore = scores[i];
+			Image? image2 = Utils.TryLoadImage($"./Assets/Tracks/{currentScore.Name}.0/IllustrationLowRes.png")?.MutateChain(x => x.Resize(128, 68));
 			image.Mutate(x => x.DrawImage(
-				Utils.TryLoadImage($"./Assets/Tracks/{currentScore.Name}.0/IllustrationLowRes.png")?.MutateChain(x => x.Resize(128, 68)) ?? nullImageSmall,
+				image2?.MutateChain(x => x.Resize(128, 68)) ?? nullImageSmall,
 				(i % 2 == 0 ? rightIllustrationStartPos : leftIllustrationStartPos) + (i / 2 * offset),
 				1
 			));
+			if (image2 is null)
+				Manager.Logger.Log<object>(LogLevel.Warning, $"Cannot find image for {currentScore.Name}.0!", EventId, null!);
 		}
 
 		image.Mutate(x => x.DrawImage(template, 1));

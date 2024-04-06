@@ -217,7 +217,7 @@ public class Program
 					return;
 				}
 
-				string result = ScoresFormatter(save.Records, arg.Data.Options.Count > 1 ? (int)(long)arg.Data.Options.ElementAt(2).Value : 19, userData);
+				string result = ScoresFormatter(save.Records, arg.Data.Options.Count > 2 ? (int)(long)arg.Data.Options.ElementAt(2).Value : 19, userData);
 
 				await arg.ModifyOriginalResponseAsync(
 					(msg) => {
