@@ -23,7 +23,39 @@ Prints this guide.
 Usage: `/link-token <token>` <br/>
 Example: `/link-token abcde12345fghij67890klmpq` <br/>
 Link your token. You must link your token before doing anything (except `/help`). <br/>
-Having problem finding token? Follow this [link](https://potent-cartwheel-e81.notion.site/Phigros-Bot-f154a4b0ea6446c28f62149587cd5f31).
+Token is a string which has length of 25, only contains numbers and lowercase alphabets. <br/>
+Warning: people CAN use token to find your personal information, so do NOT leak your token! 
+If you leaked it, logout in Phigros immediately. (Don't worry we don't use your token for personal information) <br/>
+How to find token: <br/>
+[Chinese version](https://potent-cartwheel-e81.notion.site/Phigros-Bot-f154a4b0ea6446c28f62149587cd5f31)
+#### Android - way 1
+
+1. Find .userdata at `Android/data/com.PigeonGames.Phigros/files/`
+(or more precisely, `/storage/emulated/[userid]/Android/data/com.PigeonGames.Phigros/files/.userdata`)
+> Some device may differ, then find folder named `com.PigeonGames.Phigros` and try to find `.userdata` underneath it.
+2. Open the `.userdata` file with any text editors, and find `"sessionToken": "abcdefg"`, the `abcdefg` is your token, save it carefully.
+> For example, the file shows `"sessionToken": "abcdefghij1234567890abcde"`, then your token is `abcdefghij1234567890abcde`.
+
+#### Android - way 2
+
+Download [the file](http://qxsky.top:886/externalLinksController/chain/getstk.apk?ckey=UbcekU4SrbrP56nuuJsjSG4sR6XVva0QpH6cgRxykQ%2BLVKfVVy1N9ftDKol27wSM) and follow the guide. (May be Chinese)
+
+#### iOS - way 1
+
+Use [Ai-Si helper](https://m.i4.cn/) to export the backup, find the folder `AppDomain-games.Pigeon.Phigros/Documents` and `.userdata` is inside. You can also find file named `f48523d73831bfbdc9faf74eca5bf2999ca5bf54`, it is the `.userdata` file but with different name, then follow the Android way 1 step.
+
+#### iOS - way 2
+
+Summary: Grabbing the request sent from Phigros client to Phigros server (`https://phigrosserver.pigeongames.cn/1.1/classes/_GameSave`), this is faster but I only recommend it for **advanced users**.
+
+1. Download a proxy app on your device.
+2. Download [HTTP Toolkit](https://httptoolkit.com/) on your computer, and connect your device and your computer to same Wi-Fi. 
+3. Get your computer IP and port which HTTP Toolkit is listening on (default 8000)，you can check it on main page (Proxy Port:8000), then install cert exported from HTTP Toolkit.
+4. Add new proxy, and enter IP and port gotten from above step, and start it.
+5. Start the service, then open Phigros and do sync, grab the request in HTTP Toolkit, then check the header of the request, the value of `x-lc-session` is your token.
+
+#### iOS - way 3
+Use an Android device temporally and follow the upper part.
 ### /get-time-index
 Usage: `/get-time-index` <br/>
 It prints out all your save time and index that means it, 0 is always latest. You must do `/link-token` first.
