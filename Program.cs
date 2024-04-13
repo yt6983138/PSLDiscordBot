@@ -4,6 +4,10 @@ using Discord.WebSocket;
 using ICSharpCode.SharpZipLib.Zip;
 using Microsoft.Extensions.Logging;
 using PhigrosLibraryCSharp;
+using PhigrosLibraryCSharp.Cloud.DataStructure;
+using PhigrosLibraryCSharp.Cloud.DataStructure.Raw;
+using PhigrosLibraryCSharp.Cloud.Login;
+using PhigrosLibraryCSharp.Cloud.Login.DataStructure;
 using SixLabors.ImageSharp;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -58,7 +62,7 @@ public class Program
 					errors = "Invalid token.";
 					goto Final;
 				}
-				Manager.Logger.Log<Program>(LogLevel.Information, $"User {userId} registered. Token: {token}", EventId, null!);
+				Manager.Logger.Log<Program>(LogLevel.Information, $"User {arg.User.GlobalName}({userId}) registered. Token: {token}", EventId, null!);
 				if (Manager.RegisteredUsers.ContainsKey(userId))
 				{
 					message = "Warning: you already registered, now proceeding. ";
@@ -74,6 +78,39 @@ public class Program
 			}
 		)
 		}, // link token
+		{ "login", new(null,
+			new SlashCommandBuilder()
+				.WithName("login")
+				.WithDescription("Log in using TapTap")
+				.AddOption(
+					"china",
+					ApplicationCommandOptionType.Boolean,
+					"If you registered using China TapTap, enter true, otherwise enter false.",
+					isRequired: true
+				),
+			async (arg) =>
+			{
+				await arg.DeferAsync(ephemeral: true);
+				bool inChina = (bool)arg.Data.Options.ElementAt(0).Value;
+				try
+				{
+					CompleteQRCodeData qrCode = await TapTapHelper.RequestLoginQrCode(useChinaEndpoint: inChina);
+					DateTime stopAt = DateTime.Now + new TimeSpan(0, 0, qrCode.ExpiresInSeconds - 15);
+					await arg.ModifyOriginalResponseAsync(
+						msg => msg.Content = $"Please login using this url: {qrCode.Url}\n" +
+						"The page _may_ stuck at loading after you click 'grant', " +
+						"don't worry about it just close the page and the login process will continue anyway, " +
+						"the bot will dm you once the process is done."
+					);
+					ListenQrCodeChange(arg, qrCode, stopAt, inChina);
+				}
+				catch (Exception ex)
+				{
+					await arg.ModifyOriginalResponseAsync(msg => msg.Content = $"Error: {ex.Message}\nYou may try again or report to author.");
+				}
+			}
+		)
+		}, // login
 		{ "export-scores", new(null,
 			new SlashCommandBuilder()
 				.WithName("export-scores")
@@ -485,6 +522,34 @@ public class Program
 			return false;
 		}
 		return true;
+	}
+	public static async void ListenQrCodeChange(SocketSlashCommand command, CompleteQRCodeData data, DateTime whenToStop, bool chinaEndpoint)
+	{
+		const int Delay = 3000;
+		while (DateTime.Now < whenToStop)
+		{
+			TapTapTokenData? result = await TapTapHelper.CheckQRCodeResult(data, chinaEndpoint);
+			if (result is not null)
+			{
+				try
+				{
+					TapTapProfileData profile = await TapTapHelper.GetProfile(result.Data, chinaEndpoint);
+					string token = await LCHelper.LoginAndGetToken(new(profile.Data, result.Data));
+					UserData userData = new(token);
+					_ = await userData.SaveHelperCache.GetUserInfoAsync();
+					Manager.Logger.Log<Program>(LogLevel.Information, $"User {command.User.GlobalName}({command.User.Id}) registered. Token: {token}", EventId, null!);
+					Manager.RegisteredUsers[command.User.Id] = userData;
+					await command.User.SendMessageAsync("Logged in successfully! Now you can access all command!");
+				}
+				catch (Exception ex)
+				{
+					await command.User.SendMessageAsync($"Error while login: {ex.Message}\nYou may try again or report to author.");
+				}
+				return;
+			}
+			await Task.Delay(Delay);
+		}
+		await command.User.SendMessageAsync("The login has been canceled due to timeout.");
 	}
 	public async Task MainAsync(string[] args)
 	{

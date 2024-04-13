@@ -3,7 +3,7 @@ This is a **P**higros **S**core **L**ookup Discord bot (aka PSLDiscordBot), <br/
 you can get your scores by using `/get-scores` or `/get-all-scores` etc.
 ## How to use this?
 If you are first time using this, please follow the guide.
-1. Use `/link-token <token>` to link your account first. Having problem? See `/link-token` usage.
+1. Use `/link-token <token>` or `/login [china]` to link your account first. Having problem? See `/link-token` or `/login` usage.
 2. (Optional) Set your score precision using `/set-precision`.
 3. Use `/get-time-index` to find the save you want to see, it will make following example:
 ```
@@ -19,7 +19,13 @@ If you want to view save modified at 7/24/2023 12:38:04, remember index 1. <br/>
 ### /help
 Usage: `/help` <br/>
 Prints this guide.
+### /login
+Usage: `/login [china]` <br/>
+Example: `/login false` <br/>
+Login with TapTap. Once you do this you no longer need to do `/link-token`. <br/>
+`china` parameter: if you registered Phigros using TapTap china (TapTap.cn), enter true, otherwise enter false.
 ### /link-token
+**Notice: You should use `/login` instead! This is obsolete.**<br/>
 Usage: `/link-token <token>` <br/>
 Example: `/link-token abcde12345fghij67890klmpq` <br/>
 Link your token. You must link your token before doing anything (except `/help`). <br/>
@@ -58,15 +64,15 @@ Summary: Grabbing the request sent from Phigros client to Phigros server (`https
 Use an Android device temporally and follow the upper part.
 ### /get-time-index
 Usage: `/get-time-index` <br/>
-It prints out all your save time and index that means it, 0 is always latest. You must do `/link-token` first.
+It prints out all your save time and index that means it, 0 is always latest. You must do `/link-token` or `/login` first.
 ### /get-all-scores
 Usage: `/get-all-scores <index>` <br/>
 Example: `/get-all-scores 0` <br/>
-It gives you a CSV attachment that has all your scores. You must do `/link-token` first.
+It gives you a CSV attachment that has all your scores. You must do `/link-token` or `/login` first.
 ### /get-scores
 Usage: `/get-scores <index> [count]` <br/>
 Example: `/get-scores 0 114514` <br/>
-It gives you a table of your scores, rks, status (with specified length) etc. You must do `/link-token` first.
+It gives you a table of your scores, rks, status (with specified length) etc. You must do `/link-token` or `/login` first.
 ### /set-precision
 Usage: `/set-precision <number, 16 >= number >= 1>` <br/>
 Example: `/set-precision 5` <br/>
@@ -77,9 +83,9 @@ number = 2: acc: 99.12 <br/>
 You also must do `/link-token` first.
 ### /get-token
 Usage: `/get-token` <br/>
-Get your token. You must do `/link-token` first.
+Get your token. You must do `/link-token` or `/login` first.
 ### /query
 Usage: `/query <index> <regex>` <br/>
 Example: `/query 0 volcanic` <br/>
-It searches all your scores with `regex` parameter by regex. You must do `/link-token` first. <br/>
+It searches all your scores with `regex` parameter by regex. You must do `/link-token` or `/login` first. <br/>
 Hint: You can add `(?i)` before the regex string (ex. `(?i)igall`) to have case insensitive search.

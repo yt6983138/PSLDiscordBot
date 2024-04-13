@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using PhigrosLibraryCSharp;
+using PhigrosLibraryCSharp.Cloud.DataStructure;
 using SixLabors.Fonts;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Drawing.Processing;
