@@ -1,5 +1,6 @@
 ﻿using CommandLine;
 using Discord;
+using Discord.Net;
 using Discord.WebSocket;
 using ICSharpCode.SharpZipLib.Zip;
 using Microsoft.Extensions.Logging;
@@ -725,7 +726,7 @@ public class Program
 	private Task Log(LogMessage msg)
 	{
 		Manager.Logger.Log(LogLevel.Debug, msg.Message, EventId, this);
-		if (msg.Exception is not null and not GatewayReconnectException)
+		if (msg.Exception is not null and not GatewayReconnectException and not WebSocketClosedException)
 			Manager.Logger.Log(LogLevel.Error, EventId, this, msg.Exception);
 		return Task.CompletedTask;
 	}
