@@ -1,6 +1,7 @@
 ﻿using Discord.WebSocket;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using PSLDiscordBot.ImageGenerating;
 using yt6983138.Common;
 
 namespace PSLDiscordBot;
@@ -13,6 +14,7 @@ public static class Manager
 	public const string ConfigLocation = "./Config.json";
 	public static bool FirstStart { get; private set; }
 	public static Config Config { get; set; }
+	public static ImageScript ImageScript { get; set; }
 	public static Logger Logger { get; set; }
 	public static DiscordSocketClient SocketClient { get; set; } = new();
 	public static Dictionary<ulong, UserData> RegisteredUsers
@@ -33,7 +35,7 @@ public static class Manager
 		try
 		{
 #if DEBUG
-			throw null!;
+			throw new Exception();
 #endif
 			Config = JsonConvert.DeserializeObject<Config>(File.ReadAllText(ConfigLocation))!;
 			FirstStart = false;
@@ -56,6 +58,21 @@ public static class Manager
 			RegisteredUsers = new();
 		}
 
+		FileInfo image = new(Config.ImageScriptLocation);
+		if (!image.Directory!.Exists)
+			image.Directory!.Create();
+		try
+		{
+#if DEBUG
+			throw new Exception();
+#endif
+			ImageScript = JsonConvert.DeserializeObject<ImageScript>(File.ReadAllText(Config.ImageScriptLocation))!;
+		}
+		catch
+		{
+			ImageScript = ImageScript.Default;
+		}
+
 		Logger = new(Config.LogLocation);
 		if (!Config.Verbose)
 		{
@@ -63,7 +80,7 @@ public static class Manager
 		}
 		AppDomain.CurrentDomain.ProcessExit += (_, _2) => { WriteEverything(); Console.WriteLine("Shutting down..."); };
 #if DEBUG
-		if (true)
+		if (false)
 #else
 		if (FirstStart)
 #endif

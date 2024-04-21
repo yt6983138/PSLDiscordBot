@@ -6,14 +6,14 @@ using SixLabors.ImageSharp.Processing;
 namespace PSLDiscordBot.ImageGenerating;
 public class ImageText : IDrawableComponent
 {
-	public int FontID { get; set; }
-	public string Text { get; set; } = "";
+	public required int FontID { get; set; }
+	public required string Text { get; set; } = "";
 	public string? Bind { get; set; } = null;
 	public PointF Position { get; set; }
 	public byte ColorRed { get; set; }
 	public byte ColorGreen { get; set; }
 	public byte ColorBlue { get; set; }
-	public byte ColorAlpha { get; set; }
+	public byte ColorAlpha { get; set; } = 255;
 	public AnchorHorizonal HorizonalAnchor { get; set; }
 	public AnchorVertical VerticalAnchor { get; set; }
 

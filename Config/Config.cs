@@ -10,6 +10,7 @@ public class Config
 	public string Token { get; set; } = "";
 #endif
 	public string LogLocation { get; set; } = "./Latest.log";
+	public string ImageScriptLocation { get; set; } = "./ImageScript.json";
 	public string UserDataLocation { get; set; } = "./UserData.json";
 	public string DifficultyCsvLocation { get; set; } = "./difficulty.csv";
 	public string NameCsvLocation { get; set; } = "./info.csv";

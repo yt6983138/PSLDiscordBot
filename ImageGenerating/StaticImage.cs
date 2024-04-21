@@ -1,4 +1,5 @@
-﻿using SixLabors.ImageSharp;
+﻿using Newtonsoft.Json;
+using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
 
 namespace PSLDiscordBot.ImageGenerating;
@@ -15,6 +16,7 @@ public class StaticImage : IDrawableComponent
 	public AnchorHorizonal HorizonalAnchor { get; set; }
 	public AnchorVertical VerticalAnchor { get; set; }
 
+	[JsonIgnore]
 	public Image Image => this._image ?? this.CreateImage();
 
 	public Image CreateImage()

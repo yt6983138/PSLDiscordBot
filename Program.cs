@@ -121,7 +121,7 @@ public class Program
 					"index",
 					ApplicationCommandOptionType.Integer,
 					"Save time converted to index, 0 is always latest. Do /get-time-index to get other index.",
-					isRequired: true,
+					isRequired: false,
 					minValue: 0
 				),
 			async (arg) =>
@@ -131,10 +131,10 @@ public class Program
 					return;
 				Summary summary;
 				GameSave save; // had to double cast
-				int index = (int)(long)arg.Data.Options.ElementAt(0).Value;
+				int? index = arg.Data.Options.ElementAtOrDefault(0)?.Value?.Cast<long?>()?.Cast<int?>();
 				try
 				{
-					(summary, save) = await userData.SaveHelperCache.GetGameSaveAsync(Manager.Difficulties, index);
+					(summary, save) = await userData.SaveHelperCache.GetGameSaveAsync(Manager.Difficulties, index ?? 0);
 				}
 				catch (ArgumentOutOfRangeException ex)
 				{
@@ -162,7 +162,7 @@ public class Program
 					"index",
 					ApplicationCommandOptionType.Integer,
 					"Save time converted to index, 0 is always latest. Do /get-time-index to get other index.",
-					isRequired: true,
+					isRequired: false,
 					minValue: 0
 				)
 				.AddOption(
@@ -180,10 +180,10 @@ public class Program
 					return;
 				Summary summary;
 				GameSave save; // had to double cast
-				int index = (int)(long)arg.Data.Options.ElementAt(0).Value;
+				int? index = arg.Data.Options.FirstOrDefault(x => x.Name == "index")?.Cast<long?>().Cast<int?>();
 				try
 				{
-					(summary, save) = await userData.SaveHelperCache.GetGameSaveAsync(Manager.Difficulties, index);
+					(summary, save) = await userData.SaveHelperCache.GetGameSaveAsync(Manager.Difficulties, index ?? 0);
 				}
 				catch (ArgumentOutOfRangeException ex)
 				{
@@ -196,7 +196,7 @@ public class Program
 					return;
 				}
 
-				string result = ScoresFormatter(save.Records, arg.Data.Options.Count > 1 ? (int)(long)arg.Data.Options.ElementAt(1).Value : 19, userData);
+				string result = ScoresFormatter(save.Records, arg.Data.Options.FirstOrDefault(x => x.Name == "count")?.Cast<long?>().Cast<int?>() ?? 19, userData);
 
 				await arg.ModifyOriginalResponseAsync(
 					(msg) => {
@@ -358,17 +358,17 @@ public class Program
 				.WithName("query")
 				.WithDescription("Query for a specified song.")
 				.AddOption(
-					"index",
-					ApplicationCommandOptionType.Integer,
-					"Save time converted to index, 0 is always latest. Do /get-time-index to get other index.",
-					isRequired: true,
-					minValue: 0
-				)
-				.AddOption(
 					"regex",
 					ApplicationCommandOptionType.String,
 					"Searching pattern (regex).",
 					isRequired: true
+				)
+				.AddOption(
+					"index",
+					ApplicationCommandOptionType.Integer,
+					"Save time converted to index, 0 is always latest. Do /get-time-index to get other index.",
+					isRequired: false,
+					minValue: 0
 				),
 			async (arg) =>
 			{
@@ -378,11 +378,11 @@ public class Program
 				Summary summary;
 				GameSave save; // had to double cast
 				Regex regex;
-				int index = (int)(long)arg.Data.Options.ElementAt(0).Value;
+				int? index = arg.Data.Options.ElementAtOrDefault(1)?.Value?.Cast<long?>()?.Cast<int?>();
 				try
 				{
-					(summary, save) = await userData.SaveHelperCache.GetGameSaveAsync(Manager.Difficulties, index);
-					regex = new((string)arg.Data.Options.ElementAt(1));
+					(summary, save) = await userData.SaveHelperCache.GetGameSaveAsync(Manager.Difficulties, index ?? 0);
+					regex = new((string)arg.Data.Options.ElementAt(0));
 				}
 				catch (ArgumentOutOfRangeException ex)
 				{
@@ -408,7 +408,7 @@ public class Program
 
 				await arg.ModifyOriginalResponseAsync(
 					(msg) => {
-						msg.Content = $"You queried `{(string)arg.Data.Options.ElementAt(1)}`, showing...";
+						msg.Content = $"You queried `{regex}`, showing...";
 						msg.Attachments = new List<FileAttachment>()
 						{
 							new(
@@ -432,7 +432,7 @@ public class Program
 					"index",
 					ApplicationCommandOptionType.Integer,
 					"Save time converted to index, 0 is always latest. Do /get-time-index to get other index.",
-					isRequired: true,
+					isRequired: false,
 					minValue: 0
 				),
 			async (arg) =>
@@ -442,10 +442,10 @@ public class Program
 					return;
 				Summary summary;
 				GameSave save; // had to double cast
-				int index = (int)(long)arg.Data.Options.ElementAt(0).Value;
+				int? index = arg.Data.Options.ElementAtOrDefault(0)?.Value?.Cast<long?>()?.Cast<int?>();
 				try
 				{
-					(summary, save) = await userData.SaveHelperCache.GetGameSaveAsync(Manager.Difficulties, index);
+					(summary, save) = await userData.SaveHelperCache.GetGameSaveAsync(Manager.Difficulties, index ?? 0);
 				}
 				catch (ArgumentOutOfRangeException ex)
 				{
@@ -494,10 +494,18 @@ public class Program
 				}
 				rks += b20[0].GetRksCalculated() * 0.05;
 
-				SixLabors.ImageSharp.Image image = await ImageGenerator.GenerateB20Photo(b20, userData, summary, rks);
+				SixLabors.ImageSharp.Image image = await ImageGenerator.GenerateB20Photo(
+					b20, Manager.Names,
+					userData,
+					summary,
+					rks,
+					Manager.ImageScript
+				);
 				MemoryStream stream = new();
 
 				await image.SaveAsPngAsync(stream);
+
+				image.Dispose();
 
 				await arg.ModifyOriginalResponseAsync(
 					(msg) => {

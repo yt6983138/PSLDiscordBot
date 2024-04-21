@@ -4,16 +4,16 @@ using SixLabors.ImageSharp.Processing;
 namespace PSLDiscordBot.ImageGenerating;
 public class DynamicImage : IDrawableComponent
 {
-	public string Bind { get; set; } = "";
+	public string? Bind { get; set; }
 	public Size Size { get; set; }
 	public PointF Position { get; set; }
 	public float Opacity { get; set; } = 1;
 	public AnchorHorizonal HorizonalAnchor { get; set; }
 	public AnchorVertical VerticalAnchor { get; set; }
 
-	public void DrawOn(Image image, Func<string, Image> imageGetter, bool shouldClone)
+	public void DrawOn(Image image, Func<string?, (Image Image, bool ShouldDispose)> imageGetter, bool shouldClone)
 	{
-		Image image2 = imageGetter(this.Bind);
+		(Image image2, bool shouldDispose) = imageGetter(this.Bind);
 
 		if (image2.Size != this.Size)
 		{
@@ -39,5 +39,8 @@ public class DynamicImage : IDrawableComponent
 			}
 		};
 		image.Mutate(x => x.DrawImage(image2, (this.Position - offset).ToIntPoint(), this.Opacity));
+
+		if (shouldDispose)
+			image2.Dispose();
 	}
 }
