@@ -9,6 +9,7 @@ using PhigrosLibraryCSharp.Cloud.DataStructure;
 using PhigrosLibraryCSharp.Cloud.DataStructure.Raw;
 using PhigrosLibraryCSharp.Cloud.Login;
 using PhigrosLibraryCSharp.Cloud.Login.DataStructure;
+using PSLDiscordBot.ImageGenerating;
 using SixLabors.ImageSharp;
 using System.Text;
 using System.Text.RegularExpressions;

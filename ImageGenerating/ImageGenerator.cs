@@ -7,7 +7,7 @@ using SixLabors.ImageSharp.Drawing.Processing;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 
-namespace PSLDiscordBot;
+namespace PSLDiscordBot.ImageGenerating;
 public static class ImageGenerator
 {
 	private static Dictionary<string, Image> ChallengeRankImages { get; } = new();

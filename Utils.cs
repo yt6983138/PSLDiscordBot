@@ -4,6 +4,9 @@ using SixLabors.ImageSharp.Processing;
 namespace PSLDiscordBot;
 internal static class Utils
 {
+	internal static bool IsNullOrEmpty(this string? value)
+		=> string.IsNullOrEmpty(value);
+
 	internal static Point ToIntPoint(this PointF val)
 		=> new((int)val.X, (int)val.Y);
 	internal static Image? TryLoadImage(string path)
