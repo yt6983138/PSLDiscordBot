@@ -1,6 +1,7 @@
 ﻿using CommandLine;
 using Discord;
 using Discord.Net;
+using Discord.Rest;
 using Discord.WebSocket;
 using ICSharpCode.SharpZipLib.Zip;
 using Microsoft.Extensions.Logging;
@@ -20,7 +21,19 @@ namespace PSLDiscordBot;
 public record class SlashCommandInfo(ulong? GuildToApply, SlashCommandBuilder Builder, Func<SocketSlashCommand, Task> CallBack);
 public class Program
 {
+	private enum Status
+	{
+		Normal,
+		UnderMaintenance,
+		ShuttingDown
+	}
+
 	private bool _shouldUpdateCommands = false;
+
+	private static Status CurrentStatus { get; set; } = Status.Normal;
+	private static CancellationToken _cancellationToken;
+	private static List<Task> RunningTasks { get; set; } = new();
+	private static CancellationTokenSource CancellationTokenSource { get; set; } = new();
 	private static EventId EventId { get; } = new(114511, "Main");
 
 	private class Options
@@ -30,6 +43,7 @@ public class Program
 		[Option("updateCommands", Required = false, HelpText = "Update commands when new command releases.")]
 		public bool ShouldUpdateCommands { get; set; }
 	}
+
 	public static Task Main(string[] args) => new Program().MainAsync(args);
 	public Dictionary<string, SlashCommandInfo> Commands { get; set; } = new()
 	{
@@ -206,66 +220,6 @@ public class Program
 			}
 		)
 		}, // get score
-		{ "get-scores-by-token", new(null,
-			new SlashCommandBuilder()
-				.WithName("get-scores-by-token")
-				.WithDescription("Get scores.")
-				.AddOption(
-					"token",
-					ApplicationCommandOptionType.String,
-					"Token.",
-					isRequired: true,
-					minValue: 0
-				)
-				.AddOption(
-					"index",
-					ApplicationCommandOptionType.Integer,
-					"Save time converted to index, 0 is always latest. Do /get-time-index to get other index.",
-					isRequired: true,
-					minValue: 0
-				)
-				.AddOption(
-					"count",
-					ApplicationCommandOptionType.Integer,
-					"The count to show.",
-					isRequired: false,
-					minValue: 1,
-					maxValue: 114514
-				),
-			async (arg) =>
-			{
-				await arg.DeferAsync(ephemeral: true);
-				string token = (string)arg.Data.Options.ElementAt(0).Value;
-				ulong userId = arg.User.Id;
-				UserData userData = new(token);
-				Summary summary;
-				GameSave save; // had to double cast
-				int index = (int)(long)arg.Data.Options.ElementAt(1).Value;
-				try
-				{
-					(summary, save) = await userData.SaveHelperCache.GetGameSaveAsync(Manager.Difficulties, index);
-				}
-				catch (ArgumentOutOfRangeException ex)
-				{
-					await arg.ModifyOriginalResponseAsync(msg => msg.Content = $"Error: Expected index less than {ex.Message}, more or equal to 0. You entered {index}.");
-					return;
-				}
-				catch (Exception ex)
-				{
-					await arg.ModifyOriginalResponseAsync(msg => msg.Content = $"Error: {ex.Message}\nYou may try again or report to author.");
-					return;
-				}
-
-				string result = ScoresFormatter(save.Records, arg.Data.Options.Count > 2 ? (int)(long)arg.Data.Options.ElementAt(2).Value : 19, userData);
-
-				await arg.ModifyOriginalResponseAsync(
-					(msg) => {
-						msg.Content = $"Got score! Now showing for token ||{token}||...";
-						msg.Attachments = new List<FileAttachment>() { new(new MemoryStream(Encoding.UTF8.GetBytes(result)), "Scores.txt") };
-					});
-			}
-		)
-		}, // get score token
 		{ "get-time-index", new(null,
 			new SlashCommandBuilder()
 				.WithName("get-time-index")
@@ -514,7 +468,136 @@ public class Program
 					});
 			}
 		)
-		} // get b20 photo
+		}, // get b20 photo
+		{ "get-scores-by-token", new(null,
+			new SlashCommandBuilder()
+				.WithName("get-scores-by-token")
+				.WithDescription("Get scores. [Admin command]")
+				.AddOption(
+					"token",
+					ApplicationCommandOptionType.String,
+					"Token.",
+					isRequired: true,
+					minValue: 0
+				)
+				.AddOption(
+					"index",
+					ApplicationCommandOptionType.Integer,
+					"Save time converted to index, 0 is always latest. Do /get-time-index to get other index.",
+					isRequired: true,
+					minValue: 0
+				)
+				.AddOption(
+					"count",
+					ApplicationCommandOptionType.Integer,
+					"The count to show.",
+					isRequired: false,
+					minValue: 1,
+					maxValue: 114514
+				),
+			async (arg) =>
+			{
+				await arg.DeferAsync(ephemeral: true);
+
+				if (await Utils.CheckIfUserIsAdminAndRespond(arg))
+					return;
+
+				ulong userId = arg.User.Id;
+				string token = (string)arg.Data.Options.ElementAt(0).Value;
+				UserData userData = new(token);
+				Summary summary;
+				GameSave save; // had to double cast
+				int index = (int)(long)arg.Data.Options.ElementAt(1).Value;
+				try
+				{
+					(summary, save) = await userData.SaveHelperCache.GetGameSaveAsync(Manager.Difficulties, index);
+				}
+				catch (ArgumentOutOfRangeException ex)
+				{
+					await arg.ModifyOriginalResponseAsync(msg => msg.Content = $"Error: Expected index less than {ex.Message}, more or equal to 0. You entered {index}.");
+					return;
+				}
+				catch (Exception ex)
+				{
+					await arg.ModifyOriginalResponseAsync(msg => msg.Content = $"Error: {ex.Message}\nYou may try again or report to author.");
+					return;
+				}
+
+				string result = ScoresFormatter(save.Records, arg.Data.Options.Count > 2 ? (int)(long)arg.Data.Options.ElementAt(2).Value : 19, userData);
+
+				await arg.ModifyOriginalResponseAsync(
+					(msg) => {
+						msg.Content = $"Got score! Now showing for token ||{token}||...";
+						msg.Attachments = new List<FileAttachment>() { new(new MemoryStream(Encoding.UTF8.GetBytes(result)), "Scores.txt") };
+					});
+			}
+		)
+		}, // get score token
+		{ "shutdown", new(null,
+			new SlashCommandBuilder()
+				.WithName("shutdown")
+				.WithDescription("Shut down the bot. [Admin command]"),
+			async (arg) =>
+			{
+				await arg.DeferAsync(ephemeral: true);
+
+				if (await Utils.CheckIfUserIsAdminAndRespond(arg))
+					return;
+
+				CurrentStatus = Status.ShuttingDown;
+
+				RestInteractionMessage message =
+					await arg.ModifyOriginalResponseAsync(x => x.Content =  $"Shut down initialized, {RunningTasks.Count} tasks running...");
+				while (RunningTasks.Count > 0)
+				{
+					await Task.Delay(1000);
+					await message.ModifyAsync(msg => msg.Content = $"Shut down initialized, {RunningTasks.Count} tasks running...");
+					if (CurrentStatus == Status.Normal)
+					{
+						await message.ModifyAsync(msg => msg.Content = $"Operation canceled.");
+						return;
+					}
+				}
+				await message.ModifyAsync(msg => msg.Content = $"Shut down.");
+
+				CancellationTokenSource.Cancel();
+			}
+		)
+		}, // shutdown
+		{ "admin-cancel", new(null,
+			new SlashCommandBuilder()
+				.WithName("admin-cancel")
+				.WithDescription("Cancel last admin operation. [Admin command]"),
+			async (arg) =>
+			{
+				await arg.DeferAsync(ephemeral: true);
+
+				if (await Utils.CheckIfUserIsAdminAndRespond(arg))
+					return;
+
+				CurrentStatus = Status.Normal;
+
+				await arg.ModifyOriginalResponseAsync(x => x.Content = $"Operation canceled successfully.");
+			}
+		)
+		}, // cancel	
+		{ "toggle-maintenance", new(null,
+			new SlashCommandBuilder()
+				.WithName("toggle-maintenance")
+				.WithDescription("Toggle maintenance. [Admin command]"),
+			async (arg) =>
+			{
+				await arg.DeferAsync(ephemeral: true);
+
+				if (await Utils.CheckIfUserIsAdminAndRespond(arg))
+					return;
+
+				CurrentStatus = CurrentStatus == Status.UnderMaintenance ? Status.Normal : Status.UnderMaintenance;
+
+				await arg.ModifyOriginalResponseAsync(x => x.Content = $"Operation done successfully.");
+			}
+		)
+		} // toggle maintenance
 	};
 	/// <summary>
 	/// 
@@ -563,6 +646,8 @@ public class Program
 	}
 	public async Task MainAsync(string[] args)
 	{
+		_cancellationToken = CancellationTokenSource.Token;
+
 #pragma warning disable CS0162 // Unreachable code detected
 #if DEBUG
 		if (false)
@@ -611,7 +696,10 @@ public class Program
 		await Manager.SocketClient.LoginAsync(TokenType.Bot, Manager.Config.Token);
 		await Manager.SocketClient.StartAsync();
 
-		await Task.Delay(-1);
+		await Task.Delay(-1, _cancellationToken);
+
+		Manager.WriteEverything();
+		Manager.Logger.Log(LogLevel.Information, "Service shutting down...", EventId, this);
 	}
 	private static string ExportCSV(List<InternalScoreFormat> scores, int countToExport = 0)
 	{
@@ -729,7 +817,23 @@ public class Program
 	private Task SocketClient_SlashCommandExecuted(SocketSlashCommand arg)
 	{
 		Manager.Logger.Log(LogLevel.Information, $"Command received: {arg.CommandName} from: {arg.User.GlobalName}({arg.User.Id})", EventId, this);
-		return this.Commands[arg.CommandName].CallBack(arg);
+
+		if (CurrentStatus != Status.Normal)
+		{
+			string message = CurrentStatus switch
+			{
+				Status.UnderMaintenance => "The bot is under maintenance. You may try again later.",
+				Status.ShuttingDown => "The service is shutting down. The service may be up later.",
+				_ => "Unprocessed error."
+			};
+			arg.RespondAsync(message, ephemeral: true);
+			return Task.CompletedTask;
+		}
+
+		Task task = this.Commands[arg.CommandName].CallBack(arg);
+		RunningTasks.Add(task);
+
+		return Utils.RunWithTaskOnEnd(task, () => RunningTasks.Remove(task));
 	}
 
 	private Task Log(LogMessage msg)

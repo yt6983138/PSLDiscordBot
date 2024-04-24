@@ -66,11 +66,12 @@ public static class Manager
 #if DEBUG
 			throw new Exception();
 #endif
-			ImageScript = JsonConvert.DeserializeObject<ImageScript>(File.ReadAllText(Config.ImageScriptLocation))!;
+			ImageScript = ImageScript.Deserialize(File.ReadAllText(Config.ImageScriptLocation));
 		}
 		catch
 		{
 			ImageScript = ImageScript.Default;
+			File.WriteAllText(Config.ImageScriptLocation, ImageScript.Serialize());
 		}
 
 		Logger = new(Config.LogLocation);
@@ -78,7 +79,6 @@ public static class Manager
 		{
 			Logger.Disabled.Add(LogLevel.Debug);
 		}
-		AppDomain.CurrentDomain.ProcessExit += (_, _2) => { WriteEverything(); Console.WriteLine("Shutting down..."); };
 #if DEBUG
 		if (false)
 #else
@@ -106,7 +106,7 @@ public static class Manager
 				new DirectoryInfo(Secret.AssetsFolder).CopyFilesRecursively(asset);
 #else
 				File.WriteAllBytes("./Assets.zip", zip.Result);
-				var fastZip = new ICSharpCode.SharpZipLib.Zip.FastZip();
+				ICSharpCode.SharpZipLib.Zip.FastZip fastZip = new();
 				fastZip.ExtractZip("./Assets.zip", ".", "");
 #endif
 			}

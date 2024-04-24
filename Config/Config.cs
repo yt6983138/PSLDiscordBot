@@ -5,9 +5,11 @@ public class Config
 #if DEBUG
 	public bool Verbose { get; set; } = true;
 	public string Token { get; set; } = Secret.Token;
+	public ulong AdminUserId { get; set; } = Secret.AdminId;
 #else
 	public bool Verbose { get; set; } = false;
 	public string Token { get; set; } = "";
+	public ulong AdminUserId { get; set; }
 #endif
 	public string LogLocation { get; set; } = "./Latest.log";
 	public string ImageScriptLocation { get; set; } = "./ImageScript.json";

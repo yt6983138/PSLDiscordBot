@@ -1,4 +1,5 @@
-﻿using SixLabors.ImageSharp;
+﻿using Discord.WebSocket;
+using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
 
 namespace PSLDiscordBot;
@@ -37,4 +38,31 @@ internal static class Utils
 		=> new((int)val.Width, (int)val.Height);
 	internal static IImageProcessingContext Scale(this IImageProcessingContext context, float scale)
 		=> context.Resize((context.GetCurrentSize() * scale).ToIntSize());
+
+	internal static async Task RunWithTaskOnEnd(Task task, Action? toDoOnEnd)
+	{
+		try
+		{
+			await task;
+		}
+		catch
+		{
+			throw;
+		}
+		finally
+		{
+			if (toDoOnEnd is not null)
+				toDoOnEnd();
+		}
+
+	}
+
+	internal static async Task<bool> CheckIfUserIsAdminAndRespond(SocketSlashCommand command)
+	{
+		if (command.User.Id == Manager.Config.AdminUserId)
+			return false;
+
+		await command.ModifyOriginalResponseAsync(x => x.Content = "Permission denied.");
+		return true;
+	}
 }
