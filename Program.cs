@@ -630,10 +630,10 @@ public class Program
 		const int Delay = 3000;
 		while (DateTime.Now < whenToStop)
 		{
-			TapTapTokenData? result = await TapTapHelper.CheckQRCodeResult(data, chinaEndpoint);
-			if (result is not null)
+			try
 			{
-				try
+				TapTapTokenData? result = await TapTapHelper.CheckQRCodeResult(data, chinaEndpoint);
+				if (result is not null)
 				{
 					TapTapProfileData profile = await TapTapHelper.GetProfile(result.Data, chinaEndpoint);
 					string token = await LCHelper.LoginAndGetToken(new(profile.Data, result.Data));
@@ -642,12 +642,12 @@ public class Program
 					Manager.Logger.Log<Program>(LogLevel.Information, $"User {command.User.GlobalName}({command.User.Id}) registered. Token: {token}", EventId, null!);
 					Manager.RegisteredUsers[command.User.Id] = userData;
 					await command.User.SendMessageAsync("Logged in successfully! Now you can access all command!");
+					return;
 				}
-				catch (Exception ex)
-				{
-					await command.User.SendMessageAsync($"Error while login: {ex.Message}\nYou may try again or report to author.");
-				}
-				return;
+			}
+			catch (Exception ex)
+			{
+				await command.User.SendMessageAsync($"Error while login: {ex.Message}\nYou may try again or report to author.");
 			}
 			await Task.Delay(Delay);
 		}
