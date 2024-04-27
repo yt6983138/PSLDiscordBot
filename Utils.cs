@@ -65,4 +65,6 @@ internal static class Utils
 		await command.ModifyOriginalResponseAsync(x => x.Content = "Permission denied.");
 		return true;
 	}
+	internal static int ToInt(this long num)
+		=> Convert.ToInt32(num);
 }
