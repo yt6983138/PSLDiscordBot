@@ -203,7 +203,7 @@ public class Program
 					return;
 				Summary summary;
 				GameSave save; // had to double cast
-				int? index = arg.Data.Options.FirstOrDefault(x => x.Name == "index")?.Cast<long?>()?.ToInt();
+				int? index = arg.Data.Options.FirstOrDefault(x => x.Name == "index")?.Value?.Cast<long?>()?.ToInt();
 				try
 				{
 					(summary, save) = await userData.SaveHelperCache.GetGameSaveAsync(Manager.Difficulties, index ?? 0);
@@ -219,7 +219,7 @@ public class Program
 					return;
 				}
 
-				string result = ScoresFormatter(save.Records, arg.Data.Options.FirstOrDefault(x => x.Name == "count")?.Cast<long?>()?.ToInt() ?? 19, userData);
+				string result = ScoresFormatter(save.Records, arg.Data.Options.FirstOrDefault(x => x.Name == "count")?.Value?.Cast<long?>()?.ToInt() ?? 19, userData);
 
 				await arg.ModifyOriginalResponseAsync(
 					(msg) => {
