@@ -12,6 +12,7 @@ using PhigrosLibraryCSharp.Cloud.Login;
 using PhigrosLibraryCSharp.Cloud.Login.DataStructure;
 using PSLDiscordBot.ImageGenerating;
 using SixLabors.ImageSharp;
+using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
 using yt6983138.Common;
@@ -35,6 +36,7 @@ public class Program
 	private static List<Task> RunningTasks { get; set; } = new();
 	private static CancellationTokenSource CancellationTokenSource { get; set; } = new();
 	private static EventId EventId { get; } = new(114511, "Main");
+	private static EventId EventIdInitialize { get; } = new(114511, "Main/Initializing");
 
 	private class Options
 	{
@@ -64,33 +66,40 @@ public class Program
 				await arg.DeferAsync(ephemeral: true);
 				ulong userId = arg.User.Id;
 				string token = (string)arg.Data.Options.ElementAt(0).Value;
-				string message = "";
-				string errors = "";
 				UserData tmp;
+				Exception exception;
 				try
 				{
 					tmp = new(token);
 					_ = await tmp.SaveHelperCache.GetUserInfoAsync();
-					errors = "none";
-				}
-				catch
-				{
-					errors = "Invalid token.";
-					goto Final;
-				}
-				Manager.Logger.Log<Program>(LogLevel.Information, $"User {arg.User.GlobalName}({userId}) registered. Token: {token}", EventId, null!);
-				if (Manager.RegisteredUsers.ContainsKey(userId))
-				{
-					message = "Warning: you already registered, now proceeding. ";
+					if (Manager.RegisteredUsers.ContainsKey(userId))
+					{
+						await arg.ModifyOriginalResponseAsync(msg => msg.Content = $"You have already registered, but still linked successfully!");
+					}
+					else
+					{
+						await arg.ModifyOriginalResponseAsync(msg => msg.Content = $"Linked successfully!");
+					}
 					Manager.RegisteredUsers[userId] = tmp;
-					goto Final;
+					Manager.Logger.Log<Program>(LogLevel.Information, EventId, $"User {arg.User.GlobalName}({userId}) registered. Token: {token}");
+					return;
 				}
-				Manager.RegisteredUsers.Add(userId, tmp);
-				message = "Linked successfully.";
-				Manager.WriteEverything();
-			Final:
-				await arg.ModifyOriginalResponseAsync(msg => msg.Content = $"{message} Error: {errors}");
-				return;
+				catch (HttpRequestException ex) when (ex.StatusCode is not null && ex.StatusCode == HttpStatusCode.BadRequest)
+				{
+					await arg.ModifyOriginalResponseAsync(msg => msg.Content = $"Invalid token!");
+					exception = ex;
+				}
+				catch (ArgumentException ex)
+				{
+					await arg.ModifyOriginalResponseAsync(msg => msg.Content = $"Invalid token!");
+					exception = ex;
+				}
+				catch (Exception ex)
+				{
+					await arg.ModifyOriginalResponseAsync(msg => msg.Content = $"Error: {ex}, you may try again or report to author.");
+					exception = ex;
+				}
+				Manager.Logger.Log<Program>(LogLevel.Debug, EventId, "Error while initializing for user {0}({1})", exception, arg.User.GlobalName, userId);
 			}
 		)
 		}, // link token
@@ -547,11 +556,11 @@ public class Program
 				CurrentStatus = Status.ShuttingDown;
 
 				RestInteractionMessage message =
-					await arg.ModifyOriginalResponseAsync(x => x.Content =  $"Shut down initialized, {RunningTasks.Count} tasks running...");
-				while (RunningTasks.Count > 0)
+					await arg.ModifyOriginalResponseAsync(x => x.Content =  $"Shut down initialized, {RunningTasks.Count - 1} tasks running...");
+				while (RunningTasks.Count > 1)
 				{
 					await Task.Delay(1000);
-					await message.ModifyAsync(msg => msg.Content = $"Shut down initialized, {RunningTasks.Count} tasks running...");
+					await message.ModifyAsync(msg => msg.Content = $"Shut down initialized, {RunningTasks.Count - 1} tasks running...");
 					if (CurrentStatus == Status.Normal)
 					{
 						await message.ModifyAsync(msg => msg.Content = $"Operation canceled.");
@@ -672,7 +681,7 @@ public class Program
 				}
 				if (o.Update)
 				{
-					Manager.Logger.Log(LogLevel.Information, EventId, "Updating...");
+					Manager.Logger.Log(LogLevel.Information, EventIdInitialize, "Updating...");
 					using (HttpClient client = new())
 					{
 						byte[] diff = await client.GetByteArrayAsync(@"https://yt6983138.github.io/Assets/RksReader/Latest/difficulty.csv");
@@ -696,7 +705,7 @@ public class Program
 		await Manager.SocketClient.LoginAsync(TokenType.Bot, Manager.Config.Token);
 		await Manager.SocketClient.StartAsync();
 
-		await Task.Delay(-1, _cancellationToken);
+		await Task.Delay(-1, _cancellationToken).ContinueWith(_ => { });
 
 		Manager.WriteEverything();
 		Manager.Logger.Log(LogLevel.Information, "Service shutting down...", EventId, this);
@@ -818,7 +827,7 @@ public class Program
 	{
 		Manager.Logger.Log(LogLevel.Information, $"Command received: {arg.CommandName} from: {arg.User.GlobalName}({arg.User.Id})", EventId, this);
 
-		if (CurrentStatus != Status.Normal)
+		if (CurrentStatus != Status.Normal && arg.User.Id != Manager.Config.AdminUserId)
 		{
 			string message = CurrentStatus switch
 			{
@@ -845,42 +854,88 @@ public class Program
 	}
 	private async Task Client_Ready()
 	{
-		Manager.Logger.Log(LogLevel.Information, "Bot started!", EventId, this);
+		const int Delay = 400;
+
 		List<ulong> serverChecked = new();
 
-		if (!this._shouldUpdateCommands) return;
+		if (!this._shouldUpdateCommands) goto Final;
+
+		List<Task> tasks = new();
 
 		foreach (SocketApplicationCommand? command in await Manager.SocketClient.GetGlobalApplicationCommandsAsync())
+		{
 			if (!this.Commands.TryGetValue(command.Name, out SlashCommandInfo? tmp) || tmp.GuildToApply == null)
-				await command.DeleteAsync();
+			{
+				tasks.Add(command.DeleteAsync());
+				Manager.Logger.Log<Program>(LogLevel.Debug, EventIdInitialize, "Deleting global command {0}", command.Name);
+			}
+
+			await Task.Delay(Delay);
+		}
 
 		foreach (KeyValuePair<string, SlashCommandInfo> item in this.Commands)
 		{
+			if (item.Value.GuildToApply == null)
+			{
+				tasks.Add(Manager.SocketClient.CreateGlobalApplicationCommandAsync(item.Value.Builder.Build()));
+				Manager.Logger.Log<Program>(LogLevel.Debug, EventIdInitialize, "Adding global command {0}", item.Key);
+			}
+			else
+			{
+				ulong id = (ulong)item.Value.GuildToApply;
+				SocketGuild guild = Manager.SocketClient.GetGuild(id);
+				if (!serverChecked.Contains(id))
+				{
+					foreach (SocketApplicationCommand? command in await guild.GetApplicationCommandsAsync())
+					{
+						if (!this.Commands.TryGetValue(command.Name, out SlashCommandInfo? tmp2) || tmp2.GuildToApply == null)
+						{
+							tasks.Add(command.DeleteAsync());
+							Manager.Logger.Log<Program>(LogLevel.Debug, EventIdInitialize, "Deleting command {0}", item.Key);
+						}
+
+						await Task.Delay(Delay);
+					}
+
+					serverChecked.Add(id);
+				}
+			}
+			await Task.Delay(Delay);
+		}
+		foreach (Task item in tasks)
+		{
 			try
 			{
-				if (item.Value.GuildToApply == null)
-				{
-					await Manager.SocketClient.CreateGlobalApplicationCommandAsync(item.Value.Builder.Build());
-				}
-				else
-				{
-					ulong id = (ulong)item.Value.GuildToApply;
-					SocketGuild guild = Manager.SocketClient.GetGuild(id);
-					if (!serverChecked.Contains(id))
-					{
-						foreach (SocketApplicationCommand? command in await guild.GetApplicationCommandsAsync())
-							if (!this.Commands.TryGetValue(command.Name, out SlashCommandInfo? tmp2) || tmp2.GuildToApply == null)
-								await command.DeleteAsync();
-
-						serverChecked.Add(id);
-					}
-					await guild.CreateApplicationCommandAsync(item.Value.Builder.Build());
-				}
+				await item;
 			}
 			catch (Exception exception)
 			{
-				Manager.Logger.Log(LogLevel.Error, EventId, this, exception);
+				Manager.Logger.Log(LogLevel.Error, EventIdInitialize, this, exception);
 			}
 		}
+		tasks.Clear();
+		foreach (KeyValuePair<string, SlashCommandInfo> item in this.Commands)
+		{
+			ulong? id = item.Value.GuildToApply;
+			if (id is null) continue;
+			SocketGuild guild = Manager.SocketClient.GetGuild(id.Value);
+			tasks.Add(guild.CreateApplicationCommandAsync(item.Value.Builder.Build()));
+			Manager.Logger.Log<Program>(LogLevel.Debug, EventIdInitialize, "Adding command {0}", item.Key);
+
+			await Task.Delay(Delay);
+		}
+		foreach (Task item in tasks)
+		{
+			try
+			{
+				await item;
+			}
+			catch (Exception exception)
+			{
+				Manager.Logger.Log(LogLevel.Error, EventIdInitialize, this, exception);
+			}
+		}
+	Final:
+		Manager.Logger.Log(LogLevel.Information, "Bot started!", EventIdInitialize, this);
 	}
 }

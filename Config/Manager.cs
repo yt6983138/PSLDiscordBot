@@ -45,6 +45,12 @@ public static class Manager
 			Config = new();
 			FirstStart = true;
 		}
+
+		Logger = new(Config.LogLocation);
+		if (!Config.Verbose)
+		{
+			Logger.Disabled.Add(LogLevel.Debug);
+		}
 #pragma warning restore CS0162 // Unreachable code detected
 		FileInfo user = new(Config.UserDataLocation);
 		if (!file.Directory!.Exists)
@@ -73,12 +79,6 @@ public static class Manager
 			ImageScript = ImageScript.Default;
 			File.WriteAllText(Config.ImageScriptLocation, ImageScript.Serialize());
 		}
-
-		Logger = new(Config.LogLocation);
-		if (!Config.Verbose)
-		{
-			Logger.Disabled.Add(LogLevel.Debug);
-		}
 #if DEBUG
 		if (false)
 #else
@@ -100,7 +100,7 @@ public static class Manager
 				File.WriteAllBytes(Config.HelpMDLocation, help.Result);
 #if DEBUG
 				DirectoryInfo asset = new("./Assets");
-				Logger.Log(LogLevel.Debug, "copying");
+				Logger.Log(LogLevel.Debug, EventId, "Copying...");
 				asset.Create();
 
 				new DirectoryInfo(Secret.AssetsFolder).CopyFilesRecursively(asset);
@@ -118,6 +118,7 @@ public static class Manager
 	{
 		File.WriteAllText(ConfigLocation, JsonConvert.SerializeObject(Config));
 		File.WriteAllText(Config.UserDataLocation, JsonConvert.SerializeObject(RegisteredUsers));
+		Logger.Log(LogLevel.Debug, EventId, "Writing everything...");
 	}
 	private async static void AutoSave()
 	{
@@ -127,7 +128,7 @@ public static class Manager
 			{
 				WriteEverything();
 			}
-			Logger.Log(LogLevel.Debug, "Auto saved.");
+			Logger.Log(LogLevel.Debug, EventId, "Auto saved.");
 			await Task.Delay(Config.AutoSaveInterval);
 		}
 	}
@@ -151,7 +152,7 @@ public static class Manager
 			}
 			catch (Exception ex)
 			{
-				Logger.Log(LogLevel.Error, EventId, FakeState, ex);
+				Logger.Log(LogLevel.Error, EventId, "Error while reading difficulties csv: ", ex);
 			}
 		}
 		Difficulties = diffculties;
@@ -167,7 +168,7 @@ public static class Manager
 			}
 			catch (Exception ex)
 			{
-				Logger.Log(LogLevel.Error, EventId, FakeState, ex);
+				Logger.Log(LogLevel.Error, EventId, "Error while reading info csv: ", ex);
 			}
 		}
 		Names = names;
