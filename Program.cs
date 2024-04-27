@@ -117,20 +117,27 @@ public class Program
 			{
 				await arg.DeferAsync(ephemeral: true);
 				bool inChina = (bool)arg.Data.Options.ElementAt(0).Value;
+				RestInteractionMessage? message = null;
 				try
 				{
 					CompleteQRCodeData qrCode = await TapTapHelper.RequestLoginQrCode(useChinaEndpoint: inChina);
 					DateTime stopAt = DateTime.Now + new TimeSpan(0, 0, qrCode.ExpiresInSeconds - 15);
-					await arg.ModifyOriginalResponseAsync(
+					message = await arg.ModifyOriginalResponseAsync(
 						msg => msg.Content = $"Please login using this url: {qrCode.Url}\n" +
 						"The page _may_ stuck at loading after you click 'grant', " +
 						"don't worry about it just close the page and the login process will continue anyway, " +
-						"the bot will dm you once the process is done."
+						"after you do it this message should show that you logged in successfully."
 					);
-					ListenQrCodeChange(arg, qrCode, stopAt, inChina);
+					await ListenQrCodeChange(arg, message, qrCode, stopAt, inChina);
 				}
 				catch (Exception ex)
 				{
+					if (message is not null && ex is HttpRequestException hr)
+					{
+						await message.ModifyAsync(x => x.Content = $"Error: {hr.Message}\nYou may try again or report to author.");
+						Manager.Logger.Log<Program>(LogLevel.Warning, EventId, "", hr);
+						return;
+					}
 					await arg.ModifyOriginalResponseAsync(msg => msg.Content = $"Error: {ex.Message}\nYou may try again or report to author.");
 				}
 			}
@@ -603,7 +610,7 @@ public class Program
 
 				CurrentStatus = CurrentStatus == Status.UnderMaintenance ? Status.Normal : Status.UnderMaintenance;
 
-				await arg.ModifyOriginalResponseAsync(x => x.Content = $"Operation done successfully.");
+				await arg.ModifyOriginalResponseAsync(x => x.Content = $"Operation done successfully, current status: {CurrentStatus}");
 			}
 		)
 		} // toggle maintenance
@@ -625,7 +632,7 @@ public class Program
 		}
 		return true;
 	}
-	public static async void ListenQrCodeChange(SocketSlashCommand command, CompleteQRCodeData data, DateTime whenToStop, bool chinaEndpoint)
+	public static async Task ListenQrCodeChange(SocketSlashCommand command, RestInteractionMessage message, CompleteQRCodeData data, DateTime whenToStop, bool chinaEndpoint)
 	{
 		const int Delay = 3000;
 		while (DateTime.Now < whenToStop)
@@ -639,19 +646,23 @@ public class Program
 					string token = await LCHelper.LoginAndGetToken(new(profile.Data, result.Data));
 					UserData userData = new(token);
 					_ = await userData.SaveHelperCache.GetUserInfoAsync();
-					Manager.Logger.Log<Program>(LogLevel.Information, $"User {command.User.GlobalName}({command.User.Id}) registered. Token: {token}", EventId, null!);
+					Manager.Logger.Log<Program>(LogLevel.Information, EventId, $"User {command.User.GlobalName}({command.User.Id}) registered. Token: {token}");
 					Manager.RegisteredUsers[command.User.Id] = userData;
-					await command.User.SendMessageAsync("Logged in successfully! Now you can access all command!");
+					await message.ModifyAsync(x => x.Content = "Logged in successfully! Now you can access all command!");
 					return;
 				}
 			}
 			catch (Exception ex)
 			{
-				await command.User.SendMessageAsync($"Error while login: {ex.Message}\nYou may try again or report to author.");
+				await message.ModifyAsync(x => x.Content = $"Error while login: {ex.Message}\nYou may try again or report to author.");
+				if (ex.InnerException is HttpRequestException)
+					throw ex.InnerException;
+
+				return;
 			}
 			await Task.Delay(Delay);
 		}
-		await command.User.SendMessageAsync("The login has been canceled due to timeout.");
+		await message.ModifyAsync(x => x.Content = "The login has been canceled due to timeout.");
 	}
 	public async Task MainAsync(string[] args)
 	{
