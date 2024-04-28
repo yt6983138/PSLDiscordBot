@@ -106,36 +106,30 @@ public class Program
 		{ "login", new(null,
 			new SlashCommandBuilder()
 				.WithName("login")
-				.WithDescription("Log in using TapTap")
-				.AddOption(
-					"china",
-					ApplicationCommandOptionType.Boolean,
-					"If you registered using China TapTap, enter true, otherwise enter false.",
-					isRequired: true
-				),
+				.WithDescription("Log in using TapTap"),
 			async (arg) =>
 			{
 				await arg.DeferAsync(ephemeral: true);
-				bool inChina = (bool)arg.Data.Options.ElementAt(0).Value;
 				RestInteractionMessage? message = null;
 				try
 				{
-					CompleteQRCodeData qrCode = await TapTapHelper.RequestLoginQrCode(useChinaEndpoint: inChina);
+					CompleteQRCodeData qrCode = await TapTapHelper.RequestLoginQrCode();
 					DateTime stopAt = DateTime.Now + new TimeSpan(0, 0, qrCode.ExpiresInSeconds - 15);
 					message = await arg.ModifyOriginalResponseAsync(
 						msg => msg.Content = $"Please login using this url: {qrCode.Url}\n" +
+						"Make sure to login with the exact credentials you used in Phigros.\n" +
 						"The page _may_ stuck at loading after you click 'grant', " +
 						"don't worry about it just close the page and the login process will continue anyway, " +
 						"after you do it this message should show that you logged in successfully."
 					);
-					await ListenQrCodeChange(arg, message, qrCode, stopAt, inChina);
+					await ListenQrCodeChange(arg, message, qrCode, stopAt);
 				}
 				catch (Exception ex)
 				{
-					if (message is not null && ex is HttpRequestException hr)
+					if (message is not null && ex is RequestException hr)
 					{
 						await message.ModifyAsync(x => x.Content = $"Error: {hr.Message}\nYou may try again or report to author.");
-						Manager.Logger.Log<Program>(LogLevel.Warning, EventId, "", hr);
+						Manager.Logger.Log<Program>(LogLevel.Warning, EventId, hr.ToString());
 						return;
 					}
 					await arg.ModifyOriginalResponseAsync(msg => msg.Content = $"Error: {ex.Message}\nYou may try again or report to author.");
@@ -632,17 +626,17 @@ public class Program
 		}
 		return true;
 	}
-	public static async Task ListenQrCodeChange(SocketSlashCommand command, RestInteractionMessage message, CompleteQRCodeData data, DateTime whenToStop, bool chinaEndpoint)
+	public static async Task ListenQrCodeChange(SocketSlashCommand command, RestInteractionMessage message, CompleteQRCodeData data, DateTime whenToStop)
 	{
 		const int Delay = 3000;
 		while (DateTime.Now < whenToStop)
 		{
 			try
 			{
-				TapTapTokenData? result = await TapTapHelper.CheckQRCodeResult(data, chinaEndpoint);
+				TapTapTokenData? result = await TapTapHelper.CheckQRCodeResult(data);
 				if (result is not null)
 				{
-					TapTapProfileData profile = await TapTapHelper.GetProfile(result.Data, chinaEndpoint);
+					TapTapProfileData profile = await TapTapHelper.GetProfile(result.Data);
 					string token = await LCHelper.LoginAndGetToken(new(profile.Data, result.Data));
 					UserData userData = new(token);
 					_ = await userData.SaveHelperCache.GetUserInfoAsync();
@@ -655,8 +649,8 @@ public class Program
 			catch (Exception ex)
 			{
 				await message.ModifyAsync(x => x.Content = $"Error while login: {ex.Message}\nYou may try again or report to author.");
-				if (ex.InnerException is HttpRequestException)
-					throw ex.InnerException;
+				if (ex is RequestException)
+					throw;
 
 				return;
 			}
