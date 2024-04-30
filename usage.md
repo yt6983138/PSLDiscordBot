@@ -3,27 +3,20 @@ This is a **P**higros **S**core **L**ookup Discord bot (aka PSLDiscordBot), <br/
 you can get your scores by using `/get-scores` or `/get-all-scores` etc.
 ## How to use this?
 If you are first time using this, please follow the guide.
-1. Use `/link-token <token>` or `/login [china]` to link your account first. Having problem? See `/link-token` or `/login` usage.
+1. Use `/link-token <token>` or `/login` to link your account first. Having problem? See `/link-token` or `/login` usage.
 2. (Optional) Set your score precision using `/set-precision`.
-3. Use `/get-time-index` to find the save you want to see, it will make following example:
-```
-Index | Date
-0     | 2/4/2024 00:59:59
-1     | 7/24/2023 12:38:04
-2     | 10/27/2023 14:31:05
-...
-```
-If you want to view save modified at 7/24/2023 12:38:04, remember index 1. <br/>
-4. Now, you can get your scores by using `/get-scores <index> [count]` or `/get-all-scores <index>`. remember, index 0 is always latest.
+3. (Optional, this is almost optional in every case) Use `/get-time-index` to find the save you want to see (See `/get-time-index` usage)
+4. Now, you can get your scores by using `/get-scores [index]` or `/get-b20-photo [index]`.
 ## Command usage
+
+Options in `<example>` are _required_ options, in `[example]` are _optional_ options.
 ### /help
 Usage: `/help` <br/>
 Prints this guide.
 ### /login
-Usage: `/login [china]` <br/>
-Example: `/login false` <br/>
+Usage: `/login` <br/>
+Example: `/login` <br/>
 Login with TapTap. Once you do this you no longer need to do `/link-token`. <br/>
-`china` parameter: if you registered Phigros using TapTap china (TapTap.cn), enter true, otherwise enter false.
 ### /link-token
 **Notice: You should use `/login` instead! This is obsolete.**<br/>
 Usage: `/link-token <token>` <br/>
@@ -66,11 +59,11 @@ Use an Android device temporally and follow the upper part.
 Usage: `/get-time-index` <br/>
 It prints out all your save time and index that means it, 0 is always latest. You must do `/link-token` or `/login` first.
 ### /get-all-scores
-Usage: `/get-all-scores <index>` <br/>
+Usage: `/get-all-scores [index]` <br/>
 Example: `/get-all-scores 0` <br/>
 It gives you a CSV attachment that has all your scores. You must do `/link-token` or `/login` first.
 ### /get-scores
-Usage: `/get-scores <index> [count]` <br/>
+Usage: `/get-scores [index] [count]` <br/>
 Example: `/get-scores 0 114514` <br/>
 It gives you a table of your scores, rks, status (with specified length) etc. You must do `/link-token` or `/login` first.
 ### /set-precision
@@ -85,7 +78,11 @@ You also must do `/link-token` first.
 Usage: `/get-token` <br/>
 Get your token. You must do `/link-token` or `/login` first.
 ### /query
-Usage: `/query <index> <regex>` <br/>
-Example: `/query 0 volcanic` <br/>
+Usage: `/query <regex> [index]` <br/>
+Example: `/query volcanic 0` <br/>
 It searches all your scores with `regex` parameter by regex. You must do `/link-token` or `/login` first. <br/>
 Hint: You can add `(?i)` before the regex string (ex. `(?i)igall`) to have case insensitive search.
+### /get-b20-photo
+Usage: `/get-b20-photo [index]` <br/>
+Example: `/get-b20-photo 0` <br/>
+Gives you a cool picture about your b19&1phi scores. You must do `/link-token` or `/login` first.

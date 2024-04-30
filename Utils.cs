@@ -1,6 +1,8 @@
-﻿using Discord.WebSocket;
+﻿using Discord;
+using Discord.WebSocket;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
+using Image = SixLabors.ImageSharp.Image;
 
 namespace PSLDiscordBot;
 internal static class Utils
@@ -67,4 +69,34 @@ internal static class Utils
 	}
 	internal static int ToInt(this long num)
 		=> Convert.ToInt32(num);
+	internal static bool Compare(this SocketApplicationCommandOption source, ApplicationCommandOptionProperties target)
+	{
+		SocketApplicationCommandOption a = source;
+		ApplicationCommandOptionProperties x = target;
+		return a.Name == x.Name &&
+			a.Description == x.Description &&
+			a.MinValue.IsSameOrSameToDefault(x.MinValue) &&
+			a.MaxValue.IsSameOrSameToDefault(x.MaxValue) &&
+			a.IsDefault.IsSameOrSameToDefault(x.IsDefault) &&
+			a.MaxLength.IsSameOrSameToDefault(x.MaxLength) &&
+			a.IsRequired.IsSameOrSameToDefault(x.IsRequired) &&
+			a.Type == x.Type;
+	}
+	internal static bool Compare(this ApplicationCommandOptionProperties source, SocketApplicationCommandOption target)
+		=> target.Compare(source);
+	internal static bool IsSameOrSameToDefault<T>(this Nullable<T> source, Nullable<T> target) where T : struct
+	{
+		if (!source.HasValue)
+		{
+			if (!target.HasValue) return true;
+			return target.Value.Equals(default(T));
+		}
+		if (!target.HasValue)
+		{
+			if (!source.HasValue) return true;
+			return source.Value.Equals(default(T));
+		}
+		return source.Value.Equals(target.Value);
+	}
+
 }

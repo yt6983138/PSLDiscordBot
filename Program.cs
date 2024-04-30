@@ -19,7 +19,7 @@ using yt6983138.Common;
 
 namespace PSLDiscordBot;
 
-public record class SlashCommandInfo(ulong? GuildToApply, SlashCommandBuilder Builder, Func<SocketSlashCommand, Task> CallBack);
+public record class SlashCommandInfo(SlashCommandBuilder Builder, Func<SocketSlashCommand, Task> CallBack);
 public class Program
 {
 	private enum Status
@@ -32,6 +32,7 @@ public class Program
 	private bool _shouldUpdateCommands = false;
 
 	private static Status CurrentStatus { get; set; } = Status.Normal;
+	private static DateTime? MaintenanceStartedAt { get; set; } = null;
 	private static CancellationToken _cancellationToken;
 	private static List<Task> RunningTasks { get; set; } = new();
 	private static CancellationTokenSource CancellationTokenSource { get; set; } = new();
@@ -49,7 +50,7 @@ public class Program
 	public static Task Main(string[] args) => new Program().MainAsync(args);
 	public Dictionary<string, SlashCommandInfo> Commands { get; set; } = new()
 	{
-		{ "link-token", new(null,
+		{ "link-token", new(
 			new SlashCommandBuilder()
 				.WithName("link-token")
 				.WithDescription("Link account by token")
@@ -103,7 +104,7 @@ public class Program
 			}
 		)
 		}, // link token
-		{ "login", new(null,
+		{ "login", new(
 			new SlashCommandBuilder()
 				.WithName("login")
 				.WithDescription("Log in using TapTap"),
@@ -137,7 +138,7 @@ public class Program
 			}
 		)
 		}, // login
-		{ "export-scores", new(null,
+		{ "export-scores", new(
 			new SlashCommandBuilder()
 				.WithName("export-scores")
 				.WithDescription("Export all your scores. Returns: A csv file that includes all of your scores.")
@@ -178,7 +179,7 @@ public class Program
 			}
 		)
 		}, // export score
-		{ "get-scores", new(null,
+		{ "get-scores", new(
 			new SlashCommandBuilder()
 				.WithName("get-scores")
 				.WithDescription("Get scores.")
@@ -230,7 +231,7 @@ public class Program
 			}
 		)
 		}, // get score
-		{ "get-time-index", new(null,
+		{ "get-time-index", new(
 			new SlashCommandBuilder()
 				.WithName("get-time-index")
 				.WithDescription("Get all indexes. Returns: A list of index/time table"),
@@ -258,7 +259,7 @@ public class Program
 			}
 		)
 		}, // get time index
-		{ "set-precision", new(null,
+		{ "set-precision", new(
 			new SlashCommandBuilder()
 				.WithName("set-precision")
 				.WithDescription("Set precision of value shown on /get-b20.")
@@ -286,7 +287,7 @@ public class Program
 			}
 		)
 		}, // set precision
-		{ "help", new(null,
+		{ "help", new(
 			new SlashCommandBuilder()
 				.WithName("help")
 				.WithDescription("Show help."),
@@ -300,7 +301,7 @@ public class Program
 			}
 		)
 		}, // help
-		{ "get-token", new(null,
+		{ "get-token", new(
 			new SlashCommandBuilder()
 				.WithName("get-token")
 				.WithDescription("Show your token."),
@@ -317,7 +318,7 @@ public class Program
 			}
 		)
 		}, // get token
-		{ "query", new(null,
+		{ "query", new(
 			new SlashCommandBuilder()
 				.WithName("query")
 				.WithDescription("Query for a specified song.")
@@ -388,7 +389,7 @@ public class Program
 			}
 		)
 		}, // query
-		{ "get-b20-photo", new(null,
+		{ "get-b20-photo", new(
 			new SlashCommandBuilder()
 				.WithName("get-b20-photo")
 				.WithDescription("Get best 19 + 1 Phi photo.")
@@ -479,7 +480,7 @@ public class Program
 			}
 		)
 		}, // get b20 photo
-		{ "get-scores-by-token", new(null,
+		{ "get-scores-by-token", new(
 			new SlashCommandBuilder()
 				.WithName("get-scores-by-token")
 				.WithDescription("Get scores. [Admin command]")
@@ -543,7 +544,7 @@ public class Program
 			}
 		)
 		}, // get score token
-		{ "shutdown", new(null,
+		{ "shutdown", new(
 			new SlashCommandBuilder()
 				.WithName("shutdown")
 				.WithDescription("Shut down the bot. [Admin command]"),
@@ -574,7 +575,7 @@ public class Program
 			}
 		)
 		}, // shutdown
-		{ "admin-cancel", new(null,
+		{ "admin-cancel", new(
 			new SlashCommandBuilder()
 				.WithName("admin-cancel")
 				.WithDescription("Cancel last admin operation. [Admin command]"),
@@ -591,7 +592,7 @@ public class Program
 			}
 		)
 		}, // cancel	
-		{ "toggle-maintenance", new(null,
+		{ "toggle-maintenance", new(
 			new SlashCommandBuilder()
 				.WithName("toggle-maintenance")
 				.WithDescription("Toggle maintenance. [Admin command]"),
@@ -603,11 +604,42 @@ public class Program
 					return;
 
 				CurrentStatus = CurrentStatus == Status.UnderMaintenance ? Status.Normal : Status.UnderMaintenance;
+				MaintenanceStartedAt = DateTime.Now;
 
 				await arg.ModifyOriginalResponseAsync(x => x.Content = $"Operation done successfully, current status: {CurrentStatus}");
 			}
 		)
-		} // toggle maintenance
+		}, // toggle maintenance
+		{ "list-users", new(
+			new SlashCommandBuilder()
+				.WithName("list-users")
+				.WithDescription("List current registered users. [Admin command]"),
+			async (arg) =>
+			{
+				await arg.DeferAsync(ephemeral: true);
+
+				if (await Utils.CheckIfUserIsAdminAndRespond(arg))
+					return;
+
+				StringBuilder sb = new();
+				foreach (KeyValuePair<ulong, UserData> user in Manager.RegisteredUsers)
+				{
+					sb.Append(user.Key);
+					sb.Append(" aka \"");
+					sb.Append((await Manager.SocketClient.GetUserAsync(user.Key)).GlobalName);
+					sb.Append("\"\n");
+				}
+
+				await arg.ModifyOriginalResponseAsync(
+					x =>
+					{
+						x.Content = $"There are currently {Manager.RegisteredUsers.Count} user(s).";
+						x.Attachments = new List<FileAttachment>() { new(new MemoryStream(Encoding.UTF8.GetBytes(sb.ToString())), "UserList.txt") };
+					}
+					);
+			}
+		)
+		} // list users
 	};
 	/// <summary>
 	/// 
@@ -836,7 +868,7 @@ public class Program
 		{
 			string message = CurrentStatus switch
 			{
-				Status.UnderMaintenance => "The bot is under maintenance. You may try again later.",
+				Status.UnderMaintenance => $"The bot is under maintenance since {MaintenanceStartedAt}. You may try again later.",
 				Status.ShuttingDown => "The service is shutting down. The service may be up later.",
 				_ => "Unprocessed error."
 			};
@@ -859,80 +891,71 @@ public class Program
 	}
 	private async Task Client_Ready()
 	{
+		Manager.Logger.Log(LogLevel.Information, "Initializing bot...", EventIdInitialize, this);
 		const int Delay = 600;
 
-		List<ulong> serverChecked = new();
+		foreach (KeyValuePair<string, SlashCommandInfo> command in this.Commands)
+			if (command.Key != command.Value.Builder.Name)
+				throw new Exception($"Command dictionary key ({command.Key}) and builder name ({command.Value.Builder.Name}) is inconsistent.");
 
 		if (!this._shouldUpdateCommands) goto Final;
 
+		IReadOnlyCollection<SocketApplicationCommand> globalCommandsAlreadyExisted =
+			await Manager.SocketClient.GetGlobalApplicationCommandsAsync();
+
 		List<Task> tasks = new();
 
-		foreach (SocketApplicationCommand? command in await Manager.SocketClient.GetGlobalApplicationCommandsAsync())
+		foreach (SocketApplicationCommand command in globalCommandsAlreadyExisted)
 		{
-			if (!this.Commands.TryGetValue(command.Name, out SlashCommandInfo? tmp) || tmp.GuildToApply == null)
-			{
-				tasks.Add(command.DeleteAsync());
-				Manager.Logger.Log<Program>(LogLevel.Debug, EventIdInitialize, "Deleting global command {0}", command.Name);
-			}
-
 			await Task.Delay(Delay);
-		}
+			string name = command.Name;
+			this.Commands.TryGetValue(name, out SlashCommandInfo? localCommand);
 
-		foreach (KeyValuePair<string, SlashCommandInfo> item in this.Commands)
-		{
-			if (item.Value.GuildToApply == null)
+			bool shouldAdd = false;
+			SlashCommandBuilder? builder = localCommand?.Builder;
+			SlashCommandProperties? built = builder?.Build();
+			if (localCommand is null) goto Delete;
+			shouldAdd = true;
+			if (builder!.Description != command.Description) goto Delete;
+			IReadOnlyCollection<SocketApplicationCommandOption> commandOption = command.Options;
+			List<ApplicationCommandOptionProperties> localCommandOptions = built!.Options.IsSpecified ? built!.Options.Value : new();
+			if (localCommandOptions.Count != commandOption.Count) goto Delete;
+			bool allContains = true;
+			foreach (ApplicationCommandOptionProperties? localOption in localCommandOptions)
 			{
-				tasks.Add(Manager.SocketClient.CreateGlobalApplicationCommandAsync(item.Value.Builder.Build()));
-				Manager.Logger.Log<Program>(LogLevel.Debug, EventIdInitialize, "Adding global command {0}", item.Key);
-			}
-			else
-			{
-				ulong id = (ulong)item.Value.GuildToApply;
-				SocketGuild guild = Manager.SocketClient.GetGuild(id);
-				if (!serverChecked.Contains(id))
+				bool contains = false;
+				foreach (SocketApplicationCommandOption remoteOption in commandOption)
 				{
-					foreach (SocketApplicationCommand? command in await guild.GetApplicationCommandsAsync())
+					if (localOption.Compare(remoteOption))
 					{
-						if (!this.Commands.TryGetValue(command.Name, out SlashCommandInfo? tmp2) || tmp2.GuildToApply == null)
-						{
-							tasks.Add(command.DeleteAsync());
-							Manager.Logger.Log<Program>(LogLevel.Debug, EventIdInitialize, "Deleting command {0}", item.Key);
-						}
-
-						await Task.Delay(Delay);
+						contains = true;
+						break;
 					}
-
-					serverChecked.Add(id);
 				}
+				if (!contains)
+					allContains = false;
 			}
-			await Task.Delay(Delay);
-		}
-		foreach (Task item in tasks)
-		{
-			try
-			{
-				await item;
-			}
-			catch (Exception exception)
-			{
-				Manager.Logger.Log(LogLevel.Error, EventIdInitialize, this, exception);
-			}
-		}
-		tasks.Clear();
-		foreach (KeyValuePair<string, SlashCommandInfo> item in this.Commands)
-		{
-			ulong? id = item.Value.GuildToApply;
-			if (id is null) continue;
-			SocketGuild guild = Manager.SocketClient.GetGuild(id.Value);
-			tasks.Add(guild.CreateApplicationCommandAsync(item.Value.Builder.Build()));
-			Manager.Logger.Log<Program>(LogLevel.Debug, EventIdInitialize, "Adding command {0}", item.Key);
+			if (!allContains) goto Delete;
+			Manager.Logger.Log<Program>(LogLevel.Debug, EventIdInitialize, "Global command {0} did not get removed", command.Name);
+			continue;
 
+		Delete:
+			tasks.Add(command.DeleteAsync().ContinueWith(_ => shouldAdd ? Manager.SocketClient.CreateGlobalApplicationCommandAsync(built) : Task.CompletedTask));
+			Manager.Logger.Log<Program>(LogLevel.Debug, EventIdInitialize, "Removing global command {0}", command.Name);
+			if (!shouldAdd) continue;
+			Manager.Logger.Log<Program>(LogLevel.Debug, EventIdInitialize, "Also adding global command {0}", built!.Name);
+		}
+		foreach (KeyValuePair<string, SlashCommandInfo> command in this.Commands.Where(x => !globalCommandsAlreadyExisted.Any(a => a.Name == x.Key)))
+		{
+			tasks.Add(Manager.SocketClient.CreateGlobalApplicationCommandAsync(command.Value.Builder.Build()));
+			Manager.Logger.Log<Program>(LogLevel.Debug, EventIdInitialize, "Adding new global command {0}", command.Key);
 			await Task.Delay(Delay);
 		}
 		foreach (Task item in tasks)
 		{
 			try
 			{
+				Manager.Logger.Log<Program>(LogLevel.Debug, EventIdInitialize, "Awaiting a task whose status is {0}.", item.Status);
 				await item;
 			}
 			catch (Exception exception)
