@@ -29,10 +29,14 @@ public class GetB20PhotoCommand : CommandBase
 	{
 		Summary summary;
 		GameSave save; // had to double cast
+		GameUserInfo userInfo;
+		GameProgress progress;
 		int? index = arg.Data.Options.ElementAtOrDefault(0)?.Value?.Cast<long?>()?.ToInt();
 		try
 		{
 			(summary, save) = await data.SaveHelperCache.GetGameSaveAsync(Manager.Difficulties, index ?? 0);
+			userInfo = await data.SaveHelperCache.GetGameUserInfoAsync(index ?? 0);
+			progress = await data.SaveHelperCache.GetGameProgressAsync(index ?? 0);
 		}
 		catch (ArgumentOutOfRangeException ex)
 		{
@@ -81,13 +85,15 @@ public class GetB20PhotoCommand : CommandBase
 		}
 		rks += b20[0].GetRksCalculated() * 0.05;
 
-		SixLabors.ImageSharp.Image image = await ImageGenerator.GenerateB20Photo(
+		SixLabors.ImageSharp.Image image = await ImageGenerator.MakePhoto(
 			b20,
 			Manager.Names,
 			data,
 			summary,
+			userInfo,
+			progress,
 			rks,
-			Manager.ImageScript
+			Manager.GetB20PhotoImageScript
 		);
 		MemoryStream stream = new();
 

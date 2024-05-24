@@ -5,6 +5,8 @@ using Discord.WebSocket;
 using ICSharpCode.SharpZipLib.Zip;
 using Microsoft.Extensions.Logging;
 using PSLDiscordBot.Command;
+using PSLDiscordBot.ImageGenerating;
+using SixLabors.Fonts;
 using System.Reflection;
 
 namespace PSLDiscordBot;
@@ -13,7 +15,40 @@ public class Program
 {
 	private static EventId EventId { get; } = new(114511, "Main");
 	private static EventId EventIdInitialize { get; } = new(114511, "Initializing");
+	private static EventId EventIdApp { get; } = new(114509, "Application");
 
+	public Status CurrentStatus { get; set; } = Status.Normal;
+	public DateTime? MaintenanceStartedAt { get; set; } = null;
+	public CancellationTokenSource CancellationTokenSource { get; set; } = new();
+	public CancellationToken CancellationToken { get; set; }
+	public List<Task> RunningTasks { get; set; } = new();
+	public InputArgs InputOptions { get; set; } = default!;
+	public bool Initialized { get; set; } = false;
+	public Dictionary<string, CommandBase> Commands { get; set; } =
+		typeof(Program).Assembly
+		.GetTypes()
+		.Where(t => t.IsSubclassOf(typeof(CommandBase)))
+		.Where(t => t.GetCustomAttribute<AddToGlobalAttribute>() is not null)
+		.Select(t => (CommandBase)Activator.CreateInstance(t)!)
+		.ToDictionary(c => c.Name);
+
+	public class InputArgs
+	{
+		[Option("updateFiles", Required = false, HelpText = "Update files.")]
+		public bool UpdateFiles { get; set; }
+
+		[Option("updateCommands", Required = false, HelpText = "Update commands when new command releases.")]
+		public bool UpdateCommands { get; set; }
+
+		[Option("resetConfig", Required = false, HelpText = "Reset configuration (only part)")]
+		public bool ResetConfig { get; set; }
+
+		[Option("resetConfigFull", Required = false, HelpText = "Reset configuration completely.")]
+		public bool ResetConfigFull { get; set; }
+
+		[Option("resetScripts", Required = false, HelpText = "Reset all image scripts.")]
+		public bool ResetScripts { get; set; }
+	}
 	public enum Status
 	{
 		Normal,
@@ -21,37 +56,11 @@ public class Program
 		ShuttingDown
 	}
 
-	private bool _shouldUpdateCommands = false;
-
-	public Status CurrentStatus { get; set; } = Status.Normal;
-	public DateTime? MaintenanceStartedAt { get; set; } = null;
-	public CancellationToken CancellationToken { get; set; }
-	public List<Task> RunningTasks { get; set; } = new();
-	public CancellationTokenSource CancellationTokenSource { get; set; } = new();
-	public Dictionary<string, CommandBase> Commands { get; set; } = new();
-
-	private class Options
-	{
-		[Option("update", Required = false, HelpText = "Update files.")]
-		public bool Update { get; set; }
-		[Option("updateCommands", Required = false, HelpText = "Update commands when new command releases.")]
-		public bool ShouldUpdateCommands { get; set; }
-	}
-
 	public static Task Main(string[] args) => new Program().MainAsync(args);
 
 	public async Task MainAsync(string[] args)
 	{
-		IEnumerable<Type> commands = typeof(Program)
-			.Assembly.GetTypes()
-			.Where(t => t.IsSubclassOf(typeof(CommandBase)))
-			.Where(t => t.GetCustomAttribute<AddToGlobalAttribute>() is not null);
-
-		foreach (Type command in commands)
-		{
-			CommandBase instance = (CommandBase)Activator.CreateInstance(command)!;
-			this.Commands.Add(instance.Name, instance);
-		}
+		AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
 
 		this.CancellationToken = this.CancellationTokenSource.Token;
 
@@ -62,40 +71,70 @@ public class Program
 		if (Manager.FirstStart)
 #endif
 		{
-			Manager.Logger.Log(LogLevel.Error, $"Seems this is first start. Please enter token in {Manager.ConfigLocation} first.", EventId, this);
+			Manager.Logger.Log(LogLevel.Critical, $"Seems this is first start. Please enter token in {Manager.ConfigLocation} first.", EventId, this);
 			return;
 		}
 #pragma warning restore CS0162 // Unreachable code detected
-		Parser.Default.ParseArguments<Options>(args)
-			.WithParsed(async o =>
+		Parser.Default.ParseArguments<InputArgs>(args)
+			.WithParsed(o => this.InputOptions = o);
+
+		if (!SystemFonts.Collection.Families.Any())
+		{
+			Manager.Logger.Log(LogLevel.Critical, "No system fonts have been found, please install at least one (and Saira)!", EventId, this);
+			return;
+		}
+
+		if (this.InputOptions.UpdateFiles)
+		{
+			Manager.Logger.Log(LogLevel.Information, EventIdInitialize, "Updating...");
+			using (HttpClient client = new())
 			{
-#if DEBUG
-				if (true)
-#else
-				if (o.ShouldUpdateCommands)
-#endif
-				{
-					this._shouldUpdateCommands = true;
-				}
-				if (o.Update)
-				{
-					Manager.Logger.Log(LogLevel.Information, EventIdInitialize, "Updating...");
-					using (HttpClient client = new())
-					{
-						byte[] diff = await client.GetByteArrayAsync(@"https://yt6983138.github.io/Assets/RksReader/Latest/difficulty.csv");
-						byte[] name = await client.GetByteArrayAsync(@"https://yt6983138.github.io/Assets/RksReader/Latest/info.csv");
-						byte[] help = await client.GetByteArrayAsync(@"https://raw.githubusercontent.com/yt6983138/PSLDiscordBot/master/help.md");
-						byte[] zip = await client.GetByteArrayAsync(@"https://github.com/yt6983138/PSLDiscordBot/raw/master/Assets.zip");
-						File.WriteAllBytes(Manager.Config.DifficultyCsvLocation, diff);
-						File.WriteAllBytes(Manager.Config.NameCsvLocation, name);
-						File.WriteAllBytes(Manager.Config.HelpMDLocation, help);
-						File.WriteAllBytes("./Assets.zip", zip);
-						FastZip fastZip = new();
-						fastZip.ExtractZip("./Assets.zip", ".", "");
-					}
-					Manager.ReadCsvs();
-				}
-			});
+				byte[] diff = await client.GetByteArrayAsync(@"https://yt6983138.github.io/Assets/RksReader/Latest/difficulty.csv");
+				byte[] name = await client.GetByteArrayAsync(@"https://yt6983138.github.io/Assets/RksReader/Latest/info.csv");
+				byte[] help = await client.GetByteArrayAsync(@"https://raw.githubusercontent.com/yt6983138/PSLDiscordBot/master/help.md");
+				byte[] zip = await client.GetByteArrayAsync(@"https://github.com/yt6983138/PSLDiscordBot/raw/master/Assets.zip");
+				File.WriteAllBytes(Manager.Config.DifficultyCsvLocation, diff);
+				File.WriteAllBytes(Manager.Config.NameCsvLocation, name);
+				File.WriteAllBytes(Manager.Config.HelpMDLocation, help);
+				File.WriteAllBytes("./Assets.zip", zip);
+				FastZip fastZip = new();
+				fastZip.ExtractZip("./Assets.zip", ".", "");
+			}
+			Manager.ReadCsvs();
+		}
+
+		if (this.InputOptions.ResetConfig)
+		{
+			Manager.Logger.Log(LogLevel.Information, "Resetting config... (partial)", EventId, this);
+			Config @default = new();
+			Manager.Config.LogLocation = @default.LogLocation;
+			Manager.Config.AutoSaveInterval = @default.AutoSaveInterval;
+			Manager.Config.DifficultyCsvLocation = @default.DifficultyCsvLocation;
+			Manager.Config.GetB20PhotoImageScriptLocation = @default.GetB20PhotoImageScriptLocation;
+			Manager.Config.HelpMDLocation = @default.HelpMDLocation;
+			Manager.Config.NameCsvLocation = @default.NameCsvLocation;
+			Manager.Config.Verbose = @default.Verbose;
+			Manager.Config.UserDataLocation = @default.UserDataLocation;
+
+			Manager.WriteEverything();
+		}
+
+		if (this.InputOptions.ResetConfigFull)
+		{
+			Manager.Logger.Log(LogLevel.Information, "Resetting config... (full)", EventId, this);
+			Manager.Config = new();
+
+			Manager.WriteEverything();
+		}
+
+		if (this.InputOptions.ResetScripts)
+		{
+			Manager.Logger.Log(LogLevel.Information, "Resetting image scripts...", EventId, this);
+			Manager.GetB20PhotoImageScript = ImageScript.GetB20PhotoDefault;
+
+			Manager.WriteEverything();
+		}
+
 		Manager.SocketClient.Log += this.Log;
 		Manager.SocketClient.Ready += this.Client_Ready;
 		Manager.SocketClient.SlashCommandExecuted += this.SocketClient_SlashCommandExecuted;
@@ -142,7 +181,8 @@ public class Program
 		Manager.Logger.Log(LogLevel.Information, "Initializing bot...", EventIdInitialize, this);
 		const int Delay = 600;
 
-		if (!this._shouldUpdateCommands) goto Final;
+		if (this.Initialized) goto Final;
+		if (!this.InputOptions.UpdateCommands) goto Final;
 
 		IReadOnlyCollection<SocketApplicationCommand> globalCommandsAlreadyExisted =
 			await Manager.SocketClient.GetGlobalApplicationCommandsAsync();
@@ -209,5 +249,13 @@ public class Program
 		}
 	Final:
 		Manager.Logger.Log(LogLevel.Information, "Bot started!", EventIdInitialize, this);
+		this.Initialized = true;
+	}
+
+	private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
+	{
+		Manager.Logger.Log<Program>(LogLevel.Critical, EventIdApp, "Unhandled exception. Application exiting.");
+		Manager.Logger.Log<Program>(LogLevel.Critical, EventIdApp, "", (Exception)e.ExceptionObject);
+		Environment.Exit(-1145141919);
 	}
 }

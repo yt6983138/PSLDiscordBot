@@ -36,7 +36,15 @@ public class ImageGenerator
 		}
 	}
 
-	public static async Task<Image> GenerateB20Photo(InternalScoreFormat[] scores, IReadOnlyDictionary<string, string> infos, UserData userData, Summary summary, double rks, ImageScript script)
+	public static async Task<Image> MakePhoto(
+		InternalScoreFormat[] scores,
+		IReadOnlyDictionary<string, string> infos,
+		UserData userData,
+		Summary summary,
+		GameUserInfo gameUserInfo,
+		GameProgress progress,
+		double rks,
+		ImageScript script)
 	{
 		ushort challengeRank = summary.ChallengeCode;
 		string challengeRankString = challengeRank.ToString();
@@ -69,6 +77,13 @@ public class ImageGenerator
 			{ "User.Rks", rks.ToString(userData.ShowFormat) },
 			{ "User.Nickname", userInfo.NickName },
 			{ "User.Challenge.Text", challengeRankLevel.ToString() },
+			{ "User.Intro", gameUserInfo.Intro },
+			{ "User.Currency.KiB", progress.Money.KiB.ToString() },
+			{ "User.Currency.MiB", progress.Money.MiB.ToString() },
+			{ "User.Currency.GiB", progress.Money.GiB.ToString() },
+			{ "User.Currency.TiB", progress.Money.TiB.ToString() },
+			{ "User.Currency.PiB", progress.Money.PiB.ToString() },
+			{ "User.Currency.Combined", progress.Money.ToString() },
 			{ "Time.Now", DateTime.Now.ToString() }
 		};
 
@@ -76,7 +91,7 @@ public class ImageGenerator
 		{
 			InternalScoreFormat score = scores[i];
 			textMap.Add($"B20.Score.{i}", score.Score.ToString());
-			textMap.Add($"B20.Acc.{i}", score.Acc.ToString(userData.ShowFormat) + "%");
+			textMap.Add($"B20.Acc.{i}", score.Acc.ToString(userData.ShowFormat));
 			textMap.Add($"B20.CCAndDiff.{i}", $"{score.DifficultyName} {score.ChartConstant}");
 			textMap.Add($"B20.CC.{i}", score.ChartConstant.ToString());
 			textMap.Add($"B20.Diff.{i}", score.DifficultyName);
@@ -86,13 +101,21 @@ public class ImageGenerator
 			textMap.Add($"B20.Rks.{i}", score.GetRksCalculated().ToString(userData.ShowFormat));
 		}
 
-		Dictionary<string, Image> imageMap = new()
+		Dictionary<string, Lazy<Image>> imageMap = new()
 		{
-			{ "User.Avatar", avatar },
-			{ "User.Challenge.Image",
-				ChallengeRankImages.TryGetValue(rankType, out Image? val)
-		 		? val :
-		 		StaticImage.Default.Image }
+			{ "User.Avatar", new Lazy<Image>(avatar) },
+			{ "User.Challenge.Image", new Lazy<Image>(
+				() => ChallengeRankImages.TryGetValue(rankType, out Image? val)
+		 		? val
+				: StaticImage.Default.Image) },
+			{ "User.Background.Image.LowRes", new Lazy<Image>(
+				() =>
+				Utils.TryLoadImage($"./Assets/Tracks/{infos.FirstOrDefault(p => p.Value == gameUserInfo.BackgroundId)}.0/IllustrationLowRes.png")
+				?? StaticImage.Default.Image) },
+			{ "User.Background.Image.Blurry", new Lazy<Image>(
+				() =>
+				Utils.TryLoadImage($"./Assets/Tracks/{infos.FirstOrDefault(p => p.Value == gameUserInfo.BackgroundId)}.0/IllustrationBlur.png")
+				?? StaticImage.Default.Image) }
 		};
 
 		for (int i = 0; i < scores.Length; i++)
@@ -100,8 +123,12 @@ public class ImageGenerator
 			InternalScoreFormat score = scores[i];
 			Image? image2 = Utils.TryLoadImage($"./Assets/Tracks/{score.Name}.0/IllustrationLowRes.png");
 
-			imageMap.Add($"B20.Rank.{i}", RankImages[score.Status]);
-			imageMap.Add($"B20.Illustration.{i}", image2 ?? StaticImage.Default.Image);
+			imageMap.Add($"B20.Rank.{i}", new(RankImages[score.Status]));
+			imageMap.Add($"B20.Illustration.{i}", new(
+				() =>
+				Utils.TryLoadImage($"./Assets/Tracks/{score.Name}.0/IllustrationLowRes.png")
+				?? StaticImage.Default.Image)
+			);
 			if (image2 == null)
 			{
 				Manager.Logger.Log<ImageGenerator>(LogLevel.Warning, $"Cannot find image for {score.Name}.0!", EventId, null!);
@@ -131,12 +158,12 @@ public class ImageGenerator
 
 		(Image Image, bool ShouldDispose) ImageGetter(string? key)
 		{
-			if (key is not null && imageMap.TryGetValue(key, out Image? image))
+			if (key is not null && imageMap.TryGetValue(key, out Lazy<Image>? image))
 			{
-				if (key.StartsWith("B20.Illustration"))
-					return (image, true);
+				if (key.StartsWith("B20.Illustration") || key.StartsWith("User.Background"))
+					return (image.Value, true);
 
-				return (image, false);
+				return (image.Value, false);
 			}
 			return (StaticImage.Default.Image, true);
 		}

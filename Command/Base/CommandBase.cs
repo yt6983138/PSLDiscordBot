@@ -26,7 +26,7 @@ public abstract class CommandBase
 		ulong userId = task.User.Id;
 		if (!Manager.RegisteredUsers.TryGetValue(userId, out userData!))
 		{
-			task.ModifyOriginalResponseAsync(msg => msg.Content = "You haven't linked token. Please use /link-token first.");
+			task.ModifyOriginalResponseAsync(msg => msg.Content = "You haven't logged in/linked token. Please use /login or /link-token first.");
 			userData = default!;
 			return false;
 		}

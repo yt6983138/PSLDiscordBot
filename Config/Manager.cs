@@ -9,12 +9,11 @@ public static class Manager
 {
 	private static volatile Dictionary<ulong, UserData> _registeredUsers;
 	private static EventId EventId { get; } = new(114510, "Manager");
-	private static object FakeState { get => null!; }
 
 	public const string ConfigLocation = "./Config.json";
 	public static bool FirstStart { get; private set; }
 	public static Config Config { get; set; }
-	public static ImageScript ImageScript { get; set; }
+	public static ImageScript GetB20PhotoImageScript { get; set; }
 	public static Logger Logger { get; set; }
 	public static DiscordSocketClient SocketClient { get; set; } = new();
 	public static Dictionary<ulong, UserData> RegisteredUsers
@@ -51,6 +50,7 @@ public static class Manager
 		{
 			Logger.Disabled.Add(LogLevel.Debug);
 		}
+
 #pragma warning restore CS0162 // Unreachable code detected
 		FileInfo user = new(Config.UserDataLocation);
 		if (!file.Directory!.Exists)
@@ -64,7 +64,7 @@ public static class Manager
 			RegisteredUsers = new();
 		}
 
-		FileInfo image = new(Config.ImageScriptLocation);
+		FileInfo image = new(Config.GetB20PhotoImageScriptLocation);
 		if (!image.Directory!.Exists)
 			image.Directory!.Create();
 		try
@@ -72,12 +72,12 @@ public static class Manager
 #if DEBUG
 			throw new Exception();
 #endif
-			ImageScript = ImageScript.Deserialize(File.ReadAllText(Config.ImageScriptLocation));
+			GetB20PhotoImageScript = ImageScript.Deserialize(File.ReadAllText(Config.GetB20PhotoImageScriptLocation));
 		}
 		catch
 		{
-			ImageScript = ImageScript.Default;
-			File.WriteAllText(Config.ImageScriptLocation, ImageScript.Serialize());
+			GetB20PhotoImageScript = ImageScript.GetB20PhotoDefault;
+			File.WriteAllText(Config.GetB20PhotoImageScriptLocation, GetB20PhotoImageScript.Serialize());
 		}
 #if DEBUG
 		if (false)
@@ -114,10 +114,15 @@ public static class Manager
 		ReadCsvs();
 		Task.Run(AutoSave);
 	}
+
+
+
 	public static void WriteEverything()
 	{
 		File.WriteAllText(ConfigLocation, JsonConvert.SerializeObject(Config));
 		File.WriteAllText(Config.UserDataLocation, JsonConvert.SerializeObject(RegisteredUsers));
+		File.WriteAllText(Config.GetB20PhotoImageScriptLocation, GetB20PhotoImageScript.Serialize());
+
 		Logger.Log(LogLevel.Debug, EventId, "Writing everything...");
 	}
 	private async static void AutoSave()

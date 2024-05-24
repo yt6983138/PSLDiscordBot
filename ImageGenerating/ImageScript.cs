@@ -20,7 +20,7 @@ public class ImageScript
 	public static ImageScript Deserialize(string json)
 		=> JsonConvert.DeserializeObject<ImageScript>(json, _serializerSettings)!;
 
-	public static ImageScript Default
+	public static ImageScript GetB20PhotoDefault
 	{
 		get
 		{
@@ -150,7 +150,7 @@ public class ImageScript
 				{
 					FontID = 1,
 					Bind = $"B20.Acc.{num}",
-					Text = "{0}",
+					Text = "{0}%",
 					Position = image.Position + new Size(-32, 36),
 					HorizonalAnchor = AnchorHorizonal.Middle
 				}
