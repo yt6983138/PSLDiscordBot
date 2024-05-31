@@ -1,6 +1,5 @@
 ﻿using Discord;
 using Discord.WebSocket;
-using Microsoft.Extensions.Logging;
 using static PSLDiscordBot.Program;
 
 namespace PSLDiscordBot.Command;
@@ -8,7 +7,6 @@ namespace PSLDiscordBot.Command;
 [AddToGlobal]
 public class ToggleMaintenanceCommand : AdminCommandBase
 {
-	private static readonly EventId EventId = new(11451414, nameof(ToggleMaintenanceCommand));
 	public override string Name => "toggle-maintenance";
 	public override string Description => "Toggle maintenance. [Admin command]";
 

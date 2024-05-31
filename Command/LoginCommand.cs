@@ -10,7 +10,6 @@ namespace PSLDiscordBot.Command;
 [AddToGlobal]
 public class LoginCommand : GuestCommandBase
 {
-	private static readonly EventId EventId = new(1145143, nameof(LoginCommand));
 	public override string Name => "login";
 	public override string Description => "Log in using TapTap.";
 
@@ -31,20 +30,20 @@ public class LoginCommand : GuestCommandBase
 				"don't worry about it just close the page and the login process will continue anyway, " +
 				"after you do it this message should show that you logged in successfully."
 			);
-			await ListenQrCodeChange(arg, message, qrCode, stopAt);
+			await this.ListenQrCodeChange(arg, message, qrCode, stopAt);
 		}
 		catch (Exception ex)
 		{
 			if (message is not null && ex is RequestException hr)
 			{
 				await message.ModifyAsync(x => x.Content = $"Error: {hr.Message}\nYou may try again or report to author.");
-				Manager.Logger.Log<Program>(LogLevel.Warning, EventId, hr.ToString());
+				Manager.Logger.Log<Program>(LogLevel.Warning, this.EventId, hr.ToString());
 				return;
 			}
 			await arg.ModifyOriginalResponseAsync(msg => msg.Content = $"Error: {ex.Message}\nYou may try again or report to author.");
 		}
 	}
-	public static async Task ListenQrCodeChange(SocketSlashCommand command, RestInteractionMessage message, CompleteQRCodeData data, DateTime whenToStop)
+	public async Task ListenQrCodeChange(SocketSlashCommand command, RestInteractionMessage message, CompleteQRCodeData data, DateTime whenToStop)
 	{
 		const int Delay = 3000;
 		while (DateTime.Now < whenToStop)
@@ -58,7 +57,7 @@ public class LoginCommand : GuestCommandBase
 					string token = await LCHelper.LoginAndGetToken(new(profile.Data, result.Data));
 					UserData userData = new(token);
 					_ = await userData.SaveHelperCache.GetUserInfoAsync();
-					Manager.Logger.Log<Program>(LogLevel.Information, EventId, $"User {command.User.GlobalName}({command.User.Id}) registered. Token: {token}");
+					Manager.Logger.Log<Program>(LogLevel.Information, this.EventId, $"User {command.User.GlobalName}({command.User.Id}) registered. Token: {token}");
 					Manager.RegisteredUsers[command.User.Id] = userData;
 					await message.ModifyAsync(x => x.Content = "Logged in successfully! Now you can access all command!");
 					return;

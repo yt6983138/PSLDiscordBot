@@ -5,7 +5,7 @@ public abstract class AdminCommandBase : CommandBase
 {
 	public override async Task ExecuteWithPermissionProtect(SocketSlashCommand arg, object executer)
 	{
-		await arg.DeferAsync(ephemeral: true);
+		await arg.DeferAsync(ephemeral: this.IsEphemeral);
 		if (!await CheckIfUserIsAdminAndRespond(arg))
 			return;
 

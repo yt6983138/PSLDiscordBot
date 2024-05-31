@@ -8,7 +8,6 @@ namespace PSLDiscordBot.Command;
 [AddToGlobal]
 public class LinkTokenCommand : GuestCommandBase
 {
-	private static readonly EventId EventId = new(1145142, nameof(LinkTokenCommand));
 	public override string Name => "link-token";
 	public override string Description => "Link account by token.";
 
@@ -41,7 +40,7 @@ public class LinkTokenCommand : GuestCommandBase
 				await arg.ModifyOriginalResponseAsync(msg => msg.Content = $"Linked successfully!");
 			}
 			Manager.RegisteredUsers[userId] = tmp;
-			Manager.Logger.Log<Program>(LogLevel.Information, EventId, $"User {arg.User.GlobalName}({userId}) registered. Token: {token}");
+			Manager.Logger.Log<Program>(LogLevel.Information, this.EventId, $"User {arg.User.GlobalName}({userId}) registered. Token: {token}");
 			return;
 		}
 		catch (HttpRequestException ex) when (ex.StatusCode is not null && ex.StatusCode == HttpStatusCode.BadRequest)
@@ -59,6 +58,6 @@ public class LinkTokenCommand : GuestCommandBase
 			await arg.ModifyOriginalResponseAsync(msg => msg.Content = $"Error: {ex}, you may try again or report to author.");
 			exception = ex;
 		}
-		Manager.Logger.Log<Program>(LogLevel.Debug, EventId, "Error while initializing for user {0}({1})", exception, arg.User.GlobalName, userId);
+		Manager.Logger.Log<Program>(LogLevel.Debug, this.EventId, "Error while initializing for user {0}({1})", exception, arg.User.GlobalName, userId);
 	}
 }

@@ -1,6 +1,5 @@
 ﻿using Discord;
 using Discord.WebSocket;
-using Microsoft.Extensions.Logging;
 using PhigrosLibraryCSharp.Cloud.DataStructure;
 using System.Text;
 
@@ -9,7 +8,6 @@ namespace PSLDiscordBot.Command;
 [AddToGlobal]
 public class GetScoresByTokenCommand : AdminCommandBase
 {
-	private static readonly EventId EventId = new(11451411, nameof(GetScoresByTokenCommand));
 	public override string Name => "get-scores-by-token";
 	public override string Description => "Get scores. [Admin command]";
 

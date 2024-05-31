@@ -1,6 +1,5 @@
 ﻿using Discord;
 using Discord.WebSocket;
-using Microsoft.Extensions.Logging;
 using System.Text;
 
 namespace PSLDiscordBot.Command;
@@ -8,7 +7,6 @@ namespace PSLDiscordBot.Command;
 [AddToGlobal]
 public class ListUsersCommand : AdminCommandBase
 {
-	private static readonly EventId EventId = new(11451415, nameof(ListUsersCommand));
 	public override string Name => "list-users";
 	public override string Description => "List current registered users. [Admin command]";
 

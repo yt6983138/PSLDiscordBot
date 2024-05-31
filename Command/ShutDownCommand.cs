@@ -1,7 +1,6 @@
 ﻿using Discord;
 using Discord.Rest;
 using Discord.WebSocket;
-using Microsoft.Extensions.Logging;
 using static PSLDiscordBot.Program;
 
 namespace PSLDiscordBot.Command;
@@ -9,7 +8,6 @@ namespace PSLDiscordBot.Command;
 [AddToGlobal]
 public class ShutDownCommand : AdminCommandBase
 {
-	private static readonly EventId EventId = new(11451412, nameof(ShutDownCommand));
 	public override string Name => "shutdown";
 	public override string Description => "Shut down the bot. [Admin command]";
 

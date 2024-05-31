@@ -1,7 +1,6 @@
 ﻿using CommandLine;
 using Discord;
 using Discord.WebSocket;
-using Microsoft.Extensions.Logging;
 using System.Text;
 using yt6983138.Common;
 
@@ -10,7 +9,6 @@ namespace PSLDiscordBot.Command;
 [AddToGlobal]
 public class GetLogsCommand : AdminCommandBase
 {
-	private static readonly EventId EventId = new(11451416, nameof(GetLogsCommand));
 	public override string Name => "get-logs";
 	public override string Description => "Get latest logs. [Admin command]";
 

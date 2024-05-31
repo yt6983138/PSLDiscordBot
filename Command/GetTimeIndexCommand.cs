@@ -1,6 +1,5 @@
 ﻿using Discord;
 using Discord.WebSocket;
-using Microsoft.Extensions.Logging;
 using PhigrosLibraryCSharp.Cloud.DataStructure.Raw;
 using System.Text;
 
@@ -9,7 +8,6 @@ namespace PSLDiscordBot.Command;
 [AddToGlobal]
 public class GetTimeIndexCommand : CommandBase
 {
-	private static readonly EventId EventId = new(1145145, nameof(GetTimeIndexCommand));
 	public override string Name => "get-time-index";
 	public override string Description => "Get all indexes. Returns: A list of index/time table";
 

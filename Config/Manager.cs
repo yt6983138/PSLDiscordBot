@@ -1,6 +1,7 @@
 ﻿using Discord.WebSocket;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using PSLDiscordBot.Command;
 using PSLDiscordBot.ImageGenerating;
 using yt6983138.Common;
 
@@ -76,7 +77,7 @@ public static class Manager
 		}
 		catch
 		{
-			GetB20PhotoImageScript = ImageScript.GetB20PhotoDefault;
+			GetB20PhotoImageScript = GetB20PhotoCommand.DefaultScript;
 			File.WriteAllText(Config.GetB20PhotoImageScriptLocation, GetB20PhotoImageScript.Serialize());
 		}
 #if DEBUG

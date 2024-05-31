@@ -1,13 +1,11 @@
 ﻿using Discord;
 using Discord.WebSocket;
-using Microsoft.Extensions.Logging;
 
 namespace PSLDiscordBot.Command;
 
 [AddToGlobal]
 public class GetTokenCommand : CommandBase
 {
-	private static readonly EventId EventId = new(1145148, nameof(GetTokenCommand));
 	public override string Name => "get-token";
 	public override string Description => "Show your token.";
 

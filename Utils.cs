@@ -59,13 +59,12 @@ internal static class Utils
 
 	}
 
-	internal static async Task<bool> CheckIfUserIsAdminAndRespond(SocketSlashCommand command)
+	internal static void MergeWith<K, V>(this IDictionary<K, V> source, IDictionary<K, V> target)
 	{
-		if (command.User.Id == Manager.Config.AdminUserId)
-			return false;
-
-		await command.ModifyOriginalResponseAsync(x => x.Content = "Permission denied.");
-		return true;
+		foreach (KeyValuePair<K, V> pair in target)
+		{
+			source.Add(pair);
+		}
 	}
 	internal static int ToInt(this long num)
 		=> Convert.ToInt32(num);

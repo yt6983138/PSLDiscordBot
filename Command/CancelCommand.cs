@@ -1,6 +1,5 @@
 ﻿using Discord;
 using Discord.WebSocket;
-using Microsoft.Extensions.Logging;
 using static PSLDiscordBot.Program;
 
 namespace PSLDiscordBot.Command;
@@ -8,7 +7,6 @@ namespace PSLDiscordBot.Command;
 [AddToGlobal]
 public class CancelCommand : AdminCommandBase
 {
-	private static readonly EventId EventId = new(11451413, nameof(CancelCommand));
 	public override string Name => "admin-cancel";
 	public override string Description => "Cancel last admin operation. [Admin command]";
 

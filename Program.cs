@@ -5,7 +5,6 @@ using Discord.WebSocket;
 using ICSharpCode.SharpZipLib.Zip;
 using Microsoft.Extensions.Logging;
 using PSLDiscordBot.Command;
-using PSLDiscordBot.ImageGenerating;
 using SixLabors.Fonts;
 using System.Reflection;
 
@@ -60,7 +59,7 @@ public class Program
 
 	public async Task MainAsync(string[] args)
 	{
-		AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
+		AppDomain.CurrentDomain.UnhandledException += this.CurrentDomain_UnhandledException;
 
 		this.CancellationToken = this.CancellationTokenSource.Token;
 
@@ -126,11 +125,14 @@ public class Program
 
 			Manager.WriteEverything();
 		}
-
+#if DEBUG
+		if (true)
+#else
 		if (this.InputOptions.ResetScripts)
+#endif
 		{
 			Manager.Logger.Log(LogLevel.Information, "Resetting image scripts...", EventId, this);
-			Manager.GetB20PhotoImageScript = ImageScript.GetB20PhotoDefault;
+			Manager.GetB20PhotoImageScript = GetB20PhotoCommand.DefaultScript;
 
 			Manager.WriteEverything();
 		}
@@ -172,8 +174,13 @@ public class Program
 	private Task Log(LogMessage msg)
 	{
 		Manager.Logger.Log(LogLevel.Debug, msg.Message, EventId, this);
-		if (msg.Exception is not null and not GatewayReconnectException and not WebSocketClosedException)
+		if (msg.Exception is not null and not GatewayReconnectException and not WebSocketClosedException and { InnerException: not WebSocketClosedException })
+		{
+			Manager.Logger.Log(LogLevel.Debug, msg.Exception!.GetType().FullName!, EventId, this);
+			if (msg.Exception.InnerException is not null)
+				Manager.Logger.Log(LogLevel.Debug, msg.Exception!.InnerException!.GetType().FullName!, EventId, this);
 			Manager.Logger.Log(LogLevel.Error, EventId, this, msg.Exception);
+		}
 		return Task.CompletedTask;
 	}
 	private async Task Client_Ready()
@@ -252,10 +259,10 @@ public class Program
 		this.Initialized = true;
 	}
 
-	private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
+	private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
 	{
-		Manager.Logger.Log<Program>(LogLevel.Critical, EventIdApp, "Unhandled exception. Application exiting.");
-		Manager.Logger.Log<Program>(LogLevel.Critical, EventIdApp, "", (Exception)e.ExceptionObject);
+		Manager.Logger.Log(LogLevel.Critical, "Unhandled exception. Application exiting.", EventIdApp, this);
+		Manager.Logger.Log(LogLevel.Critical, EventIdApp, this, (Exception)e.ExceptionObject);
 		Environment.Exit(-1145141919);
 	}
 }

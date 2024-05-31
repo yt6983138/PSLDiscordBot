@@ -1,20 +1,29 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using Microsoft.Extensions.Logging;
 
 namespace PSLDiscordBot.Command;
 public abstract class CommandBase
 {
+	protected private static int EventIdCount;
+
+	protected virtual private EventId EventId { get; }
 	public abstract string Name { get; }
 	public abstract string Description { get; }
+	public virtual bool IsEphemeral => true;
 	protected private virtual SlashCommandBuilder BasicBuilder => new SlashCommandBuilder()
 		.WithName(this.Name)
 		.WithDescription(this.Description);
 	public abstract SlashCommandBuilder CompleteBuilder { get; }
 
+	public CommandBase()
+	{
+		this.EventId = new(11451400 + EventIdCount++, this.GetType().Name);
+	}
 	public abstract Task Execute(SocketSlashCommand arg, UserData data, object executer);
 	public virtual async Task ExecuteWithPermissionProtect(SocketSlashCommand arg, object executer)
 	{
-		await arg.DeferAsync(ephemeral: true);
+		await arg.DeferAsync(ephemeral: this.IsEphemeral);
 		if (!CheckHasRegisteredAndReply(arg, out UserData userData))
 			return;
 

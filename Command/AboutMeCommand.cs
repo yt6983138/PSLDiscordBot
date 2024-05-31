@@ -1,7 +1,6 @@
 ﻿using CommandLine;
 using Discord;
 using Discord.WebSocket;
-using Microsoft.Extensions.Logging;
 using PhigrosLibraryCSharp;
 using PhigrosLibraryCSharp.Cloud.DataStructure;
 
@@ -11,7 +10,6 @@ namespace PSLDiscordBot.Command;
 // [AddToGlobal]
 public class AboutMeCommand : CommandBase
 {
-	private static readonly EventId EventId = new(11451418, nameof(AboutMeCommand));
 	private static Dictionary<string, string> ChallengeRankNames { get; } = new()
 	{
 		{ "0", "White" },
@@ -42,11 +40,6 @@ public class AboutMeCommand : CommandBase
 		GameSettings settings = await saveHelper.GetGameSettingsAsync(index);
 		GameProgress progress = await saveHelper.GetGameProgressAsync(index);
 		GameUserInfo gameUserInfo = await saveHelper.GetGameUserInfoAsync(index);
-
-		short challengeRank = progress.ChallengeModeRank;
-		string challengeRankString = challengeRank.ToString();
-		string rankType = challengeRank > 99 ? challengeRankString[^3].ToString() : "0";
-		string challengeRankLevel = challengeRank > 99 ? challengeRankString[^2..] : challengeRankString;
 
 	}
 }

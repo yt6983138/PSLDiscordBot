@@ -1,6 +1,5 @@
 ﻿using Discord;
 using Discord.WebSocket;
-using Microsoft.Extensions.Logging;
 using System.Text;
 
 namespace PSLDiscordBot.Command;
@@ -8,7 +7,6 @@ namespace PSLDiscordBot.Command;
 [AddToGlobal]
 public class SetPrecisionCommand : CommandBase
 {
-	private static readonly EventId EventId = new(1145146, nameof(SetPrecisionCommand));
 	public override string Name => "set-precision";
 	public override string Description => "Set precision of value shown on /get-b20.";
 

@@ -1,7 +1,6 @@
 ﻿using CommandLine;
 using Discord;
 using Discord.WebSocket;
-using Microsoft.Extensions.Logging;
 using PhigrosLibraryCSharp.Cloud.DataStructure;
 
 namespace PSLDiscordBot.Command;
@@ -9,7 +8,6 @@ namespace PSLDiscordBot.Command;
 [AddToGlobal]
 public class GetMoneyCommand : CommandBase
 {
-	private static readonly EventId EventId = new(11451417, nameof(GetMoneyCommand));
 	public override string Name => "get-money";
 	public override string Description => "Get amount of data/money/currency you have in Phigros.";
 

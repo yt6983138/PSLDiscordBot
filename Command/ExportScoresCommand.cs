@@ -1,7 +1,6 @@
 ﻿using CommandLine;
 using Discord;
 using Discord.WebSocket;
-using Microsoft.Extensions.Logging;
 using PhigrosLibraryCSharp;
 using PhigrosLibraryCSharp.Cloud.DataStructure;
 using System.Text;
@@ -12,7 +11,6 @@ namespace PSLDiscordBot.Command;
 [AddToGlobal]
 public class ExportScoresCommand : CommandBase
 {
-	private static readonly EventId EventId = new(1145141, nameof(ExportScoresCommand));
 	public override string Name => "export-scores";
 	public override string Description => "Export all your scores. Returns: A csv file that includes all of your scores.";
 

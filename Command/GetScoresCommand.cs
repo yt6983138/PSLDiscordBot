@@ -1,7 +1,6 @@
 ﻿using CommandLine;
 using Discord;
 using Discord.WebSocket;
-using Microsoft.Extensions.Logging;
 using PhigrosLibraryCSharp;
 using PhigrosLibraryCSharp.Cloud.DataStructure;
 using System.Text;
@@ -11,7 +10,6 @@ namespace PSLDiscordBot.Command;
 [AddToGlobal]
 public class GetScoresCommand : CommandBase
 {
-	private static readonly EventId EventId = new(1145144, nameof(GetScoresCommand));
 	public override string Name => "get-scores";
 	public override string Description => "Get scores (Text format)";
 

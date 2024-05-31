@@ -1,7 +1,6 @@
 ﻿using CommandLine;
 using Discord;
 using Discord.WebSocket;
-using Microsoft.Extensions.Logging;
 using PhigrosLibraryCSharp;
 using PhigrosLibraryCSharp.Cloud.DataStructure;
 using System.Text;
@@ -12,7 +11,6 @@ namespace PSLDiscordBot.Command;
 [AddToGlobal]
 public class QueryCommand : CommandBase
 {
-	private static readonly EventId EventId = new(1145149, nameof(QueryCommand));
 	public override string Name => "query";
 	public override string Description => "Query for a specified song.";
 

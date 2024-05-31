@@ -17,4 +17,6 @@ public class Config
 	public string DifficultyCsvLocation { get; set; } = "./difficulty.csv";
 	public string NameCsvLocation { get; set; } = "./info.csv";
 	public string HelpMDLocation { get; set; } = "./help.md";
+	public int MaxTagCount { get; set; } = 114;
+	public int MaxTagStringLength { get; set; } = 114;
 }

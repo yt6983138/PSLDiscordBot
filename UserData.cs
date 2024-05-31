@@ -7,6 +7,7 @@ public class UserData
 {
 	public string Token { get; set; }
 	public string ShowFormat { get; set; } = ".00";
+	public List<string> Tags { get; set; } = new();
 
 	[JsonIgnore]
 	public SaveHelper SaveHelperCache { get; init; }
