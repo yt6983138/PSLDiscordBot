@@ -43,6 +43,10 @@ public class QueryCommand : CommandBase
 		catch (ArgumentOutOfRangeException ex)
 		{
 			await arg.ModifyOriginalResponseAsync(msg => msg.Content = $"Error: Expected index less than {ex.Message}, more or equal to 0. You entered {index}.");
+			if (ex.Message.Any(x => !char.IsDigit(x))) // detecting is arg error or shit happened in library
+			{
+				throw;
+			}
 			return;
 		}
 		catch (RegexParseException ex)
@@ -53,7 +57,7 @@ public class QueryCommand : CommandBase
 		catch (Exception ex)
 		{
 			await arg.ModifyOriginalResponseAsync(msg => msg.Content = $"Error: {ex.Message}\nYou may try again or report to author.");
-			return;
+			throw;
 		}
 		List<InternalScoreFormat> scoresToShow = new();
 		foreach (InternalScoreFormat score in save.Records)

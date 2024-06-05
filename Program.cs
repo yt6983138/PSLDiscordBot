@@ -6,6 +6,7 @@ using ICSharpCode.SharpZipLib.Zip;
 using Microsoft.Extensions.Logging;
 using PSLDiscordBot.Command;
 using SixLabors.Fonts;
+using System.Net.WebSockets;
 using System.Reflection;
 
 namespace PSLDiscordBot;
@@ -77,6 +78,13 @@ public class Program
 		Parser.Default.ParseArguments<InputArgs>(args)
 			.WithParsed(o => this.InputOptions = o);
 
+#if DEBUG
+		this.InputOptions.UpdateCommands = true;
+		this.InputOptions.UpdateFiles = true;
+		this.InputOptions.ResetConfig = true;
+		this.InputOptions.ResetScripts = true;
+#endif
+
 		if (!SystemFonts.Collection.Families.Any())
 		{
 			Manager.Logger.Log(LogLevel.Critical, "No system fonts have been found, please install at least one (and Saira)!", EventId, this);
@@ -125,11 +133,7 @@ public class Program
 
 			Manager.WriteEverything();
 		}
-#if DEBUG
-		if (true)
-#else
 		if (this.InputOptions.ResetScripts)
-#endif
 		{
 			Manager.Logger.Log(LogLevel.Information, "Resetting image scripts...", EventId, this);
 			Manager.GetB20PhotoImageScript = GetB20PhotoCommand.DefaultScript;
@@ -165,16 +169,32 @@ public class Program
 			return Task.CompletedTask;
 		}
 
-		Task task = this.Commands[arg.CommandName].ExecuteWithPermissionProtect(arg, this);
+		CommandBase command = this.Commands[arg.CommandName];
+
+		Task task;
+
+		if (command.RunOnDifferentThread)
+			task = Task.Run(() => command.ExecuteWithPermissionProtect(arg, this));
+		else task = command.ExecuteWithPermissionProtect(arg, this);
+
 		this.RunningTasks.Add(task);
 
-		return Utils.RunWithTaskOnEnd(task, () => this.RunningTasks.Remove(task));
+		_ = Utils.RunWithTaskOnEnd(task, () => this.RunningTasks.Remove(task));
+		return Task.CompletedTask;
 	}
 
 	private Task Log(LogMessage msg)
 	{
 		Manager.Logger.Log(LogLevel.Debug, msg.Message, EventId, this);
-		if (msg.Exception is not null and not GatewayReconnectException and not WebSocketClosedException and { InnerException: not WebSocketClosedException })
+		if (msg.Exception is not null
+			and not GatewayReconnectException
+			and not WebSocketClosedException
+			and
+			{
+				InnerException:
+				not WebSocketClosedException
+				and not WebSocketException
+			})
 		{
 			Manager.Logger.Log(LogLevel.Debug, msg.Exception!.GetType().FullName!, EventId, this);
 			if (msg.Exception.InnerException is not null)

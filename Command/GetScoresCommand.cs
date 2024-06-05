@@ -42,12 +42,16 @@ public class GetScoresCommand : CommandBase
 		catch (ArgumentOutOfRangeException ex)
 		{
 			await arg.ModifyOriginalResponseAsync(msg => msg.Content = $"Error: Expected index less than {ex.Message}, more or equal to 0. You entered {index}.");
+			if (ex.Message.Any(x => !char.IsDigit(x))) // detecting is arg error or shit happened in library
+			{
+				throw;
+			}
 			return;
 		}
 		catch (Exception ex)
 		{
 			await arg.ModifyOriginalResponseAsync(msg => msg.Content = $"Error: {ex.Message}\nYou may try again or report to author.");
-			return;
+			throw;
 		}
 
 		string result = ScoresFormatter(save.Records, arg.Data.Options.FirstOrDefault(x => x.Name == "count")?.Value?.Cast<long?>()?.ToInt() ?? 19, data);

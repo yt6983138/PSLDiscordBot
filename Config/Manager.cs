@@ -16,7 +16,12 @@ public static class Manager
 	public static Config Config { get; set; }
 	public static ImageScript GetB20PhotoImageScript { get; set; }
 	public static Logger Logger { get; set; }
-	public static DiscordSocketClient SocketClient { get; set; } = new();
+	public static DiscordSocketClient SocketClient { get; set; } = new(new()
+	{
+		GatewayIntents = Discord.GatewayIntents.AllUnprivileged
+			^ Discord.GatewayIntents.GuildScheduledEvents
+			^ Discord.GatewayIntents.GuildInvites
+	});
 	public static Dictionary<ulong, UserData> RegisteredUsers
 	{
 		get => _registeredUsers;

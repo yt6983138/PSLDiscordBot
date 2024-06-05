@@ -13,7 +13,7 @@ public class SaveAllCommand : AdminCommandBase
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder;
 
-	public override async Task Execute(SocketSlashCommand arg, UserData data, object executer)
+	public override async Task Execute(SocketSlashCommand arg, UserData? data, object executer)
 	{
 		Manager.WriteEverything();
 		Manager.Logger.Log(LogLevel.Information, "Files saved.", this.EventId, (Program)executer);

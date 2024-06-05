@@ -13,7 +13,7 @@ public class ListUsersCommand : AdminCommandBase
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder;
 
-	public override async Task Execute(SocketSlashCommand arg, UserData data, object executer)
+	public override async Task Execute(SocketSlashCommand arg, UserData? data, object executer)
 	{
 		StringBuilder sb = new();
 		foreach (KeyValuePair<ulong, UserData> user in Manager.RegisteredUsers)

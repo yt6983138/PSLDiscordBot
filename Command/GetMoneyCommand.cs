@@ -23,7 +23,25 @@ public class GetMoneyCommand : CommandBase
 	public override async Task Execute(SocketSlashCommand arg, UserData data, object executer)
 	{
 		int? index = arg.Data.Options.FirstOrDefault(x => x.Name == "index")?.Value?.Cast<long?>()?.ToInt();
-		GameProgress progress = await data.SaveHelperCache.GetGameProgressAsync(index ?? 0);
+		GameProgress progress;
+		try
+		{
+			progress = await data.SaveHelperCache.GetGameProgressAsync(index ?? 0);
+		}
+		catch (ArgumentOutOfRangeException ex)
+		{
+			await arg.ModifyOriginalResponseAsync(msg => msg.Content = $"Error: Expected index less than {ex.Message}, more or equal to 0. You entered {index}.");
+			if (ex.Message.Any(x => !char.IsDigit(x))) // detecting is arg error or shit happened in library
+			{
+				throw;
+			}
+			return;
+		}
+		catch (Exception ex)
+		{
+			await arg.ModifyOriginalResponseAsync(msg => msg.Content = $"Error: {ex.Message}\nYou may try again or report to author.");
+			throw;
+		}
 		await arg.ModifyOriginalResponseAsync(
 			msg =>
 			msg.Content = $"You have {progress.Money}."

@@ -15,4 +15,12 @@ public abstract class AdminCommandBase : CommandBase
 
 		await this.Execute(arg, userData!, executer);
 	}
+	/// <summary>
+	/// Please notice: we can not guarantee that data is not null
+	/// </summary>
+	/// <param name="arg"></param>
+	/// <param name="data"></param>
+	/// <param name="executer"></param>
+	/// <returns></returns>
+	public override abstract Task Execute(SocketSlashCommand arg, UserData? data, object executer);
 }

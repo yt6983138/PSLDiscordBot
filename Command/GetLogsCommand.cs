@@ -21,7 +21,7 @@ public class GetLogsCommand : AdminCommandBase
 			minValue: 1
 		);
 
-	public override async Task Execute(SocketSlashCommand arg, UserData data, object executer)
+	public override async Task Execute(SocketSlashCommand arg, UserData? data, object executer)
 	{
 		int count = arg.Data.Options.ElementAt(0).Value.Cast<long>().ToInt();
 

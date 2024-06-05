@@ -11,6 +11,8 @@ public abstract class CommandBase
 	public abstract string Name { get; }
 	public abstract string Description { get; }
 	public virtual bool IsEphemeral => true;
+	public virtual bool RunOnDifferentThread => true;
+
 	protected private virtual SlashCommandBuilder BasicBuilder => new SlashCommandBuilder()
 		.WithName(this.Name)
 		.WithDescription(this.Description);

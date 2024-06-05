@@ -7,7 +7,7 @@ namespace PSLDiscordBot.Command;
 public class RemoveTagCommandCommand : CommandBase
 {
 	public override string Name => "remove-tag";
-	public override string Description => "Remove tag which will be seen when you share 'about me' photos. (Can be listed with `/list-tags` command.)";
+	public override string Description => "Remove tag which will be seen when you share 'about me' photos. (List with `/list-tags` command)";
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder
