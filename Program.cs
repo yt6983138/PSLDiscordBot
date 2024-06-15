@@ -24,6 +24,7 @@ public class Program
 	public List<Task> RunningTasks { get; set; } = new();
 	public InputArgs InputOptions { get; set; } = default!;
 	public bool Initialized { get; set; } = false;
+	public IUser? AdminUser { get; set; }
 	public Dictionary<string, CommandBase> Commands { get; set; } =
 		typeof(Program).Assembly
 		.GetTypes()
@@ -137,6 +138,7 @@ public class Program
 		{
 			Manager.Logger.Log(LogLevel.Information, "Resetting image scripts...", EventId, this);
 			Manager.GetB20PhotoImageScript = GetB20PhotoCommand.DefaultScript;
+			Manager.AboutMeImageScript = AboutMeCommand.DefaultScript;
 
 			Manager.WriteEverything();
 		}
@@ -197,9 +199,15 @@ public class Program
 			})
 		{
 			Manager.Logger.Log(LogLevel.Debug, msg.Exception!.GetType().FullName!, EventId, this);
-			if (msg.Exception.InnerException is not null)
-				Manager.Logger.Log(LogLevel.Debug, msg.Exception!.InnerException!.GetType().FullName!, EventId, this);
 			Manager.Logger.Log(LogLevel.Error, EventId, this, msg.Exception);
+			if (this.AdminUser is not null)
+			{
+				try
+				{
+					this.AdminUser.SendMessageAsync(msg.Exception.ToString());
+				}
+				catch { }
+			}
 		}
 		return Task.CompletedTask;
 	}
@@ -211,6 +219,30 @@ public class Program
 		if (this.Initialized) goto Final;
 		if (!this.InputOptions.UpdateCommands) goto Final;
 
+		IUser admin = await Manager.SocketClient.GetUserAsync(Manager.Config.AdminUserId);
+		if (!Manager.Config.DMAdminAboutErrors)
+			goto BypassAdminCheck;
+		this.AdminUser = admin;
+		if (admin is null)
+		{
+			Manager.Logger.Log<Program>(LogLevel.Warning, EventIdInitialize, "Admin {0} user not found!", Manager.Config.AdminUserId);
+			goto BypassAdminCheck;
+		}
+
+		try
+		{
+			await this.AdminUser.SendMessageAsync("Bot initializing...");
+		}
+		catch (HttpException ex) when (ex.DiscordCode == DiscordErrorCode.CannotSendMessageToUser)
+		{
+			Manager.Logger.Log<Program>(LogLevel.Warning, EventIdInitialize, "Unable to send message to admin!");
+		}
+		catch (Exception ex)
+		{
+			Manager.Logger.Log(LogLevel.Warning, EventIdInitialize, this, ex);
+		}
+
+	BypassAdminCheck:
 		IReadOnlyCollection<SocketApplicationCommand> globalCommandsAlreadyExisted =
 			await Manager.SocketClient.GetGlobalApplicationCommandsAsync();
 

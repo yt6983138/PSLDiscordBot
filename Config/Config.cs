@@ -2,6 +2,7 @@
 public class Config
 {
 	public int AutoSaveInterval { get; set; } = 20 * 1000 * 60; // 20min
+	public bool DMAdminAboutErrors { get; set; } = true;
 #if DEBUG
 	public bool Verbose { get; set; } = true;
 	public string Token { get; set; } = Secret.Token;
@@ -13,6 +14,7 @@ public class Config
 #endif
 	public string LogLocation { get; set; } = "./Latest.log";
 	public string GetB20PhotoImageScriptLocation { get; set; } = "./GetB20PhotoImageScript.json";
+	public string AboutMeImageScriptLocation { get; set; } = "./AboutMeImageScript.json";
 	public string UserDataLocation { get; set; } = "./UserData.json";
 	public string DifficultyCsvLocation { get; set; } = "./difficulty.csv";
 	public string NameCsvLocation { get; set; } = "./info.csv";

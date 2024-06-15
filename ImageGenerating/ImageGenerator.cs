@@ -84,6 +84,7 @@ public class ImageGenerator
 		{
 			{ "User.Rks", new Lazy<string>(rks.ToString(userData.ShowFormat)) },
 			{ "User.Nickname", new Lazy<string>(userInfo.NickName) },
+			{ "User.ID", new Lazy<string>(userInfo.UserName) },
 			{ "User.Challenge.Text", new Lazy<string>(challengeRankLevel.ToString()) },
 			{ "User.Intro", new Lazy<string>(gameUserInfo.Intro) },
 			{ "User.Currency.KiB", new Lazy<string>(progress.Money.KiB.ToString) },
@@ -96,6 +97,7 @@ public class ImageGenerator
 			{ "User.PlayStatistics.HDClearCount", new Lazy<string>(scores.Count(x => x.DifficultyName == "HD").ToString) },
 			{ "User.PlayStatistics.INClearCount", new Lazy<string>(scores.Count(x => x.DifficultyName == "IN").ToString) },
 			{ "User.PlayStatistics.ATClearCount", new Lazy<string>(scores.Count(x => x.DifficultyName == "AT").ToString) },
+			{ "User.PlayStatistics.AllClearCount", new Lazy<string>(scores.Length.ToString) },
 			{ "User.Tags.JoinedComma", new Lazy<string>(() => string.Join(", ", userData.Tags)) },
 			{ "User.Tags.JoinedNewLine", new Lazy<string>(() => string.Join("\n", userData.Tags)) },
 			{ "User.Tags.Count", new Lazy<string>(userData.Tags.Count.ToString) },
@@ -119,6 +121,9 @@ public class ImageGenerator
 			textMap.Add(
 				$"User.PlayStatistics.AT{status}Count",
 				new Lazy<string>(() => scores.Count(x => x.DifficultyName == "AT" && x.Status == status).ToString()));
+			textMap.Add(
+				$"User.PlayStatistics.All{status}Count",
+				new Lazy<string>(() => scores.Count(x => x.Status == status).ToString()));
 		}
 
 		for (int i = 0; i < scores.Length; i++)
@@ -136,7 +141,7 @@ public class ImageGenerator
 		}
 		for (int i = 0; i < userData.Tags.Count; i++)
 		{
-			textMap.Add($"User.Tags.{i}", new(() => userData.Tags[i]));
+			textMap.Add($"User.Tags.{i}", new(userData.Tags[i])); // using lambda here cause argument out of range for some reason
 		}
 
 		Dictionary<string, Lazy<Image>> imageMap = new()
@@ -148,11 +153,11 @@ public class ImageGenerator
 				: StaticImage.Default.Image) },
 			{ "User.Background.Image.LowRes", new Lazy<Image>(
 				() =>
-				Utils.TryLoadImage($"./Assets/Tracks/{infos.FirstOrDefault(p => p.Value == gameUserInfo.BackgroundId)}.0/IllustrationLowRes.png")
+				Utils.TryLoadImage($"./Assets/Tracks/{infos.FirstOrDefault(p => p.Value == gameUserInfo.BackgroundId).Key}.0/IllustrationLowRes.png")
 				?? StaticImage.Default.Image) },
 			{ "User.Background.Image.Blurry", new Lazy<Image>(
 				() =>
-				Utils.TryLoadImage($"./Assets/Tracks/{infos.FirstOrDefault(p => p.Value == gameUserInfo.BackgroundId)}.0/IllustrationBlur.png")
+				Utils.TryLoadImage($"./Assets/Tracks/{infos.FirstOrDefault(p => p.Value == gameUserInfo.BackgroundId).Key}.0/IllustrationBlur.png")
 				?? StaticImage.Default.Image) }
 		};
 
@@ -185,6 +190,9 @@ public class ImageGenerator
 					break;
 				case DynamicImage dynamicImage:
 					dynamicImage.DrawOn(image, ImageGetter, false);
+					break;
+				case StaticallyMaskedImage staticallyMaskedImage:
+					staticallyMaskedImage.DrawOn(image, ImageGetter, false);
 					break;
 				default:
 					image.Dispose();

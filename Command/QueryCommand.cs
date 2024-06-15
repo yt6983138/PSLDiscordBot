@@ -35,10 +35,16 @@ public class QueryCommand : CommandBase
 		GameSave save; // had to double cast
 		Regex regex;
 		int? index = arg.Data.Options.ElementAtOrDefault(1)?.Value?.Cast<long?>()?.ToInt();
+		List<InternalScoreFormat> scoresToShow = new();
 		try
 		{
 			(summary, save) = await data.SaveHelperCache.GetGameSaveAsync(Manager.Difficulties, index ?? 0);
 			regex = new((string)arg.Data.Options.ElementAt(0));
+			foreach (InternalScoreFormat score in save.Records)
+			{
+				if (regex.Match(score.Name).Success || regex.Match(Manager.Names[score.Name]).Success)
+					scoresToShow.Add(score);
+			}
 		}
 		catch (ArgumentOutOfRangeException ex)
 		{
@@ -58,12 +64,6 @@ public class QueryCommand : CommandBase
 		{
 			await arg.ModifyOriginalResponseAsync(msg => msg.Content = $"Error: {ex.Message}\nYou may try again or report to author.");
 			throw;
-		}
-		List<InternalScoreFormat> scoresToShow = new();
-		foreach (InternalScoreFormat score in save.Records)
-		{
-			if (regex.Match(score.Name).Success)
-				scoresToShow.Add(score);
 		}
 
 		await arg.ModifyOriginalResponseAsync(

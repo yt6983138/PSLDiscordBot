@@ -15,6 +15,7 @@ public static class Manager
 	public static bool FirstStart { get; private set; }
 	public static Config Config { get; set; }
 	public static ImageScript GetB20PhotoImageScript { get; set; }
+	public static ImageScript AboutMeImageScript { get; set; }
 	public static Logger Logger { get; set; }
 	public static DiscordSocketClient SocketClient { get; set; } = new(new()
 	{
@@ -85,6 +86,18 @@ public static class Manager
 			GetB20PhotoImageScript = GetB20PhotoCommand.DefaultScript;
 			File.WriteAllText(Config.GetB20PhotoImageScriptLocation, GetB20PhotoImageScript.Serialize());
 		}
+		try
+		{
+#if DEBUG
+			throw new Exception();
+#endif
+			AboutMeImageScript = ImageScript.Deserialize(File.ReadAllText(Config.AboutMeImageScriptLocation));
+		}
+		catch
+		{
+			AboutMeImageScript = AboutMeCommand.DefaultScript;
+			File.WriteAllText(Config.AboutMeImageScriptLocation, AboutMeImageScript.Serialize());
+		}
 #if DEBUG
 		if (false)
 #else
@@ -128,6 +141,7 @@ public static class Manager
 		File.WriteAllText(ConfigLocation, JsonConvert.SerializeObject(Config));
 		File.WriteAllText(Config.UserDataLocation, JsonConvert.SerializeObject(RegisteredUsers));
 		File.WriteAllText(Config.GetB20PhotoImageScriptLocation, GetB20PhotoImageScript.Serialize());
+		File.WriteAllText(Config.AboutMeImageScriptLocation, GetB20PhotoImageScript.Serialize());
 
 		Logger.Log(LogLevel.Debug, EventId, "Writing everything...");
 	}
