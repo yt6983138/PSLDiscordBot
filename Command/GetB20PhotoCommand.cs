@@ -1,5 +1,4 @@
-﻿using CommandLine;
-using Discord;
+﻿using Discord;
 using Discord.WebSocket;
 using PhigrosLibraryCSharp;
 using PhigrosLibraryCSharp.Cloud.DataStructure;
@@ -30,7 +29,7 @@ public class GetB20PhotoCommand : CommandBase
 		GameSave save; // had to double cast
 		GameUserInfo userInfo;
 		GameProgress progress;
-		int? index = arg.Data.Options.ElementAtOrDefault(0)?.Value?.Cast<long?>()?.ToInt();
+		int? index = arg.Data.Options.ElementAtOrDefault(0)?.Value.Unbox<long>().CastTo<long, int>();
 		try
 		{
 			(summary, save) = await data.SaveHelperCache.GetGameSaveAsync(Manager.Difficulties, index ?? 0);

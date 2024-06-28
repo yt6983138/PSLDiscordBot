@@ -1,5 +1,4 @@
-﻿using CommandLine;
-using Discord;
+﻿using Discord;
 using Discord.WebSocket;
 using PhigrosLibraryCSharp;
 using PhigrosLibraryCSharp.Cloud.DataStructure;
@@ -34,10 +33,10 @@ public class GetScoresCommand : CommandBase
 	{
 		Summary summary;
 		GameSave save; // had to double cast
-		int? index = arg.Data.Options.FirstOrDefault(x => x.Name == "index")?.Value?.Cast<long?>()?.ToInt();
+		int index = arg.Data.Options.FirstOrDefault(x => x.Name == "index")?.Value.Unbox<long>().CastTo<long, int>() ?? 0;
 		try
 		{
-			(summary, save) = await data.SaveHelperCache.GetGameSaveAsync(Manager.Difficulties, index ?? 0);
+			(summary, save) = await data.SaveHelperCache.GetGameSaveAsync(Manager.Difficulties, index);
 		}
 		catch (ArgumentOutOfRangeException ex)
 		{
@@ -54,7 +53,7 @@ public class GetScoresCommand : CommandBase
 			throw;
 		}
 
-		string result = ScoresFormatter(save.Records, arg.Data.Options.FirstOrDefault(x => x.Name == "count")?.Value?.Cast<long?>()?.ToInt() ?? 19, data);
+		string result = ScoresFormatter(save.Records, arg.Data.Options.FirstOrDefault(x => x.Name == "count")?.Value.Unbox<long>().CastTo<long, int>() ?? 19, data);
 
 		await arg.ModifyOriginalResponseAsync(
 			(msg) =>

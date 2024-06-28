@@ -21,7 +21,7 @@ public class RemoveTagCommandCommand : CommandBase
 
 	public override async Task Execute(SocketSlashCommand arg, UserData data, object executer)
 	{
-		int index = (int)(long)arg.Data.Options.First().Value;
+		int index = arg.Data.Options.First().Value.Unbox<long>().CastTo<long, int>();
 		if (index >= data.Tags.Count)
 		{
 			await arg.ModifyOriginalResponseAsync(

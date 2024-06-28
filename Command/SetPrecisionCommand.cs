@@ -23,7 +23,7 @@ public class SetPrecisionCommand : CommandBase
 	public override async Task Execute(SocketSlashCommand arg, UserData data, object executer)
 	{
 		StringBuilder sb = new(".");
-		sb.Append('0', (int)(long)arg.Data.Options.ElementAt(0).Value);
+		sb.Append('0', arg.Data.Options.ElementAt(0).Value.Unbox<long>().CastTo<long, int>());
 		data.ShowFormat = sb.ToString();
 		await arg.ModifyOriginalResponseAsync(
 			(msg) =>

@@ -97,5 +97,10 @@ internal static class Utils
 		}
 		return source.Value.Equals(target.Value);
 	}
-
+	internal static T Unbox<T>(this object obj)
+		=> (T)obj;
+	internal static TTo CastTo<TFrom, TTo>(this TFrom from)
+	{
+		return (TTo)Convert.ChangeType(from, typeof(TTo))!;
+	}
 }

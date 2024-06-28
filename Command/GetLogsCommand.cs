@@ -1,5 +1,4 @@
-﻿using CommandLine;
-using Discord;
+﻿using Discord;
 using Discord.WebSocket;
 using System.Text;
 using yt6983138.Common;
@@ -23,7 +22,7 @@ public class GetLogsCommand : AdminCommandBase
 
 	public override async Task Execute(SocketSlashCommand arg, UserData? data, object executer)
 	{
-		int count = arg.Data.Options.ElementAt(0).Value.Cast<long>().ToInt();
+		int count = arg.Data.Options.ElementAt(0).Value.Unbox<long>().CastTo<long, int>();
 
 		List<string> logs;
 		lock (Logger.AllLogs)

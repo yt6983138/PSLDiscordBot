@@ -1,5 +1,4 @@
-﻿using CommandLine;
-using Discord;
+﻿using Discord;
 using Discord.WebSocket;
 using PhigrosLibraryCSharp.Cloud.DataStructure;
 
@@ -22,7 +21,7 @@ public class GetMoneyCommand : CommandBase
 
 	public override async Task Execute(SocketSlashCommand arg, UserData data, object executer)
 	{
-		int? index = arg.Data.Options.FirstOrDefault(x => x.Name == "index")?.Value?.Cast<long?>()?.ToInt();
+		int? index = arg.Data.Options.FirstOrDefault(x => x.Name == "index")?.Value.Unbox<long>().CastTo<long, int>();
 		GameProgress progress;
 		try
 		{

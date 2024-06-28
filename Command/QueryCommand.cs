@@ -1,5 +1,4 @@
-﻿using CommandLine;
-using Discord;
+﻿using Discord;
 using Discord.WebSocket;
 using PhigrosLibraryCSharp;
 using PhigrosLibraryCSharp.Cloud.DataStructure;
@@ -34,11 +33,11 @@ public class QueryCommand : CommandBase
 		Summary summary;
 		GameSave save; // had to double cast
 		Regex regex;
-		int? index = arg.Data.Options.ElementAtOrDefault(1)?.Value?.Cast<long?>()?.ToInt();
+		int index = arg.Data.Options.ElementAtOrDefault(1)?.Value.Unbox<long>().CastTo<long, int>() ?? 0;
 		List<InternalScoreFormat> scoresToShow = new();
 		try
 		{
-			(summary, save) = await data.SaveHelperCache.GetGameSaveAsync(Manager.Difficulties, index ?? 0);
+			(summary, save) = await data.SaveHelperCache.GetGameSaveAsync(Manager.Difficulties, index);
 			regex = new((string)arg.Data.Options.ElementAt(0));
 			foreach (InternalScoreFormat score in save.Records)
 			{
