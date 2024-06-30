@@ -65,7 +65,6 @@ public class Program
 
 		this.CancellationToken = this.CancellationTokenSource.Token;
 
-#pragma warning disable CS0162 // Unreachable code detected
 #if DEBUG
 		if (false)
 #else
@@ -75,7 +74,7 @@ public class Program
 			Manager.Logger.Log(LogLevel.Critical, $"Seems this is first start. Please enter token in {Manager.ConfigLocation} first.", EventId, this);
 			return;
 		}
-#pragma warning restore CS0162 // Unreachable code detected
+
 		Parser.Default.ParseArguments<InputArgs>(args)
 			.WithParsed(o => this.InputOptions = o);
 
@@ -313,8 +312,9 @@ public class Program
 
 	private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
 	{
+		Exception ex = e.ExceptionObject.Unbox<Exception>();
 		Manager.Logger.Log(LogLevel.Critical, "Unhandled exception. Application exiting.", EventIdApp, this);
-		Manager.Logger.Log(LogLevel.Critical, EventIdApp, this, (Exception)e.ExceptionObject);
-		Environment.Exit(-1145141919);
+		Manager.Logger.Log(LogLevel.Critical, EventIdApp, this, ex);
+		Environment.Exit(ex.HResult);
 	}
 }

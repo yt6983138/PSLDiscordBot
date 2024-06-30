@@ -6,7 +6,7 @@ using SixLabors.ImageSharp.Processing;
 namespace PSLDiscordBot.ImageGenerating;
 public class StaticImage : IDrawableComponent
 {
-	public Image? _image;
+	private Image? _image;
 
 	public static StaticImage Default { get; } = new StaticImage() { Size = new(514, 114) };
 

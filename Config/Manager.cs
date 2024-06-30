@@ -34,23 +34,8 @@ public static class Manager
 	static Manager()
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 	{
-		FileInfo file = new(ConfigLocation);
-		if (!file.Directory!.Exists)
-			file.Directory!.Create();
-#pragma warning disable CS0162 // Unreachable code detected
-		try
-		{
-#if DEBUG
-			throw new Exception();
-#endif
-			Config = JsonConvert.DeserializeObject<Config>(File.ReadAllText(ConfigLocation))!;
-			FirstStart = false;
-		}
-		catch
-		{
-			Config = new();
-			FirstStart = true;
-		}
+		FirstStart = false;
+		Config = TryReadJsonOrDefaultAndWrite<Config>(ConfigLocation, new(), () => FirstStart = true);
 
 		Logger = new(Config.LogLocation);
 		if (!Config.Verbose)
@@ -58,46 +43,11 @@ public static class Manager
 			Logger.Disabled.Add(LogLevel.Debug);
 		}
 
-#pragma warning restore CS0162 // Unreachable code detected
-		FileInfo user = new(Config.UserDataLocation);
-		if (!file.Directory!.Exists)
-			file.Directory!.Create();
-		try
-		{
-			RegisteredUsers = JsonConvert.DeserializeObject<Dictionary<ulong, UserData>>(File.ReadAllText(Config.UserDataLocation))!;
-		}
-		catch
-		{
-			RegisteredUsers = new();
-		}
+		RegisteredUsers = TryReadJsonOrDefaultAndWrite<Dictionary<ulong, UserData>>(Config.UserDataLocation, new());
 
-		FileInfo image = new(Config.GetB20PhotoImageScriptLocation);
-		if (!image.Directory!.Exists)
-			image.Directory!.Create();
-		try
-		{
-#if DEBUG
-			throw new Exception();
-#endif
-			GetB20PhotoImageScript = ImageScript.Deserialize(File.ReadAllText(Config.GetB20PhotoImageScriptLocation));
-		}
-		catch
-		{
-			GetB20PhotoImageScript = GetB20PhotoCommand.DefaultScript;
-			File.WriteAllText(Config.GetB20PhotoImageScriptLocation, GetB20PhotoImageScript.Serialize());
-		}
-		try
-		{
-#if DEBUG
-			throw new Exception();
-#endif
-			AboutMeImageScript = ImageScript.Deserialize(File.ReadAllText(Config.AboutMeImageScriptLocation));
-		}
-		catch
-		{
-			AboutMeImageScript = AboutMeCommand.DefaultScript;
-			File.WriteAllText(Config.AboutMeImageScriptLocation, AboutMeImageScript.Serialize());
-		}
+		GetB20PhotoImageScript = TryReadOrDefaultAndWrite(Config.GetB20PhotoImageScriptLocation, GetB20PhotoCommand.DefaultScript);
+
+		AboutMeImageScript = TryReadOrDefaultAndWrite(Config.AboutMeImageScriptLocation, AboutMeCommand.DefaultScript);
 #if DEBUG
 		if (false)
 #else
@@ -134,14 +84,44 @@ public static class Manager
 		Task.Run(AutoSave);
 	}
 
-
-
+	internal static ImageScript TryReadOrDefaultAndWrite(string filePath, ImageScript @default, Action? onCatch = null)
+	{
+		try
+		{
+#if DEBUG
+			throw new Exception();
+#endif
+			return ImageScript.Deserialize(File.ReadAllText(filePath));
+		}
+		catch
+		{
+			File.WriteAllText(filePath, @default.Serialize());
+			onCatch?.Invoke();
+			return @default;
+		}
+	}
+	internal static T TryReadJsonOrDefaultAndWrite<T>(string filePath, T @default, Action? onCatch = null)
+	{
+		try
+		{
+#if DEBUG
+			throw new Exception();
+#endif
+			return JsonConvert.DeserializeObject<T>(File.ReadAllText(filePath));
+		}
+		catch
+		{
+			File.WriteAllText(filePath, JsonConvert.SerializeObject(@default));
+			onCatch?.Invoke();
+			return @default;
+		}
+	}
 	public static void WriteEverything()
 	{
 		File.WriteAllText(ConfigLocation, JsonConvert.SerializeObject(Config));
 		File.WriteAllText(Config.UserDataLocation, JsonConvert.SerializeObject(RegisteredUsers));
 		File.WriteAllText(Config.GetB20PhotoImageScriptLocation, GetB20PhotoImageScript.Serialize());
-		File.WriteAllText(Config.AboutMeImageScriptLocation, GetB20PhotoImageScript.Serialize());
+		File.WriteAllText(Config.AboutMeImageScriptLocation, AboutMeImageScript.Serialize());
 
 		Logger.Log(LogLevel.Debug, EventId, "Writing everything...");
 	}

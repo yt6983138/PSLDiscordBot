@@ -29,12 +29,12 @@ public class GetB20PhotoCommand : CommandBase
 		GameSave save; // had to double cast
 		GameUserInfo userInfo;
 		GameProgress progress;
-		int? index = arg.Data.Options.ElementAtOrDefault(0)?.Value.Unbox<long>().CastTo<long, int>();
+		int index = arg.Data.Options.ElementAtOrDefault(0)?.Value.Unbox<long>().CastTo<long, int>() ?? 0;
 		try
 		{
-			(summary, save) = await data.SaveHelperCache.GetGameSaveAsync(Manager.Difficulties, index ?? 0);
-			userInfo = await data.SaveHelperCache.GetGameUserInfoAsync(index ?? 0);
-			progress = await data.SaveHelperCache.GetGameProgressAsync(index ?? 0);
+			(summary, save) = await data.SaveHelperCache.GetGameSaveAsync(Manager.Difficulties, index);
+			userInfo = await data.SaveHelperCache.GetGameUserInfoAsync(index);
+			progress = await data.SaveHelperCache.GetGameProgressAsync(index);
 		}
 		catch (ArgumentOutOfRangeException ex)
 		{

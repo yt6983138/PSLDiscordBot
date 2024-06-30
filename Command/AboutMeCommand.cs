@@ -11,16 +11,6 @@ namespace PSLDiscordBot.Command;
 [AddToGlobal]
 public class AboutMeCommand : CommandBase
 {
-	private static Dictionary<string, string> ChallengeRankNames { get; } = new()
-	{
-		{ "0", "White" },
-		{ "1", "Green" },
-		{ "2", "Blue" },
-		{ "3", "Red" },
-		{ "4", "Gold" },
-		{ "5", "Rainbow" }
-	};
-
 	public override string Name => "about-me";
 	public override string Description => "Get info about you in game.";
 
@@ -39,12 +29,12 @@ public class AboutMeCommand : CommandBase
 		GameSave save; // had to double cast
 		GameUserInfo userInfo;
 		GameProgress progress;
-		int? index = arg.Data.Options.ElementAtOrDefault(0)?.Value.Unbox<long>().CastTo<long, int>();
+		int index = arg.Data.Options.ElementAtOrDefault(0)?.Value.Unbox<long>().CastTo<long, int>() ?? 0;
 		try
 		{
-			(summary, save) = await data.SaveHelperCache.GetGameSaveAsync(Manager.Difficulties, index ?? 0);
-			userInfo = await data.SaveHelperCache.GetGameUserInfoAsync(index ?? 0);
-			progress = await data.SaveHelperCache.GetGameProgressAsync(index ?? 0);
+			(summary, save) = await data.SaveHelperCache.GetGameSaveAsync(Manager.Difficulties, index);
+			userInfo = await data.SaveHelperCache.GetGameUserInfoAsync(index);
+			progress = await data.SaveHelperCache.GetGameProgressAsync(index);
 		}
 		catch (ArgumentOutOfRangeException ex)
 		{
@@ -97,7 +87,7 @@ public class AboutMeCommand : CommandBase
 		await arg.ModifyOriginalResponseAsync(
 			(msg) =>
 			{
-				msg.Content = "Got score! Now showing...";
+				msg.Content = "Generated!";
 				msg.Attachments = new List<FileAttachment>() { new(stream, "Scores.png") };
 			});
 	}
