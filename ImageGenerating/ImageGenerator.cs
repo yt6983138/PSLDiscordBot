@@ -45,7 +45,7 @@ public class ImageGenerator
 	}
 
 	public static async Task<Image> MakePhoto(
-		InternalScoreFormat[] scores,
+		CompleteScore[] scores,
 		IReadOnlyDictionary<string, string> infos,
 		UserData userData,
 		Summary summary,
@@ -78,7 +78,7 @@ public class ImageGenerator
 		}
 #pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
 
-		UserInfo userInfo = await userData.SaveHelperCache.GetUserInfoAsync();
+		UserInfo userInfo = await userData.SaveCache.GetUserInfoAsync();
 
 		Dictionary<string, Lazy<string>> textMap = new()
 		{
@@ -128,7 +128,7 @@ public class ImageGenerator
 
 		for (int i = 0; i < scores.Length; i++)
 		{
-			InternalScoreFormat score = scores[i];
+			CompleteScore score = scores[i];
 			textMap.Add($"B20.Score.{i}", new Lazy<string>(score.Score.ToString));
 			textMap.Add($"B20.Acc.{i}", new Lazy<string>(() => score.Acc.ToString(userData.ShowFormat)));
 			textMap.Add($"B20.CCAndDiff.{i}", new Lazy<string>(() => $"{score.DifficultyName} {score.ChartConstant}"));
@@ -163,7 +163,7 @@ public class ImageGenerator
 
 		for (int i = 0; i < scores.Length; i++)
 		{
-			InternalScoreFormat score = scores[i];
+			CompleteScore score = scores[i];
 			Image? image2 = Utils.TryLoadImage($"./Assets/Tracks/{score.Name}.0/IllustrationLowRes.png");
 
 			imageMap.Add($"B20.Rank.{i}", new(RankImages[score.Status]));

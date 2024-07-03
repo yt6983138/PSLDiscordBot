@@ -25,7 +25,7 @@ public class GetMoneyCommand : CommandBase
 		GameProgress progress;
 		try
 		{
-			progress = await data.SaveHelperCache.GetGameProgressAsync(index ?? 0);
+			progress = await data.SaveCache.GetGameProgressAsync(index ?? 0);
 		}
 		catch (ArgumentOutOfRangeException ex)
 		{

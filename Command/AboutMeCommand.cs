@@ -32,9 +32,9 @@ public class AboutMeCommand : CommandBase
 		int index = arg.Data.Options.ElementAtOrDefault(0)?.Value.Unbox<long>().CastTo<long, int>() ?? 0;
 		try
 		{
-			(summary, save) = await data.SaveHelperCache.GetGameSaveAsync(Manager.Difficulties, index);
-			userInfo = await data.SaveHelperCache.GetGameUserInfoAsync(index);
-			progress = await data.SaveHelperCache.GetGameProgressAsync(index);
+			(summary, save) = await data.SaveCache.GetGameSaveAsync(Manager.Difficulties, index);
+			userInfo = await data.SaveCache.GetGameUserInfoAsync(index);
+			progress = await data.SaveCache.GetGameProgressAsync(index);
 		}
 		catch (ArgumentOutOfRangeException ex)
 		{
@@ -52,10 +52,10 @@ public class AboutMeCommand : CommandBase
 		}
 		save.Records.Sort((x, y) => y.GetRksCalculated().CompareTo(x.GetRksCalculated()));
 		double rks = 0;
-		InternalScoreFormat best = new();
+		CompleteScore best = new();
 		for (int i = 0; i < save.Records.Count; i++)
 		{
-			InternalScoreFormat score = save.Records[i];
+			CompleteScore score = save.Records[i];
 			if (i < 19)
 			{
 				rks += score.GetRksCalculated() * 0.05;

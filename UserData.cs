@@ -10,11 +10,10 @@ public class UserData
 	public List<string> Tags { get; set; } = new();
 
 	[JsonIgnore]
-	public SaveHelper SaveHelperCache { get; init; }
+	public Save SaveCache { get; init; }
 	public UserData(string token)
 	{
 		this.Token = token;
-		this.SaveHelperCache = new();
-		this.SaveHelperCache.InitializeCloudHelper(this.Token);
+		this.SaveCache = new(this.Token);
 	}
 }

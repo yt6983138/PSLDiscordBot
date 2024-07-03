@@ -30,7 +30,7 @@ public class LinkTokenCommand : GuestCommandBase
 		try
 		{
 			tmp = new(token);
-			_ = await tmp.SaveHelperCache.GetUserInfoAsync();
+			_ = await tmp.SaveCache.GetUserInfoAsync();
 			if (Manager.RegisteredUsers.ContainsKey(userId))
 			{
 				await arg.ModifyOriginalResponseAsync(msg => msg.Content = $"You have already registered, but still linked successfully!");

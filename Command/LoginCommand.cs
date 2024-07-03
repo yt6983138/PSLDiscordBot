@@ -56,7 +56,7 @@ public class LoginCommand : GuestCommandBase
 					TapTapProfileData profile = await TapTapHelper.GetProfile(result.Data);
 					string token = await LCHelper.LoginAndGetToken(new(profile.Data, result.Data));
 					UserData userData = new(token);
-					_ = await userData.SaveHelperCache.GetUserInfoAsync();
+					_ = await userData.SaveCache.GetUserInfoAsync();
 					Manager.Logger.Log<Program>(LogLevel.Information, this.EventId, $"User {command.User.GlobalName}({command.User.Id}) registered. Token: {token}");
 					Manager.RegisteredUsers[command.User.Id] = userData;
 					await message.ModifyAsync(x => x.Content = "Logged in successfully! Now you can access all command!");

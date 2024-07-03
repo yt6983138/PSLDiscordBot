@@ -16,7 +16,7 @@ public class GetTimeIndexCommand : CommandBase
 
 	public override async Task Execute(SocketSlashCommand arg, UserData data, object executer)
 	{
-		List<RawSave> saves = (await data.SaveHelperCache.GetRawSaveFromCloudAsync()).results;
+		List<RawSave> saves = (await data.SaveCache.GetRawSaveFromCloudAsync()).results;
 		StringBuilder sb = new("```\nIndex | Date\n"); // cant use tabs
 		for (int i = 0; i < saves.Count; i++)
 		{

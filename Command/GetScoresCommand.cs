@@ -36,7 +36,7 @@ public class GetScoresCommand : CommandBase
 		int index = arg.Data.Options.FirstOrDefault(x => x.Name == "index")?.Value.Unbox<long>().CastTo<long, int>() ?? 0;
 		try
 		{
-			(summary, save) = await data.SaveHelperCache.GetGameSaveAsync(Manager.Difficulties, index);
+			(summary, save) = await data.SaveCache.GetGameSaveAsync(Manager.Difficulties, index);
 		}
 		catch (ArgumentOutOfRangeException ex)
 		{
@@ -62,9 +62,9 @@ public class GetScoresCommand : CommandBase
 				msg.Attachments = new List<FileAttachment>() { new(new MemoryStream(Encoding.UTF8.GetBytes(result)), "Scores.txt") };
 			});
 	}
-	public static string ScoresFormatter(List<InternalScoreFormat> scores, int shouldAddCount, in UserData userData, bool calculateRks = true, bool showLineNumber = true)
+	public static string ScoresFormatter(List<CompleteScore> scores, int shouldAddCount, in UserData userData, bool calculateRks = true, bool showLineNumber = true)
 	{
-		(int index, InternalScoreFormat score) highest = (0, new()
+		(int index, CompleteScore score) highest = (0, new()
 		{
 			Acc = 0,
 			Score = 0,
@@ -79,7 +79,7 @@ public class GetScoresCommand : CommandBase
 
 		for (int i = 0; i < scores.Count; i++)
 		{
-			InternalScoreFormat score = scores[i];
+			CompleteScore score = scores[i];
 			if (score.Acc == 100 && score.GetRksCalculated() > highest.score.GetRksCalculated())
 			{
 				highest.index = i;
@@ -116,7 +116,7 @@ public class GetScoresCommand : CommandBase
 
 		for (int j = 0; j < realNames.Count; j++)
 		{
-			InternalScoreFormat score = scores[j];
+			CompleteScore score = scores[j];
 			int showFormatLen = userData.ShowFormat.Length;
 			string jStr = j.ToString();
 			string statusStr = score.Status.ToString();

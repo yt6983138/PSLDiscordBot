@@ -45,7 +45,7 @@ public class GetScoresByTokenCommand : AdminCommandBase
 		int index = (int)(long)arg.Data.Options.ElementAt(1).Value;
 		try
 		{
-			(summary, save) = await userData.SaveHelperCache.GetGameSaveAsync(Manager.Difficulties, index);
+			(summary, save) = await userData.SaveCache.GetGameSaveAsync(Manager.Difficulties, index);
 		}
 		catch (ArgumentOutOfRangeException ex)
 		{

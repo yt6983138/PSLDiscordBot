@@ -32,9 +32,9 @@ public class GetB20PhotoCommand : CommandBase
 		int index = arg.Data.Options.ElementAtOrDefault(0)?.Value.Unbox<long>().CastTo<long, int>() ?? 0;
 		try
 		{
-			(summary, save) = await data.SaveHelperCache.GetGameSaveAsync(Manager.Difficulties, index);
-			userInfo = await data.SaveHelperCache.GetGameUserInfoAsync(index);
-			progress = await data.SaveHelperCache.GetGameProgressAsync(index);
+			(summary, save) = await data.SaveCache.GetGameSaveAsync(Manager.Difficulties, index);
+			userInfo = await data.SaveCache.GetGameUserInfoAsync(index);
+			progress = await data.SaveCache.GetGameProgressAsync(index);
 		}
 		catch (ArgumentOutOfRangeException ex)
 		{
@@ -50,12 +50,12 @@ public class GetB20PhotoCommand : CommandBase
 			await arg.ModifyOriginalResponseAsync(msg => msg.Content = $"Error: {ex.Message}\nYou may try again or report to author.");
 			throw;
 		}
-		InternalScoreFormat[] b20 = new InternalScoreFormat[20];
+		CompleteScore[] b20 = new CompleteScore[20];
 		string[] realNames = new string[20];
 		save.Records.Sort((x, y) => y.GetRksCalculated().CompareTo(x.GetRksCalculated()));
 		double rks = 0;
 		const string RealCoolName = "NULL";
-		InternalScoreFormat @default = new()
+		CompleteScore @default = new()
 		{
 			Acc = 0,
 			Score = 0,
@@ -72,7 +72,7 @@ public class GetB20PhotoCommand : CommandBase
 
 		for (int i = 0; i < save.Records.Count; i++)
 		{
-			InternalScoreFormat score = save.Records[i];
+			CompleteScore score = save.Records[i];
 			if (i < 19)
 			{
 				b20[i + 1] = score;

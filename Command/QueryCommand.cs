@@ -34,12 +34,12 @@ public class QueryCommand : CommandBase
 		GameSave save; // had to double cast
 		Regex regex;
 		int index = arg.Data.Options.ElementAtOrDefault(1)?.Value.Unbox<long>().CastTo<long, int>() ?? 0;
-		List<InternalScoreFormat> scoresToShow = new();
+		List<CompleteScore> scoresToShow = new();
 		try
 		{
-			(summary, save) = await data.SaveHelperCache.GetGameSaveAsync(Manager.Difficulties, index);
+			(summary, save) = await data.SaveCache.GetGameSaveAsync(Manager.Difficulties, index);
 			regex = new((string)arg.Data.Options.ElementAt(0));
-			foreach (InternalScoreFormat score in save.Records)
+			foreach (CompleteScore score in save.Records)
 			{
 				if (regex.Match(score.Name).Success || regex.Match(Manager.Names[score.Name]).Success)
 					scoresToShow.Add(score);

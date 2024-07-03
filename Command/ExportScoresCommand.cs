@@ -29,7 +29,7 @@ public class ExportScoresCommand : CommandBase
 		int? index = arg.Data.Options.ElementAtOrDefault(0)?.Value.Unbox<long>().CastTo<long, int>();
 		try
 		{
-			(summary, save) = await data.SaveHelperCache.GetGameSaveAsync(Manager.Difficulties, index ?? 0);
+			(summary, save) = await data.SaveCache.GetGameSaveAsync(Manager.Difficulties, index ?? 0);
 		}
 		catch (ArgumentOutOfRangeException ex)
 		{
@@ -52,7 +52,7 @@ public class ExportScoresCommand : CommandBase
 				msg.Attachments = new List<FileAttachment>() { new(new MemoryStream(Encoding.UTF8.GetBytes(ExportCSV(save.Records))), "Export.csv") };
 			});
 	}
-	public static string ExportCSV(List<InternalScoreFormat> scores, int countToExport = 0)
+	public static string ExportCSV(List<CompleteScore> scores, int countToExport = 0)
 	{
 		CsvBuilder builder = new();
 		builder.AddHeader("ID", "Name", "Difficulty", "Chart Constant", "Score", "Acc", "Rks Given", "Stat");
