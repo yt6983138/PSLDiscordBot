@@ -1,7 +1,7 @@
 ﻿using Discord;
 using Discord.WebSocket;
-using PhigrosLibraryCSharp;
 using PhigrosLibraryCSharp.Cloud.DataStructure;
+using PhigrosLibraryCSharp.GameRecords;
 using System.Text;
 using yt6983138.Common;
 
@@ -66,8 +66,8 @@ public class ExportScoresCommand : CommandBase
 				scores[i].DifficultyName,
 				scores[i].ChartConstant.ToString(),
 				scores[i].Score.ToString(),
-				scores[i].Acc.ToString(),
-				scores[i].GetRksCalculated().ToString(),
+				scores[i].Accuracy.ToString(),
+				scores[i].Rks.ToString(),
 				scores[i].Status.ToString()
 			);
 		}

@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
-using PhigrosLibraryCSharp;
 using PhigrosLibraryCSharp.Cloud.DataStructure;
+using PhigrosLibraryCSharp.GameRecords;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
@@ -130,14 +130,14 @@ public class ImageGenerator
 		{
 			CompleteScore score = scores[i];
 			textMap.Add($"B20.Score.{i}", new Lazy<string>(score.Score.ToString));
-			textMap.Add($"B20.Acc.{i}", new Lazy<string>(() => score.Acc.ToString(userData.ShowFormat)));
+			textMap.Add($"B20.Acc.{i}", new Lazy<string>(() => score.Accuracy.ToString(userData.ShowFormat)));
 			textMap.Add($"B20.CCAndDiff.{i}", new Lazy<string>(() => $"{score.DifficultyName} {score.ChartConstant}"));
 			textMap.Add($"B20.CC.{i}", new Lazy<string>(score.ChartConstant.ToString));
 			textMap.Add($"B20.Diff.{i}", new Lazy<string>(() => score.DifficultyName));
 			textMap.Add($"B20.IdName.{i}", new Lazy<string>(() => score.Name));
 			textMap.Add($"B20.Name.{i}", new Lazy<string>(() => infos.TryGetValue(score.Name, out string? _str1) ? _str1 : score.Name));
 			textMap.Add($"B20.Status.{i}", new Lazy<string>(score.Status.ToString));
-			textMap.Add($"B20.Rks.{i}", new Lazy<string>(() => score.GetRksCalculated().ToString(userData.ShowFormat)));
+			textMap.Add($"B20.Rks.{i}", new Lazy<string>(() => score.Rks.ToString(userData.ShowFormat)));
 		}
 		for (int i = 0; i < userData.Tags.Count; i++)
 		{

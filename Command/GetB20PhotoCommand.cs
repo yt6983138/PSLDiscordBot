@@ -1,7 +1,7 @@
 ﻿using Discord;
 using Discord.WebSocket;
-using PhigrosLibraryCSharp;
 using PhigrosLibraryCSharp.Cloud.DataStructure;
+using PhigrosLibraryCSharp.GameRecords;
 using PSLDiscordBot.ImageGenerating;
 using SixLabors.Fonts;
 using SixLabors.ImageSharp;
@@ -52,12 +52,12 @@ public class GetB20PhotoCommand : CommandBase
 		}
 		CompleteScore[] b20 = new CompleteScore[20];
 		string[] realNames = new string[20];
-		save.Records.Sort((x, y) => y.GetRksCalculated().CompareTo(x.GetRksCalculated()));
+		save.Records.Sort((x, y) => y.Rks.CompareTo(x.Rks));
 		double rks = 0;
 		const string RealCoolName = "NULL";
 		CompleteScore @default = new()
 		{
-			Acc = 0,
+			Accuracy = 0,
 			Score = 0,
 			ChartConstant = 0,
 			DifficultyName = "EZ",
@@ -77,15 +77,15 @@ public class GetB20PhotoCommand : CommandBase
 			{
 				b20[i + 1] = score;
 				realNames[i + 1] = Manager.Names.TryGetValue(score.Name, out string? _val1) ? _val1 : score.Name;
-				rks += score.GetRksCalculated() * 0.05;
+				rks += score.Rks * 0.05;
 			}
-			if (score.Acc == 100 && score.GetRksCalculated() > b20[0].GetRksCalculated())
+			if (score.Accuracy == 100 && score.Rks > b20[0].Rks)
 			{
 				b20[0] = score;
 				realNames[0] = Manager.Names.TryGetValue(score.Name, out string? _val2) ? _val2 : score.Name;
 			}
 		}
-		rks += b20[0].GetRksCalculated() * 0.05;
+		rks += b20[0].Rks * 0.05;
 
 		SixLabors.ImageSharp.Image image = await ImageGenerator.MakePhoto(
 			b20,

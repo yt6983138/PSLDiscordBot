@@ -1,7 +1,7 @@
 ﻿using Discord;
 using Discord.WebSocket;
-using PhigrosLibraryCSharp;
 using PhigrosLibraryCSharp.Cloud.DataStructure;
+using PhigrosLibraryCSharp.GameRecords;
 using System.Text;
 
 namespace PSLDiscordBot.Command;
@@ -66,7 +66,7 @@ public class GetScoresCommand : CommandBase
 	{
 		(int index, CompleteScore score) highest = (0, new()
 		{
-			Acc = 0,
+			Accuracy = 0,
 			Score = 0,
 			ChartConstant = 0,
 			DifficultyName = "EZ",
@@ -75,18 +75,18 @@ public class GetScoresCommand : CommandBase
 		});
 		List<string> realNames = new();
 		double elapsedRks = 0;
-		scores.Sort((x, y) => y.GetRksCalculated().CompareTo(x.GetRksCalculated()));
+		scores.Sort((x, y) => y.Rks.CompareTo(x.Rks));
 
 		for (int i = 0; i < scores.Count; i++)
 		{
 			CompleteScore score = scores[i];
-			if (score.Acc == 100 && score.GetRksCalculated() > highest.score.GetRksCalculated())
+			if (score.Accuracy == 100 && score.Rks > highest.score.Rks)
 			{
 				highest.index = i;
 				highest.score = score;
 			}
 			if (i < 19 && calculateRks)
-				elapsedRks += score.GetRksCalculated() * 0.05; // add b19 rks
+				elapsedRks += score.Rks * 0.05; // add b19 rks
 
 			if (i < shouldAddCount)
 				realNames.Add(Manager.Names.TryGetValue(score.Name, out string? _val2) ? _val2 : score.Name);
@@ -94,7 +94,7 @@ public class GetScoresCommand : CommandBase
 		if (calculateRks)
 		{
 			scores.Insert(0, highest.score);
-			elapsedRks += highest.score.GetRksCalculated() * 0.05; // add phi 1 rks
+			elapsedRks += highest.score.Rks * 0.05; // add phi 1 rks
 			realNames.Insert(0, Manager.Names.TryGetValue(highest.score.Name, out string? _val1) ? _val1 : highest.score.Name);
 		}
 
@@ -120,8 +120,8 @@ public class GetScoresCommand : CommandBase
 			int showFormatLen = userData.ShowFormat.Length;
 			string jStr = j.ToString();
 			string statusStr = score.Status.ToString();
-			string accStr = score.Acc.ToString(userData.ShowFormat);
-			string rksStr = score.GetRksCalculated().ToString(userData.ShowFormat);
+			string accStr = score.Accuracy.ToString(userData.ShowFormat);
+			string rksStr = score.Rks.ToString(userData.ShowFormat);
 			string scoreStr = score.Score.ToString();
 			string difficultyStr = score.DifficultyName;
 			string CCStr = score.ChartConstant.ToString(".0");

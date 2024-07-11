@@ -107,7 +107,7 @@ public static class Manager
 #if DEBUG
 			throw new Exception();
 #endif
-			return JsonConvert.DeserializeObject<T>(File.ReadAllText(filePath));
+			return JsonConvert.DeserializeObject<T>(File.ReadAllText(filePath))!;
 		}
 		catch
 		{

@@ -1,7 +1,7 @@
 ﻿using Discord;
 using Discord.WebSocket;
-using PhigrosLibraryCSharp;
 using PhigrosLibraryCSharp.Cloud.DataStructure;
+using PhigrosLibraryCSharp.GameRecords;
 using PSLDiscordBot.ImageGenerating;
 using SixLabors.Fonts;
 using SixLabors.ImageSharp;
@@ -50,7 +50,7 @@ public class AboutMeCommand : CommandBase
 			await arg.ModifyOriginalResponseAsync(msg => msg.Content = $"Error: {ex.Message}\nYou may try again or report to author.");
 			throw;
 		}
-		save.Records.Sort((x, y) => y.GetRksCalculated().CompareTo(x.GetRksCalculated()));
+		save.Records.Sort((x, y) => y.Rks.CompareTo(x.Rks));
 		double rks = 0;
 		CompleteScore best = new();
 		for (int i = 0; i < save.Records.Count; i++)
@@ -58,14 +58,14 @@ public class AboutMeCommand : CommandBase
 			CompleteScore score = save.Records[i];
 			if (i < 19)
 			{
-				rks += score.GetRksCalculated() * 0.05;
+				rks += score.Rks * 0.05;
 			}
-			if (score.Acc == 100 && score.GetRksCalculated() > best.GetRksCalculated())
+			if (score.Accuracy == 100 && score.Rks > best.Rks)
 			{
 				best = score;
 			}
 		}
-		rks += best.GetRksCalculated() * 0.05;
+		rks += best.Rks * 0.05;
 		save.Records.Insert(0, best);
 
 		SixLabors.ImageSharp.Image image = await ImageGenerator.MakePhoto(

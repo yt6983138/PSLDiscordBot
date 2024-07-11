@@ -1,7 +1,7 @@
 ﻿using Discord;
 using Discord.WebSocket;
-using PhigrosLibraryCSharp;
 using PhigrosLibraryCSharp.Cloud.DataStructure;
+using PhigrosLibraryCSharp.GameRecords;
 using System.Text;
 using System.Text.RegularExpressions;
 
