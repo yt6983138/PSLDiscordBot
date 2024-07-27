@@ -3,11 +3,25 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.8.34525.116
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PSLDiscordBot", "PSLDiscordBot.csproj", "{CFBBD24B-F4D6-4534-A985-2675C9784F8E}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "yt6983138", "..\yt6983138\yt6983138.csproj", "{4C56ED84-FE45-458E-A73C-F09FC205BEC4}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PhigrosLibraryCSharp", "..\PhigrosLibraryCSharp\PhigrosLibraryCSharp\PhigrosLibraryCSharp.csproj", "{77293C1D-8884-4A1B-9A44-71AAF676A235}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PSLDiscordBot", "PSLDiscordBot\PSLDiscordBot.csproj", "{3E978548-C0D1-4020-90CA-0EBB05FB6777}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{51385BB3-A9CC-450D-B934-FDB2B3C491BE}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+		.gitattributes = .gitattributes
+		.gitignore = .gitignore
+		Assets.zip = Assets.zip
+		help.md = help.md
+		Icon.png = Icon.png
+		Icon.psd = Icon.psd
+		LICENSE.txt = LICENSE.txt
+		README.md = README.md
+		usage.md = usage.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,10 +29,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{CFBBD24B-F4D6-4534-A985-2675C9784F8E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{CFBBD24B-F4D6-4534-A985-2675C9784F8E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{CFBBD24B-F4D6-4534-A985-2675C9784F8E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{CFBBD24B-F4D6-4534-A985-2675C9784F8E}.Release|Any CPU.Build.0 = Release|Any CPU
 		{4C56ED84-FE45-458E-A73C-F09FC205BEC4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{4C56ED84-FE45-458E-A73C-F09FC205BEC4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4C56ED84-FE45-458E-A73C-F09FC205BEC4}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -27,6 +37,10 @@ Global
 		{77293C1D-8884-4A1B-9A44-71AAF676A235}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{77293C1D-8884-4A1B-9A44-71AAF676A235}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{77293C1D-8884-4A1B-9A44-71AAF676A235}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3E978548-C0D1-4020-90CA-0EBB05FB6777}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3E978548-C0D1-4020-90CA-0EBB05FB6777}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3E978548-C0D1-4020-90CA-0EBB05FB6777}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3E978548-C0D1-4020-90CA-0EBB05FB6777}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
