@@ -20,7 +20,7 @@ public abstract class CommandBase : InjectableBase
 	public abstract string Name { get; }
 	public abstract string Description { get; }
 	public virtual bool IsEphemeral => true;
-	public virtual bool RunOnDifferentThread => true;
+	public virtual bool RunOnDifferentThread => false;
 
 	protected private virtual SlashCommandBuilder BasicBuilder => new SlashCommandBuilder()
 		.WithName(this.Name)

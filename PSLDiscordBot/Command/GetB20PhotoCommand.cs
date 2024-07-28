@@ -24,6 +24,7 @@ public class GetB20PhotoCommand : CommandBase
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 	#endregion
 
+	public override bool RunOnDifferentThread => true;
 	public override string Name => "get-b20-photo";
 	public override string Description => "Get best 19 + 1 Phi photo.";
 
