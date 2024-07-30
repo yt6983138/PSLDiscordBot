@@ -85,4 +85,14 @@ public static class Utils
 		}
 		return result;
 	}
+	public static string GetRelativePath(string from, string to)
+	{
+		Uri pathUri = new(to);
+		if (!from.EndsWith(Path.DirectorySeparatorChar))
+		{
+			from += Path.DirectorySeparatorChar;
+		}
+		Uri folderUri = new(from);
+		return Uri.UnescapeDataString(folderUri.MakeRelativeUri(pathUri).ToString().Replace('/', Path.DirectorySeparatorChar));
+	}
 }

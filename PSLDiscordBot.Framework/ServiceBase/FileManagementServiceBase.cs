@@ -57,6 +57,7 @@ public abstract class FileManagementServiceBase<T> : InjectableBase
 		else
 		{
 			this.Data = this.Generate();
+			this.Save(this.Data);
 		}
 	}
 
@@ -67,7 +68,7 @@ public abstract class FileManagementServiceBase<T> : InjectableBase
 	/// <returns></returns>
 	protected abstract bool Load(out T data);
 	protected abstract void Save(T data);
-	protected abstract T Generate();
+	public abstract T Generate();
 
 	public virtual void Save()
 		=> this.Save(this.Data);
@@ -81,6 +82,9 @@ public abstract class FileManagementServiceBase<T> : InjectableBase
 			stream.Read(buffer);
 
 			data = JsonConvert.DeserializeObject<TFile>(Encoding.UTF8.GetString(buffer))!;
+			if (data is null)
+				return false;
+
 			return true;
 		}
 		catch

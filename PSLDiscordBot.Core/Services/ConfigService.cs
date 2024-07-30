@@ -1,5 +1,4 @@
-﻿using PSLDiscordBot.Core;
-using PSLDiscordBot.Framework.ServiceBase;
+﻿using PSLDiscordBot.Framework.ServiceBase;
 
 namespace PSLDiscordBot.Core.Services;
 public class ConfigService : FileManagementServiceBase<Config>
@@ -13,7 +12,7 @@ public class ConfigService : FileManagementServiceBase<Config>
 		this.AutoSaveIntervalMs = 0;
 	}
 
-	protected override Config Generate()
+	public override Config Generate()
 	{
 		return new();
 	}

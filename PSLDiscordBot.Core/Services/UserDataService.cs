@@ -16,7 +16,7 @@ public class UserDataService : FileManagementServiceBase<Dictionary<ulong, UserD
 		this.AutoSaveIntervalMs = this.Config.Data.AutoSaveInterval;
 	}
 
-	protected override Dictionary<ulong, UserData> Generate()
+	public override Dictionary<ulong, UserData> Generate()
 	{
 		return new();
 	}

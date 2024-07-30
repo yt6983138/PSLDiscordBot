@@ -17,7 +17,7 @@ public class AboutMeImageScriptService : FileManagementServiceBase<ImageScript>
 		this.LaterInitialize(this.Config!.Data.AboutMeImageScriptLocation);
 		this.AutoSaveIntervalMs = 0;
 	}
-	protected override ImageScript Generate()
+	public override ImageScript Generate()
 	{
 		const int Width = 768;
 		const int Height = 405;
@@ -407,6 +407,8 @@ public class AboutMeImageScriptService : FileManagementServiceBase<ImageScript>
 		try
 		{
 			data = ImageScript.Deserialize(File.ReadAllText(this.InfoOfFile.FullName));
+			if (data is null)
+				return false;
 			return true;
 		}
 		catch

@@ -11,15 +11,16 @@ public class Program
 	private List<ArgParseInfo> _argParseInfos = new();
 
 	private DiscordClientService _discordClientService = null!;
+	private PluginResolveService _pluginResolveService = null!;
 
 	// so basically it goes like this:
-	// AfterPluginsLoaded -> BeforeArgParse -> ArgParsing -> AfterArgParse -> AfterCommandLoaded -> ... -> AfterMainInitialize
+	// plugin loading -> AfterPluginsLoaded -> ArgParsing ->
+	// AfterArgParse -> AfterCommandLoaded -> ... -> AfterMainInitialize -> BeforeMainExiting -> plugin unload
 	public event EventHandler<EventArgs>? AfterPluginsLoaded;
-#warning ^ implement it
-	public event EventHandler<EventArgs>? BeforeArgParse;
 	public event EventHandler<EventArgs>? AfterArgParse;
 	public event EventHandler<EventArgs>? AfterCommandLoaded;
 	public event EventHandler<EventArgs>? AfterMainInitialize;
+	public event EventHandler<EventArgs>? BeforeMainExiting;
 
 	public event EventHandler<SlashCommandEventArgs>? BeforeSlashCommandExecutes;
 
@@ -35,6 +36,8 @@ public class Program
 		this.CancellationToken = this.CancellationTokenSource.Token;
 
 		InjectableBase.AddSingleton(this);
+		this._pluginResolveService = new();
+		InjectableBase.AddSingleton(this._pluginResolveService);
 		this._discordClientService = new(new(new()
 		{
 			GatewayIntents = Discord.GatewayIntents.AllUnprivileged
@@ -43,7 +46,14 @@ public class Program
 		}), new());
 		InjectableBase.AddSingleton(this._discordClientService);
 
-		this.BeforeArgParse?.Invoke(this, EventArgs.Empty);
+		this._pluginResolveService.LoadAllPlugins();
+		foreach (IPlugin item in this._pluginResolveService.Plugins)
+		{
+			item.Load(this, false);
+			Console.WriteLine($"Framework: Loaded {item.Name}, Ver. {item.Version} by {item.Author}");
+		}
+		Console.WriteLine();
+		this.AfterPluginsLoaded?.Invoke(this, EventArgs.Empty);
 
 		#region Argument parsing
 		if (args.Contains("--help"))
@@ -59,7 +69,7 @@ public class Program
 				ArgParseInfo? info = this._argParseInfos.FirstOrDefault(x => x.Name == args[i].Replace("-", ""));
 				if (info is null)
 				{
-					Console.WriteLine($"No option associated with argument '{args[i]}.'");
+					Console.WriteLine($"No option associated with argument '{args[i]}'.");
 					ShowHelp();
 					return;
 				}
@@ -135,6 +145,14 @@ public class Program
 		AfterMainInitialize?.Invoke(this, EventArgs.Empty);
 
 		await Task.Delay(-1, this.CancellationToken).ContinueWith(_ => { });
+
+		BeforeMainExiting?.Invoke(this, EventArgs.Empty);
+		Console.WriteLine();
+		foreach (IPlugin item in this._pluginResolveService.Plugins)
+		{
+			Console.WriteLine($"Framework: Unloaded {item.Name}, Ver. {item.Version} by {item.Author}");
+			item.Unload(this, false);
+		}
 	}
 
 	public void AddArgReceiver(ArgParseInfo info)

@@ -18,7 +18,7 @@ public class GetB20PhotoImageScriptService : FileManagementServiceBase<ImageScri
 		this.LaterInitialize(this.Config!.Data.GetB20PhotoImageScriptLocation);
 		this.AutoSaveIntervalMs = 0;
 	}
-	protected override ImageScript Generate()
+	public override ImageScript Generate()
 	{
 		ImageScript script = new()
 		{
@@ -219,6 +219,8 @@ public class GetB20PhotoImageScriptService : FileManagementServiceBase<ImageScri
 		try
 		{
 			data = ImageScript.Deserialize(File.ReadAllText(this.InfoOfFile.FullName));
+			if (data is null)
+				return false;
 			return true;
 		}
 		catch

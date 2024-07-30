@@ -6,6 +6,10 @@ public interface IPlugin
 	public string Version { get; }
 	public int VersionId { get; }
 	public string Author { get; }
+	/// <summary>
+	/// lower for higher priority
+	/// </summary>
+	public int Priority { get; }
 
 	public bool CanBeDynamicallyLoaded { get; }
 	public bool CanBeDynamicallyUnloaded { get; }

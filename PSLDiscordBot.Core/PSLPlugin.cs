@@ -3,7 +3,6 @@ using Discord.Net;
 using Discord.WebSocket;
 using ICSharpCode.SharpZipLib.Zip;
 using Microsoft.Extensions.Logging;
-using PSLDiscordBot.Core.Command;
 using PSLDiscordBot.Core.ImageGenerating;
 using PSLDiscordBot.Core.Services;
 using PSLDiscordBot.Framework;
@@ -15,7 +14,7 @@ using System.Net.WebSockets;
 using yt6983138.Common;
 
 namespace PSLDiscordBot.Core;
-internal class PSLPlugin : IPlugin
+internal class PSLPlugin : InjectableBase, IPlugin
 {
 	private static EventId EventId { get; } = new(114511, "PSL");
 	private static EventId EventIdInitialize { get; } = new(114511, "PSL.Initializing");
@@ -23,12 +22,23 @@ internal class PSLPlugin : IPlugin
 
 	private Logger _logger = null!;
 	private ConfigService _configService = null!;
-	private DiscordClientService _discordClientService = null!;
 
 	private bool _updateCommands = false;
 
+	#region Injection
+	[Inject]
+	public DiscordClientService DiscordClientService { get; set; }
+	#endregion
+
 	public IUser? AdminUser { get; set; }
 	public bool Initialized { get; private set; }
+
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+	public PSLPlugin()
+		: base()
+	{
+	}
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
 	#region Interface
 
@@ -41,24 +51,33 @@ internal class PSLPlugin : IPlugin
 
 	bool IPlugin.CanBeDynamicallyLoaded => false;
 	bool IPlugin.CanBeDynamicallyUnloaded => false;
+	int IPlugin.Priority => -1;
 	#endregion
 
 	#region Arg Info
 	public ArgParseInfo UpdateFiles => new(
 		"updateFiles",
 		"Update files.",
-		async (_) =>
+		(_) => // using async here break shit
 		{
 			this._logger.Log(LogLevel.Information, EventIdInitialize, "Updating...");
 			using HttpClient client = new();
-			byte[] diff = await client.GetByteArrayAsync(@"https://yt6983138.github.io/Assets/RksReader/Latest/difficulty.csv");
-			byte[] name = await client.GetByteArrayAsync(@"https://yt6983138.github.io/Assets/RksReader/Latest/info.csv");
-			byte[] help = await client.GetByteArrayAsync(@"https://raw.githubusercontent.com/yt6983138/PSLDiscordBot/master/help.md");
-			byte[] zip = await client.GetByteArrayAsync(@"https://github.com/yt6983138/PSLDiscordBot/raw/master/Assets.zip");
-			File.WriteAllBytes(this._configService.Data.DifficultyMapLocation, diff);
-			File.WriteAllBytes(this._configService.Data.NameMapLocation, name);
-			File.WriteAllBytes(this._configService.Data.HelpMDLocation, help);
-			File.WriteAllBytes("./Assets.zip", zip);
+			Task<byte[]> diff =
+				client.GetByteArrayAsync(@"https://yt6983138.github.io/Assets/RksReader/Latest/difficulty.csv");
+			Task<byte[]> name =
+				client.GetByteArrayAsync(@"https://yt6983138.github.io/Assets/RksReader/Latest/info.csv");
+			Task<byte[]> help =
+				client.GetByteArrayAsync(@"https://raw.githubusercontent.com/yt6983138/PSLDiscordBot/master/help.md");
+			Task<byte[]> zip =
+				client.GetByteArrayAsync(@"https://github.com/yt6983138/PSLDiscordBot/raw/master/Assets.zip");
+			diff.Wait();
+			name.Wait();
+			help.Wait();
+			zip.Wait();
+			File.WriteAllBytes(this._configService.Data.DifficultyMapLocation, diff.Result);
+			File.WriteAllBytes(this._configService.Data.NameMapLocation, name.Result);
+			File.WriteAllBytes(this._configService.Data.HelpMDLocation, help.Result);
+			File.WriteAllBytes("./Assets.zip", zip.Result);
 			FastZip fastZip = new();
 			fastZip.ExtractZip("./Assets.zip", ".", "");
 		}, null, true);
@@ -109,11 +128,11 @@ internal class PSLPlugin : IPlugin
 			{
 				AboutMeImageScriptService about =
 					InjectableBase.GetSingleton<AboutMeImageScriptService>();
-				about.Data = AboutMeCommand.DefaultScript;
+				about.Data = about.Generate();
 				about.Save();
 				GetB20PhotoImageScriptService b20 =
 					InjectableBase.GetSingleton<GetB20PhotoImageScriptService>();
-				b20.Data = GetB20PhotoCommand.DefaultScript;
+				b20.Data = b20.Generate();
 				b20.Save();
 			};
 		}, null, true);
@@ -123,7 +142,7 @@ internal class PSLPlugin : IPlugin
 	{
 		AppDomain.CurrentDomain.UnhandledException += this.CurrentDomain_UnhandledException;
 
-		program.BeforeArgParse += this.Program_BeforeArgParse;
+		program.AfterPluginsLoaded += this.Program_AfterPluginsLoaded;
 		program.AfterArgParse += this.Program_AfterArgParse;
 		program.AfterCommandLoaded += this.Program_AfterCommandLoaded;
 		program.AfterMainInitialize += this.Program_AfterMainInitialize;
@@ -135,18 +154,8 @@ internal class PSLPlugin : IPlugin
 		program.AddArgReceiver(this.ResetConfigFull);
 		program.AddArgReceiver(this.ResetScripts);
 
-		this._discordClientService.SocketClient.Ready += this.Client_Ready;
-		this._discordClientService.SocketClient.Log += this.Log;
-
-		if (!SystemFonts.Collection.Families.Any())
-		{
-			this._logger.Log(
-				LogLevel.Critical,
-				"No system fonts have been found, please install at least one (and Saira)!",
-				EventIdInitialize,
-				this);
-			throw new InvalidOperationException("No fonts installed");
-		}
+		this.DiscordClientService.SocketClient.Ready += this.Client_Ready;
+		this.DiscordClientService.SocketClient.Log += this.Log;
 	}
 
 	void IPlugin.Unload(Program program, bool isDynamicUnloading)
@@ -168,24 +177,24 @@ internal class PSLPlugin : IPlugin
 	{
 		this.WriteAll();
 
-		await this._discordClientService.SocketClient.LoginAsync(TokenType.Bot, this._configService.Data.Token);
-		await this._discordClientService.SocketClient.StartAsync();
+		await this.DiscordClientService.SocketClient.LoginAsync(TokenType.Bot, this._configService.Data.Token);
+		await this.DiscordClientService.SocketClient.StartAsync();
 	}
 	private void Program_AfterArgParse(object? sender, EventArgs e)
 	{
 		InjectableBase.AddSingleton(new PhigrosDataService());
-		InjectableBase.AddSingleton(new AboutMeImageScriptService());
 		InjectableBase.AddSingleton(new GetB20PhotoImageScriptService());
+		InjectableBase.AddSingleton(new AboutMeImageScriptService());
 		InjectableBase.AddSingleton(new ImageGenerator());
 		InjectableBase.AddSingleton(new UserDataService());
+		InjectableBase.AddSingleton(new StatusService());
 	}
-	private void Program_BeforeArgParse(object? sender, EventArgs e)
+	private void Program_AfterPluginsLoaded(object? sender, EventArgs e)
 	{
 		this._configService = new();
 		InjectableBase.AddSingleton(this._configService);
 		this._logger = new(this._configService.Data.LogLocation);
 		InjectableBase.AddSingleton(this._logger);
-		this._discordClientService = InjectableBase.GetSingleton<DiscordClientService>();
 
 		if (!this._configService.Data.Verbose)
 			this._logger.Disabled.Add(LogLevel.Debug);
@@ -198,6 +207,16 @@ internal class PSLPlugin : IPlugin
 				EventIdInitialize,
 				this);
 			throw new InvalidOperationException("No token entered");
+		}
+
+		if (!SystemFonts.Collection.Families.Any())
+		{
+			this._logger.Log(
+				LogLevel.Critical,
+				"No system fonts have been found, please install at least one (and Saira)!",
+				EventIdInitialize,
+				this);
+			throw new InvalidOperationException("No fonts installed");
 		}
 	}
 	private void Program_BeforeSlashCommandExecutes(object? sender, SlashCommandEventArgs e)
@@ -224,7 +243,7 @@ internal class PSLPlugin : IPlugin
 		if (this.Initialized) goto Final;
 		if (!this._updateCommands) goto Final;
 
-		IUser admin = await this._discordClientService.SocketClient.GetUserAsync(this._configService.Data.AdminUserId);
+		IUser admin = await this.DiscordClientService.SocketClient.GetUserAsync(this._configService.Data.AdminUserId);
 		if (!this._configService.Data.DMAdminAboutErrors)
 			goto BypassAdminCheck;
 		this.AdminUser = admin;
@@ -249,7 +268,7 @@ internal class PSLPlugin : IPlugin
 
 	BypassAdminCheck:
 		IReadOnlyCollection<SocketApplicationCommand> globalCommandsAlreadyExisted =
-			await this._discordClientService.SocketClient.GetGlobalApplicationCommandsAsync();
+			await this.DiscordClientService.SocketClient.GetGlobalApplicationCommandsAsync();
 
 		List<Task> tasks = new();
 
@@ -291,7 +310,7 @@ internal class PSLPlugin : IPlugin
 			tasks.Add(command.DeleteAsync()
 				.ContinueWith(_ =>
 				shouldAdd
-				? this._discordClientService.SocketClient.CreateGlobalApplicationCommandAsync(built)
+				? this.DiscordClientService.SocketClient.CreateGlobalApplicationCommandAsync(built)
 				: Task.CompletedTask));
 			this._logger.Log<PSLPlugin>(LogLevel.Debug, EventIdInitialize, "Removing global command {0}", command.Name);
 			if (!shouldAdd) continue;
@@ -302,7 +321,7 @@ internal class PSLPlugin : IPlugin
 			in program.GlobalCommands.Where(x => !globalCommandsAlreadyExisted.Any(a => a.Name == x.Key)))
 		{
 			tasks.Add(
-				this._discordClientService.SocketClient.CreateGlobalApplicationCommandAsync(
+				this.DiscordClientService.SocketClient.CreateGlobalApplicationCommandAsync(
 					command.Value.CompleteBuilder.Build()));
 			this._logger.Log<PSLPlugin>(LogLevel.Debug, EventIdInitialize, "Adding new global command {0}", command.Key);
 			await Task.Delay(Delay);
