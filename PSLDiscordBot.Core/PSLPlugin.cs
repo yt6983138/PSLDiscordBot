@@ -45,8 +45,8 @@ internal class PSLPlugin : InjectableBase, IPlugin
 	#region Properties
 	string IPlugin.Name => "PSLDiscordBot Core";
 	string IPlugin.Description => "Core implementation for PSLDiscord bot";
-	string IPlugin.Version => "0.0.0.0";
-	int IPlugin.VersionId => 0x00_00_00_00;
+	string IPlugin.Version => "1.0.0.0";
+	int IPlugin.VersionId => 0x01_00_00_00;
 	string IPlugin.Author => "yt6983138 aka static_void (yt6983138@gmail.com)";
 
 	bool IPlugin.CanBeDynamicallyLoaded => false;
@@ -241,9 +241,9 @@ internal class PSLPlugin : InjectableBase, IPlugin
 		const int Delay = 600;
 
 		if (this.Initialized) goto Final;
+		IUser admin = await this.DiscordClientService.SocketClient.GetUserAsync(this._configService.Data.AdminUserId);
 		if (!this._updateCommands) goto Final;
 
-		IUser admin = await this.DiscordClientService.SocketClient.GetUserAsync(this._configService.Data.AdminUserId);
 		if (!this._configService.Data.DMAdminAboutErrors)
 			goto BypassAdminCheck;
 		this.AdminUser = admin;

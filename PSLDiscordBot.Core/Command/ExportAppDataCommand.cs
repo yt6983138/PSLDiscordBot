@@ -2,12 +2,14 @@
 using Discord.WebSocket;
 using ICSharpCode.SharpZipLib.Core;
 using ICSharpCode.SharpZipLib.Zip;
-using PSLDiscordBot.Core;
 using PSLDiscordBot.Core.Command.Base;
 using PSLDiscordBot.Core.Services;
 using PSLDiscordBot.Framework;
+using PSLDiscordBot.Framework.CommandBase;
 
 namespace PSLDiscordBot.Core.Command;
+
+[AddToGlobal]
 public class ExportAppDataCommand : AdminCommandBase
 {
 	public override string Name => "export-app-data";
@@ -44,7 +46,10 @@ public class ExportAppDataCommand : AdminCommandBase
 
 		await arg.ModifyOriginalResponseAsync(
 			msg =>
-			msg.Attachments = new List<FileAttachment>() { new(memoryStream, "Data.zip") });
+			{
+				msg.Content = "Exported!";
+				msg.Attachments = new List<FileAttachment>() { new(memoryStream, "Data.zip") };
+			});
 	}
 }
 file static class Extension

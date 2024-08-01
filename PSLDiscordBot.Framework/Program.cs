@@ -15,7 +15,18 @@ public class Program
 
 	// so basically it goes like this:
 	// plugin loading -> AfterPluginsLoaded -> ArgParsing ->
-	// AfterArgParse -> AfterCommandLoaded -> ... -> AfterMainInitialize -> BeforeMainExiting -> plugin unload
+	// AfterArgParse -> AfterCommandLoaded -> AfterMainInitialize ->
+	// (waiting for exit) -> BeforeMainExiting -> plugin unload
+
+	// during the wait, things can attach on BeforeSlashCommandExecutes,
+	// which can manipulate the commands
+
+	// plugin load behavior:
+	// search for dlls under ./Plugins/, load assemblies ->
+	// search for subfolders, then look for dlls under them (not looking deeper), load assemblies ->
+	// spawn instance of IPlugin in dlls under ./Plugins/ ->
+	// spawn instance of IPlugin in dlls found under subfolders
+	// assembly loading order: sorted by name
 	public event EventHandler<EventArgs>? AfterPluginsLoaded;
 	public event EventHandler<EventArgs>? AfterArgParse;
 	public event EventHandler<EventArgs>? AfterCommandLoaded;
@@ -47,6 +58,12 @@ public class Program
 		InjectableBase.AddSingleton(this._discordClientService);
 
 		this._pluginResolveService.LoadAllPlugins();
+		if (this._pluginResolveService.Plugins.Count == 0)
+		{
+			Utils.WriteLineWithColor(
+				"Framework: No plugins loaded (no plugins installed?), Ctrl-C to exit.",
+				ConsoleColor.Yellow);
+		}
 		foreach (IPlugin item in this._pluginResolveService.Plugins)
 		{
 			item.Load(this, false);
@@ -138,6 +155,7 @@ public class Program
 			.Where(t => t.GetCustomAttribute<AddToGlobalAttribute>() is not null)
 			.Select(t => (BasicCommandBase)Activator.CreateInstance(t)!)
 			.ToDictionary(c => c.Name);
+
 		this.AfterCommandLoaded?.Invoke(this, EventArgs.Empty);
 
 		this._discordClientService.SocketClient.SlashCommandExecuted += this.SocketClient_SlashCommandExecuted;
@@ -150,7 +168,7 @@ public class Program
 		Console.WriteLine();
 		foreach (IPlugin item in this._pluginResolveService.Plugins)
 		{
-			Console.WriteLine($"Framework: Unloaded {item.Name}, Ver. {item.Version} by {item.Author}");
+			Console.WriteLine($"Framework: Unloading {item.Name}, Ver. {item.Version} by {item.Author}");
 			item.Unload(this, false);
 		}
 	}

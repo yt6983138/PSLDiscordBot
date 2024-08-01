@@ -95,4 +95,23 @@ public static class Utils
 		Uri folderUri = new(from);
 		return Uri.UnescapeDataString(folderUri.MakeRelativeUri(pathUri).ToString().Replace('/', Path.DirectorySeparatorChar));
 	}
+	public static void WriteWithColor(string dat, ConsoleColor? foreground = null, ConsoleColor? background = null)
+	{
+		ConsoleColor oldBack = Console.BackgroundColor;
+		ConsoleColor oldFore = Console.ForegroundColor;
+
+		if (background is not null)
+			Console.BackgroundColor = background.Value;
+		if (foreground is not null)
+			Console.ForegroundColor = foreground.Value;
+
+		Console.Write(dat);
+
+		if (background is not null)
+			Console.BackgroundColor = oldBack;
+		if (foreground is not null)
+			Console.ForegroundColor = oldFore;
+	}
+	public static void WriteLineWithColor(string dat = "", ConsoleColor? foreground = null, ConsoleColor? background = null)
+		=> WriteWithColor($"{dat}\n", foreground, background);
 }

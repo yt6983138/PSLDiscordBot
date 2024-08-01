@@ -27,8 +27,10 @@ public class ToggleMaintenanceCommand : AdminCommandBase
 
 	public override async Task Execute(SocketSlashCommand arg, UserData? data, object executer)
 	{
-		this.StatusService.CurrentStatus = this.StatusService.CurrentStatus == Status.UnderMaintenance ? Status.Normal : Status.UnderMaintenance;
-		this.StatusService.MaintenanceStartedAt = DateTime.Now;
+		this.StatusService.CurrentStatus =
+			this.StatusService.CurrentStatus == Status.UnderMaintenance
+				? Status.Normal
+				: Status.UnderMaintenance;
 
 		await arg.ModifyOriginalResponseAsync(
 			x => x.Content = $"Operation done successfully, current status: {this.StatusService.CurrentStatus}");
