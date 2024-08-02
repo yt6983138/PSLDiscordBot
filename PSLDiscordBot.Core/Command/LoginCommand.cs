@@ -22,6 +22,8 @@ public class LoginCommand : GuestCommandBase
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 	#endregion
 
+	public override bool RunOnDifferentThread => true;
+
 	public override string Name => "login";
 	public override string Description => "Log in using TapTap.";
 
@@ -78,10 +80,8 @@ public class LoginCommand : GuestCommandBase
 			catch (Exception ex)
 			{
 				await message.ModifyAsync(x => x.Content = $"Error while login: {ex.Message}\nYou may try again or report to author.");
-				if (ex is RequestException)
-					throw;
 
-				return;
+				throw;
 			}
 			await Task.Delay(Delay);
 		}

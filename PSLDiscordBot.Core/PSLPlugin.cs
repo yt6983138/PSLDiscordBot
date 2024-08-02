@@ -242,11 +242,13 @@ internal class PSLPlugin : InjectableBase, IPlugin
 
 		if (this.Initialized) goto Final;
 		IUser admin = await this.DiscordClientService.SocketClient.GetUserAsync(this._configService.Data.AdminUserId);
-		if (!this._updateCommands) goto Final;
 
 		if (!this._configService.Data.DMAdminAboutErrors)
 			goto BypassAdminCheck;
 		this.AdminUser = admin;
+
+		if (!this._updateCommands) goto Final;
+
 		if (admin is null)
 		{
 			this._logger.Log<PSLPlugin>(LogLevel.Warning, EventIdInitialize, "Admin {0} user not found!", this._configService.Data.AdminUserId);

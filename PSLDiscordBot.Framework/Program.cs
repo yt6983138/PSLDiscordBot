@@ -177,13 +177,13 @@ public class Program
 	{
 		this._argParseInfos.Add(info);
 	}
-	private async Task SocketClient_SlashCommandExecuted(SocketSlashCommand arg)
+	private Task SocketClient_SlashCommandExecuted(SocketSlashCommand arg)
 	{
 		SlashCommandEventArgs eventArg = new(arg);
 
 		this.BeforeSlashCommandExecutes?.Invoke(this, eventArg);
 		if (eventArg.Canceled)
-			return;
+			return Task.CompletedTask;
 
 		BasicCommandBase command = this.GlobalCommands[arg.CommandName];
 
@@ -195,6 +195,7 @@ public class Program
 
 		this.RunningTasks.Add(task);
 
-		await Utils.RunWithTaskOnEnd(task, () => this.RunningTasks.Remove(task));
+		_ = Utils.RunWithTaskOnEnd(task, () => this.RunningTasks.Remove(task));
+		return Task.CompletedTask;
 	}
 }
