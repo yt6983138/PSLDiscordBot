@@ -2,6 +2,7 @@
 using Discord.WebSocket;
 using PSLDiscordBot.Core;
 using PSLDiscordBot.Core.Command.Base;
+using PSLDiscordBot.Framework.CommandBase;
 
 namespace PSLDiscordBot.Core.Command.Template;
 
