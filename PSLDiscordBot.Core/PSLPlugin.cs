@@ -147,6 +147,7 @@ internal class PSLPlugin : InjectableBase, IPlugin
 		program.AfterCommandLoaded += this.Program_AfterCommandLoaded;
 		program.AfterMainInitialize += this.Program_AfterMainInitialize;
 		program.BeforeSlashCommandExecutes += this.Program_BeforeSlashCommandExecutes;
+		program.OnSlashCommandError += async (_, e) => await this.OnException(e.Exception);
 
 		program.AddArgReceiver(this.UpdateFiles);
 		program.AddArgReceiver(this.UpdateCommands);
@@ -358,19 +359,23 @@ internal class PSLPlugin : InjectableBase, IPlugin
 			})
 		{
 			this._logger.Log(LogLevel.Debug, msg.Exception!.GetType().FullName!, EventId, this);
-			this._logger.Log(LogLevel.Error, EventId, this, msg.Exception);
-			if (this.AdminUser is not null)
-			{
-				try
-				{
-					await this.AdminUser.SendMessageAsync($"```\n{msg.Exception}```");
-				}
-				catch { }
-			}
+			await this.OnException(msg.Exception);
 		}
 	}
 	#endregion
 
+	private async Task OnException(Exception exception)
+	{
+		this._logger.Log(LogLevel.Error, EventId, this, exception);
+		if (this.AdminUser is not null)
+		{
+			try
+			{
+				await this.AdminUser.SendMessageAsync($"```\n{exception}```");
+			}
+			catch { }
+		}
+	}
 	private void WriteAll()
 	{
 		this._configService.Save();

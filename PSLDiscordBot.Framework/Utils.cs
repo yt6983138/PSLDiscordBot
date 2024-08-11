@@ -14,20 +14,19 @@ public static class Utils
 			file.CopyTo(Path.Combine(target.FullName, file.Name), true);
 	}
 
-	internal static async Task RunWithTaskOnEnd(Task task, Action? toDoOnEnd)
+	internal static async Task RunWithTaskOnEnd(Task task, Action? toDoOnEnd = null, Action<Exception>? toDoOnCatch = null)
 	{
 		try
 		{
 			await task;
 		}
-		catch
+		catch (Exception e)
 		{
-			throw;
+			toDoOnCatch?.Invoke(e);
 		}
 		finally
 		{
-			if (toDoOnEnd is not null)
-				toDoOnEnd();
+			toDoOnEnd?.Invoke();
 		}
 
 	}

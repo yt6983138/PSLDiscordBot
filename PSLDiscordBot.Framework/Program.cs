@@ -35,6 +35,7 @@ public class Program
 
 	public event EventHandler<SlashCommandEventArgs>? BeforeSlashCommandExecutes;
 
+	public event EventHandler<SlashCommandExceptionEventArgs>? OnSlashCommandError;
 	public CancellationTokenSource CancellationTokenSource { get; set; } = new();
 	public CancellationToken CancellationToken { get; set; }
 	public List<Task> RunningTasks { get; set; } = new();
@@ -195,7 +196,13 @@ public class Program
 
 		this.RunningTasks.Add(task);
 
-		_ = Utils.RunWithTaskOnEnd(task, () => this.RunningTasks.Remove(task));
+		_ = Utils.RunWithTaskOnEnd(
+			task,
+			() => this.RunningTasks.Remove(task),
+			(e) =>
+			{
+				this.OnSlashCommandError?.Invoke(this, new(e, command, task));
+			});
 		return Task.CompletedTask;
 	}
 }
