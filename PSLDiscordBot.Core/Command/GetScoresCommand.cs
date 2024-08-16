@@ -81,15 +81,7 @@ public class GetScoresCommand : CommandBase
 	}
 	public static string ScoresFormatter(List<CompleteScore> scores, Dictionary<string, string> map, int shouldAddCount, in UserData userData, bool calculateRks = true, bool showLineNumber = true)
 	{
-		(int index, CompleteScore score) highest = (0, new()
-		{
-			Accuracy = 0,
-			Score = 0,
-			ChartConstant = 0,
-			DifficultyName = "EZ",
-			Name = "None",
-			Status = ScoreStatus.Bugged
-		});
+		(int index, CompleteScore score) highest = (0, new(0, 0, 0, "None", Difficulty.EZ, ScoreStatus.Bugged));
 		List<string> realNames = new();
 		double elapsedRks = 0;
 		scores.Sort((x, y) => y.Rks.CompareTo(x.Rks));
@@ -106,13 +98,13 @@ public class GetScoresCommand : CommandBase
 				elapsedRks += score.Rks * 0.05; // add b19 rks
 
 			if (i < shouldAddCount)
-				realNames.Add(map.TryGetValue(score.Name, out string? _val2) ? _val2 : score.Name);
+				realNames.Add(map.TryGetValue(score.Id, out string? _val2) ? _val2 : score.Id);
 		}
 		if (calculateRks)
 		{
 			scores.Insert(0, highest.score);
 			elapsedRks += highest.score.Rks * 0.05; // add phi 1 rks
-			realNames.Insert(0, map.TryGetValue(highest.score.Name, out string? _val1) ? _val1 : highest.score.Name);
+			realNames.Insert(0, map.TryGetValue(highest.score.Id, out string? _val1) ? _val1 : highest.score.Id);
 		}
 
 		StringBuilder sb = new();
@@ -140,7 +132,7 @@ public class GetScoresCommand : CommandBase
 			string accStr = score.Accuracy.ToString(userData.ShowFormat);
 			string rksStr = score.Rks.ToString(userData.ShowFormat);
 			string scoreStr = score.Score.ToString();
-			string difficultyStr = score.DifficultyName;
+			string difficultyStr = score.Difficulty.ToString();
 			string CCStr = score.ChartConstant.ToString(".0");
 			if (showLineNumber)
 			{

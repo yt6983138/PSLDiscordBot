@@ -53,7 +53,7 @@ public class QueryCommand : CommandBase
 			regex = new((string)arg.Data.Options.ElementAt(0));
 			foreach (CompleteScore score in save.Records)
 			{
-				if (regex.Match(score.Name).Success || regex.Match(this.PhigrosDataService.IdNameMap[score.Name]).Success)
+				if (regex.Match(score.Id).Success || regex.Match(this.PhigrosDataService.IdNameMap[score.Id]).Success)
 					scoresToShow.Add(score);
 			}
 		}

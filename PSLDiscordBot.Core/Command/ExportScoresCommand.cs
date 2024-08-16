@@ -72,11 +72,11 @@ public class ExportScoresCommand : CommandBase
 		int count = countToExport < 1 ? scores.Count : Math.Min(countToExport, scores.Count);
 		for (int i = 0; i < count; i++)
 		{
-			string realName = map.TryGetValue(scores[i].Name, out string? value) ? value : "Unknown";
+			string realName = map.TryGetValue(scores[i].Id, out string? value) ? value : "Unknown";
 			builder.AddRow(
-				scores[i].Name,
+				scores[i].Id,
 				realName,
-				scores[i].DifficultyName,
+				scores[i].Difficulty.ToString(),
 				scores[i].ChartConstant.ToString(),
 				scores[i].Score.ToString(),
 				scores[i].Accuracy.ToString(),

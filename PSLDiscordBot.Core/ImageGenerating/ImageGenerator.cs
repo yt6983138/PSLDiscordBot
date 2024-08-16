@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using PhigrosLibraryCSharp.Cloud.DataStructure;
 using PhigrosLibraryCSharp.GameRecords;
-using PSLDiscordBot.Core;
 using PSLDiscordBot.Core.Services;
 using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.DependencyInjection;
@@ -73,10 +72,10 @@ public class ImageGenerator : InjectableBase
 		double rks,
 		ImageScript script)
 	{
-		ushort challengeRank = summary.ChallengeCode;
-		string challengeRankString = challengeRank.ToString();
-		string rankType = challengeRank > 99 ? challengeRankString[^3].ToString() : "0";
-		string challengeRankLevel = challengeRank > 99 ? challengeRankString[^2..] : challengeRankString;
+		Challenge challenge = summary.Challenge;
+		string challengeString = challenge.RawCode.ToString();
+		string rankType = challenge.Rank.CastTo<ChallengeRank, int>().ToString();
+		string challengeRankLevel = challenge.Level.ToString();
 
 		Image<Rgba32> image = new(script.Width, script.Height);
 
@@ -112,10 +111,10 @@ public class ImageGenerator : InjectableBase
 			{ "User.Currency.TiB", new Lazy<string>(progress.Money.TiB.ToString) },
 			{ "User.Currency.PiB", new Lazy<string>(progress.Money.PiB.ToString) },
 			{ "User.Currency.Combined", new Lazy<string>(progress.Money.ToString) },
-			{ "User.PlayStatistics.EZClearCount", new Lazy<string>(scores.Count(x => x.DifficultyName == "EZ").ToString) },
-			{ "User.PlayStatistics.HDClearCount", new Lazy<string>(scores.Count(x => x.DifficultyName == "HD").ToString) },
-			{ "User.PlayStatistics.INClearCount", new Lazy<string>(scores.Count(x => x.DifficultyName == "IN").ToString) },
-			{ "User.PlayStatistics.ATClearCount", new Lazy<string>(scores.Count(x => x.DifficultyName == "AT").ToString) },
+			{ "User.PlayStatistics.EZClearCount", new Lazy<string>(scores.Count(x => x.Difficulty == Difficulty.EZ).ToString) },
+			{ "User.PlayStatistics.HDClearCount", new Lazy<string>(scores.Count(x => x.Difficulty == Difficulty.HD).ToString) },
+			{ "User.PlayStatistics.INClearCount", new Lazy<string>(scores.Count(x => x.Difficulty == Difficulty.IN).ToString) },
+			{ "User.PlayStatistics.ATClearCount", new Lazy<string>(scores.Count(x => x.Difficulty == Difficulty.AT).ToString) },
 			{ "User.PlayStatistics.AllClearCount", new Lazy<string>(scores.Length.ToString) },
 			{ "User.Tags.JoinedComma", new Lazy<string>(() => string.Join(", ", userData.Tags)) },
 			{ "User.Tags.JoinedNewLine", new Lazy<string>(() => string.Join("\n", userData.Tags)) },
@@ -130,16 +129,16 @@ public class ImageGenerator : InjectableBase
 			if (status == ScoreStatus.Bugged || status == ScoreStatus.NotFc) continue;
 			textMap.Add(
 				$"User.PlayStatistics.EZ{status}Count",
-				new Lazy<string>(() => scores.Count(x => x.DifficultyName == "EZ" && x.Status == status).ToString()));
+				new Lazy<string>(() => scores.Count(x => x.Difficulty == Difficulty.EZ && x.Status == status).ToString()));
 			textMap.Add(
 				$"User.PlayStatistics.HD{status}Count",
-				new Lazy<string>(() => scores.Count(x => x.DifficultyName == "HD" && x.Status == status).ToString()));
+				new Lazy<string>(() => scores.Count(x => x.Difficulty == Difficulty.HD && x.Status == status).ToString()));
 			textMap.Add(
 				$"User.PlayStatistics.IN{status}Count",
-				new Lazy<string>(() => scores.Count(x => x.DifficultyName == "IN" && x.Status == status).ToString()));
+				new Lazy<string>(() => scores.Count(x => x.Difficulty == Difficulty.IN && x.Status == status).ToString()));
 			textMap.Add(
 				$"User.PlayStatistics.AT{status}Count",
-				new Lazy<string>(() => scores.Count(x => x.DifficultyName == "AT" && x.Status == status).ToString()));
+				new Lazy<string>(() => scores.Count(x => x.Difficulty == Difficulty.AT && x.Status == status).ToString()));
 			textMap.Add(
 				$"User.PlayStatistics.All{status}Count",
 				new Lazy<string>(() => scores.Count(x => x.Status == status).ToString()));
@@ -150,11 +149,11 @@ public class ImageGenerator : InjectableBase
 			CompleteScore score = scores[i];
 			textMap.Add($"B20.Score.{i}", new Lazy<string>(score.Score.ToString));
 			textMap.Add($"B20.Acc.{i}", new Lazy<string>(() => score.Accuracy.ToString(userData.ShowFormat)));
-			textMap.Add($"B20.CCAndDiff.{i}", new Lazy<string>(() => $"{score.DifficultyName} {score.ChartConstant}"));
+			textMap.Add($"B20.CCAndDiff.{i}", new Lazy<string>(() => $"{score.Difficulty} {score.ChartConstant}"));
 			textMap.Add($"B20.CC.{i}", new Lazy<string>(score.ChartConstant.ToString));
-			textMap.Add($"B20.Diff.{i}", new Lazy<string>(() => score.DifficultyName));
-			textMap.Add($"B20.IdName.{i}", new Lazy<string>(() => score.Name));
-			textMap.Add($"B20.Name.{i}", new Lazy<string>(() => infos.TryGetValue(score.Name, out string? _str1) ? _str1 : score.Name));
+			textMap.Add($"B20.Diff.{i}", new Lazy<string>(score.Difficulty.ToString));
+			textMap.Add($"B20.IdName.{i}", new Lazy<string>(() => score.Id));
+			textMap.Add($"B20.Name.{i}", new Lazy<string>(() => infos.TryGetValue(score.Id, out string? _str1) ? _str1 : score.Id));
 			textMap.Add($"B20.Status.{i}", new Lazy<string>(score.Status.ToString));
 			textMap.Add($"B20.Rks.{i}", new Lazy<string>(() => score.Rks.ToString(userData.ShowFormat)));
 		}
@@ -183,16 +182,16 @@ public class ImageGenerator : InjectableBase
 		for (int i = 0; i < scores.Length; i++)
 		{
 			CompleteScore score = scores[i];
-			Image? image2 = Utils.TryLoadImage($"./Assets/Tracks/{score.Name}.0/IllustrationLowRes.png");
+			Image? image2 = Utils.TryLoadImage($"./Assets/Tracks/{score.Id}.0/IllustrationLowRes.png");
 
 			imageMap.Add($"B20.Rank.{i}", new(this.RankImages[score.Status]));
 			imageMap.Add($"B20.Illustration.{i}", new(
 				() =>
-				Utils.TryLoadImage($"./Assets/Tracks/{score.Name}.0/IllustrationLowRes.png")
+				Utils.TryLoadImage($"./Assets/Tracks/{score.Id}.0/IllustrationLowRes.png")
 				?? StaticImage.Default.Image)
 			);
-			if (image2 == null)
-				this.Logger.Log<ImageGenerator>(LogLevel.Warning, $"Cannot find image for {score.Name}.0!", EventId, null!);
+			if (image2 is null)
+				this.Logger.Log<ImageGenerator>(LogLevel.Warning, $"Cannot find image for {score.Id}.0!", EventId, null!);
 		}
 
 		foreach (IDrawableComponent component in script.Components)

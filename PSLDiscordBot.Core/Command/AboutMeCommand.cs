@@ -66,7 +66,7 @@ public class AboutMeCommand : CommandBase
 		}
 		save.Records.Sort((x, y) => y.Rks.CompareTo(x.Rks));
 		double rks = 0;
-		CompleteScore best = new();
+		CompleteScore best = new(0, 0, 0, "", Difficulty.EZ, ScoreStatus.Bugged);
 		for (int i = 0; i < save.Records.Count; i++)
 		{
 			CompleteScore score = save.Records[i];

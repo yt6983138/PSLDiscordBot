@@ -69,15 +69,7 @@ public class GetB20PhotoCommand : CommandBase
 		save.Records.Sort((x, y) => y.Rks.CompareTo(x.Rks));
 		double rks = 0;
 		const string RealCoolName = "NULL";
-		CompleteScore @default = new()
-		{
-			Accuracy = 0,
-			Score = 0,
-			ChartConstant = 0,
-			DifficultyName = "EZ",
-			Name = RealCoolName, // real cool name
-			Status = ScoreStatus.Bugged
-		};
+		CompleteScore @default = new(0, 0, 0, RealCoolName, Difficulty.EZ, ScoreStatus.Bugged);
 		for (int j = 0; j < 20; j++)
 		{
 			b20[j] = @default;
@@ -90,13 +82,13 @@ public class GetB20PhotoCommand : CommandBase
 			if (i < 19)
 			{
 				b20[i + 1] = score;
-				realNames[i + 1] = this.PhigrosDataService.IdNameMap.TryGetValue(score.Name, out string? _val1) ? _val1 : score.Name;
+				realNames[i + 1] = this.PhigrosDataService.IdNameMap.TryGetValue(score.Id, out string? _val1) ? _val1 : score.Id;
 				rks += score.Rks * 0.05;
 			}
 			if (score.Accuracy == 100 && score.Rks > b20[0].Rks)
 			{
 				b20[0] = score;
-				realNames[0] = this.PhigrosDataService.IdNameMap.TryGetValue(score.Name, out string? _val2) ? _val2 : score.Name;
+				realNames[0] = this.PhigrosDataService.IdNameMap.TryGetValue(score.Id, out string? _val2) ? _val2 : score.Id;
 			}
 		}
 		rks += b20[0].Rks * 0.05;
