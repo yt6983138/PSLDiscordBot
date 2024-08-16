@@ -3,7 +3,7 @@
 namespace PSLDiscordBot.Core.Services;
 public class ConfigService : FileManagementServiceBase<Config>
 {
-	public const string ConfigLocation = "./Config.json";
+	public const string ConfigLocation = "./PSL/Config.json";
 	public bool FirstStart { get; set; }
 
 	public ConfigService()
