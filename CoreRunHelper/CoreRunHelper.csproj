@@ -1,15 +1,18 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<TargetFramework>net8.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\PSLDiscordBot.Core\PSLDiscordBot.Core.csproj" />
-    <ProjectReference Include="..\PSLDiscordBot.Framework\PSLDiscordBot.Framework.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\PSLDiscordBot.Core\PSLDiscordBot.Core.csproj" />
+		<ProjectReference Include="..\PSLDiscordBot.Framework\PSLDiscordBot.Framework.csproj" />
+	</ItemGroup>
 
+	<Target Name="RemoveShit" BeforeTargets="Compile">
+		<RemoveDir Directories="$(OutDir)"></RemoveDir>
+	</Target>
 </Project>
