@@ -102,7 +102,6 @@ internal class PSLPlugin : InjectableBase, IPlugin
 			this._configService.Data.HelpMDLocation = @default.HelpMDLocation;
 			this._configService.Data.NameMapLocation = @default.NameMapLocation;
 			this._configService.Data.Verbose = @default.Verbose;
-			this._configService.Data.MainUserDataDbLocation = @default.MainUserDataDbLocation;
 
 			this._configService.Save();
 		}, null, true);
