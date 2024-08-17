@@ -1,7 +1,9 @@
 ﻿using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.Logging;
 using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Framework.DependencyInjection;
 using System.Runtime.Caching;
+using yt6983138.Common;
 
 namespace PSLDiscordBot.Core.Services;
 public sealed class DataBaseService : InjectableBase
@@ -26,6 +28,11 @@ public sealed class DataBaseService : InjectableBase
 	public sealed class DbDataRequester : InjectableBase, IDisposable
 	{
 		public const string StringArrayDelimiter = "\x1F";
+		private static readonly EventId _eventId = new(114, nameof(DbDataRequester));
+
+		#region Injection
+		public Logger Logger { get; set; }
+		#endregion
 
 		private Config _config;
 
@@ -54,7 +61,9 @@ public sealed class DataBaseService : InjectableBase
 		#endregion
 
 		#region Initialization
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
 		internal DbDataRequester(Config config)
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
 			: base()
 		{
 			this._config = config;
@@ -64,6 +73,9 @@ public sealed class DataBaseService : InjectableBase
 		}
 		private SqliteConnection CreateConnection_UserTokenDataBase()
 		{
+			int traceId = Random.Shared.Next();
+			this.Logger.Log(LogLevel.Debug, $"{nameof(CreateConnection_UserTokenDataBase)}: Start ({traceId})", _eventId, this);
+
 			SqliteConnection dat = new($"Data Source={this._config.MainUserDataDbLocation}");
 			dat.Open();
 
@@ -73,10 +85,15 @@ CREATE TABLE IF NOT EXISTS {this._config.MainUserDataTableName} (
 );";
 			SqliteCommand command = new(tableCreateCommand, dat);
 			command.ExecuteNonQuery();
+
+			this.Logger.Log(LogLevel.Debug, $"{nameof(CreateConnection_UserTokenDataBase)}: End ({traceId})", _eventId, this);
 			return dat;
 		}
 		private SqliteConnection CreateConnection_UserMiscInfoDataBase()
 		{
+			int traceId = Random.Shared.Next();
+			this.Logger.Log(LogLevel.Debug, $"{nameof(CreateConnection_UserMiscInfoDataBase)}: Start ({traceId})", _eventId, this);
+
 			SqliteConnection dat = new($"Data Source={this._config.UserMiscInfoDbLocation}");
 			dat.Open();
 
@@ -87,10 +104,15 @@ CREATE TABLE IF NOT EXISTS {this._config.UserMiscInfoTableName} (
 
 			SqliteCommand command = new(tableCreateCommand, dat);
 			command.ExecuteNonQuery();
+
+			this.Logger.Log(LogLevel.Debug, $"{nameof(CreateConnection_UserMiscInfoDataBase)}: End ({traceId})", _eventId, this);
 			return dat;
 		}
 		private SqliteConnection CreateConnection_SongAliasDataBase()
 		{
+			int traceId = Random.Shared.Next();
+			this.Logger.Log(LogLevel.Debug, $"{nameof(CreateConnection_SongAliasDataBase)}: Start ({traceId})", _eventId, this);
+
 			SqliteConnection dat = new($"Data Source={this._config.SongAliasDbLocation}");
 			dat.Open();
 
@@ -101,6 +123,8 @@ CREATE TABLE IF NOT EXISTS {this._config.SongAliasTableName} (
 
 			SqliteCommand command = new(tableCreateCommand, dat);
 			command.ExecuteNonQuery();
+
+			this.Logger.Log(LogLevel.Debug, $"{nameof(CreateConnection_SongAliasDataBase)}: End ({traceId})", _eventId, this);
 			return dat;
 		}
 		#endregion
@@ -108,14 +132,22 @@ CREATE TABLE IF NOT EXISTS {this._config.SongAliasTableName} (
 		#region Token/show format operation
 		public async Task<int> AddOrReplaceTokenAsync(ulong id, string token, string? showFormat = null)
 		{
+			int traceId = Random.Shared.Next();
+			this.Logger.Log(LogLevel.Debug, $"{nameof(AddOrReplaceTokenAsync)}: Start ({traceId})", _eventId, this);
+
 			SqliteConnection connection = this._userTokenDataBase.Value;
 			SqliteCommand command = new($@"
 INSERT OR REPLACE INTO {this._config.MainUserDataTableName}(Id, Token, ShowFormat) VALUES(
 	{UncheckedConvertToLong(id)}, '{token}', '{showFormat ?? ".00"}');", connection);
+
+			this.Logger.Log(LogLevel.Debug, $"{nameof(AddOrReplaceTokenAsync)}: End ({traceId})", _eventId, this);
 			return await command.ExecuteNonQueryAsync();
 		}
 		public async Task<string?> GetTokenDirectlyAsync(ulong id)
 		{
+			int traceId = Random.Shared.Next();
+			this.Logger.Log(LogLevel.Debug, $"{nameof(GetTokenDirectlyAsync)}: Start ({traceId})", _eventId, this);
+
 			SqliteConnection connection = this._userTokenDataBase.Value;
 			SqliteCommand command = new($@"
 SELECT * FROM {this._config.MainUserDataTableName} WHERE
@@ -123,6 +155,8 @@ SELECT * FROM {this._config.MainUserDataTableName} WHERE
 			using SqliteDataReader reader = await command.ExecuteReaderAsync();
 			if (!await reader.ReadAsync())
 				return null;
+
+			this.Logger.Log(LogLevel.Debug, $"{nameof(GetTokenDirectlyAsync)}: End ({traceId})", _eventId, this);
 			return reader.GetString(1);
 		}
 		public async Task<UserData?> GetUserDataCachedAsync(ulong id)
@@ -157,6 +191,9 @@ SELECT * FROM {this._config.MainUserDataTableName} WHERE
 		#region Tags operation
 		public async Task<string[]?> GetTagsAsync(ulong id)
 		{
+			int traceId = Random.Shared.Next();
+			this.Logger.Log(LogLevel.Debug, $"{nameof(GetTagsAsync)}: Start ({traceId})", _eventId, this);
+
 			SqliteConnection connection = this._userMiscInfoDataBase.Value;
 			SqliteCommand command = new($@"
 SELECT * FROM {this._config.UserMiscInfoTableName} WHERE
@@ -164,15 +201,22 @@ SELECT * FROM {this._config.UserMiscInfoTableName} WHERE
 			using SqliteDataReader reader = await command.ExecuteReaderAsync();
 			if (!await reader.ReadAsync())
 				return null;
+
+			this.Logger.Log(LogLevel.Debug, $"{nameof(GetTagsAsync)}: End ({traceId})", _eventId, this);
 			return FromNormalizedSqlString(reader.GetString(1));
 		}
 		public async Task<int> AddOrReplaceTagsAsync(ulong id, params string[] tags)
 		{
+			int traceId = Random.Shared.Next();
+			this.Logger.Log(LogLevel.Debug, $"{nameof(AddOrReplaceTagsAsync)}: Start ({traceId})", _eventId, this);
+
 			SqliteConnection connection = this._userMiscInfoDataBase.Value;
 			SqliteCommand command = new($@"
 INSERT OR REPLACE INTO {this._config.UserMiscInfoTableName}(Id, Tags) VALUES(
 	{UncheckedConvertToLong(id)}, $value);", connection);
 			command.Parameters.AddWithValue("$value", NormalizeToSqlString(tags));
+
+			this.Logger.Log(LogLevel.Debug, $"{nameof(AddOrReplaceTagsAsync)}: End ({traceId})", _eventId, this);
 			return await command.ExecuteNonQueryAsync();
 		}
 		public async Task<string[]?> GetTagsCachedAsync(ulong id)
@@ -197,6 +241,9 @@ INSERT OR REPLACE INTO {this._config.UserMiscInfoTableName}(Id, Tags) VALUES(
 		#region Song alias
 		public async Task<string[]> GetSongAliasAsync(string songId)
 		{
+			int traceId = Random.Shared.Next();
+			this.Logger.Log(LogLevel.Debug, $"{nameof(GetSongAliasAsync)}: Start ({traceId})", _eventId, this);
+
 			SqliteConnection connection = this._songAliasDataBase.Value;
 			SqliteCommand command = new($@"
 SELECT * FROM {this._config.SongAliasTableName} WHERE
@@ -205,16 +252,23 @@ SELECT * FROM {this._config.SongAliasTableName} WHERE
 			using SqliteDataReader reader = await command.ExecuteReaderAsync();
 			if (!await reader.ReadAsync())
 				return [];
+
+			this.Logger.Log(LogLevel.Debug, $"{nameof(GetSongAliasAsync)}: End ({traceId})", _eventId, this);
 			return FromNormalizedSqlString(reader.GetString(1));
 		}
 		public async Task<int> AddOrReplaceSongAliasAsync(string songId, string[] alias)
 		{
+			int traceId = Random.Shared.Next();
+			this.Logger.Log(LogLevel.Debug, $"{nameof(AddOrReplaceSongAliasAsync)}: Start ({traceId})", _eventId, this);
+
 			SqliteConnection connection = this._songAliasDataBase.Value;
 			SqliteCommand command = new($@"
 INSERT OR REPLACE INTO {this._config.SongAliasTableName} VALUES(
 	$songId, $value);", connection);
 			command.Parameters.AddWithValue("$songId", songId);
 			command.Parameters.AddWithValue("$value", NormalizeToSqlString(alias));
+
+			this.Logger.Log(LogLevel.Debug, $"{nameof(AddOrReplaceSongAliasAsync)}: End ({traceId})", _eventId, this);
 			return await command.ExecuteNonQueryAsync();
 		}
 		public async Task<string[]?> GetSongAliasCachedAsync(string id)
@@ -240,6 +294,8 @@ INSERT OR REPLACE INTO {this._config.SongAliasTableName} VALUES(
 		public void Dispose()
 		{
 			GC.SuppressFinalize(this);
+
+			this.Logger.Log(LogLevel.Debug, $"{nameof(DbDataRequester)} finalizing", _eventId, this);
 
 			if (this._userTokenDataBase.IsValueCreated)
 				this._userTokenDataBase.Value.Dispose();
