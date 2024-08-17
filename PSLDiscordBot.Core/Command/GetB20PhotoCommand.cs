@@ -5,6 +5,7 @@ using PhigrosLibraryCSharp.GameRecords;
 using PSLDiscordBot.Core.Command.Base;
 using PSLDiscordBot.Core.ImageGenerating;
 using PSLDiscordBot.Core.Services;
+using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.CommandBase;
 using PSLDiscordBot.Framework.DependencyInjection;
@@ -39,7 +40,7 @@ public class GetB20PhotoCommand : CommandBase
 			minValue: 0
 		);
 
-	public override async Task Execute(SocketSlashCommand arg, UserData data, object executer)
+	public override async Task Execute(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
 	{
 		Summary summary;
 		GameSave save; // had to double cast
@@ -101,7 +102,8 @@ public class GetB20PhotoCommand : CommandBase
 			userInfo,
 			progress,
 			rks,
-			this.GetB20PhotoImageScriptService.Data
+			this.GetB20PhotoImageScriptService.Data,
+			arg.User.Id
 		);
 		MemoryStream stream = new();
 

@@ -2,6 +2,7 @@
 using PhigrosLibraryCSharp.Cloud.DataStructure;
 using PhigrosLibraryCSharp.GameRecords;
 using PSLDiscordBot.Core.Services;
+using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.DependencyInjection;
 using SixLabors.ImageSharp;
@@ -17,6 +18,8 @@ public class ImageGenerator : InjectableBase
 	public PhigrosDataService PhigrosDataService { get; set; }
 	[Inject]
 	public Logger Logger { get; set; }
+	[Inject]
+	public DataBaseService DataBaseService { get; set; }
 	#endregion
 
 	private Dictionary<string, Image> ChallengeRankImages { get; } = new();
@@ -70,8 +73,12 @@ public class ImageGenerator : InjectableBase
 		GameUserInfo gameUserInfo,
 		GameProgress progress,
 		double rks,
-		ImageScript script)
+		ImageScript script,
+		ulong userId)
 	{
+		using DataBaseService.DbDataRequester requester = this.DataBaseService.NewRequester();
+		Lazy<string[]> tags = new(() => requester.GetTagsCachedAsync(userId).GetAwaiter().GetResult() ?? []);
+
 		Challenge challenge = summary.Challenge;
 		string challengeString = challenge.RawCode.ToString();
 		string rankType = challenge.Rank.CastTo<ChallengeRank, int>().ToString();
@@ -116,9 +123,9 @@ public class ImageGenerator : InjectableBase
 			{ "User.PlayStatistics.INClearCount", new Lazy<string>(scores.Count(x => x.Difficulty == Difficulty.IN).ToString) },
 			{ "User.PlayStatistics.ATClearCount", new Lazy<string>(scores.Count(x => x.Difficulty == Difficulty.AT).ToString) },
 			{ "User.PlayStatistics.AllClearCount", new Lazy<string>(scores.Length.ToString) },
-			{ "User.Tags.JoinedComma", new Lazy<string>(() => string.Join(", ", userData.Tags)) },
-			{ "User.Tags.JoinedNewLine", new Lazy<string>(() => string.Join("\n", userData.Tags)) },
-			{ "User.Tags.Count", new Lazy<string>(userData.Tags.Count.ToString) },
+			{ "User.Tags.JoinedComma", new Lazy<string>(() => string.Join(", ", tags.Value)) },
+			{ "User.Tags.JoinedNewLine", new Lazy<string>(() => string.Join("\n", tags.Value)) },
+			{ "User.Tags.Count", new Lazy<string>(tags.Value.Length.ToString) },
 			{ "Time.Now", new Lazy<string>(DateTime.Now.ToString()) }
 		};
 
@@ -157,9 +164,9 @@ public class ImageGenerator : InjectableBase
 			textMap.Add($"B20.Status.{i}", new Lazy<string>(score.Status.ToString));
 			textMap.Add($"B20.Rks.{i}", new Lazy<string>(() => score.Rks.ToString(userData.ShowFormat)));
 		}
-		for (int i = 0; i < userData.Tags.Count; i++)
+		for (int i = 0; i < tags.Value.Length; i++)
 		{
-			textMap.Add($"User.Tags.{i}", new(userData.Tags[i])); // using lambda here cause argument out of range for some reason
+			textMap.Add($"User.Tags.{i}", new(tags.Value[i])); // using lambda here cause argument out of range for some reason
 		}
 
 		Dictionary<string, Lazy<Image>> imageMap = new()

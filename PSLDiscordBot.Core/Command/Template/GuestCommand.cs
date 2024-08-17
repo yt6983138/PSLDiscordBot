@@ -1,8 +1,8 @@
 ﻿using Discord;
 using Discord.WebSocket;
-using PSLDiscordBot.Core;
 using PSLDiscordBot.Core.Command.Base;
-using PSLDiscordBot.Framework.CommandBase;
+using PSLDiscordBot.Core.Services;
+using PSLDiscordBot.Core.UserDatas;
 
 namespace PSLDiscordBot.Core.Command.Template;
 
@@ -15,7 +15,7 @@ public class ExampleGuestCommand : GuestCommandBase
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder;
 
-	public override async Task Execute(SocketSlashCommand arg, UserData? data, object executer)
+	public override async Task Execute(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
 	{
 		await Task.Delay(0);
 	}

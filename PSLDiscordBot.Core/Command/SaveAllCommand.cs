@@ -2,6 +2,8 @@
 using Discord.WebSocket;
 using Microsoft.Extensions.Logging;
 using PSLDiscordBot.Core.Command.Base;
+using PSLDiscordBot.Core.Services;
+using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.CommandBase;
 using PSLDiscordBot.Framework.DependencyInjection;
@@ -27,9 +29,8 @@ public class SaveAllCommand : AdminCommandBase
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder;
 
-	public override async Task Execute(SocketSlashCommand arg, UserData? data, object executer)
+	public override async Task Execute(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
 	{
-		this.UserDataService.Save();
 		this.Logger.Log(LogLevel.Information, "Files saved.", this.EventId, this.Program);
 		await arg.ModifyOriginalResponseAsync(
 			x => x.Content = "Files saved.");

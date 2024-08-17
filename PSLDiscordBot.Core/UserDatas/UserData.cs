@@ -1,13 +1,11 @@
-﻿#define NOT_BROWSER
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using PhigrosLibraryCSharp;
 
-namespace PSLDiscordBot.Core;
+namespace PSLDiscordBot.Core.UserDatas;
 public class UserData
 {
 	public string Token { get; set; }
 	public string ShowFormat { get; set; } = ".00";
-	public List<string> Tags { get; set; } = new();
 
 	[JsonIgnore]
 	public Save SaveCache { get; init; }

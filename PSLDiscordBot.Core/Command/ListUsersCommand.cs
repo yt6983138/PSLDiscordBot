@@ -1,14 +1,14 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using PSLDiscordBot.Core.Command.Base;
+using PSLDiscordBot.Core.Services;
+using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Framework.BuiltInServices;
-using PSLDiscordBot.Framework.CommandBase;
 using PSLDiscordBot.Framework.DependencyInjection;
-using System.Text;
 
 namespace PSLDiscordBot.Core.Command;
 
-[AddToGlobal]
+//[AddToGlobal] // might be added soon
 public class ListUsersCommand : AdminCommandBase
 {
 	#region Injection
@@ -24,26 +24,27 @@ public class ListUsersCommand : AdminCommandBase
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder;
 
-	public override async Task Execute(SocketSlashCommand arg, UserData? data, object executer)
+	public override async Task Execute(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
 	{
-		StringBuilder sb = new();
-		foreach (KeyValuePair<ulong, UserData> user in this.UserDataService.Data)
-		{
-			sb.Append(user.Key);
-			sb.Append(" aka \"");
-			sb.Append((await this.DiscordClientService.SocketClient.GetUserAsync(user.Key)).GlobalName);
-			sb.Append("\"\n");
-		}
+		await Task.Delay(0);
+		//StringBuilder sb = new();
+		//foreach (KeyValuePair<ulong, UserData> user in this.UserDataService.Data)
+		//{
+		//	sb.Append(user.Key);
+		//	sb.Append(" aka \"");
+		//	sb.Append((await this.DiscordClientService.SocketClient.GetUserAsync(user.Key)).GlobalName);
+		//	sb.Append("\"\n");
+		//}
 
-		await arg.ModifyOriginalResponseAsync(
-			x =>
-			{
-				x.Content = $"There are currently {this.UserDataService.Data.Count} user(s).";
-				x.Attachments = new List<FileAttachment>()
-				{
-					new(new MemoryStream(Encoding.UTF8.GetBytes(sb.ToString())), "UserList.txt")
-				};
-			}
-			);
+		//await arg.ModifyOriginalResponseAsync(
+		//	x =>
+		//	{
+		//		x.Content = $"There are currently {this.UserDataService.Data.Count} user(s).";
+		//		x.Attachments = new List<FileAttachment>()
+		//		{
+		//			new(new MemoryStream(Encoding.UTF8.GetBytes(sb.ToString())), "UserList.txt")
+		//		};
+		//	}
+		//	);
 	}
 }

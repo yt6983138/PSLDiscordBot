@@ -1,6 +1,8 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using PSLDiscordBot.Core.Command.Base;
+using PSLDiscordBot.Core.Services;
+using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Framework.CommandBase;
 using System.Text;
 
@@ -15,9 +17,10 @@ public class ListTagsCommandCommand : CommandBase
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder;
 
-	public override async Task Execute(SocketSlashCommand arg, UserData data, object executer)
+	public override async Task Execute(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
 	{
-		if (data.Tags.Count == 0)
+		string[] tags = await requester.GetTagsCachedAsync(arg.User.Id) ?? [];
+		if (tags.Length == 0)
 		{
 			await arg.ModifyOriginalResponseAsync(
 			(msg) =>
@@ -28,18 +31,18 @@ public class ListTagsCommandCommand : CommandBase
 		}
 
 		StringBuilder stringBuilder = new("```\n");
-		for (int i = 0; i < data.Tags.Count; i++)
+		for (int i = 0; i < tags.Length; i++)
 		{
 			stringBuilder.Append(i);
 			stringBuilder.Append(": ");
-			stringBuilder.AppendLine(data.Tags[i]);
+			stringBuilder.AppendLine(tags[i]);
 		}
 		stringBuilder.Append("```");
 
 		await arg.ModifyOriginalResponseAsync(
 			(msg) =>
 			{
-				msg.Content = $"You have {data.Tags.Count} tag(s): \n{stringBuilder}";
+				msg.Content = $"You have {tags.Length} tag(s): \n{stringBuilder}";
 			});
 	}
 }

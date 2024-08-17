@@ -2,6 +2,8 @@
 using Discord.WebSocket;
 using PhigrosLibraryCSharp.Cloud.DataStructure.Raw;
 using PSLDiscordBot.Core.Command.Base;
+using PSLDiscordBot.Core.Services;
+using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Framework.CommandBase;
 using System.Text;
 
@@ -16,7 +18,7 @@ public class GetTimeIndexCommand : CommandBase
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder;
 
-	public override async Task Execute(SocketSlashCommand arg, UserData data, object executer)
+	public override async Task Execute(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
 	{
 		List<RawSave> saves = (await data.SaveCache.GetRawSaveFromCloudAsync()).results;
 		StringBuilder sb = new("```\nIndex | Date\n"); // cant use tabs
