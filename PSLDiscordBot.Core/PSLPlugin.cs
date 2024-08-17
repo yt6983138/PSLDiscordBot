@@ -182,11 +182,11 @@ internal class PSLPlugin : InjectableBase, IPlugin
 	}
 	private void Program_AfterArgParse(object? sender, EventArgs e)
 	{
+		InjectableBase.AddSingleton(new DataBaseService());
 		InjectableBase.AddSingleton(new PhigrosDataService());
 		InjectableBase.AddSingleton(new GetB20PhotoImageScriptService());
 		InjectableBase.AddSingleton(new AboutMeImageScriptService());
 		InjectableBase.AddSingleton(new ImageGenerator());
-		InjectableBase.AddSingleton(new DataBaseService());
 		InjectableBase.AddSingleton(new StatusService());
 	}
 	private void Program_AfterPluginsLoaded(object? sender, EventArgs e)
