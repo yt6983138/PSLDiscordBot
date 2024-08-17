@@ -22,15 +22,15 @@ public abstract class CommandBase : BasicCommandBase
 	{
 	}
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
-	public abstract Task Execute(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer);
-	public override async Task ExecuteWithPermissionProtect(SocketSlashCommand arg, object executer)
+	public abstract Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer);
+	public override async Task Execute(SocketSlashCommand arg, object executer)
 	{
 		using DataBaseService.DbDataRequester requester = this.UserDataService.NewRequester();
 		await arg.DeferAsync(ephemeral: this.IsEphemeral);
 		if (!this.CheckHasRegisteredAndReply(arg, requester, out UserData? userData))
 			return;
 
-		await this.Execute(arg, userData!, requester, executer);
+		await this.Callback(arg, userData!, requester, executer);
 	}
 
 	public bool CheckHasRegisteredAndReply(in SocketSlashCommand task, in DataBaseService.DbDataRequester requester, out UserData? userData)

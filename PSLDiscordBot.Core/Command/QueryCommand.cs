@@ -41,7 +41,7 @@ public class QueryCommand : CommandBase
 			minValue: 0
 		);
 
-	public override async Task Execute(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
+	public override async Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
 	{
 		Summary summary;
 		GameSave save; // had to double cast

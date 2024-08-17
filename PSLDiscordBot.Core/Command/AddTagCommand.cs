@@ -18,7 +18,7 @@ public class AddTagCommandCommand : CommandBase
 		this.BasicBuilder
 		.AddOption("tag", ApplicationCommandOptionType.String, "Tag you want to add.", isRequired: true);
 
-	public override async Task Execute(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
+	public override async Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
 	{
 		string tag = arg.Data.Options.ElementAt(0).Value.Unbox<string>();
 

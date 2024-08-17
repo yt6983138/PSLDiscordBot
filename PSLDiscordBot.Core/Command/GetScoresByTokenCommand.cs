@@ -48,7 +48,7 @@ public class GetScoresByTokenCommand : AdminCommandBase
 			maxValue: 114514
 		);
 
-	public override async Task Execute(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
+	public override async Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
 	{
 		ulong userId = arg.User.Id;
 		string token = arg.Data.Options.ElementAt(0).Value.Unbox<string>();

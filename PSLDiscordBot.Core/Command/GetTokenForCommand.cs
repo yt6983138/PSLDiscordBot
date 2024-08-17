@@ -17,7 +17,7 @@ public class GetTokenForCommand : AdminCommandBase
 		this.BasicBuilder
 		.AddOption("user", ApplicationCommandOptionType.User, "The user id/name.", isRequired: true);
 
-	public override async Task Execute(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
+	public override async Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
 	{
 		IUser user = (IUser)arg.Data.Options.First().Value;
 

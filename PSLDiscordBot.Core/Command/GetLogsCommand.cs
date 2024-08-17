@@ -25,7 +25,7 @@ public class GetLogsCommand : AdminCommandBase
 			minValue: 1
 		);
 
-	public override async Task Execute(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
+	public override async Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
 	{
 		int count = arg.Data.Options.ElementAt(0).Value.Unbox<long>().CastTo<long, int>();
 

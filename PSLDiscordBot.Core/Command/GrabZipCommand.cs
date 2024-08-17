@@ -29,7 +29,7 @@ public class GrabZipCommand : AdminCommandBase
 			"Index.",
 			isRequired: true);
 
-	public override async Task Execute(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
+	public override async Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
 	{
 		string token = arg.Data.Options.First(x => x.Name == "token").Value.Unbox<string>();
 		int index = arg.Data.Options.First(x => x.Name == "index").Value.Unbox<long>().CastTo<long, int>();

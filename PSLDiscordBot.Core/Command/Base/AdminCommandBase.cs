@@ -5,7 +5,7 @@ using PSLDiscordBot.Core.UserDatas;
 namespace PSLDiscordBot.Core.Command.Base;
 public abstract class AdminCommandBase : CommandBase
 {
-	public override async Task ExecuteWithPermissionProtect(SocketSlashCommand arg, object executer)
+	public override async Task Execute(SocketSlashCommand arg, object executer)
 	{
 		using DataBaseService.DbDataRequester requester = this.UserDataService.NewRequester();
 		await arg.DeferAsync(ephemeral: this.IsEphemeral);
@@ -14,7 +14,7 @@ public abstract class AdminCommandBase : CommandBase
 
 		UserData? userData = await requester.GetUserDataCachedAsync(arg.User.Id);
 
-		await this.Execute(arg, userData, requester, executer);
+		await this.Callback(arg, userData, requester, executer);
 	}
 	/// <summary>
 	/// Please notice: we can not guarantee that data is not null
@@ -23,5 +23,5 @@ public abstract class AdminCommandBase : CommandBase
 	/// <param name="data"></param>
 	/// <param name="executer"></param>
 	/// <returns></returns>
-	public override abstract Task Execute(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer);
+	public override abstract Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer);
 }

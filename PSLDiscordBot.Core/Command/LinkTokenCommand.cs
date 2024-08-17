@@ -35,7 +35,7 @@ public class LinkTokenCommand : GuestCommandBase
 			minLength: 25
 		);
 
-	public override async Task Execute(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
+	public override async Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
 	{
 		ulong userId = arg.User.Id;
 		string token = arg.Data.Options.ElementAt(0).Value.Unbox<string>();

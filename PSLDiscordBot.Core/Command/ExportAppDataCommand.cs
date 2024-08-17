@@ -24,7 +24,7 @@ public class ExportAppDataCommand : AdminCommandBase
 			"The password of the zip archive.",
 			isRequired: true);
 
-	public override async Task Execute(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
+	public override async Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
 	{
 		MemoryStream memoryStream = new();
 

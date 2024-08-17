@@ -18,7 +18,7 @@ public class GetTimeIndexCommand : CommandBase
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder;
 
-	public override async Task Execute(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
+	public override async Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
 	{
 		List<RawSave> saves = (await data.SaveCache.GetRawSaveFromCloudAsync()).results;
 		StringBuilder sb = new("```\nIndex | Date\n"); // cant use tabs
