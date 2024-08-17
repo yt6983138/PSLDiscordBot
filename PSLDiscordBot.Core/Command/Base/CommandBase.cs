@@ -27,13 +27,13 @@ public abstract class CommandBase : BasicCommandBase
 	{
 		using DataBaseService.DbDataRequester requester = this.UserDataService.NewRequester();
 		await arg.DeferAsync(ephemeral: this.IsEphemeral);
-		if (!this.CheckHasRegisteredAndReply(arg, requester, out UserData? userData))
+		if (!CheckHasRegisteredAndReply(arg, requester, out UserData? userData))
 			return;
 
 		await this.Callback(arg, userData!, requester, executer);
 	}
 
-	public bool CheckHasRegisteredAndReply(in SocketSlashCommand task, in DataBaseService.DbDataRequester requester, out UserData? userData)
+	public static bool CheckHasRegisteredAndReply(in SocketSlashCommand task, in DataBaseService.DbDataRequester requester, out UserData? userData)
 	{
 		ulong userId = task.User.Id;
 
