@@ -154,6 +154,8 @@ public class PSLPlugin : InjectableBase, IPlugin
 		program.AddArgReceiver(this.ResetConfigFull);
 		program.AddArgReceiver(this.ResetScripts);
 
+		InjectableBase.AddSingleton(this);
+
 		this.DiscordClientService.SocketClient.Ready += this.Client_Ready;
 		this.DiscordClientService.SocketClient.Log += this.Log;
 	}
