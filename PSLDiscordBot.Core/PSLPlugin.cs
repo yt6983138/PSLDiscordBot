@@ -14,7 +14,7 @@ using System.Net.WebSockets;
 using yt6983138.Common;
 
 namespace PSLDiscordBot.Core;
-internal class PSLPlugin : InjectableBase, IPlugin
+public class PSLPlugin : InjectableBase, IPlugin
 {
 	private static EventId EventId { get; } = new(114511, "PSL");
 	private static EventId EventIdInitialize { get; } = new(114511, "PSL.Initializing");
