@@ -284,6 +284,40 @@ INSERT OR REPLACE INTO {this._config.SongAliasTableName} VALUES(
 			_songAliasCache[id] = alias;
 			return await this.AddOrReplaceSongAliasAsync(id, alias);
 		}
+
+		public async Task<(string Id, string[] Alias)?> FindSongAliasAsync(string alias)
+		{
+			int traceId = Random.Shared.Next();
+			this._logger.Log(LogLevel.Debug, $"{nameof(FindSongAliasAsync)}: Start ({traceId})", _eventId, this);
+
+			SqliteConnection connection = this._songAliasDataBase.Value;
+			SqliteCommand command = new($@"
+SELECT * FROM {this._config.SongAliasTableName} WHERE
+	Alias LIKE $alias LIMIT 1;", connection);
+			command.Parameters.AddWithValue("$alias", alias);
+			using SqliteDataReader reader = await command.ExecuteReaderAsync();
+			if (!await reader.ReadAsync())
+				return null;
+
+			this._logger.Log(LogLevel.Debug, $"{nameof(FindSongAliasAsync)}: End ({traceId})", _eventId, this);
+			return (reader.GetString(0), FromNormalizedSqlString(reader.GetString(1)));
+		}
+		public async Task<(string Id, string[] Alias)?> FindSongAliasCachedAsync(string alias)
+		{
+			(string Key, string[]) matchesInCaches = _songAliasCache
+				.Select(x => (x.Key, (string[])x.Value))
+				.FirstOrDefault(x => x.Item2.Contains(alias));
+
+			if (matchesInCaches != default)
+				return matchesInCaches;
+
+			(string Id, string[] Alias)? result = await this.FindSongAliasAsync(alias);
+
+			if (result is null) return null;
+
+			_songAliasCache[result.Value.Id] = result.Value.Alias;
+			return result;
+		}
 		#endregion
 
 		#region Finalize
