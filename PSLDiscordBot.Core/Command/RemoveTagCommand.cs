@@ -1,6 +1,8 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using PSLDiscordBot.Core.Command.Base;
+using PSLDiscordBot.Core.Services;
+using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.CommandBase;
 
@@ -22,20 +24,23 @@ public class RemoveTagCommandCommand : CommandBase
 			minValue: 0,
 			maxValue: int.MaxValue);
 
-	public override async Task Execute(SocketSlashCommand arg, UserData data, object executer)
+	public override async Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
 	{
 		int index = arg.Data.Options.First().Value.Unbox<long>().CastTo<long, int>();
-		if (index >= data.Tags.Count)
+		List<string> tags = (await requester.GetTagsCachedAsync(arg.User.Id) ?? []).ToList();
+
+		if (index >= tags.Count)
 		{
 			await arg.ModifyOriginalResponseAsync(
 			(msg) =>
 			{
-				msg.Content = $"Index exceeds maximum number, which is {data.Tags.Count - 1}. You entered {index}.";
+				msg.Content = $"Index exceeds maximum number, which is {tags.Count - 1}. You entered {index}.";
 			});
 			return;
 		}
 
-		data.Tags.RemoveAt(index);
+		tags.RemoveAt(index);
+		await requester.AddOrReplaceTagsCachedAsync(arg.User.Id, tags.ToArray());
 		await arg.ModifyOriginalResponseAsync(
 			(msg) =>
 			{

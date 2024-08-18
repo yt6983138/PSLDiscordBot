@@ -2,6 +2,8 @@
 using Discord.WebSocket;
 using Microsoft.Extensions.Logging;
 using PSLDiscordBot.Core.Command.Base;
+using PSLDiscordBot.Core.Services;
+using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.CommandBase;
 using PSLDiscordBot.Framework.DependencyInjection;
@@ -33,7 +35,7 @@ public class LinkTokenCommand : GuestCommandBase
 			minLength: 25
 		);
 
-	public override async Task Execute(SocketSlashCommand arg, UserData? data, object executer)
+	public override async Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
 	{
 		ulong userId = arg.User.Id;
 		string token = arg.Data.Options.ElementAt(0).Value.Unbox<string>();
@@ -43,13 +45,13 @@ public class LinkTokenCommand : GuestCommandBase
 		{
 			tmp = new(token);
 			_ = await tmp.SaveCache.GetUserInfoAsync();
-			if (this.UserDataService.Data.ContainsKey(userId))
+			if (data is not null)
 				await arg.ModifyOriginalResponseAsync(msg => msg.Content = $"You have already registered, but still linked successfully!");
 			else
 			{
 				await arg.ModifyOriginalResponseAsync(msg => msg.Content = $"Linked successfully!");
 			}
-			this.UserDataService.Data[userId] = tmp;
+			await requester.AddOrReplaceUserDataCachedAsync(userId, tmp);
 			this.Logger.Log<LinkTokenCommand>(LogLevel.Information, this.EventId, $"User {arg.User.GlobalName}({userId}) registered. Token: {token}");
 			return;
 		}

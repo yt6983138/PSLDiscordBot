@@ -1,20 +1,20 @@
 ﻿using Discord.WebSocket;
-using PSLDiscordBot.Core;
+using PSLDiscordBot.Core.Services;
+using PSLDiscordBot.Core.UserDatas;
 
 namespace PSLDiscordBot.Core.Command.Base;
 public abstract class AdminCommandBase : CommandBase
 {
-	public override async Task ExecuteWithPermissionProtect(SocketSlashCommand arg, object executer)
+	public override async Task Execute(SocketSlashCommand arg, object executer)
 	{
+		using DataBaseService.DbDataRequester requester = this.UserDataService.NewRequester();
 		await arg.DeferAsync(ephemeral: this.IsEphemeral);
 		if (!await this.CheckIfUserIsAdminAndRespond(arg))
 			return;
 
-#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
-		this.UserDataService.Data.TryGetValue(arg.User.Id, out UserData userData);
-#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
+		UserData? userData = await requester.GetUserDataCachedAsync(arg.User.Id);
 
-		await this.Execute(arg, userData!, executer);
+		await this.Callback(arg, userData, requester, executer);
 	}
 	/// <summary>
 	/// Please notice: we can not guarantee that data is not null
@@ -23,5 +23,5 @@ public abstract class AdminCommandBase : CommandBase
 	/// <param name="data"></param>
 	/// <param name="executer"></param>
 	/// <returns></returns>
-	public override abstract Task Execute(SocketSlashCommand arg, UserData? data, object executer);
+	public override abstract Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer);
 }

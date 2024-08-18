@@ -2,6 +2,8 @@
 using Discord.WebSocket;
 using PhigrosLibraryCSharp.Cloud.DataStructure;
 using PSLDiscordBot.Core.Command.Base;
+using PSLDiscordBot.Core.Services;
+using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.CommandBase;
 
@@ -22,7 +24,7 @@ public class GetMoneyCommand : CommandBase
 			minValue: 0
 		);
 
-	public override async Task Execute(SocketSlashCommand arg, UserData data, object executer)
+	public override async Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
 	{
 		int? index = arg.Data.Options.FirstOrDefault(x => x.Name == "index")?.Value.Unbox<long>().CastTo<long, int>();
 		GameProgress progress;

@@ -102,7 +102,6 @@ internal class PSLPlugin : InjectableBase, IPlugin
 			this._configService.Data.HelpMDLocation = @default.HelpMDLocation;
 			this._configService.Data.NameMapLocation = @default.NameMapLocation;
 			this._configService.Data.Verbose = @default.Verbose;
-			this._configService.Data.UserDataLocation = @default.UserDataLocation;
 
 			this._configService.Save();
 		}, null, true);
@@ -183,11 +182,11 @@ internal class PSLPlugin : InjectableBase, IPlugin
 	}
 	private void Program_AfterArgParse(object? sender, EventArgs e)
 	{
+		InjectableBase.AddSingleton(new DataBaseService());
 		InjectableBase.AddSingleton(new PhigrosDataService());
 		InjectableBase.AddSingleton(new GetB20PhotoImageScriptService());
 		InjectableBase.AddSingleton(new AboutMeImageScriptService());
 		InjectableBase.AddSingleton(new ImageGenerator());
-		InjectableBase.AddSingleton(new UserDataService());
 		InjectableBase.AddSingleton(new StatusService());
 	}
 	private void Program_AfterPluginsLoaded(object? sender, EventArgs e)
@@ -379,7 +378,7 @@ internal class PSLPlugin : InjectableBase, IPlugin
 	private void WriteAll()
 	{
 		this._configService.Save();
-		InjectableBase.GetSingleton<UserDataService>().Save();
+		//InjectableBase.GetSingleton<DataBaseService>().Save();
 		InjectableBase.GetSingleton<AboutMeImageScriptService>().Save();
 		InjectableBase.GetSingleton<GetB20PhotoImageScriptService>().Save();
 	}

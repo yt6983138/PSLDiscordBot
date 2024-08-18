@@ -1,6 +1,8 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using PSLDiscordBot.Core.Command.Base;
+using PSLDiscordBot.Core.Services;
+using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.CommandBase;
 using System.Text;
@@ -23,11 +25,12 @@ public class SetPrecisionCommand : CommandBase
 			minValue: 1
 		);
 
-	public override async Task Execute(SocketSlashCommand arg, UserData data, object executer)
+	public override async Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
 	{
 		StringBuilder sb = new(".");
 		sb.Append('0', arg.Data.Options.ElementAt(0).Value.Unbox<long>().CastTo<long, int>());
 		data.ShowFormat = sb.ToString();
+		await requester.AddOrReplaceUserDataCachedAsync(arg.User.Id, data);
 		await arg.ModifyOriginalResponseAsync(
 			(msg) =>
 			{

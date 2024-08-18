@@ -5,6 +5,8 @@ using Microsoft.Extensions.Logging;
 using PhigrosLibraryCSharp.Cloud.Login;
 using PhigrosLibraryCSharp.Cloud.Login.DataStructure;
 using PSLDiscordBot.Core.Command.Base;
+using PSLDiscordBot.Core.Services;
+using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.CommandBase;
 using PSLDiscordBot.Framework.DependencyInjection;
@@ -30,7 +32,7 @@ public class LoginCommand : GuestCommandBase
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder;
 
-	public override async Task Execute(SocketSlashCommand arg, UserData? data, object executer)
+	public override async Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
 	{
 		RestInteractionMessage? message = null;
 		try
@@ -44,7 +46,7 @@ public class LoginCommand : GuestCommandBase
 				"don't worry about it just close the page and the login process will continue anyway, " +
 				"after you do it this message should show that you logged in successfully."
 			);
-			await this.ListenQrCodeChange(arg, message, qrCode, stopAt);
+			await this.ListenQrCodeChange(arg, message, qrCode, stopAt, requester);
 		}
 		catch (Exception ex)
 		{
@@ -57,7 +59,12 @@ public class LoginCommand : GuestCommandBase
 			await arg.ModifyOriginalResponseAsync(msg => msg.Content = $"Error: {ex.Message}\nYou may try again or report to author.");
 		}
 	}
-	public async Task ListenQrCodeChange(SocketSlashCommand command, RestInteractionMessage message, CompleteQRCodeData data, DateTime whenToStop)
+	public async Task ListenQrCodeChange(
+		SocketSlashCommand command,
+		RestInteractionMessage message,
+		CompleteQRCodeData data,
+		DateTime whenToStop,
+		DataBaseService.DbDataRequester requester)
 	{
 		const int Delay = 3000;
 		while (DateTime.Now < whenToStop)
@@ -71,8 +78,8 @@ public class LoginCommand : GuestCommandBase
 					string token = await LCHelper.LoginAndGetToken(new(profile.Data, result.Data));
 					UserData userData = new(token);
 					_ = await userData.SaveCache.GetUserInfoAsync();
-					this.Logger.Log<Program>(LogLevel.Information, this.EventId, $"User {command.User.GlobalName}({command.User.Id}) registered. Token: {token}");
-					this.UserDataService.Data[command.User.Id] = userData;
+					this.Logger.Log<LoginCommand>(LogLevel.Information, this.EventId, $"User {command.User.GlobalName}({command.User.Id}) registered. Token: {token}");
+					await requester.AddOrReplaceUserDataCachedAsync(command.User.Id, userData);
 					await message.ModifyAsync(x => x.Content = "Logged in successfully! Now you can access all command!");
 					return;
 				}

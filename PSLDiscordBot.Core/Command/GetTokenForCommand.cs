@@ -1,6 +1,8 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using PSLDiscordBot.Core.Command.Base;
+using PSLDiscordBot.Core.Services;
+using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Framework.CommandBase;
 
 namespace PSLDiscordBot.Core.Command;
@@ -15,24 +17,26 @@ public class GetTokenForCommand : AdminCommandBase
 		this.BasicBuilder
 		.AddOption("user", ApplicationCommandOptionType.User, "The user id/name.", isRequired: true);
 
-	public override async Task Execute(SocketSlashCommand arg, UserData? data, object executer)
+	public override async Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
 	{
 		IUser user = (IUser)arg.Data.Options.First().Value;
 
-		if (!this.UserDataService.Data.TryGetValue(user.Id, out UserData? userData))
+		UserData? result = await requester.GetUserDataCachedAsync(user.Id);
+
+		if (result is null)
 		{
 			await arg.ModifyOriginalResponseAsync(
 			x =>
 			{
 				x.Content = $"User `{user.Id}` aka `{user.GlobalName}` is not registered.";
-			}
-			);
+			});
+			return;
 		}
 
 		await arg.ModifyOriginalResponseAsync(
 			x =>
 			{
-				x.Content = $"The user's token is ||`{userData!.Token}`||.";
+				x.Content = $"The user's token is ||`{result.Token}`||.";
 			}
 			);
 	}

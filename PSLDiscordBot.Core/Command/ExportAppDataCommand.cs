@@ -4,6 +4,7 @@ using ICSharpCode.SharpZipLib.Core;
 using ICSharpCode.SharpZipLib.Zip;
 using PSLDiscordBot.Core.Command.Base;
 using PSLDiscordBot.Core.Services;
+using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.CommandBase;
 
@@ -23,9 +24,8 @@ public class ExportAppDataCommand : AdminCommandBase
 			"The password of the zip archive.",
 			isRequired: true);
 
-	public override async Task Execute(SocketSlashCommand arg, UserData? data, object executer)
+	public override async Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
 	{
-		this.UserDataService.Save();
 		MemoryStream memoryStream = new();
 
 		using ZipOutputStream zipStream = new(memoryStream);
@@ -39,7 +39,10 @@ public class ExportAppDataCommand : AdminCommandBase
 		zipStream.PutFile(this.ConfigService.Data.GetB20PhotoImageScriptLocation);
 		zipStream.PutFile(this.ConfigService.Data.LogLocation);
 		zipStream.PutFile(this.ConfigService.Data.HelpMDLocation);
-		zipStream.PutFile(this.ConfigService.Data.UserDataLocation);
+
+		zipStream.PutFile(this.ConfigService.Data.MainUserDataDbLocation);
+		zipStream.PutFile(this.ConfigService.Data.SongAliasDbLocation);
+		zipStream.PutFile(this.ConfigService.Data.UserMiscInfoDbLocation);
 
 		zipStream.Close();
 		memoryStream.Seek(0, SeekOrigin.Begin);

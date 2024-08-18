@@ -1,5 +1,6 @@
 ﻿using Discord.WebSocket;
 using PSLDiscordBot.Core.Services;
+using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Framework.CommandBase;
 using PSLDiscordBot.Framework.DependencyInjection;
 
@@ -12,7 +13,7 @@ public abstract class CommandBase : BasicCommandBase
 	[Inject]
 	public ConfigService ConfigService { get; set; }
 	[Inject]
-	public UserDataService UserDataService { get; set; }
+	public DataBaseService UserDataService { get; set; }
 	#endregion
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
@@ -21,20 +22,23 @@ public abstract class CommandBase : BasicCommandBase
 	{
 	}
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
-	public abstract Task Execute(SocketSlashCommand arg, UserData data, object executer);
-	public override async Task ExecuteWithPermissionProtect(SocketSlashCommand arg, object executer)
+	public abstract Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer);
+	public override async Task Execute(SocketSlashCommand arg, object executer)
 	{
+		using DataBaseService.DbDataRequester requester = this.UserDataService.NewRequester();
 		await arg.DeferAsync(ephemeral: this.IsEphemeral);
-		if (!this.CheckHasRegisteredAndReply(arg, out UserData userData))
+		if (!CheckHasRegisteredAndReply(arg, requester, out UserData? userData))
 			return;
 
-		await this.Execute(arg, userData, executer);
+		await this.Callback(arg, userData!, requester, executer);
 	}
 
-	public bool CheckHasRegisteredAndReply(in SocketSlashCommand task, out UserData userData)
+	public static bool CheckHasRegisteredAndReply(in SocketSlashCommand task, in DataBaseService.DbDataRequester requester, out UserData? userData)
 	{
 		ulong userId = task.User.Id;
-		if (!this.UserDataService.Data.TryGetValue(userId, out userData!))
+
+		userData = requester.GetUserDataCachedAsync(userId).GetAwaiter().GetResult();
+		if (userData is null)
 		{
 			task.ModifyOriginalResponseAsync(msg => msg.Content = "You haven't logged in/linked token. Please use /login or /link-token first.");
 			userData = default!;

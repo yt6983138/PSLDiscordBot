@@ -191,8 +191,8 @@ public class Program
 		Task task;
 
 		if (command.RunOnDifferentThread)
-			task = Task.Run(() => command.ExecuteWithPermissionProtect(arg, this));
-		else task = command.ExecuteWithPermissionProtect(arg, this);
+			task = Task.Run(() => command.Execute(arg, this));
+		else task = command.Execute(arg, this);
 
 		this.RunningTasks.Add(task);
 

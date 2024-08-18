@@ -3,6 +3,7 @@ using Discord.Rest;
 using Discord.WebSocket;
 using PSLDiscordBot.Core.Command.Base;
 using PSLDiscordBot.Core.Services;
+using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.CommandBase;
 using PSLDiscordBot.Framework.DependencyInjection;
@@ -27,7 +28,7 @@ public class ShutDownCommand : AdminCommandBase
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder;
 
-	public override async Task Execute(SocketSlashCommand arg, UserData? data, object executer)
+	public override async Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
 	{
 		this.StatusService.CurrentStatus = Status.ShuttingDown;
 
