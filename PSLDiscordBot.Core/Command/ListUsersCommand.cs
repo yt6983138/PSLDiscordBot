@@ -28,7 +28,7 @@ public class ListUsersCommand : AdminCommandBase
 	{
 		await Task.Delay(0);
 		//StringBuilder sb = new();
-		//foreach (KeyValuePair<ulong, UserData> user in this.UserDataService.Data)
+		//foreach (KeyValuePair<ulong, UserData> user in this.DataBaseService.Data)
 		//{
 		//	sb.Append(user.Key);
 		//	sb.Append(" aka \"");
@@ -39,7 +39,7 @@ public class ListUsersCommand : AdminCommandBase
 		//await arg.ModifyOriginalResponseAsync(
 		//	x =>
 		//	{
-		//		x.Content = $"There are currently {this.UserDataService.Data.Count} user(s).";
+		//		x.Content = $"There are currently {this.DataBaseService.Data.Count} user(s).";
 		//		x.Attachments = new List<FileAttachment>()
 		//		{
 		//			new(new MemoryStream(Encoding.UTF8.GetBytes(sb.ToString())), "UserList.txt")

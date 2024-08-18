@@ -7,7 +7,7 @@ public abstract class AdminCommandBase : CommandBase
 {
 	public override async Task Execute(SocketSlashCommand arg, object executer)
 	{
-		using DataBaseService.DbDataRequester requester = this.UserDataService.NewRequester();
+		using DataBaseService.DbDataRequester requester = this.DataBaseService.NewRequester();
 		await arg.DeferAsync(ephemeral: this.IsEphemeral);
 		if (!await this.CheckIfUserIsAdminAndRespond(arg))
 			return;

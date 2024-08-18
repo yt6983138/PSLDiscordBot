@@ -13,7 +13,7 @@ public abstract class CommandBase : BasicCommandBase
 	[Inject]
 	public ConfigService ConfigService { get; set; }
 	[Inject]
-	public DataBaseService UserDataService { get; set; }
+	public DataBaseService DataBaseService { get; set; }
 	#endregion
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
@@ -25,7 +25,7 @@ public abstract class CommandBase : BasicCommandBase
 	public abstract Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer);
 	public override async Task Execute(SocketSlashCommand arg, object executer)
 	{
-		using DataBaseService.DbDataRequester requester = this.UserDataService.NewRequester();
+		using DataBaseService.DbDataRequester requester = this.DataBaseService.NewRequester();
 		await arg.DeferAsync(ephemeral: this.IsEphemeral);
 		if (!CheckHasRegisteredAndReply(arg, requester, out UserData? userData))
 			return;

@@ -7,7 +7,7 @@ public abstract class GuestCommandBase : CommandBase
 {
 	public override async Task Execute(SocketSlashCommand arg, object executer)
 	{
-		using DataBaseService.DbDataRequester requester = this.UserDataService.NewRequester();
+		using DataBaseService.DbDataRequester requester = this.DataBaseService.NewRequester();
 		await arg.DeferAsync(ephemeral: this.IsEphemeral);
 		await this.Callback(arg, null, requester, executer);
 	}
