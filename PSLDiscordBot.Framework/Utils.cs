@@ -75,14 +75,13 @@ public static class Utils
 	{
 		return (TTo)Convert.ChangeType(from, typeof(TTo))!;
 	}
-	public static List<T> MergeArrays<T>(this IEnumerable<T[]> source)
+	public static IEnumerable<T> MergeArrays<T>(this IEnumerable<IList<T>> source)
 	{
-		List<T> result = new();
-		foreach (T[] item in source)
+		foreach (IList<T> item in source)
 		{
-			result.AddRange(item);
+			for (int i = 0; i < item.Count; i++)
+				yield return item[i];
 		}
-		return result;
 	}
 	public static string GetRelativePath(string from, string to)
 	{
