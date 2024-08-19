@@ -66,7 +66,7 @@ public class AddAliasCommand : CommandBase
 		string[] newAlias = theRealOne.Alias;
 		Array.Resize(ref newAlias, newAlias.Length + 1);
 		newAlias[^1] = alias;
-		await requester.AddOrReplaceSongAliasAsync(theRealOne.SongId, newAlias);
+		await requester.AddOrReplaceSongAliasCachedAsync(theRealOne.SongId, newAlias);
 
 		await arg.QuickReply($"Your alias has added successfully! The song " +
 			$"`{this.PhigrosDataService.IdNameMap[theRealOne.SongId]}` now has the following alias: \n" +
