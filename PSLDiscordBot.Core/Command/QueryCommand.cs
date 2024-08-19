@@ -9,7 +9,6 @@ using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.CommandBase;
 using PSLDiscordBot.Framework.DependencyInjection;
 using System.Text;
-using System.Text.RegularExpressions;
 
 namespace PSLDiscordBot.Core.Command;
 
@@ -28,9 +27,9 @@ public class QueryCommand : CommandBase
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder.AddOption(
-			"regex",
+			"search",
 			ApplicationCommandOptionType.String,
-			"Searching pattern (regex, hint: you can add (?i) at start to query case insensitively)",
+			"Searching strings, you can either put id, put alias, or put the song name.",
 			isRequired: true
 		)
 		.AddOption(
@@ -44,30 +43,32 @@ public class QueryCommand : CommandBase
 	public override async Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
 	{
 		Summary summary;
-		GameSave save; // had to double cast
-		Regex regex;
-		int index = arg.Data.Options.ElementAtOrDefault(1)?.Value.Unbox<long>().CastTo<long, int>() ?? 0;
-		List<CompleteScore> scoresToShow = new();
+		GameSave save;
+
+		string search = arg.GetOption<string>("search");
+		int index = arg.GetIntegerOptionAsInt32OrDefault("index");
+
+		List<SongAliasPair> searchResult = await requester.FindFromIdOrAlias(search, this.PhigrosDataService.IdNameMap);
+		if (searchResult.Count == 0)
+		{
+			await arg.QuickReply("Sorry, nothing matched your query.");
+			return;
+		}
+
+		List<CompleteScore> scoresToShow;
 		try
 		{
 			(summary, save) = await data.SaveCache.GetGameSaveAsync(this.PhigrosDataService.DifficultiesMap, index);
-			regex = new((string)arg.Data.Options.ElementAt(0));
-			foreach (CompleteScore score in save.Records)
-			{
-				if (regex.Match(score.Id).Success || regex.Match(this.PhigrosDataService.IdNameMap[score.Id]).Success)
-					scoresToShow.Add(score);
-			}
+			scoresToShow = save.Records
+				.Where(x =>
+					searchResult.Any(y => y.SongId == x.Id))
+				.ToList();
 		}
 		catch (ArgumentOutOfRangeException ex)
 		{
 			await arg.ModifyOriginalResponseAsync(msg => msg.Content = $"Error: Expected index less than {ex.Message}, more or equal to 0. You entered {index}.");
 			if (ex.Message.Any(x => !char.IsDigit(x))) // detecting is arg error or shit happened in library
 				throw;
-			return;
-		}
-		catch (RegexParseException ex)
-		{
-			await arg.ModifyOriginalResponseAsync(msg => msg.Content = $"Regex error: `{ex.Message}`");
 			return;
 		}
 		catch (Exception ex)
@@ -79,7 +80,7 @@ public class QueryCommand : CommandBase
 		await arg.ModifyOriginalResponseAsync(
 			(msg) =>
 			{
-				msg.Content = $"You queried `{regex}`, showing...";
+				msg.Content = $"You queried `{search}`, showing...";
 				msg.Attachments = new List<FileAttachment>()
 				{
 					new(

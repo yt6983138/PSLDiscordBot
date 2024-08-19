@@ -27,17 +27,32 @@ public class SongInfoCommand : GuestCommandBase
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder
 		.AddOption(
-			"regex",
+			"search",
 			ApplicationCommandOptionType.String,
-			"Searching pattern (regex, hint: you can add (?i) at start to query case insensitively) ",
+			"Searching strings, you can either put id, put alias, or put the song name.",
 			isRequired: true);
 
 	public override async Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
 	{
-		Regex regex;
+		StringBuilder sb = new();
+		int i = 0;
 		try
 		{
-			regex = new(arg.Data.Options.First().Value.Unbox<string>());
+			List<SongAliasPair> foundAlias = await requester.FindFromIdOrAlias(
+				arg.GetOption<string>("search"),
+				this.PhigrosDataService.IdNameMap);
+
+			foreach (SongAliasPair item in foundAlias)
+			{
+				i++;
+				sb.Append(item.SongId);
+				sb.Append(" aka ");
+				sb.Append(this.PhigrosDataService.IdNameMap[item.SongId]);
+				sb.Append(", Chart constants: ");
+				sb.Append(string.Join(", ", this.PhigrosDataService.DifficultiesMap[item.SongId]));
+				sb.Append(", Alias: ");
+				sb.AppendLine(string.Join(", ", item.Alias));
+			}
 		}
 		catch (RegexParseException ex)
 		{
@@ -49,20 +64,6 @@ public class SongInfoCommand : GuestCommandBase
 		{
 			await arg.ModifyOriginalResponseAsync(msg => msg.Content = $"Error: {ex.Message}\nYou may try again or report to author.");
 			throw;
-		}
-		int i = 0;
-		StringBuilder sb = new();
-		foreach (KeyValuePair<string, string> pair in this.PhigrosDataService.IdNameMap)
-		{
-			if (regex.Match(pair.Key).Success || regex.Match(pair.Value).Success)
-			{
-				i++;
-				sb.Append(pair.Key);
-				sb.Append(", ");
-				sb.Append(pair.Value);
-				sb.Append(", Chart constants: ");
-				sb.AppendLine(string.Join(", ", this.PhigrosDataService.DifficultiesMap[pair.Key]));
-			}
 		}
 
 		await arg.ModifyOriginalResponseAsync(
