@@ -113,4 +113,55 @@ public static class Utils
 	}
 	public static void WriteLineWithColor(string dat = "", ConsoleColor? foreground = null, ConsoleColor? background = null)
 		=> WriteWithColor($"{dat}\n", foreground, background);
+
+	public static T GetOption<T>(this SocketSlashCommand socketSlashCommand, string name)
+	{
+		return socketSlashCommand.Data.Options.First(x => x.Name == name).Value.Unbox<T>();
+	}
+	public static T GetOptionOrDefault<T>(this SocketSlashCommand socketSlashCommand, string name, T defaultValue = default) where T : struct
+	{
+		SocketSlashCommandDataOption? option = socketSlashCommand.Data.Options.FirstOrDefault(x => x.Name == name);
+		if (option is null)
+			return defaultValue;
+		return option.Value.Unbox<T>();
+	}
+	public static T? GetOptionOrDefault<T>(this SocketSlashCommand socketSlashCommand, string name) where T : class
+	{
+		return socketSlashCommand.Data.Options.FirstOrDefault(x => x.Name == name)?.Value.Unbox<T>();
+	}
+	public static int GetIntegerOptionAsInt32(this SocketSlashCommand socketSlashCommand, string name)
+	{
+		return socketSlashCommand.Data.Options.First(x => x.Name == name).Value.Unbox<long>().CastTo<long, int>();
+	}
+	public static int GetIntegerOptionAsInt32OrDefault(this SocketSlashCommand socketSlashCommand, string name, int defaultValue = default)
+	{
+		SocketSlashCommandDataOption? option = socketSlashCommand.Data.Options.FirstOrDefault(x => x.Name == name);
+		if (option is null)
+			return defaultValue;
+		return option.Value.Unbox<long>().CastTo<long, int>();
+	}
+	public static async Task QuickReply(
+		this SocketSlashCommand socketSlashCommand,
+		string message,
+		Action<MessageProperties>? additionalModification = null)
+	{
+		await socketSlashCommand.ModifyOriginalResponseAsync(msg =>
+		{
+			msg.Content = message;
+			additionalModification?.Invoke(msg);
+		});
+	}
+	public static async Task QuickReplyWithAttachments(
+		this SocketSlashCommand socketSlashCommand,
+		string message,
+		Action<MessageProperties>? additionalModification = null,
+		params FileAttachment[] attachments)
+	{
+		await socketSlashCommand.ModifyOriginalResponseAsync(msg =>
+		{
+			msg.Content = message;
+			msg.Attachments = attachments;
+			additionalModification?.Invoke(msg);
+		});
+	}
 }
