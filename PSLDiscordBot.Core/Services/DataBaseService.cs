@@ -6,6 +6,8 @@ using System.Runtime.Caching;
 using yt6983138.Common;
 
 namespace PSLDiscordBot.Core.Services;
+
+public record class SongAliasPair(string SongId, string[] Alias);
 public sealed class DataBaseService : InjectableBase
 {
 	[Inject]
@@ -274,7 +276,7 @@ INSERT OR REPLACE INTO {this._config.SongAliasTableName} VALUES(
 				return (string[])cache;
 
 			string[]? data = await this.GetSongAliasAsync(id);
-			if (data == null) return null;
+			if (data is null) return null;
 
 			_songAliasCache[id] = data;
 			return data;
@@ -285,7 +287,7 @@ INSERT OR REPLACE INTO {this._config.SongAliasTableName} VALUES(
 			return await this.AddOrReplaceSongAliasAsync(id, alias);
 		}
 
-		public async Task<(string Id, string[] Alias)?> FindSongAliasAsync(string alias)
+		public async Task<List<SongAliasPair>> FindSongAliasAsync(string alias)
 		{
 			int traceId = Random.Shared.Next();
 			this._logger.Log(LogLevel.Debug, $"{nameof(FindSongAliasAsync)}: Start ({traceId})", _eventId, this);
@@ -293,30 +295,37 @@ INSERT OR REPLACE INTO {this._config.SongAliasTableName} VALUES(
 			SqliteConnection connection = this._songAliasDataBase.Value;
 			SqliteCommand command = new($@"
 SELECT * FROM {this._config.SongAliasTableName} WHERE
-	Alias LIKE $alias LIMIT 1;", connection);
+	Alias LIKE $alias;", connection);
 			command.Parameters.AddWithValue("$alias", alias);
 			using SqliteDataReader reader = await command.ExecuteReaderAsync();
-			if (!await reader.ReadAsync())
-				return null;
+
+			List<SongAliasPair> pairs = new();
+			while (await reader.ReadAsync())
+			{
+				pairs.Add(new(reader.GetString(0), FromNormalizedSqlString(reader.GetString(1))));
+			}
 
 			this._logger.Log(LogLevel.Debug, $"{nameof(FindSongAliasAsync)}: End ({traceId})", _eventId, this);
-			return (reader.GetString(0), FromNormalizedSqlString(reader.GetString(1)));
+			return pairs;
 		}
-		public async Task<(string Id, string[] Alias)?> FindSongAliasCachedAsync(string alias)
+		public async Task<List<SongAliasPair>> FindSongAliasCachedAsync(string alias)
 		{
-			(string Key, string[]) matchesInCaches = _songAliasCache
-				.Select(x => (x.Key, (string[])x.Value))
-				.FirstOrDefault(x => x.Item2.Contains(alias));
+			List<SongAliasPair> matchesInCaches = _songAliasCache
+				.Select(x => new SongAliasPair(x.Key, (string[])x.Value))
+				.Where(x => x.Alias.Contains(alias))
+				.ToList();
 
-			if (matchesInCaches != default)
+			if (matchesInCaches.Count != 0)
 				return matchesInCaches;
 
-			(string Id, string[] Alias)? result = await this.FindSongAliasAsync(alias);
+			List<SongAliasPair> results = await this.FindSongAliasAsync(alias);
 
-			if (result is null) return null;
+			foreach (SongAliasPair item in results)
+			{
+				_songAliasCache[item.SongId] = item.Alias;
+			}
 
-			_songAliasCache[result.Value.Id] = result.Value.Alias;
-			return result;
+			return results;
 		}
 		#endregion
 
