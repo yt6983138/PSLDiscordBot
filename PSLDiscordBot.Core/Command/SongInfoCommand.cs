@@ -1,13 +1,15 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using Microsoft.Extensions.Logging;
 using PSLDiscordBot.Core.Command.Base;
+using PSLDiscordBot.Core.ImageGenerating;
 using PSLDiscordBot.Core.Services;
 using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.CommandBase;
 using PSLDiscordBot.Framework.DependencyInjection;
 using System.Text;
-using System.Text.RegularExpressions;
+using yt6983138.Common;
 
 namespace PSLDiscordBot.Core.Command;
 
@@ -18,6 +20,8 @@ public class SongInfoCommand : GuestCommandBase
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 	[Inject]
 	public PhigrosDataService PhigrosDataService { get; set; }
+	[Inject]
+	public Logger Logger { get; set; }
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 	#endregion
 
@@ -36,9 +40,10 @@ public class SongInfoCommand : GuestCommandBase
 	{
 		StringBuilder sb = new();
 		int i = 0;
+		List<SongAliasPair> foundAlias;
 		try
 		{
-			List<SongAliasPair> foundAlias = await requester.FindFromIdOrAlias(
+			foundAlias = await requester.FindFromIdOrAlias(
 				arg.GetOption<string>("search"),
 				this.PhigrosDataService.IdNameMap);
 
@@ -54,32 +59,24 @@ public class SongInfoCommand : GuestCommandBase
 				sb.AppendLine(string.Join(", ", item.Alias));
 			}
 		}
-		catch (RegexParseException ex)
-		{
-			await arg.ModifyOriginalResponseAsync(
-				msg => msg.Content = $"Regex error: {ex.Message}");
-			return;
-		}
 		catch (Exception ex)
 		{
 			await arg.ModifyOriginalResponseAsync(msg => msg.Content = $"Error: {ex.Message}\nYou may try again or report to author.");
 			throw;
 		}
-
-		await arg.ModifyOriginalResponseAsync(
-			msg =>
-			{
-				msg.Content = $"Found {i} match(es).";
-				msg.Attachments = new List<FileAttachment>()
-				{
-					new(
-						new MemoryStream(
-							Encoding.UTF8.GetBytes(sb.ToString())
-						),
-						"Query.txt"
-					)
-				};
-			}
-		);
+		if (i == 0)
+		{
+			await arg.QuickReply("Sorry, no matches found.");
+			return;
+		}
+		string returnImgPath = $"./Assets/Tracks/{foundAlias[0].SongId}.0/IllustrationLowRes.png";
+		if (!File.Exists(returnImgPath))
+		{
+			this.Logger.Log(LogLevel.Warning, $"Cannot locate image {returnImgPath}!", this.EventId, this);
+			returnImgPath = StaticImage.Default.Path;
+		}
+		await arg.QuickReplyWithAttachments($"Found {i} match(es).",
+			new(new MemoryStream(Encoding.UTF8.GetBytes(sb.ToString())), "Query.txt"),
+			new(returnImgPath));
 	}
 }
