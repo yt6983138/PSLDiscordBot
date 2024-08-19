@@ -154,14 +154,12 @@ public static class Utils
 	public static async Task QuickReplyWithAttachments(
 		this SocketSlashCommand socketSlashCommand,
 		string message,
-		Action<MessageProperties>? additionalModification = null,
 		params FileAttachment[] attachments)
 	{
 		await socketSlashCommand.ModifyOriginalResponseAsync(msg =>
 		{
 			msg.Content = message;
 			msg.Attachments = attachments;
-			additionalModification?.Invoke(msg);
 		});
 	}
 }
