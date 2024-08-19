@@ -27,9 +27,13 @@ public class HelpCommand : // CommandBase or GuestCommandBase or AdminCommandBas
 		this.BasicBuilder;
 	// use .AddOption to add option and add other things
 
-	public override Task Execute(SocketSlashCommand arg, UserData data, object executer)
+	public override async Task Callback(
+		SocketSlashCommand arg, 
+		UserData? data, 
+		DataBaseService.DbDataRequester requester, 
+		object executer)
 	{
-		// actual callback, note you do not need arg.DeferAsync, already did that in ExecuteWithPermissionProtect
+		// actual callback, note you do not need arg.DeferAsync, already did that in Execute
 	}
 }
 ```
