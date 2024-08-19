@@ -4,6 +4,14 @@ internal class Program
 {
 	private static async Task Main(string[] args)
 	{
+		string? assetsToCopy = Environment.GetEnvironmentVariable("ASSETS_COPY_PATH");
+		if (!string.IsNullOrEmpty(assetsToCopy))
+		{
+			Console.WriteLine("Copy asset start");
+			CopyFolder(new(assetsToCopy), Directory.CreateDirectory("./Assets"));
+			Console.WriteLine("Copy asset done");
+		}
+
 		Directory.CreateDirectory("./PSL");
 		DirectoryInfo plugin = Directory.CreateDirectory("./Plugins/0100.PSL");
 		plugin.Delete(true);
@@ -18,10 +26,23 @@ internal class Program
 
 		foreach (FileInfo item in files)
 		{
-			item.MoveTo(Path.Combine(plugin.FullName, item.Name) + item.Extension);
+			item.MoveTo(Path.Combine(plugin.FullName, item.Name) + item.Extension, true);
 		}
 
 		// i know this is dumb but idk how to set startup executable
 		await PSLDiscordBot.Framework.Program.Main(args);
+	}
+
+	public static void CopyFolder(DirectoryInfo src, DirectoryInfo dest)
+	{
+		foreach (FileInfo item in src.GetFiles())
+		{
+			item.CopyTo(Path.Combine(dest.FullName, $"{src.Name}{item.Extension}"));
+		}
+		foreach (DirectoryInfo item in src.GetDirectories())
+		{
+			DirectoryInfo destSub = dest.CreateSubdirectory(item.Name);
+			CopyFolder(item, destSub);
+		}
 	}
 }
