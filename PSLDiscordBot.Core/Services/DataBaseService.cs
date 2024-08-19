@@ -295,7 +295,7 @@ INSERT OR REPLACE INTO {this._config.SongAliasTableName} VALUES(
 			SqliteConnection connection = this._songAliasDataBase.Value;
 			SqliteCommand command = new($@"
 SELECT * FROM {this._config.SongAliasTableName} WHERE
-	Alias LIKE $alias;", connection);
+	instr(Alias, $alias) > 0;", connection);
 			command.Parameters.AddWithValue("$alias", alias);
 			using SqliteDataReader reader = await command.ExecuteReaderAsync();
 
@@ -308,6 +308,7 @@ SELECT * FROM {this._config.SongAliasTableName} WHERE
 			this._logger.Log(LogLevel.Debug, $"{nameof(FindSongAliasAsync)}: End ({traceId})", _eventId, this);
 			return pairs;
 		}
+		[Obsolete("I think theres something wrong here, as some caches might miss and return things without the cache even it exists")]
 		public async Task<List<SongAliasPair>> FindSongAliasCachedAsync(string alias)
 		{
 			List<SongAliasPair> matchesInCaches = _songAliasCache

@@ -46,7 +46,7 @@ internal static class Utils
 		}
 		else
 		{
-			List<SongAliasPair> pairs = await requester.FindSongAliasCachedAsync(idOrAlias);
+			List<SongAliasPair> pairs = await requester.FindSongAliasAsync(idOrAlias);
 			return pairs;
 		}
 
