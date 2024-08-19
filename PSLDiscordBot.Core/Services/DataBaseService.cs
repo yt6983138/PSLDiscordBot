@@ -237,7 +237,7 @@ INSERT OR REPLACE INTO {this._config.UserMiscInfoTableName}(Id, Tags) VALUES(
 		#endregion
 
 		#region Song alias
-		public async Task<string[]> GetSongAliasAsync(string songId)
+		public async Task<string[]?> GetSongAliasAsync(string songId)
 		{
 			int traceId = Random.Shared.Next();
 			this._logger.Log(LogLevel.Debug, $"{nameof(GetSongAliasAsync)}: Start ({traceId})", _eventId, this);
@@ -249,7 +249,7 @@ SELECT * FROM {this._config.SongAliasTableName} WHERE
 			command.Parameters.AddWithValue("$songId", songId);
 			using SqliteDataReader reader = await command.ExecuteReaderAsync();
 			if (!await reader.ReadAsync())
-				return [];
+				return null;
 
 			this._logger.Log(LogLevel.Debug, $"{nameof(GetSongAliasAsync)}: End ({traceId})", _eventId, this);
 			return FromNormalizedSqlString(reader.GetString(1));
