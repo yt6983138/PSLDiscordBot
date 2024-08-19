@@ -77,7 +77,7 @@ public class Program
 		if (args.Contains("--help"))
 		{
 			ShowHelp();
-			goto BypassArgParse;
+			return;
 		}
 		List<ArgParseInfo> invokeList = new();
 		for (int i = 0; i < args.Length; i++)
@@ -130,12 +130,11 @@ public class Program
 #else
 				false;
 #endif
-			if (invokeList.Contains(info) || info.ForceExecuteInDebug && debug)
+			if (invokeList.Contains(info) || (info.ForceExecuteInDebug && debug))
 				info.IfArgPresent?.Invoke(info.InvokeArg);
 			else
 				info.IfArgNotPresent?.Invoke("");
 		}
-	BypassArgParse:
 		void ShowHelp()
 		{
 			Console.WriteLine("--help: Show this help.");
