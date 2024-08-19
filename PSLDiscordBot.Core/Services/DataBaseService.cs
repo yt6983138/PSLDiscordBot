@@ -287,6 +287,11 @@ INSERT OR REPLACE INTO {this._config.SongAliasTableName} VALUES(
 			return await this.AddOrReplaceSongAliasAsync(id, alias);
 		}
 
+		/// <summary>
+		/// Note: this searches case-insensitively
+		/// </summary>
+		/// <param name="alias"></param>
+		/// <returns></returns>
 		public async Task<List<SongAliasPair>> FindSongAliasAsync(string alias)
 		{
 			int traceId = Random.Shared.Next();
@@ -295,7 +300,7 @@ INSERT OR REPLACE INTO {this._config.SongAliasTableName} VALUES(
 			SqliteConnection connection = this._songAliasDataBase.Value;
 			SqliteCommand command = new($@"
 SELECT * FROM {this._config.SongAliasTableName} WHERE
-	instr(Alias, $alias) > 0;", connection);
+	instr(lower(Alias), lower($alias)) > 0;", connection);
 			command.Parameters.AddWithValue("$alias", alias);
 			using SqliteDataReader reader = await command.ExecuteReaderAsync();
 
