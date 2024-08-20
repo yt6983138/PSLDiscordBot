@@ -37,7 +37,7 @@ internal class Program
 	{
 		foreach (FileInfo item in src.GetFiles())
 		{
-			item.CopyTo(Path.Combine(dest.FullName, $"{src.Name}{item.Extension}"));
+			item.CopyTo(Path.Combine(dest.FullName, item.Name), true);
 		}
 		foreach (DirectoryInfo item in src.GetDirectories())
 		{
