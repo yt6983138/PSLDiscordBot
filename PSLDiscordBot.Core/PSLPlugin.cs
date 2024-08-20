@@ -11,6 +11,7 @@ using PSLDiscordBot.Framework.CommandBase;
 using PSLDiscordBot.Framework.DependencyInjection;
 using SixLabors.Fonts;
 using System.Net.WebSockets;
+using System.Text;
 using yt6983138.Common;
 
 namespace PSLDiscordBot.Core;
@@ -134,6 +135,33 @@ public class PSLPlugin : InjectableBase, IPlugin
 				b20.Data = b20.Generate();
 				b20.Save();
 			};
+		}, null);
+	public ArgParseInfo UpdateInfoAndDifficulty => new(
+		"updateInfoAndDifficulty",
+		"Update info.csv/tsv and difficulty.csv/tsv.",
+		(_) =>
+		{
+			using HttpClient client = new();
+			byte[] diff =
+				client.GetByteArrayAsync(@"https://yt6983138.github.io/Assets/RksReader/Latest/difficulty.csv")
+				.GetAwaiter().GetResult();
+			byte[] info =
+				client.GetByteArrayAsync(@"https://yt6983138.github.io/Assets/RksReader/Latest/info.csv")
+				.GetAwaiter().GetResult();
+
+			string diffStr = Encoding.UTF8.GetString(diff);
+			string infoStr = Encoding.UTF8.GetString(info);
+			if (this._configService.Data.DifficultyMapLocation.EndsWith(".tsv", StringComparison.InvariantCultureIgnoreCase))
+			{
+				diffStr = diffStr.Replace(",", "\t");
+			}
+			if (this._configService.Data.NameMapLocation.EndsWith(".tsv", StringComparison.InvariantCultureIgnoreCase))
+			{
+				infoStr = infoStr.Replace("\\", "\t");
+			}
+
+			File.WriteAllText(this._configService.Data.DifficultyMapLocation, diffStr);
+			File.WriteAllText(this._configService.Data.NameMapLocation, infoStr);
 		}, null);
 	#endregion
 
