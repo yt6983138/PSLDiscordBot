@@ -178,6 +178,7 @@ public class PSLPlugin : InjectableBase, IPlugin
 
 		program.AddArgReceiver(this.UpdateFiles);
 		program.AddArgReceiver(this.UpdateCommands);
+		program.AddArgReceiver(this.UpdateInfoAndDifficulty);
 		program.AddArgReceiver(this.ResetConfig);
 		program.AddArgReceiver(this.ResetConfigFull);
 		program.AddArgReceiver(this.ResetScripts);
