@@ -15,7 +15,7 @@ public class ImageText : IDrawableComponent
 	public byte ColorAlpha { get; set; } = 255;
 	public CustomTextOptions TextOptions { get; set; } = new();
 
-	public void DrawOn(Dictionary<string, Lazy<string>> bindMap, Dictionary<int, ImageFont> fontMap, Image image)
+	public void DrawOn(Dictionary<string, Lazy<object>> bindMap, Dictionary<int, ImageFont> fontMap, Image image)
 	{
 		if (!fontMap.TryGetValue(this.FontID, out ImageFont? imageFont))
 			imageFont = ImageFont.Default;
@@ -23,7 +23,7 @@ public class ImageText : IDrawableComponent
 		string formatted = string.Format(
 			this.Text,
 			this.Bind.Select(
-				x => bindMap.TryGetValue(x, out Lazy<string>? val)
+				x => bindMap.TryGetValue(x, out Lazy<object>? val)
 				? val.Value
 				: this.FallBackFormattingText)
 			.ToArray());

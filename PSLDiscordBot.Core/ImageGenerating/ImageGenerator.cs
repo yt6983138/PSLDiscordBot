@@ -25,7 +25,7 @@ public class ImageGenerator : InjectableBase
 	private Dictionary<string, Image> ChallengeRankImages { get; } = new();
 	private Dictionary<ScoreStatus, Image> RankImages { get; } = new();
 	private Dictionary<string, Image> Avatars { get; } = new();
-	private Dictionary<string, Lazy<string>> SongDifficultyCount { get; }
+	private Dictionary<string, Lazy<object>> SongDifficultyCount { get; }
 
 	private static EventId EventId { get; } = new(114512, "ImageGenerator");
 
@@ -37,11 +37,11 @@ public class ImageGenerator : InjectableBase
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
 		this.SongDifficultyCount = new()
 		{
-			{ "SongStatistics.EZCount", new Lazy<string>(this.PhigrosDataService.DifficultiesMap.Count(x => x.Value.Length == 1).ToString()) },
-			{ "SongStatistics.HDCount", new Lazy<string>(this.PhigrosDataService.DifficultiesMap.Count(x => x.Value.Length == 2).ToString()) },
-			{ "SongStatistics.INCount", new Lazy<string>(this.PhigrosDataService.DifficultiesMap.Count(x => x.Value.Length == 3).ToString()) },
-			{ "SongStatistics.ATCount", new Lazy<string>(this.PhigrosDataService.DifficultiesMap.Count(x => x.Value.Length == 4).ToString()) },
-			{ "SongStatistics.Count", new Lazy<string>(this.PhigrosDataService.DifficultiesMap.Count.ToString()) }
+			{ "SongStatistics.EZCount", new(this.PhigrosDataService.DifficultiesMap.Count(x => x.Value.Length == 1).ToString()) },
+			{ "SongStatistics.HDCount", new(this.PhigrosDataService.DifficultiesMap.Count(x => x.Value.Length == 2).ToString()) },
+			{ "SongStatistics.INCount", new(this.PhigrosDataService.DifficultiesMap.Count(x => x.Value.Length == 3).ToString()) },
+			{ "SongStatistics.ATCount", new(this.PhigrosDataService.DifficultiesMap.Count(x => x.Value.Length == 4).ToString()) },
+			{ "SongStatistics.Count", new(this.PhigrosDataService.DifficultiesMap.Count.ToString()) }
 		};
 #pragma warning restore CS8602 // Dereference of a possibly null reference.
 
@@ -105,28 +105,28 @@ public class ImageGenerator : InjectableBase
 
 		UserInfo userInfo = await userData.SaveCache.GetUserInfoAsync();
 
-		Dictionary<string, Lazy<string>> textMap = new()
+		Dictionary<string, Lazy<object>> textMap = new()
 		{
-			{ "User.Rks", new Lazy<string>(rks.ToString(userData.ShowFormat)) },
-			{ "User.Nickname", new Lazy<string>(userInfo.NickName) },
-			{ "User.ID", new Lazy<string>(userInfo.UserName) },
-			{ "User.Challenge.Text", new Lazy<string>(challengeRankLevel.ToString()) },
-			{ "User.Intro", new Lazy<string>(gameUserInfo.Intro) },
-			{ "User.Currency.KiB", new Lazy<string>(progress.Money.KiB.ToString) },
-			{ "User.Currency.MiB", new Lazy<string>(progress.Money.MiB.ToString) },
-			{ "User.Currency.GiB", new Lazy<string>(progress.Money.GiB.ToString) },
-			{ "User.Currency.TiB", new Lazy<string>(progress.Money.TiB.ToString) },
-			{ "User.Currency.PiB", new Lazy<string>(progress.Money.PiB.ToString) },
-			{ "User.Currency.Combined", new Lazy<string>(progress.Money.ToString) },
-			{ "User.PlayStatistics.EZClearCount", new Lazy<string>(scores.Count(x => x.Difficulty == Difficulty.EZ).ToString) },
-			{ "User.PlayStatistics.HDClearCount", new Lazy<string>(scores.Count(x => x.Difficulty == Difficulty.HD).ToString) },
-			{ "User.PlayStatistics.INClearCount", new Lazy<string>(scores.Count(x => x.Difficulty == Difficulty.IN).ToString) },
-			{ "User.PlayStatistics.ATClearCount", new Lazy<string>(scores.Count(x => x.Difficulty == Difficulty.AT).ToString) },
-			{ "User.PlayStatistics.AllClearCount", new Lazy<string>(scores.Length.ToString) },
-			{ "User.Tags.JoinedComma", new Lazy<string>(() => string.Join(", ", tags.Value)) },
-			{ "User.Tags.JoinedNewLine", new Lazy<string>(() => string.Join("\n", tags.Value)) },
-			{ "User.Tags.Count", new Lazy<string>(tags.Value.Length.ToString) },
-			{ "Time.Now", new Lazy<string>(DateTime.Now.ToString()) }
+			{ "User.Rks", new(() => rks.ToString(userData.ShowFormat)) },
+			{ "User.Nickname", new(() => userInfo.NickName) },
+			{ "User.ID", new(() => userInfo.UserName) },
+			{ "User.Challenge.Text", new(() => challengeRankLevel) },
+			{ "User.Intro", new(() => gameUserInfo.Intro) },
+			{ "User.Currency.KiB", new(() => progress.Money.KiB) },
+			{ "User.Currency.MiB", new(() => progress.Money.MiB) },
+			{ "User.Currency.GiB", new(() => progress.Money.GiB) },
+			{ "User.Currency.TiB", new(() => progress.Money.TiB) },
+			{ "User.Currency.PiB", new(() => progress.Money.PiB) },
+			{ "User.Currency.Combined", new(() => progress.Money) },
+			{ "User.PlayStatistics.EZClearCount", new(() => scores.Count(x => x.Difficulty == Difficulty.EZ)) },
+			{ "User.PlayStatistics.HDClearCount", new(() => scores.Count(x => x.Difficulty == Difficulty.HD)) },
+			{ "User.PlayStatistics.INClearCount", new(() => scores.Count(x => x.Difficulty == Difficulty.IN)) },
+			{ "User.PlayStatistics.ATClearCount", new(() => scores.Count(x => x.Difficulty == Difficulty.AT)) },
+			{ "User.PlayStatistics.AllClearCount", new(() => scores.Length) },
+			{ "User.Tags.JoinedComma", new(() => string.Join(", ", tags.Value)) },
+			{ "User.Tags.JoinedNewLine", new(() => string.Join("\n", tags.Value)) },
+			{ "User.Tags.Count", new(() => tags.Value.Length) },
+			{ "Time.Now", new(() => DateTime.Now) }
 		};
 
 		textMap.MergeWith(this.SongDifficultyCount);
@@ -136,33 +136,32 @@ public class ImageGenerator : InjectableBase
 			if (status == ScoreStatus.Bugged || status == ScoreStatus.NotFc) continue;
 			textMap.Add(
 				$"User.PlayStatistics.EZ{status}Count",
-				new Lazy<string>(() => scores.Count(x => x.Difficulty == Difficulty.EZ && x.Status == status).ToString()));
+				new(() => scores.Count(x => x.Difficulty == Difficulty.EZ && x.Status == status)));
 			textMap.Add(
 				$"User.PlayStatistics.HD{status}Count",
-				new Lazy<string>(() => scores.Count(x => x.Difficulty == Difficulty.HD && x.Status == status).ToString()));
+				new(() => scores.Count(x => x.Difficulty == Difficulty.HD && x.Status == status)));
 			textMap.Add(
 				$"User.PlayStatistics.IN{status}Count",
-				new Lazy<string>(() => scores.Count(x => x.Difficulty == Difficulty.IN && x.Status == status).ToString()));
+				new(() => scores.Count(x => x.Difficulty == Difficulty.IN && x.Status == status)));
 			textMap.Add(
 				$"User.PlayStatistics.AT{status}Count",
-				new Lazy<string>(() => scores.Count(x => x.Difficulty == Difficulty.AT && x.Status == status).ToString()));
+				new(() => scores.Count(x => x.Difficulty == Difficulty.AT && x.Status == status)));
 			textMap.Add(
 				$"User.PlayStatistics.All{status}Count",
-				new Lazy<string>(() => scores.Count(x => x.Status == status).ToString()));
+				new(() => scores.Count(x => x.Status == status)));
 		}
 
 		for (int i = 0; i < scores.Length; i++)
 		{
 			CompleteScore score = scores[i];
-			textMap.Add($"B20.Score.{i}", new Lazy<string>(score.Score.ToString));
-			textMap.Add($"B20.Acc.{i}", new Lazy<string>(() => score.Accuracy.ToString(userData.ShowFormat)));
-			textMap.Add($"B20.CCAndDiff.{i}", new Lazy<string>(() => $"{score.Difficulty} {score.ChartConstant}"));
-			textMap.Add($"B20.CC.{i}", new Lazy<string>(score.ChartConstant.ToString));
-			textMap.Add($"B20.Diff.{i}", new Lazy<string>(score.Difficulty.ToString));
-			textMap.Add($"B20.IdName.{i}", new Lazy<string>(() => score.Id));
-			textMap.Add($"B20.Name.{i}", new Lazy<string>(() => infos.TryGetValue(score.Id, out string? _str1) ? _str1 : score.Id));
-			textMap.Add($"B20.Status.{i}", new Lazy<string>(score.Status.ToString));
-			textMap.Add($"B20.Rks.{i}", new Lazy<string>(() => score.Rks.ToString(userData.ShowFormat)));
+			textMap.Add($"B20.Score.{i}", new(() => score.Score));
+			textMap.Add($"B20.Acc.{i}", new(() => score.Accuracy.ToString(userData.ShowFormat)));
+			textMap.Add($"B20.CC.{i}", new(() => score.ChartConstant));
+			textMap.Add($"B20.Diff.{i}", new(() => score.Difficulty));
+			textMap.Add($"B20.IdName.{i}", new(() => score.Id));
+			textMap.Add($"B20.Name.{i}", new(() => infos.TryGetValue(score.Id, out string? _str1) ? _str1 : score.Id));
+			textMap.Add($"B20.Status.{i}", new(() => score.Status));
+			textMap.Add($"B20.Rks.{i}", new(() => score.Rks.ToString(userData.ShowFormat)));
 		}
 		for (int i = 0; i < tags.Value.Length; i++)
 		{
