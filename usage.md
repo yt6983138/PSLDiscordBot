@@ -78,11 +78,23 @@ You also must do `/link-token` first.
 Usage: `/get-token` <br/>
 Get your token. You must do `/link-token` or `/login` first.
 ### /query
-Usage: `/query <regex> [index]` <br/>
+Usage: `/query <search> [index]` <br/>
 Example: `/query volcanic 0` <br/>
-It searches all your scores with `regex` parameter by regex. You must do `/link-token` or `/login` first. <br/>
-Hint: You can add `(?i)` before the regex string (ex. `(?i)igall`) to have case insensitive search.
+It searches all your scores, you can input song name, a song alias, or song id to find the song. 
+You must do `/link-token` or `/login` first. <br/>
 ### /get-b20-photo
 Usage: `/get-b20-photo [index]` <br/>
 Example: `/get-b20-photo 0` <br/>
 Gives you a cool picture about your b19&1phi scores. You must do `/link-token` or `/login` first.
+### /about-me
+Usage: `/about-me [index]` <br/>
+Example: `/about-me 0` <br/>
+Gives you a cool picture about your statistics. You must do `/link-token` or `/login` first.
+### /song-info
+Usage: `/song-info <search>` <br/>
+Example: `/song-info 321` <br/>
+It searches songs in database, you can input song name, a song alias, or song id to find the song. 
+You must do `/link-token` or `/login` first. <br/>
+### /poke
+Usage: `/poke` <br/>
+Poke me
