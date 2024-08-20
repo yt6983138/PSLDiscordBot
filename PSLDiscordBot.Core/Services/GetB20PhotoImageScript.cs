@@ -20,56 +20,89 @@ public class GetB20PhotoImageScriptService : FileManagementServiceBase<ImageScri
 	}
 	public override ImageScript Generate()
 	{
+		const int Size32 = 1;
+		const int Size64 = 2;
+		const int Size22 = 4;
+		const int Size36 = 5;
+		const int Size52 = 6;
+
+		const int Size20Condensed = 7;
+		const int Size22Condensed = 8;
+
 		ImageScript script = new()
 		{
 			Fonts = new()
 				{
-					{ 0, new() // default
+					{ Size32, new() // default
 					{
 						FamilyName = "Saira",
-						FontSize = 60
+						FontSize = 32
 					} },
-					{ 1, new() // small
+					{ Size64, new() // default
+					{
+						FamilyName = "Saira",
+						FontSize = 64
+					} },
+					{ Size36, new() // default
+					{
+						FamilyName = "Saira",
+						FontSize = 36
+					} },
+					{ Size52, new() // default
+					{
+						FamilyName = "Saira",
+						FontSize = 52
+					} },
+					{ Size20Condensed, new() // small
 					{
 						FamilyName = "Saira ExtraCondensed",
-						FontSize = 24
+						FontSize = 20
 					} },
-					{ 2, new() // medium
+					{ Size22Condensed, new() // small
 					{
 						FamilyName = "Saira ExtraCondensed",
-						FontSize = 48
+						FontSize = 22
+					} },
+					{ Size22, new() // small
+					{
+						FamilyName = "Saira",
+						FontSize = 22
 					} }
 				},
 			Components = new()
 				{
 					#region Misc
+					new DynamicImage() // avatar
+					{
+						Bind = "User.Avatar",
+						Size = new(224, 224),
+						Position = new(158, 111),
+						VerticalAnchor = VerticalAlignment.Center
+					},
 					new StaticImage() // template
 					{
 						Path = "./Assets/Misc/GetB20PhotoTemplate.png",
 						Size = new(896, 2048),
 						Position = new(0, 0)
 					},
-					new DynamicImage() // avatar
-					{
-						Bind = "User.Avatar",
-						Size = new(224, 224),
-						Position = new(80, 64)
-					},
 					new DynamicImage() // challenge image
 					{
 						Bind = "User.Challenge.Image",
-						Position = new(62, 288),
-						Size = new(260, 128)
+						Position = new(107, 91),
+						Size = new(130, 64),
+						HorizonalAnchor = HorizontalAlignment.Center,
+						VerticalAnchor = VerticalAlignment.Center
 					},
 					new ImageText() // challenge text
 					{
-						FontID = 0,
+						FontID = Size52,
 						Bind = ["User.Challenge.Text"],
 						Text = "{0}",
 						TextOptions = new()
 						{
-							Origin = new(192, 320),
-							HorizontalAlignment = HorizontalAlignment.Center
+							Origin = new(107, 81),
+							HorizontalAlignment = HorizontalAlignment.Center,
+							VerticalAlignment = VerticalAlignment.Center
 						},
 						ColorRed = 255,
 						ColorGreen = 255,
@@ -77,12 +110,14 @@ public class GetB20PhotoImageScriptService : FileManagementServiceBase<ImageScri
 					},
 					new ImageText() // nickname
 					{
-						FontID = 0,
+						FontID = Size64,
 						Bind = ["User.Nickname"],
 						Text = "{0}",
 						TextOptions = new()
 						{
-							Origin = new(512, 184)
+							Origin = new(634, 111),
+							HorizontalAlignment = HorizontalAlignment.Center,
+							VerticalAlignment = VerticalAlignment.Center
 						},
 						ColorRed = 255,
 						ColorGreen = 255,
@@ -90,12 +125,27 @@ public class GetB20PhotoImageScriptService : FileManagementServiceBase<ImageScri
 					},
 					new ImageText() // rks
 					{
-						FontID = 0,
+						FontID = Size36,
 						Bind = ["User.Rks"],
 						Text = "{0}",
 						TextOptions = new()
 						{
-							Origin = new(512, 56)
+							Origin = new(96, 140),
+							HorizontalAlignment = HorizontalAlignment.Center,
+							VerticalAlignment = VerticalAlignment.Center
+						},
+						ColorRed = 0,
+						ColorGreen = 0,
+						ColorBlue = 0
+					},
+					new ImageText() // time of now
+					{
+						FontID = Size32,
+						Bind = ["Time.Now"],
+						Text = "{0:M/d/yyyy}",
+						TextOptions = new()
+						{
+							Origin = new(36, 265)
 						},
 						ColorRed = 255,
 						ColorGreen = 255,
@@ -103,12 +153,12 @@ public class GetB20PhotoImageScriptService : FileManagementServiceBase<ImageScri
 					},
 					new ImageText() // time of now
 					{
-						FontID = 2,
+						FontID = Size32,
 						Bind = ["Time.Now"],
-						Text = "{0}",
+						Text = "{0:h:mm:ss tt}",
 						TextOptions = new()
 						{
-							Origin = new(512, 1992)
+							Origin = new(36, 304)
 						},
 						ColorRed = 255,
 						ColorGreen = 255,
@@ -126,7 +176,7 @@ public class GetB20PhotoImageScriptService : FileManagementServiceBase<ImageScri
 				{
 					Bind = "B20.Illustration." + i.ToString(),
 					Size = new(256, 136),
-					Position = new PointF(128, 448 + 160 * ((i - 1) / 2))
+					Position = new PointF(128, 448 + (160 * ((i - 1) / 2)))
 				}
 			);
 		}
@@ -137,7 +187,7 @@ public class GetB20PhotoImageScriptService : FileManagementServiceBase<ImageScri
 				{
 					Bind = "B20.Illustration." + i.ToString(),
 					Size = new(256, 136),
-					Position = new PointF(576, 288 + 160 * (i / 2))
+					Position = new PointF(576, 288 + (160 * (i / 2)))
 				}
 			);
 		}
@@ -147,66 +197,82 @@ public class GetB20PhotoImageScriptService : FileManagementServiceBase<ImageScri
 			int num = int.Parse(image.Bind!.Split('.')[^1]);
 			script.Components.Add(new ImageText()
 			{
-				FontID = 1,
+				FontID = Size22Condensed,
 				Bind = [$"B20.Score.{num}"],
 				Text = "{0}",
 				TextOptions = new()
 				{
-					Origin = image.Position + new Size(-32, 4),
-					HorizontalAlignment = HorizontalAlignment.Center
-				}
+					Origin = image.Position + new Size(-81, 21),
+					VerticalAlignment = VerticalAlignment.Center
+				},
+				ColorRed = 255,
+				ColorGreen = 255,
+				ColorBlue = 255
 			}
 			);
 			script.Components.Add(new ImageText()
 			{
-				FontID = 1,
+				FontID = Size22Condensed,
 				Bind = [$"B20.Acc.{num}"],
 				Text = "{0}%",
 				TextOptions = new()
 				{
-					Origin = image.Position + new Size(-32, 36),
-					HorizontalAlignment = HorizontalAlignment.Center
+					Origin = image.Position + new Size(-81, 53),
+					VerticalAlignment = VerticalAlignment.Center
 				},
+				ColorRed = 255,
+				ColorGreen = 255,
+				ColorBlue = 255
 			}
 			);
 			script.Components.Add(new ImageText()
 			{
-				FontID = 1,
+				FontID = Size22Condensed,
 				Bind = [$"B20.Rks.{num}"],
 				Text = "{0}",
 				TextOptions = new()
 				{
-					Origin = image.Position + new Size(-48, 68),
-					HorizontalAlignment = HorizontalAlignment.Center
+					Origin = image.Position + new Size(-81, 85),
+					VerticalAlignment = VerticalAlignment.Center
 				},
+				ColorRed = 255,
+				ColorGreen = 255,
+				ColorBlue = 255
 			}
 			);
 			script.Components.Add(new ImageText()
 			{
-				FontID = 1,
-				Bind = [$"B20.CCAndDiff.{num}"],
-				Text = "{0}",
+				FontID = Size22Condensed,
+				Bind = [$"B20.CC.{num}", $"B20.Diff.{num}"],
+				Text = "{0} {1}",
 				TextOptions = new()
 				{
-					Origin = image.Position + new Size(-48, 100),
-					HorizontalAlignment = HorizontalAlignment.Center
-				}
+					Origin = image.Position + new Size(-81, 117),
+					VerticalAlignment = VerticalAlignment.Center
+				},
+				ColorRed = 255,
+				ColorGreen = 255,
+				ColorBlue = 255
 			}
 			);
 			script.Components.Add(new ImageText()
 			{
-				FontID = 1, // number
+				FontID = Size22, // number
 				Text = num == 0 ? "#Phi" : "#" + num.ToString(),
 				TextOptions = new()
 				{
-					Origin = image.Position + new Size(224, 4)
-				}
+					Origin = image.Position + new Size(225, 23),
+					VerticalAlignment = VerticalAlignment.Center
+				},
+				ColorRed = 255,
+				ColorGreen = 255,
+				ColorBlue = 255
 			}
 			);
 			script.Components.Add(new DynamicImage()
 			{
 				Bind = $"B20.Rank.{num}",
-				Position = image.Position + new Size(256, 64),
+				Position = image.Position + new Size(254, 68),
 				Size = new Size(64, 64)
 			}
 			);
