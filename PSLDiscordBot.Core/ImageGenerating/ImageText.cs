@@ -1,10 +1,13 @@
 ﻿using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Drawing.Processing;
 using SixLabors.ImageSharp.Processing;
+using System.Diagnostics.CodeAnalysis;
 
 namespace PSLDiscordBot.Core.ImageGenerating;
 public class ImageText : IDrawableComponent
 {
+	public delegate bool BindGetter(string id, [NotNullWhen(true)] out Lazy<object>? @object);
+
 	public required int FontID { get; set; }
 	public required string Text { get; set; } = "";
 	public string? FallBackFormattingText { get; set; } = null;
@@ -15,7 +18,7 @@ public class ImageText : IDrawableComponent
 	public byte ColorAlpha { get; set; } = 255;
 	public CustomTextOptions TextOptions { get; set; } = new();
 
-	public void DrawOn(Dictionary<string, Lazy<object>> bindMap, Dictionary<int, ImageFont> fontMap, Image image)
+	public void DrawOn(BindGetter bindGetter, Dictionary<int, ImageFont> fontMap, Image image)
 	{
 		if (!fontMap.TryGetValue(this.FontID, out ImageFont? imageFont))
 			imageFont = ImageFont.Default;
@@ -23,7 +26,7 @@ public class ImageText : IDrawableComponent
 		string formatted = string.Format(
 			this.Text,
 			this.Bind.Select(
-				x => bindMap.TryGetValue(x, out Lazy<object>? val)
+				x => bindGetter.Invoke(x, out Lazy<object>? val)
 				? val.Value
 				: this.FallBackFormattingText)
 			.ToArray());

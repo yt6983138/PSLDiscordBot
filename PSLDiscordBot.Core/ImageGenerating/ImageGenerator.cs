@@ -8,6 +8,7 @@ using PSLDiscordBot.Framework.DependencyInjection;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
+using System.Diagnostics.CodeAnalysis;
 using yt6983138.Common;
 
 namespace PSLDiscordBot.Core.ImageGenerating;
@@ -163,10 +164,6 @@ public class ImageGenerator : InjectableBase
 			textMap.Add($"B20.Status.{i}", new(() => score.Status));
 			textMap.Add($"B20.Rks.{i}", new(() => score.Rks.ToString(userData.ShowFormat)));
 		}
-		for (int i = 0; i < tags.Value.Length; i++)
-		{
-			textMap.Add($"User.Tags.{i}", new(tags.Value[i])); // using lambda here cause argument out of range for some reason
-		}
 
 		Dictionary<string, Lazy<Image>> imageMap = new()
 		{
@@ -208,7 +205,7 @@ public class ImageGenerator : InjectableBase
 					@static.DrawOn(image);
 					break;
 				case ImageText text:
-					text.DrawOn(textMap, script.Fonts, image);
+					text.DrawOn(GetTextBind, script.Fonts, image);
 					break;
 				case DynamicImage dynamicImage:
 					dynamicImage.DrawOn(image, ImageGetter, false);
@@ -234,6 +231,22 @@ public class ImageGenerator : InjectableBase
 				return (image.Value, false);
 			}
 			return (StaticImage.Default.Image, true);
+		}
+		bool GetTextBind(string id, [NotNullWhen(true)] out Lazy<object>? @object)
+		{
+			if (id.StartsWith("User.Tags."))
+			{
+				bool result = int.TryParse(id.Replace("User.Tags.", ""), out int num);
+				if (num >= tags.Value.Length)
+				{
+					@object = null;
+					return false;
+				}
+				@object = new(tags.Value[num]);
+				return true;
+			}
+
+			return textMap.TryGetValue(id, out @object);
 		}
 	}
 }
