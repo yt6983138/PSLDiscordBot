@@ -2,7 +2,7 @@
 This is a **P**higros **S**core **L**ookup Discord bot (aka PSLDiscordBot),<br/>
 you can get your scores by using `/get-b20-photo`, `/get-b20` or `/get-all-scores` etc.<br/>
 Here are some pictures showcasing: <br/>
-`/get-b20-photo` 
+`/get-b20-photo`, huge thanks to discord user Foxtrot for ui rework!
 ![image](https://github.com/yt6983138/PSLDiscordBot/assets/83499886/01cb62a6-d6c5-4ff5-aab9-cc40051973c2) <br/>
 `/get-scores`
 ![image](https://github.com/yt6983138/PSLDiscordBot/assets/83499886/5aa82534-e8c1-41d7-9637-626032242d4b) <br/>
