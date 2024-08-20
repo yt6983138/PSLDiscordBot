@@ -80,14 +80,14 @@ public class PSLPlugin : InjectableBase, IPlugin
 			File.WriteAllBytes("./Assets.zip", zip.Result);
 			FastZip fastZip = new();
 			fastZip.ExtractZip("./Assets.zip", ".", "");
-		}, null, true);
+		}, null);
 	public ArgParseInfo UpdateCommands => new(
 		"updateCommands",
 		"Update commands when new command releases.",
 		(_) =>
 		{
 			this._updateCommands = true;
-		}, null, true);
+		}, null);
 	public ArgParseInfo ResetConfig => new(
 		"resetConfig",
 		"Reset configuration (only part)",
@@ -104,7 +104,7 @@ public class PSLPlugin : InjectableBase, IPlugin
 			this._configService.Data.Verbose = @default.Verbose;
 
 			this._configService.Save();
-		}, null, true);
+		}, null);
 	public ArgParseInfo ResetConfigFull => new(
 		"resetConfigFull",
 		"Reset configuration completely.",
@@ -114,7 +114,7 @@ public class PSLPlugin : InjectableBase, IPlugin
 			this._configService.Data = new();
 
 			this._configService.Save();
-		}, null, false);
+		}, null);
 	public ArgParseInfo ResetScripts => new(
 		"resetScripts",
 		"Reset all image scripts.",
@@ -134,7 +134,7 @@ public class PSLPlugin : InjectableBase, IPlugin
 				b20.Data = b20.Generate();
 				b20.Save();
 			};
-		}, null, true);
+		}, null);
 	#endregion
 
 	void IPlugin.Load(Program program, bool isDynamicLoading)
