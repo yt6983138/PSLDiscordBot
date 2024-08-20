@@ -2,6 +2,7 @@
   "profiles": {
     "CoreRunHelper": {
       "commandName": "Project",
+      "commandLineArgs": "--resetConfigFull\r\n--updateInfoAndDifficulty\r\n--resetScripts",
       "environmentVariables": {
         "ASSETS_COPY_PATH": "G:\\Large files\\main.82.com.PigeonGames.Phigros\\PhigrosLibrary_Resource\\new\\Assets"
       }
