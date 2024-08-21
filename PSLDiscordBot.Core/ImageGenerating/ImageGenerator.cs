@@ -38,10 +38,10 @@ public class ImageGenerator : InjectableBase
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
 		this.SongDifficultyCount = new()
 		{
-			{ "SongStatistics.EZCount", new(this.PhigrosDataService.DifficultiesMap.Count(x => x.Value.Length == 1).ToString()) },
-			{ "SongStatistics.HDCount", new(this.PhigrosDataService.DifficultiesMap.Count(x => x.Value.Length == 2).ToString()) },
-			{ "SongStatistics.INCount", new(this.PhigrosDataService.DifficultiesMap.Count(x => x.Value.Length == 3).ToString()) },
-			{ "SongStatistics.ATCount", new(this.PhigrosDataService.DifficultiesMap.Count(x => x.Value.Length == 4).ToString()) },
+			{ "SongStatistics.EZCount", new(this.PhigrosDataService.DifficultiesMap.Count(x => x.Value.Length >= 1).ToString()) },
+			{ "SongStatistics.HDCount", new(this.PhigrosDataService.DifficultiesMap.Count(x => x.Value.Length >= 2).ToString()) },
+			{ "SongStatistics.INCount", new(this.PhigrosDataService.DifficultiesMap.Count(x => x.Value.Length >= 3).ToString()) },
+			{ "SongStatistics.ATCount", new(this.PhigrosDataService.DifficultiesMap.Count(x => x.Value.Length >= 4).ToString()) },
 			{ "SongStatistics.Count", new(this.PhigrosDataService.DifficultiesMap.Count.ToString()) }
 		};
 #pragma warning restore CS8602 // Dereference of a possibly null reference.
