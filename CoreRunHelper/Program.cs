@@ -26,7 +26,7 @@ internal class Program
 
 		foreach (FileInfo item in files)
 		{
-			item.MoveTo(Path.Combine(plugin.FullName, item.Name) + item.Extension, true);
+			item.MoveTo(Path.Combine(plugin.FullName, item.Name), true);
 		}
 
 		// i know this is dumb but idk how to set startup executable
