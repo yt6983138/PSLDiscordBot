@@ -1,4 +1,5 @@
-﻿using SixLabors.ImageSharp;
+﻿using SixLabors.Fonts;
+using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Drawing.Processing;
 using SixLabors.ImageSharp.Processing;
 using System.Diagnostics.CodeAnalysis;
@@ -18,8 +19,13 @@ public class ImageText : IDrawableComponent
 	public byte ColorAlpha { get; set; } = 255;
 	public CustomTextOptions TextOptions { get; set; } = new();
 
-	public void DrawOn(BindGetter bindGetter, Dictionary<int, ImageFont> fontMap, Image image)
+	public void DrawOn(BindGetter bindGetter, Dictionary<int, ImageFont> fontMap, Image image, List<FontFamily> fallBackFonts)
 	{
+		if (this.TextOptions.FallbackFontFamilies.Count == 0)
+		{
+			this.TextOptions.FallbackFontFamilies = fallBackFonts;
+		}
+
 		if (!fontMap.TryGetValue(this.FontID, out ImageFont? imageFont))
 			imageFont = ImageFont.Default;
 

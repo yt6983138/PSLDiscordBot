@@ -205,7 +205,7 @@ public class ImageGenerator : InjectableBase
 					@static.DrawOn(image);
 					break;
 				case ImageText text:
-					text.DrawOn(GetTextBind, script.Fonts, image);
+					text.DrawOn(GetTextBind, script.Fonts, image, script.FallBackFonts);
 					break;
 				case DynamicImage dynamicImage:
 					dynamicImage.DrawOn(image, ImageGetter, false);

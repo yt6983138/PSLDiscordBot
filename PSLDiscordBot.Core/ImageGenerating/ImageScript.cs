@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using SixLabors.Fonts;
 
 namespace PSLDiscordBot.Core.ImageGenerating;
 public class ImageScript
@@ -14,6 +15,27 @@ public class ImageScript
 	public List<IDrawableComponent> Components { get; set; } = new();
 	public int Width { get; set; }
 	public int Height { get; set; }
+
+	[JsonIgnore]
+	public List<FontFamily> FallBackFonts { get; set; } = new();
+
+	[Obsolete("Only used for json serialization, this attribute is only used to generate warnings")]
+	[JsonProperty(nameof(FallBackFonts))]
+	public List<string> FallBackFontsJson
+	{
+		get
+		{
+			return this.FallBackFonts
+				.Select(f => f.Name)
+				.ToList();
+		}
+		set
+		{
+			this.FallBackFonts = value
+				.Select(SystemFonts.Get)
+				.ToList();
+		}
+	}
 
 	public string Serialize()
 		=> JsonConvert.SerializeObject(this, _serializerSettings);
