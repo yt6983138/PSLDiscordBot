@@ -287,6 +287,7 @@ public class GetB20PhotoImageScriptService : FileManagementServiceBase<ImageScri
 			data = ImageScript.Deserialize(File.ReadAllText(this.InfoOfFile.FullName));
 			if (data is null)
 				return false;
+			data.FallBackFonts ??= new(); // json serialization fuck me up
 			return true;
 		}
 		catch
