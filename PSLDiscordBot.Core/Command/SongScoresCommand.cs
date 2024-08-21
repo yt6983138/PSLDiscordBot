@@ -13,7 +13,7 @@ using System.Text;
 namespace PSLDiscordBot.Core.Command;
 
 [AddToGlobal]
-public class QueryCommand : CommandBase
+public class SongScoresCommand : CommandBase
 {
 	#region Injection
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
@@ -22,8 +22,8 @@ public class QueryCommand : CommandBase
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 	#endregion
 
-	public override string Name => "query";
-	public override string Description => "Query for a specified song.";
+	public override string Name => "song-scores";
+	public override string Description => "Get scores for a specified song(s).";
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder.AddOption(
@@ -80,7 +80,7 @@ public class QueryCommand : CommandBase
 		await arg.ModifyOriginalResponseAsync(
 			(msg) =>
 			{
-				msg.Content = $"You queried `{search}`, showing...";
+				msg.Content = $"You looked for song `{search}`, showing...";
 				msg.Attachments = new List<FileAttachment>()
 				{
 					new(
