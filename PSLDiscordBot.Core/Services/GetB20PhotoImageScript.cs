@@ -31,6 +31,7 @@ public class GetB20PhotoImageScriptService : FileManagementServiceBase<ImageScri
 
 		ImageScript script = new()
 		{
+			FallBackFonts = new(),
 			Fonts = new()
 				{
 					{ Size32, new() // default

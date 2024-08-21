@@ -31,6 +31,7 @@ public class AboutMeImageScriptService : FileManagementServiceBase<ImageScript>
 		{
 			Width = Width,
 			Height = Height,
+			FallBackFonts = new(),
 			Fonts =
 				{
 					{ Small20ID, new()
