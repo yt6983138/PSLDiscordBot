@@ -1,14 +1,20 @@
-﻿using PSLDiscordBot.Core.ImageGenerating;
+﻿using Microsoft.Extensions.Logging;
+using PSLDiscordBot.Core.ImageGenerating;
 using PSLDiscordBot.Framework.DependencyInjection;
 using PSLDiscordBot.Framework.ServiceBase;
 using SixLabors.Fonts;
 using SixLabors.ImageSharp;
+using yt6983138.Common;
 
 namespace PSLDiscordBot.Core.Services;
 public class GetB20PhotoImageScriptService : FileManagementServiceBase<ImageScript>
 {
+	private static EventId EventId = new(1145141_1, "Load/Unload");
+
 	[Inject]
 	private ConfigService Config { get; set; }
+	[Inject]
+	private Logger Logger { get; set; }
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 	public GetB20PhotoImageScriptService()
@@ -288,11 +294,17 @@ public class GetB20PhotoImageScriptService : FileManagementServiceBase<ImageScri
 			data = ImageScript.Deserialize(File.ReadAllText(this.InfoOfFile.FullName));
 			if (data is null)
 				return false;
-			data.FallBackFonts ??= new(); // json serialization fuck me up
 			return true;
 		}
-		catch
+		catch (Exception ex)
 		{
+			this.Logger.Log(
+				LogLevel.Warning,
+				$"{nameof(GetB20PhotoImageScriptService)} Failed to deserialize",
+				EventId,
+				this,
+				ex);
+
 			data = null!;
 			return false;
 		}
