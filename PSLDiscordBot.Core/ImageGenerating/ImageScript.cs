@@ -17,7 +17,7 @@ public class ImageScript
 	public int Height { get; set; }
 
 	[JsonIgnore]
-	public List<FontFamily> FallBackFonts { get; set; } = new();
+	public List<FontFamily> FallBackFonts { get; set; } = null!;
 
 	[Obsolete("Only used for json serialization, this attribute is only used to generate warnings")]
 	[JsonProperty(nameof(FallBackFonts))]
@@ -25,6 +25,9 @@ public class ImageScript
 	{
 		get
 		{
+			if (this.FallBackFonts is null)
+				return null!;
+
 			return this.FallBackFonts
 				.Select(f => f.Name)
 				.ToList();
