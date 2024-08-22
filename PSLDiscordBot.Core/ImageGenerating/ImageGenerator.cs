@@ -136,6 +136,28 @@ public class ImageGenerator : InjectableBase
 		foreach (ScoreStatus status in (ScoreStatus[])Enum.GetValues(typeof(ScoreStatus)))
 		{
 			if (status == ScoreStatus.Bugged || status == ScoreStatus.NotFc) continue;
+			if (status == ScoreStatus.Fc)
+			{
+				ScoreStatus[] included = [ScoreStatus.Fc, ScoreStatus.Phi];
+
+				textMap.Add(
+				$"User.PlayStatistics.EZ{status}Count",
+				new(() => b19.Count(x => x.Difficulty == Difficulty.EZ && included.Contains(x.Status))));
+				textMap.Add(
+					$"User.PlayStatistics.HD{status}Count",
+					new(() => b19.Count(x => x.Difficulty == Difficulty.HD && included.Contains(x.Status))));
+				textMap.Add(
+					$"User.PlayStatistics.IN{status}Count",
+					new(() => b19.Count(x => x.Difficulty == Difficulty.IN && included.Contains(x.Status))));
+				textMap.Add(
+					$"User.PlayStatistics.AT{status}Count",
+					new(() => b19.Count(x => x.Difficulty == Difficulty.AT && included.Contains(x.Status))));
+				textMap.Add(
+					$"User.PlayStatistics.All{status}Count",
+					new(() => b19.Count(x => included.Contains(x.Status))));
+
+				continue;
+			}
 			textMap.Add(
 				$"User.PlayStatistics.EZ{status}Count",
 				new(() => b19.Count(x => x.Difficulty == Difficulty.EZ && x.Status == status)));
