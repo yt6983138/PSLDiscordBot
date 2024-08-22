@@ -67,7 +67,8 @@ public class ImageGenerator : InjectableBase
 	}
 
 	public async Task<Image> MakePhoto(
-		CompleteScore[] scores,
+		CompleteScore[] b19,
+		CompleteScore best,
 		IReadOnlyDictionary<string, string> infos,
 		UserData userData,
 		Summary summary,
@@ -119,11 +120,11 @@ public class ImageGenerator : InjectableBase
 			{ "User.Currency.TiB", new(() => progress.Money.TiB) },
 			{ "User.Currency.PiB", new(() => progress.Money.PiB) },
 			{ "User.Currency.Combined", new(() => progress.Money) },
-			{ "User.PlayStatistics.EZClearCount", new(() => scores.Count(x => x.Difficulty == Difficulty.EZ)) },
-			{ "User.PlayStatistics.HDClearCount", new(() => scores.Count(x => x.Difficulty == Difficulty.HD)) },
-			{ "User.PlayStatistics.INClearCount", new(() => scores.Count(x => x.Difficulty == Difficulty.IN)) },
-			{ "User.PlayStatistics.ATClearCount", new(() => scores.Count(x => x.Difficulty == Difficulty.AT)) },
-			{ "User.PlayStatistics.AllClearCount", new(() => scores.Length) },
+			{ "User.PlayStatistics.EZClearCount", new(() => b19.Count(x => x.Difficulty == Difficulty.EZ)) },
+			{ "User.PlayStatistics.HDClearCount", new(() => b19.Count(x => x.Difficulty == Difficulty.HD)) },
+			{ "User.PlayStatistics.INClearCount", new(() => b19.Count(x => x.Difficulty == Difficulty.IN)) },
+			{ "User.PlayStatistics.ATClearCount", new(() => b19.Count(x => x.Difficulty == Difficulty.AT)) },
+			{ "User.PlayStatistics.AllClearCount", new(() => b19.Length) },
 			{ "User.Tags.JoinedComma", new(() => string.Join(", ", tags.Value)) },
 			{ "User.Tags.JoinedNewLine", new(() => string.Join("\n", tags.Value)) },
 			{ "User.Tags.Count", new(() => tags.Value.Length) },
@@ -137,24 +138,26 @@ public class ImageGenerator : InjectableBase
 			if (status == ScoreStatus.Bugged || status == ScoreStatus.NotFc) continue;
 			textMap.Add(
 				$"User.PlayStatistics.EZ{status}Count",
-				new(() => scores.Count(x => x.Difficulty == Difficulty.EZ && x.Status == status)));
+				new(() => b19.Count(x => x.Difficulty == Difficulty.EZ && x.Status == status)));
 			textMap.Add(
 				$"User.PlayStatistics.HD{status}Count",
-				new(() => scores.Count(x => x.Difficulty == Difficulty.HD && x.Status == status)));
+				new(() => b19.Count(x => x.Difficulty == Difficulty.HD && x.Status == status)));
 			textMap.Add(
 				$"User.PlayStatistics.IN{status}Count",
-				new(() => scores.Count(x => x.Difficulty == Difficulty.IN && x.Status == status)));
+				new(() => b19.Count(x => x.Difficulty == Difficulty.IN && x.Status == status)));
 			textMap.Add(
 				$"User.PlayStatistics.AT{status}Count",
-				new(() => scores.Count(x => x.Difficulty == Difficulty.AT && x.Status == status)));
+				new(() => b19.Count(x => x.Difficulty == Difficulty.AT && x.Status == status)));
 			textMap.Add(
 				$"User.PlayStatistics.All{status}Count",
-				new(() => scores.Count(x => x.Status == status)));
+				new(() => b19.Count(x => x.Status == status)));
 		}
 
-		for (int i = 0; i < scores.Length; i++)
+		for (int k = 0; k < b19.Length; k++)
 		{
-			CompleteScore score = scores[i];
+			int i = k + 1;
+			CompleteScore score = b19[k];
+		Start:
 			textMap.Add($"B20.Score.{i}", new(() => score.Score));
 			textMap.Add($"B20.Acc.{i}", new(() => score.Accuracy.ToString(userData.ShowFormat)));
 			textMap.Add($"B20.CC.{i}", new(() => score.ChartConstant));
@@ -163,6 +166,12 @@ public class ImageGenerator : InjectableBase
 			textMap.Add($"B20.Name.{i}", new(() => infos.TryGetValue(score.Id, out string? _str1) ? _str1 : score.Id));
 			textMap.Add($"B20.Status.{i}", new(() => score.Status));
 			textMap.Add($"B20.Rks.{i}", new(() => score.Rks.ToString(userData.ShowFormat)));
+			if (i == 1)
+			{
+				i = 0;
+				score = best;
+				goto Start;
+			}
 		}
 
 		Dictionary<string, Lazy<Image>> imageMap = new()
@@ -182,20 +191,31 @@ public class ImageGenerator : InjectableBase
 				?? StaticImage.Default.Image) }
 		};
 
-		for (int i = 0; i < scores.Length; i++)
+		#region Add illustration/rank images
 		{
-			CompleteScore score = scores[i];
-			Image? image2 = Utils.TryLoadImage($"./Assets/Tracks/{score.Id}.0/IllustrationLowRes.png");
+			string path = $"./Assets/Tracks/{best.Id}.0/IllustrationLowRes.png";
+
+			imageMap.Add("B20.Rank.0", new(this.RankImages[best.Status]));
+			imageMap.Add("B20.Illustration.0", new(
+				() => Utils.TryLoadImage(path) ?? StaticImage.Default.Image)
+			);
+			if (!File.Exists(path))
+				this.Logger.Log<ImageGenerator>(LogLevel.Warning, $"Cannot find image for {best.Id}.0!", EventId, null!);
+		}
+		for (int j = 0; j < b19.Length; j++)
+		{
+			int i = j + 1;
+			CompleteScore score = b19[j];
+			string path = $"./Assets/Tracks/{score.Id}.0/IllustrationLowRes.png";
 
 			imageMap.Add($"B20.Rank.{i}", new(this.RankImages[score.Status]));
 			imageMap.Add($"B20.Illustration.{i}", new(
-				() =>
-				Utils.TryLoadImage($"./Assets/Tracks/{score.Id}.0/IllustrationLowRes.png")
-				?? StaticImage.Default.Image)
+				() => Utils.TryLoadImage(path) ?? StaticImage.Default.Image)
 			);
-			if (image2 is null)
+			if (!File.Exists(path))
 				this.Logger.Log<ImageGenerator>(LogLevel.Warning, $"Cannot find image for {score.Id}.0!", EventId, null!);
 		}
+		#endregion
 
 		foreach (IDrawableComponent component in script.Components)
 		{

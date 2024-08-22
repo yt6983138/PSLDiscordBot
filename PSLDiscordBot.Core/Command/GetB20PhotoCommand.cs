@@ -65,37 +65,30 @@ public class GetB20PhotoCommand : CommandBase
 			await arg.ModifyOriginalResponseAsync(msg => msg.Content = $"Error: {ex.Message}\nYou may try again or report to author.");
 			throw;
 		}
-		CompleteScore[] b20 = new CompleteScore[20];
-		string[] realNames = new string[20];
 		save.Records.Sort((x, y) => y.Rks.CompareTo(x.Rks));
-		double rks = 0;
+
 		const string RealCoolName = "NULL";
+
 		CompleteScore @default = new(0, 0, 0, RealCoolName, Difficulty.EZ, ScoreStatus.Bugged);
-		for (int j = 0; j < 20; j++)
+
+		CompleteScore[] b20 = new CompleteScore[19];
+		CompleteScore best = save.Records.FirstOrDefault(x => x.Status == ScoreStatus.Phi) ?? @default;
+
+		double rks = best.Rks * 0.05;
+
+		for (int j = 0; j < b20.Length; j++)
 		{
 			b20[j] = @default;
-			realNames[j] = RealCoolName;
-		}
-
-		for (int i = 0; i < save.Records.Count; i++)
-		{
-			CompleteScore score = save.Records[i];
-			if (i < 19)
+			if (j < save.Records.Count)
 			{
-				b20[i + 1] = score;
-				realNames[i + 1] = this.PhigrosDataService.IdNameMap.TryGetValue(score.Id, out string? _val1) ? _val1 : score.Id;
-				rks += score.Rks * 0.05;
-			}
-			if (score.Accuracy == 100 && score.Rks > b20[0].Rks)
-			{
-				b20[0] = score;
-				realNames[0] = this.PhigrosDataService.IdNameMap.TryGetValue(score.Id, out string? _val2) ? _val2 : score.Id;
+				b20[j] = save.Records[j];
+				rks += b20[j].Rks * 0.05;
 			}
 		}
-		rks += b20[0].Rks * 0.05;
 
 		SixLabors.ImageSharp.Image image = await this.ImageGenerator.MakePhoto(
 			b20,
+			best,
 			this.PhigrosDataService.IdNameMap,
 			data,
 			summary,

@@ -65,22 +65,21 @@ public class AboutMeCommand : CommandBase
 			await arg.ModifyOriginalResponseAsync(msg => msg.Content = $"Error: {ex.Message}\nYou may try again or report to author.");
 			throw;
 		}
+		const string RealCoolName = "NULL";
 		save.Records.Sort((x, y) => y.Rks.CompareTo(x.Rks));
-		double rks = 0;
-		CompleteScore best = new(0, 0, 0, "", Difficulty.EZ, ScoreStatus.Bugged);
-		for (int i = 0; i < save.Records.Count; i++)
-		{
-			CompleteScore score = save.Records[i];
-			if (i < 19)
-				rks += score.Rks * 0.05;
-			if (score.Accuracy == 100 && score.Rks > best.Rks)
-				best = score;
-		}
-		rks += best.Rks * 0.05;
-		save.Records.Insert(0, best);
+
+		CompleteScore @default = new(0, 0, 0, RealCoolName, Difficulty.EZ, ScoreStatus.Bugged);
+
+		CompleteScore best = save.Records.FirstOrDefault(x => x.Status == ScoreStatus.Phi) ?? @default;
+
+		double rks = best.Rks * 0.05;
+
+		int i = 0;
+		save.Records.ForEach(x => { if (i < 19) rks += x.Rks * 0.05; i++; });
 
 		SixLabors.ImageSharp.Image image = await this.ImageGenerator.MakePhoto(
 			save.Records.ToArray(),
+			best,
 			this.PhigrosDataService.IdNameMap,
 			data,
 			summary,
