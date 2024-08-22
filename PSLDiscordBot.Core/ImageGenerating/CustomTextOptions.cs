@@ -19,12 +19,17 @@ public class CustomTextOptions : RichTextOptions
 }
 internal class NoFontSerializeContractResolver : DefaultContractResolver
 {
+	private static readonly string[] _disallowedPropertyNames = ["Font", "FallbackFontFamilies"];
+
 	protected override JsonProperty CreateProperty(MemberInfo member, MemberSerialization memberSerialization)
 	{
 		JsonProperty property = base.CreateProperty(member, memberSerialization);
 
-		if (property.DeclaringType == typeof(TextOptions) && property.PropertyName == "Font")
+		if (property.DeclaringType == typeof(TextOptions)
+			&& _disallowedPropertyNames.Contains(property.PropertyName))
+		{
 			property.ShouldSerialize = _ => false;
+		}
 
 		return property;
 	}

@@ -21,10 +21,7 @@ public class ImageText : IDrawableComponent
 
 	public void DrawOn(BindGetter bindGetter, Dictionary<int, ImageFont> fontMap, Image image, List<FontFamily> fallBackFonts)
 	{
-		if (this.TextOptions.FallbackFontFamilies.Count == 0)
-		{
-			this.TextOptions.FallbackFontFamilies = fallBackFonts;
-		}
+		this.TextOptions.FallbackFontFamilies = fallBackFonts;
 
 		if (!fontMap.TryGetValue(this.FontID, out ImageFont? imageFont))
 			imageFont = ImageFont.Default;
