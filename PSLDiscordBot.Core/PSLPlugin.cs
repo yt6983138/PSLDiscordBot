@@ -7,8 +7,8 @@ using PSLDiscordBot.Core.ImageGenerating;
 using PSLDiscordBot.Core.Services;
 using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.BuiltInServices;
-using PSLDiscordBot.Framework.CommandBase;
 using PSLDiscordBot.Framework.DependencyInjection;
+using PSLDiscordBot.Framework.MiscEventArgs;
 using SixLabors.Fonts;
 using System.Net.WebSockets;
 using System.Text;
@@ -29,6 +29,8 @@ public class PSLPlugin : InjectableBase, IPlugin
 	#region Injection
 	[Inject]
 	public DiscordClientService DiscordClientService { get; set; }
+	[Inject]
+	public CommandResolveService CommandResolveService { get; set; }
 	#endregion
 
 	public IUser? AdminUser { get; set; }
@@ -173,8 +175,9 @@ public class PSLPlugin : InjectableBase, IPlugin
 		program.AfterArgParse += this.Program_AfterArgParse;
 		program.AfterCommandLoaded += this.Program_AfterCommandLoaded;
 		program.AfterMainInitialize += this.Program_AfterMainInitialize;
-		program.BeforeSlashCommandExecutes += this.Program_BeforeSlashCommandExecutes;
-		program.OnSlashCommandError += async (_, e) => await this.OnException(e.Exception);
+
+		this.CommandResolveService.BeforeSlashCommandExecutes += this.Program_BeforeSlashCommandExecutes;
+		this.CommandResolveService.OnSlashCommandError += async (_, e) => await this.OnException(e.Exception);
 
 		program.AddArgReceiver(this.UpdateFiles);
 		program.AddArgReceiver(this.UpdateCommands);
@@ -269,7 +272,6 @@ public class PSLPlugin : InjectableBase, IPlugin
 		Program program = InjectableBase.GetSingleton<Program>();
 
 		this._logger.Log(LogLevel.Information, "Initializing bot...", EventIdInitialize, this);
-		const int Delay = 600;
 
 		if (this.Initialized) goto Final;
 		IUser admin = await this.DiscordClientService.SocketClient.GetUserAsync(this._configService.Data.AdminUserId);
@@ -298,79 +300,7 @@ public class PSLPlugin : InjectableBase, IPlugin
 		{
 			this._logger.Log(LogLevel.Warning, EventIdInitialize, this, ex);
 		}
-
 	BypassAdminCheck:
-		IReadOnlyCollection<SocketApplicationCommand> globalCommandsAlreadyExisted =
-			await this.DiscordClientService.SocketClient.GetGlobalApplicationCommandsAsync();
-
-		List<Task> tasks = new();
-
-		foreach (SocketApplicationCommand command in globalCommandsAlreadyExisted)
-		{
-			await Task.Delay(Delay);
-			string name = command.Name;
-			program.GlobalCommands.TryGetValue(name, out BasicCommandBase? localCommand);
-
-			bool shouldAdd = false;
-			SlashCommandBuilder? builder = localCommand?.CompleteBuilder;
-			SlashCommandProperties? built = builder?.Build();
-			if (localCommand is null) goto Delete;
-			shouldAdd = true;
-			if (builder!.Description != command.Description) goto Delete;
-			IReadOnlyCollection<SocketApplicationCommandOption> commandOption = command.Options;
-			List<ApplicationCommandOptionProperties> localCommandOptions = built!.Options.IsSpecified ? built!.Options.Value : new();
-			if (localCommandOptions.Count != commandOption.Count) goto Delete;
-			bool allContains = true;
-			foreach (ApplicationCommandOptionProperties? localOption in localCommandOptions)
-			{
-				bool contains = false;
-				foreach (SocketApplicationCommandOption remoteOption in commandOption)
-				{
-					if (localOption.Compare(remoteOption))
-					{
-						contains = true;
-						break;
-					}
-				}
-				if (!contains)
-					allContains = false;
-			}
-			if (!allContains) goto Delete;
-			this._logger.Log<PSLPlugin>(LogLevel.Debug, EventIdInitialize, "Global command {0} did not get removed", command.Name);
-			continue;
-
-		Delete:
-			tasks.Add(command.DeleteAsync()
-				.ContinueWith(_ =>
-				shouldAdd
-				? this.DiscordClientService.SocketClient.CreateGlobalApplicationCommandAsync(built)
-				: Task.CompletedTask));
-			this._logger.Log<PSLPlugin>(LogLevel.Debug, EventIdInitialize, "Removing global command {0}", command.Name);
-			if (!shouldAdd) continue;
-			this._logger.Log<PSLPlugin>(LogLevel.Debug, EventIdInitialize, "Also adding global command {0}", built!.Name);
-		}
-		foreach (
-			KeyValuePair<string, BasicCommandBase> command
-			in program.GlobalCommands.Where(x => !globalCommandsAlreadyExisted.Any(a => a.Name == x.Key)))
-		{
-			tasks.Add(
-				this.DiscordClientService.SocketClient.CreateGlobalApplicationCommandAsync(
-					command.Value.CompleteBuilder.Build()));
-			this._logger.Log<PSLPlugin>(LogLevel.Debug, EventIdInitialize, "Adding new global command {0}", command.Key);
-			await Task.Delay(Delay);
-		}
-		foreach (Task item in tasks)
-		{
-			try
-			{
-				this._logger.Log<PSLPlugin>(LogLevel.Debug, EventIdInitialize, "Awaiting a task whose status is {0}.", item.Status);
-				await item;
-			}
-			catch (Exception exception)
-			{
-				this._logger.Log(LogLevel.Error, EventIdInitialize, this, exception);
-			}
-		}
 	Final:
 		this._logger.Log(LogLevel.Information, "Bot started!", EventIdInitialize, this);
 		this.Initialized = true;

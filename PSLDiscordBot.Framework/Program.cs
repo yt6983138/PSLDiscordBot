@@ -1,8 +1,5 @@
-﻿using Discord.WebSocket;
-using PSLDiscordBot.Framework.BuiltInServices;
-using PSLDiscordBot.Framework.CommandBase;
+﻿using PSLDiscordBot.Framework.BuiltInServices;
 using PSLDiscordBot.Framework.DependencyInjection;
-using System.Reflection;
 
 namespace PSLDiscordBot.Framework;
 
@@ -12,6 +9,7 @@ public class Program
 
 	private DiscordClientService _discordClientService = null!;
 	private PluginResolveService _pluginResolveService = null!;
+	private CommandResolveService _commandResolveService = null!;
 
 	// so basically it goes like this:
 	// plugin loading -> AfterPluginsLoaded -> ArgParsing ->
@@ -33,13 +31,9 @@ public class Program
 	public event EventHandler<EventArgs>? AfterMainInitialize;
 	public event EventHandler<EventArgs>? BeforeMainExiting;
 
-	public event EventHandler<SlashCommandEventArgs>? BeforeSlashCommandExecutes;
-
-	public event EventHandler<SlashCommandExceptionEventArgs>? OnSlashCommandError;
-	public CancellationTokenSource CancellationTokenSource { get; set; } = new();
-	public CancellationToken CancellationToken { get; set; }
-	public List<Task> RunningTasks { get; set; } = new();
-	public Dictionary<string, BasicCommandBase> GlobalCommands { get; private set; } = null!;
+	public CancellationTokenSource CancellationTokenSource { get; } = new();
+	public CancellationToken CancellationToken { get; private set; }
+	public List<Task> RunningTasks { get; } = new();
 
 	public static Task Main(string[] args) => new Program().MainAsync(args);
 
@@ -57,8 +51,13 @@ public class Program
 			^ Discord.GatewayIntents.GuildInvites
 		}), new());
 		InjectableBase.AddSingleton(this._discordClientService);
+		this._commandResolveService = new();
+		InjectableBase.AddSingleton(this._commandResolveService);
+
+		InjectableBase.OnServiceAdd += this.InjectableBase_OnServiceAdd;
 
 		this._pluginResolveService.LoadAllPlugins();
+
 		if (this._pluginResolveService.Plugins.Count == 0)
 		{
 			Utils.WriteLineWithColor(
@@ -145,22 +144,14 @@ public class Program
 
 		this.AfterArgParse?.Invoke(this, EventArgs.Empty);
 
-		IEnumerable<Type> allCommandBases = AppDomain.CurrentDomain
-			.GetAssemblies()
-			.Select(x => x.GetTypes())
-			.MergeArrays()
-			.Where(t => t.IsSubclassOf(typeof(BasicCommandBase)));
-
-		this.GlobalCommands = allCommandBases
-			.Where(t => t.GetCustomAttribute<AddToGlobalAttribute>() is not null)
-			.Select(t => (BasicCommandBase)Activator.CreateInstance(t)!)
-			.ToDictionary(c => c.Name);
+		this._commandResolveService.Initialize(this._discordClientService, this);
+		await this._commandResolveService.LoadAllCommand();
 
 		this.AfterCommandLoaded?.Invoke(this, EventArgs.Empty);
 
-		this._discordClientService.SocketClient.SlashCommandExecuted += this.SocketClient_SlashCommandExecuted;
+		this._commandResolveService.RegisterHandler();
 
-		AfterMainInitialize?.Invoke(this, EventArgs.Empty);
+		this.AfterMainInitialize?.Invoke(this, EventArgs.Empty);
 
 		await Task.Delay(-1, this.CancellationToken).ContinueWith(_ => { });
 
@@ -177,31 +168,17 @@ public class Program
 	{
 		this._argParseInfos.Add(info);
 	}
-	private Task SocketClient_SlashCommandExecuted(SocketSlashCommand arg)
+
+	// handles injection change automatically
+	private void InjectableBase_OnServiceAdd(object? sender, ServiceModificationEventArgs e)
 	{
-		SlashCommandEventArgs eventArg = new(arg);
+		if (e.Canceled || e.IsTransient || e.IsRemoving || !e.IsSingleton) return;
 
-		this.BeforeSlashCommandExecutes?.Invoke(this, eventArg);
-		if (eventArg.Canceled)
-			return Task.CompletedTask;
-
-		BasicCommandBase command = this.GlobalCommands[arg.CommandName];
-
-		Task task;
-
-		if (command.RunOnDifferentThread)
-			task = Task.Run(() => command.Execute(arg, this));
-		else task = command.Execute(arg, this);
-
-		this.RunningTasks.Add(task);
-
-		_ = Utils.RunWithTaskOnEnd(
-			task,
-			() => this.RunningTasks.Remove(task),
-			(e) =>
-			{
-				this.OnSlashCommandError?.Invoke(this, new(e, command, task));
-			});
-		return Task.CompletedTask;
+		if (e.Service is DiscordClientService service1)
+			this._discordClientService = service1;
+		if (e.Service is PluginResolveService service2)
+			this._pluginResolveService = service2;
+		if (e.Service is CommandResolveService service3)
+			this._commandResolveService = service3;
 	}
 }

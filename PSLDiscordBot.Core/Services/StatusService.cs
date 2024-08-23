@@ -1,5 +1,6 @@
 ﻿using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.DependencyInjection;
+using PSLDiscordBot.Framework.MiscEventArgs;
 
 namespace PSLDiscordBot.Core.Services;
 

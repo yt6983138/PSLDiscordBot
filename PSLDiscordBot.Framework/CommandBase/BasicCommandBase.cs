@@ -19,12 +19,10 @@ public abstract class BasicCommandBase : InjectableBase
 		.WithDescription(this.Description);
 	public abstract SlashCommandBuilder CompleteBuilder { get; }
 
-#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 	public BasicCommandBase()
 		: base()
 	{
-		this.EventId = new(11451400 + EventIdCount++, this.GetType().Name);
+		this.EventId = new(0_11451400 + EventIdCount++, this.GetType().Name);
 	}
-#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 	public abstract Task Execute(SocketSlashCommand arg, object executer);
 }

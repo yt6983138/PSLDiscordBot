@@ -38,9 +38,9 @@ public static class Utils
 			source.Add(pair);
 		}
 	}
-	public static bool Compare(this SocketApplicationCommandOption source, ApplicationCommandOptionProperties target)
+	public static bool Compare(this ApplicationCommandOptionProperties source, ApplicationCommandOptionProperties target)
 	{
-		SocketApplicationCommandOption a = source;
+		ApplicationCommandOptionProperties a = source;
 		ApplicationCommandOptionProperties x = target;
 		return a.Name == x.Name &&
 			a.Description == x.Description &&
@@ -51,8 +51,6 @@ public static class Utils
 			a.IsRequired.IsSameOrSameToDefault(x.IsRequired) &&
 			a.Type == x.Type;
 	}
-	public static bool Compare(this ApplicationCommandOptionProperties source, SocketApplicationCommandOption target)
-		=> target.Compare(source);
 	internal static bool IsSameOrSameToDefault<T>(this T? source, T? target) where T : struct
 	{
 		if (!source.HasValue)
