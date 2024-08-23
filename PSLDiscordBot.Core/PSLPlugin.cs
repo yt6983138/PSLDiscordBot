@@ -271,9 +271,9 @@ public class PSLPlugin : InjectableBase, IPlugin
 	{
 		Program program = InjectableBase.GetSingleton<Program>();
 
-		this._logger.Log(LogLevel.Information, "Initializing bot...", EventIdInitialize, this);
-
 		if (this.Initialized) goto Final;
+
+		this._logger.Log(LogLevel.Information, "Initializing bot...", EventIdInitialize, this);
 		IUser admin = await this.DiscordClientService.SocketClient.GetUserAsync(this._configService.Data.AdminUserId);
 
 		if (!this._configService.Data.DMAdminAboutErrors)
