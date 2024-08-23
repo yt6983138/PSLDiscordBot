@@ -175,11 +175,21 @@ public class ImageGenerator : InjectableBase
 				new(() => b19.Count(x => x.Status == status)));
 		}
 
+		#region B20 Textmap
+		{
+			textMap.Add($"B20.Score.0", new(() => best.Score));
+			textMap.Add($"B20.Acc.0", new(() => best.Accuracy.ToString(userData.ShowFormat)));
+			textMap.Add($"B20.CC.0", new(() => best.ChartConstant));
+			textMap.Add($"B20.Diff.0", new(() => best.Difficulty));
+			textMap.Add($"B20.IdName.0", new(() => best.Id));
+			textMap.Add($"B20.Name.0", new(() => infos.TryGetValue(best.Id, out string? _str1) ? _str1 : best.Id));
+			textMap.Add($"B20.Status.0", new(() => best.Status));
+			textMap.Add($"B20.Rks.0", new(() => best.Rks.ToString(userData.ShowFormat)));
+		}
 		for (int k = 0; k < b19.Length; k++)
 		{
 			int i = k + 1;
 			CompleteScore score = b19[k];
-		Start:
 			textMap.Add($"B20.Score.{i}", new(() => score.Score));
 			textMap.Add($"B20.Acc.{i}", new(() => score.Accuracy.ToString(userData.ShowFormat)));
 			textMap.Add($"B20.CC.{i}", new(() => score.ChartConstant));
@@ -188,13 +198,8 @@ public class ImageGenerator : InjectableBase
 			textMap.Add($"B20.Name.{i}", new(() => infos.TryGetValue(score.Id, out string? _str1) ? _str1 : score.Id));
 			textMap.Add($"B20.Status.{i}", new(() => score.Status));
 			textMap.Add($"B20.Rks.{i}", new(() => score.Rks.ToString(userData.ShowFormat)));
-			if (i == 1)
-			{
-				i = 0;
-				score = best;
-				goto Start;
-			}
 		}
+		#endregion
 
 		Dictionary<string, Lazy<Image>> imageMap = new()
 		{
