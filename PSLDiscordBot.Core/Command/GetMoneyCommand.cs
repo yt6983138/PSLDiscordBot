@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using PhigrosLibraryCSharp;
 using PhigrosLibraryCSharp.Cloud.DataStructure;
 using PSLDiscordBot.Core.Command.Base;
 using PSLDiscordBot.Core.Services;
@@ -32,11 +33,9 @@ public class GetMoneyCommand : CommandBase
 		{
 			progress = await data.SaveCache.GetGameProgressAsync(index ?? 0);
 		}
-		catch (ArgumentOutOfRangeException ex)
+		catch (MaxValueArgumentOutOfRangeException ex)
 		{
-			await arg.ModifyOriginalResponseAsync(msg => msg.Content = $"Error: Expected index less than {ex.Message}, more or equal to 0. You entered {index}.");
-			if (ex.Message.Any(x => !char.IsDigit(x))) // detecting is arg error or shit happened in library
-				throw;
+			await arg.ModifyOriginalResponseAsync(msg => msg.Content = $"Error: Expected index less than {ex.MaxValue}, more or equal to 0. You entered {index}.");
 			return;
 		}
 		catch (Exception ex)
