@@ -173,7 +173,6 @@ public class PSLPlugin : InjectableBase, IPlugin
 
 		program.AfterPluginsLoaded += this.Program_AfterPluginsLoaded;
 		program.AfterArgParse += this.Program_AfterArgParse;
-		program.AfterCommandLoaded += this.Program_AfterCommandLoaded;
 		program.AfterMainInitialize += this.Program_AfterMainInitialize;
 
 		this.CommandResolveService.BeforeSlashCommandExecutes += this.Program_BeforeSlashCommandExecutes;
@@ -207,12 +206,13 @@ public class PSLPlugin : InjectableBase, IPlugin
 		this._logger.Log(LogLevel.Critical, EventIdApp, this, ex);
 		Environment.Exit(ex.HResult);
 	}
-	private async void Program_AfterMainInitialize(object? sender, EventArgs e)
+	private void Program_AfterMainInitialize(object? sender, EventArgs e)
 	{
 		this.WriteAll();
 
-		await this.DiscordClientService.SocketClient.LoginAsync(TokenType.Bot, this._configService.Data.Token);
-		await this.DiscordClientService.SocketClient.StartAsync();
+		this.DiscordClientService.SocketClient.LoginAsync(TokenType.Bot, this._configService.Data.Token).Wait();
+		this.DiscordClientService.RestClient.LoginAsync(TokenType.Bot, this._configService.Data.Token).Wait();
+		this.DiscordClientService.SocketClient.StartAsync().Wait();
 	}
 	private void Program_AfterArgParse(object? sender, EventArgs e)
 	{
@@ -261,10 +261,6 @@ public class PSLPlugin : InjectableBase, IPlugin
 			$"Command received: {arg.CommandName} from: {arg.User.GlobalName} ({arg.User.Id})",
 			EventId,
 			this);
-	}
-	private void Program_AfterCommandLoaded(object? sender, EventArgs e)
-	{
-
 	}
 
 	private async Task Client_Ready()

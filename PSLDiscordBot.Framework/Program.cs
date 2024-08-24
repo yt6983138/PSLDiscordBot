@@ -27,7 +27,6 @@ public class Program
 	// assembly loading order: sorted by name
 	public event EventHandler<EventArgs>? AfterPluginsLoaded;
 	public event EventHandler<EventArgs>? AfterArgParse;
-	public event EventHandler<EventArgs>? AfterCommandLoaded;
 	public event EventHandler<EventArgs>? AfterMainInitialize;
 	public event EventHandler<EventArgs>? BeforeMainExiting;
 
@@ -145,10 +144,7 @@ public class Program
 		this.AfterArgParse?.Invoke(this, EventArgs.Empty);
 
 		this._commandResolveService.Initialize(this._discordClientService, this);
-		await this._commandResolveService.LoadAllCommand();
-
-		this.AfterCommandLoaded?.Invoke(this, EventArgs.Empty);
-
+		this._commandResolveService.LoadAllCommand();
 		this._commandResolveService.RegisterHandler();
 
 		this.AfterMainInitialize?.Invoke(this, EventArgs.Empty);

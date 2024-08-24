@@ -81,6 +81,14 @@ public static class Utils
 				yield return item[i];
 		}
 	}
+	public static IEnumerable<T> MergeIEnumerables<T>(this IEnumerable<IEnumerable<T>> source)
+	{
+		foreach (IEnumerable<T> item in source)
+		{
+			foreach (T item2 in item)
+				yield return item2;
+		}
+	}
 	public static string GetRelativePath(string from, string to)
 	{
 		Uri pathUri = new(to);

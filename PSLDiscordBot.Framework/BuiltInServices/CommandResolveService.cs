@@ -43,12 +43,15 @@ public class CommandResolveService : InjectableBase
 	}
 	public virtual void RegisterHandler()
 	{
-		this._discordClientService!.SocketClient.SlashCommandExecuted += this.SocketClient_SlashCommandExecuted;
-		this._discordClientService!.SocketClient.UserCommandExecuted += this.SocketClient_UserCommandExecuted;
-		this._discordClientService!.SocketClient.MessageCommandExecuted += this.SocketClient_MessageCommandExecuted;
+		if (this._discordClientService is null)
+			ThrowNotInitialized();
+
+		this._discordClientService.SocketClient.SlashCommandExecuted += this.SocketClient_SlashCommandExecuted;
+		this._discordClientService.SocketClient.UserCommandExecuted += this.SocketClient_UserCommandExecuted;
+		this._discordClientService.SocketClient.MessageCommandExecuted += this.SocketClient_MessageCommandExecuted;
 	}
 
-	public virtual async Task LoadAllCommand()
+	public virtual void LoadAllCommand()
 	{
 		if (this._discordClientService is null)
 			ThrowNotInitialized();
@@ -63,25 +66,16 @@ public class CommandResolveService : InjectableBase
 		this._userCommands = commandsUser.ToDictionary(c => c.Name);
 		this._messageCommands = commandsMessage.ToDictionary(c => c.Name);
 
-		await this._discordClientService.SocketClient.BulkOverwriteGlobalApplicationCommandsAsync(
-			commandsGlobal
-			.Select(x => x.CompleteBuilder.Build())
-			.ToArray());
-
-		await this._discordClientService.SocketClient.BulkOverwriteGlobalApplicationCommandsAsync(
-			commandsGuild
-			.Select(x => x.CompleteBuilder.Build())
-			.ToArray());
-
-		await this._discordClientService.SocketClient.BulkOverwriteGlobalApplicationCommandsAsync(
-			commandsUser
-			.Select(x => x.CompleteBuilder.Build())
-			.ToArray());
-
-		await this._discordClientService.SocketClient.BulkOverwriteGlobalApplicationCommandsAsync(
-			commandsMessage
-			.Select(x => x.CompleteBuilder.Build())
-			.ToArray());
+		this._discordClientService.SocketClient.Ready += async () =>
+		{
+			await this._discordClientService.SocketClient.BulkOverwriteGlobalApplicationCommandsAsync(
+				new List<IEnumerable<ApplicationCommandProperties>>() {
+					commandsGlobal.Select(x => x.CompleteBuilder.Build()),
+					commandsGuild.Select(x => x.CompleteBuilder.Build()),
+					commandsMessage.Select(x => x.CompleteBuilder.Build()),
+					commandsUser.Select(x => x.CompleteBuilder.Build())
+				}.MergeIEnumerables().ToArray());
+		};
 	}
 
 	#region Override
