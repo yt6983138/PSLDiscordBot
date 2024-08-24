@@ -1,6 +1,6 @@
 ﻿using Discord.WebSocket;
 
-namespace PSLDiscordBot.Framework;
+namespace PSLDiscordBot.Framework.MiscEventArgs;
 public sealed class SlashCommandEventArgs
 {
 	public SocketSlashCommand SocketSlashCommand { get; init; }

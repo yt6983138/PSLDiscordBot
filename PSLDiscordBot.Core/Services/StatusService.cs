@@ -1,5 +1,7 @@
 ﻿using PSLDiscordBot.Framework;
+using PSLDiscordBot.Framework.BuiltInServices;
 using PSLDiscordBot.Framework.DependencyInjection;
+using PSLDiscordBot.Framework.MiscEventArgs;
 
 namespace PSLDiscordBot.Core.Services;
 
@@ -20,6 +22,8 @@ public class StatusService : InjectableBase
 	public ConfigService ConfigService { get; set; }
 	[Inject]
 	public Program Program { get; set; }
+	[Inject]
+	public CommandResolveService CommandResolveService { get; set; }
 	#endregion
 
 	public Status CurrentStatus
@@ -44,7 +48,7 @@ public class StatusService : InjectableBase
 	public StatusService()
 		: base()
 	{
-		this.Program!.BeforeSlashCommandExecutes += this.BeforeSlashCommandExecutes;
+		this.CommandResolveService!.BeforeSlashCommandExecutes += this.BeforeSlashCommandExecutes;
 	}
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 	~StatusService()
@@ -55,7 +59,7 @@ public class StatusService : InjectableBase
 	{
 		if (this._detached)
 			return;
-		this.Program!.BeforeSlashCommandExecutes -= this.BeforeSlashCommandExecutes;
+		this.CommandResolveService!.BeforeSlashCommandExecutes -= this.BeforeSlashCommandExecutes;
 		this._detached = true;
 	}
 
