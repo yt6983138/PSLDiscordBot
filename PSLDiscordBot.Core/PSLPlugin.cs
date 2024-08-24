@@ -24,8 +24,6 @@ public class PSLPlugin : InjectableBase, IPlugin
 	private Logger _logger = null!;
 	private ConfigService _configService = null!;
 
-	private bool _updateCommands = false;
-
 	#region Injection
 	[Inject]
 	public DiscordClientService DiscordClientService { get; set; }
@@ -83,13 +81,6 @@ public class PSLPlugin : InjectableBase, IPlugin
 			File.WriteAllBytes("./Assets.zip", zip.Result);
 			FastZip fastZip = new();
 			fastZip.ExtractZip("./Assets.zip", ".", "");
-		}, null);
-	public ArgParseInfo UpdateCommands => new(
-		"updateCommands",
-		"Update commands when new command releases.",
-		(_) =>
-		{
-			this._updateCommands = true;
 		}, null);
 	public ArgParseInfo ResetConfig => new(
 		"resetConfig",
@@ -179,7 +170,6 @@ public class PSLPlugin : InjectableBase, IPlugin
 		this.CommandResolveService.OnSlashCommandError += async (_, e) => await this.OnException(e.Exception);
 
 		program.AddArgReceiver(this.UpdateFiles);
-		program.AddArgReceiver(this.UpdateCommands);
 		program.AddArgReceiver(this.UpdateInfoAndDifficulty);
 		program.AddArgReceiver(this.ResetConfig);
 		program.AddArgReceiver(this.ResetConfigFull);
@@ -275,8 +265,6 @@ public class PSLPlugin : InjectableBase, IPlugin
 		if (!this._configService.Data.DMAdminAboutErrors)
 			goto BypassAdminCheck;
 		this.AdminUser = admin;
-
-		if (!this._updateCommands) goto Final;
 
 		if (admin is null)
 		{
