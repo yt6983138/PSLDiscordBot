@@ -20,10 +20,16 @@ public abstract class BasicCommandBase : InjectableBase
 		InteractionContextType.BotDm,
 		InteractionContextType.PrivateChannel
 	];
+	public virtual ApplicationIntegrationType[] IntegrationTypes =>
+	[
+		ApplicationIntegrationType.GuildInstall,
+		ApplicationIntegrationType.UserInstall
+	];
 	protected virtual SlashCommandBuilder BasicBuilder => new SlashCommandBuilder()
 		.WithName(this.Name)
 		.WithDescription(this.Description)
-		.WithContextTypes(this.InteractionContextTypes);
+		.WithContextTypes(this.InteractionContextTypes)
+		.WithIntegrationTypes(this.IntegrationTypes);
 	public abstract SlashCommandBuilder CompleteBuilder { get; }
 
 	public BasicCommandBase()
