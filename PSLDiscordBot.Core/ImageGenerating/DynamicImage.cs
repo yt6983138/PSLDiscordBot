@@ -1,5 +1,4 @@
-﻿using PSLDiscordBot.Core;
-using SixLabors.Fonts;
+﻿using SixLabors.Fonts;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
 
