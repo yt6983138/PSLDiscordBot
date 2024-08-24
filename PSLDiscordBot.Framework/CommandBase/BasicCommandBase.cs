@@ -14,9 +14,16 @@ public abstract class BasicCommandBase : InjectableBase
 	public virtual bool IsEphemeral => true;
 	public virtual bool RunOnDifferentThread => false;
 
+	public virtual InteractionContextType[] InteractionContextTypes =>
+	[
+		InteractionContextType.Guild,
+		InteractionContextType.BotDm,
+		InteractionContextType.PrivateChannel
+	];
 	protected virtual SlashCommandBuilder BasicBuilder => new SlashCommandBuilder()
 		.WithName(this.Name)
-		.WithDescription(this.Description);
+		.WithDescription(this.Description)
+		.WithContextTypes(this.InteractionContextTypes);
 	public abstract SlashCommandBuilder CompleteBuilder { get; }
 
 	public BasicCommandBase()
