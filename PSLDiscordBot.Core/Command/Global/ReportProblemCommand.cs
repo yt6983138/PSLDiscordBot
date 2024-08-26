@@ -45,7 +45,7 @@ public class ReportProblemCommand : GuestCommandBase
 		string message = arg.Data.Options.First(x => x.Name == "message").Value.Unbox<string>();
 		IAttachment? attachment = arg.Data.Options.FirstOrDefault(x => x.Name == "attachments")?.Value.Unbox<IAttachment>();
 
-		string formatted = $"Report from `{arg.User.Id}` aka {arg.User.GlobalName}:\n{message}";
+		string formatted = $"Report from `{arg.User.Id}` aka <@{arg.User.Id}>:\n{message}";
 		if (this.PSLPlugin.AdminUser is not null)
 		{
 			if (attachment is not null)
