@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using PhigrosLibraryCSharp.Cloud.DataStructure;
 using PhigrosLibraryCSharp.GameRecords;
-using PSLDiscordBot.Core.ImageGenerating.TMPTag.Elements;
 using PSLDiscordBot.Core.Services;
 using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Framework;
@@ -67,7 +66,7 @@ public class ImageGenerator : InjectableBase
 		}
 	}
 
-	public async Task<Image> MakePhoto(
+	public Image MakePhoto(
 		CompleteScore[] b19,
 		CompleteScore best,
 		IReadOnlyDictionary<string, string> infos,
@@ -75,6 +74,7 @@ public class ImageGenerator : InjectableBase
 		Summary summary,
 		GameUserInfo gameUserInfo,
 		GameProgress progress,
+		UserInfo userInfo,
 		double rks,
 		ImageScript script,
 		ulong userId)
@@ -105,9 +105,6 @@ public class ImageGenerator : InjectableBase
 			}
 		}
 #pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
-
-		UserInfo userInfo = await userData.SaveCache.GetUserInfoAsync();
-		userInfo.NickName = string.Join("", TMPTagElementHelper.Parse(userInfo.NickName).Select(x => x.ToTextOnly()));
 
 		Dictionary<string, Lazy<object>> textMap = new()
 		{

@@ -4,6 +4,7 @@ using PhigrosLibraryCSharp.Cloud.DataStructure;
 using PhigrosLibraryCSharp.GameRecords;
 using PSLDiscordBot.Core.Command.Global.Base;
 using PSLDiscordBot.Core.ImageGenerating;
+using PSLDiscordBot.Core.ImageGenerating.TMPTag.Elements;
 using PSLDiscordBot.Core.Services;
 using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Framework;
@@ -53,6 +54,8 @@ public class AboutMeCommand : CommandBase
 		(Summary summary, GameSave save) = pair.Value;
 		GameUserInfo userInfo = await data.SaveCache.GetGameUserInfoAsync(index);
 		GameProgress progress = await data.SaveCache.GetGameProgressAsync(index);
+		UserInfo outerUserInfo = await data.SaveCache.GetUserInfoAsync();
+		outerUserInfo.UserName = string.Join("", TMPTagElementHelper.Parse(outerUserInfo.NickName).Select(x => x.ToTextOnly()));
 
 		const string RealCoolName = "NULL";
 		save.Records.Sort((x, y) => y.Rks.CompareTo(x.Rks));
@@ -66,7 +69,7 @@ public class AboutMeCommand : CommandBase
 		int i = 0;
 		save.Records.ForEach(x => { if (i < 19) rks += x.Rks * 0.05; i++; });
 
-		SixLabors.ImageSharp.Image image = await this.ImageGenerator.MakePhoto(
+		SixLabors.ImageSharp.Image image = this.ImageGenerator.MakePhoto(
 			save.Records.ToArray(),
 			best,
 			this.PhigrosDataService.IdNameMap,
@@ -74,6 +77,7 @@ public class AboutMeCommand : CommandBase
 			summary,
 			userInfo,
 			progress,
+			outerUserInfo,
 			rks,
 			this.AboutMeImageScriptService.Data,
 			arg.User.Id
