@@ -4,6 +4,7 @@ using PhigrosLibraryCSharp.Cloud.DataStructure;
 using PhigrosLibraryCSharp.GameRecords;
 using PSLDiscordBot.Core.Command.Global.Base;
 using PSLDiscordBot.Core.ImageGenerating;
+using PSLDiscordBot.Core.ImageGenerating.TMPTag.Elements;
 using PSLDiscordBot.Core.Services;
 using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Framework;
@@ -53,6 +54,8 @@ public class GetB20PhotoCommand : CommandBase
 		(Summary summary, GameSave save) = pair.Value;
 		GameUserInfo userInfo = await data.SaveCache.GetGameUserInfoAsync(index);
 		GameProgress progress = await data.SaveCache.GetGameProgressAsync(index);
+		UserInfo outerUserInfo = await data.SaveCache.GetUserInfoAsync();
+		outerUserInfo.UserName = string.Join("", TMPTagElementHelper.Parse(outerUserInfo.NickName).Select(x => x.ToTextOnly()));
 
 		save.Records.Sort((x, y) => y.Rks.CompareTo(x.Rks));
 
@@ -75,7 +78,7 @@ public class GetB20PhotoCommand : CommandBase
 			}
 		}
 
-		SixLabors.ImageSharp.Image image = await this.ImageGenerator.MakePhoto(
+		SixLabors.ImageSharp.Image image = this.ImageGenerator.MakePhoto(
 			b20,
 			best,
 			this.PhigrosDataService.IdNameMap,
@@ -83,6 +86,7 @@ public class GetB20PhotoCommand : CommandBase
 			summary,
 			userInfo,
 			progress,
+			outerUserInfo,
 			rks,
 			this.GetB20PhotoImageScriptService.Data,
 			arg.User.Id
