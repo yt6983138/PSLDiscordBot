@@ -8,6 +8,8 @@ The use of this application ("Bot") in a server requires the collection of some 
 
 ## Access to Data
 
+The messages sent by users are only read if they are sent in our Discord server, in anti-raid channel or verify channel, we do not store your message content.
+
 Access to Data is only permitted to Bot's developers, and only in the scope required for the development, testing, and implementation of features for Bot. Data is not sold, provided to, or shared with any third party, except where required by law or a Terms of Service agreement. You can view the data upon request to our team.
 
 ## Storage of Data
