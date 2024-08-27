@@ -24,7 +24,7 @@ public static partial class TMPTagElementHelper
 	[GeneratedRegex("<([^<>/]+)(?:=([^<>/]+))?>(.*?(?:(<\\1.*>.*?</\\1>)*?)[^<>/]*?)</\\1>")]
 	private static partial Regex TagMatcher();
 
-	public static List<ITMPTagElement> ParseOneLevel(string source)
+	public static List<ITMPTagElement> Parse(string source)
 	{
 		MatchCollection tags = TagMatcher()
 			.Matches(source);
@@ -68,7 +68,7 @@ public static partial class TMPTagElementHelper
 			instance.InnerHtml = match.Value;
 			instance.TagAttributeValue = string.IsNullOrWhiteSpace(tagAttribute.Value) ? null : tagAttribute.Value;
 
-			instance.ChildElements = ParseOneLevel(innerText.Value);
+			instance.ChildElements = Parse(innerText.Value);
 
 			childs.Add(instance);
 		}

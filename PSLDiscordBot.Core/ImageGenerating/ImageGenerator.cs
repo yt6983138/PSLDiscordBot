@@ -107,7 +107,7 @@ public class ImageGenerator : InjectableBase
 #pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
 
 		UserInfo userInfo = await userData.SaveCache.GetUserInfoAsync();
-		userInfo.NickName = string.Join("", TMPTagElementHelper.ParseOneLevel(userInfo.NickName).Select(x => x.ToTextOnly()));
+		userInfo.NickName = string.Join("", TMPTagElementHelper.Parse(userInfo.NickName).Select(x => x.ToTextOnly()));
 
 		Dictionary<string, Lazy<object>> textMap = new()
 		{
