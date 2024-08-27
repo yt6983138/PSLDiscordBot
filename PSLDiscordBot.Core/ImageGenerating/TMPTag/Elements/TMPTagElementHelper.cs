@@ -58,9 +58,9 @@ public static partial class TMPTagElementHelper
 			}
 			if (i == tags.Count - 1)
 			{
-				if ((match.Index + match.Length) != source.Length - 1)
+				if ((match.Index + match.Length) != source.Length)
 				{
-					childs.Add(new TMPString() { InnerHtml = source[(match.Index + match.Length + 1)..] });
+					childs.Add(new TMPString() { InnerHtml = source[(match.Index + match.Length - 1)..] });
 				}
 			}
 
