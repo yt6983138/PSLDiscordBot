@@ -55,7 +55,7 @@ public class AboutMeCommand : CommandBase
 		GameUserInfo userInfo = await data.SaveCache.GetGameUserInfoAsync(index);
 		GameProgress progress = await data.SaveCache.GetGameProgressAsync(index);
 		UserInfo outerUserInfo = await data.SaveCache.GetUserInfoAsync();
-		outerUserInfo.UserName = string.Join("", TMPTagElementHelper.Parse(outerUserInfo.NickName).Select(x => x.ToTextOnly()));
+		outerUserInfo.NickName = string.Join("", TMPTagElementHelper.Parse(outerUserInfo.NickName).Select(x => x.ToTextOnly()));
 
 		const string RealCoolName = "NULL";
 		save.Records.Sort((x, y) => y.Rks.CompareTo(x.Rks));
