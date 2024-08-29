@@ -67,9 +67,9 @@ public class ImageGenerator : InjectableBase
 	}
 
 	public Image MakePhoto(
-		CompleteScore[] b19,
-		CompleteScore best,
-		IReadOnlyDictionary<string, string> infos,
+		CompleteScore[] sortedBests,
+		CompleteScore specialScore,
+		IReadOnlyDictionary<string, string> idNameMap,
 		UserData userData,
 		Summary summary,
 		GameUserInfo gameUserInfo,
@@ -119,11 +119,11 @@ public class ImageGenerator : InjectableBase
 			{ "User.Currency.TiB", new(() => progress.Money.TiB) },
 			{ "User.Currency.PiB", new(() => progress.Money.PiB) },
 			{ "User.Currency.Combined", new(() => progress.Money) },
-			{ "User.PlayStatistics.EZClearCount", new(() => b19.Count(x => x.Difficulty == Difficulty.EZ)) },
-			{ "User.PlayStatistics.HDClearCount", new(() => b19.Count(x => x.Difficulty == Difficulty.HD)) },
-			{ "User.PlayStatistics.INClearCount", new(() => b19.Count(x => x.Difficulty == Difficulty.IN)) },
-			{ "User.PlayStatistics.ATClearCount", new(() => b19.Count(x => x.Difficulty == Difficulty.AT)) },
-			{ "User.PlayStatistics.AllClearCount", new(() => b19.Length) },
+			{ "User.PlayStatistics.EZClearCount", new(() => sortedBests.Count(x => x.Difficulty == Difficulty.EZ)) },
+			{ "User.PlayStatistics.HDClearCount", new(() => sortedBests.Count(x => x.Difficulty == Difficulty.HD)) },
+			{ "User.PlayStatistics.INClearCount", new(() => sortedBests.Count(x => x.Difficulty == Difficulty.IN)) },
+			{ "User.PlayStatistics.ATClearCount", new(() => sortedBests.Count(x => x.Difficulty == Difficulty.AT)) },
+			{ "User.PlayStatistics.AllClearCount", new(() => sortedBests.Length) },
 			{ "User.Tags.JoinedComma", new(() => string.Join(", ", tags.Value)) },
 			{ "User.Tags.JoinedNewLine", new(() => string.Join("\n", tags.Value)) },
 			{ "User.Tags.Count", new(() => tags.Value.Length) },
@@ -141,60 +141,60 @@ public class ImageGenerator : InjectableBase
 
 				textMap.Add(
 				$"User.PlayStatistics.EZ{status}Count",
-				new(() => b19.Count(x => x.Difficulty == Difficulty.EZ && included.Contains(x.Status))));
+				new(() => sortedBests.Count(x => x.Difficulty == Difficulty.EZ && included.Contains(x.Status))));
 				textMap.Add(
 					$"User.PlayStatistics.HD{status}Count",
-					new(() => b19.Count(x => x.Difficulty == Difficulty.HD && included.Contains(x.Status))));
+					new(() => sortedBests.Count(x => x.Difficulty == Difficulty.HD && included.Contains(x.Status))));
 				textMap.Add(
 					$"User.PlayStatistics.IN{status}Count",
-					new(() => b19.Count(x => x.Difficulty == Difficulty.IN && included.Contains(x.Status))));
+					new(() => sortedBests.Count(x => x.Difficulty == Difficulty.IN && included.Contains(x.Status))));
 				textMap.Add(
 					$"User.PlayStatistics.AT{status}Count",
-					new(() => b19.Count(x => x.Difficulty == Difficulty.AT && included.Contains(x.Status))));
+					new(() => sortedBests.Count(x => x.Difficulty == Difficulty.AT && included.Contains(x.Status))));
 				textMap.Add(
 					$"User.PlayStatistics.All{status}Count",
-					new(() => b19.Count(x => included.Contains(x.Status))));
+					new(() => sortedBests.Count(x => included.Contains(x.Status))));
 
 				continue;
 			}
 			textMap.Add(
 				$"User.PlayStatistics.EZ{status}Count",
-				new(() => b19.Count(x => x.Difficulty == Difficulty.EZ && x.Status == status)));
+				new(() => sortedBests.Count(x => x.Difficulty == Difficulty.EZ && x.Status == status)));
 			textMap.Add(
 				$"User.PlayStatistics.HD{status}Count",
-				new(() => b19.Count(x => x.Difficulty == Difficulty.HD && x.Status == status)));
+				new(() => sortedBests.Count(x => x.Difficulty == Difficulty.HD && x.Status == status)));
 			textMap.Add(
 				$"User.PlayStatistics.IN{status}Count",
-				new(() => b19.Count(x => x.Difficulty == Difficulty.IN && x.Status == status)));
+				new(() => sortedBests.Count(x => x.Difficulty == Difficulty.IN && x.Status == status)));
 			textMap.Add(
 				$"User.PlayStatistics.AT{status}Count",
-				new(() => b19.Count(x => x.Difficulty == Difficulty.AT && x.Status == status)));
+				new(() => sortedBests.Count(x => x.Difficulty == Difficulty.AT && x.Status == status)));
 			textMap.Add(
 				$"User.PlayStatistics.All{status}Count",
-				new(() => b19.Count(x => x.Status == status)));
+				new(() => sortedBests.Count(x => x.Status == status)));
 		}
 
 		#region B20 Textmap
 		{
-			textMap.Add($"B20.Score.0", new(() => best.Score));
-			textMap.Add($"B20.Acc.0", new(() => best.Accuracy.ToString(userData.ShowFormat)));
-			textMap.Add($"B20.CC.0", new(() => best.ChartConstant));
-			textMap.Add($"B20.Diff.0", new(() => best.Difficulty));
-			textMap.Add($"B20.IdName.0", new(() => best.Id));
-			textMap.Add($"B20.Name.0", new(() => infos.TryGetValue(best.Id, out string? _str1) ? _str1 : best.Id));
-			textMap.Add($"B20.Status.0", new(() => best.Status));
-			textMap.Add($"B20.Rks.0", new(() => best.Rks.ToString(userData.ShowFormat)));
+			textMap.Add($"B20.Score.0", new(() => specialScore.Score));
+			textMap.Add($"B20.Acc.0", new(() => specialScore.Accuracy.ToString(userData.ShowFormat)));
+			textMap.Add($"B20.CC.0", new(() => specialScore.ChartConstant));
+			textMap.Add($"B20.Diff.0", new(() => specialScore.Difficulty));
+			textMap.Add($"B20.IdName.0", new(() => specialScore.Id));
+			textMap.Add($"B20.Name.0", new(() => idNameMap.TryGetValue(specialScore.Id, out string? _str1) ? _str1 : specialScore.Id));
+			textMap.Add($"B20.Status.0", new(() => specialScore.Status));
+			textMap.Add($"B20.Rks.0", new(() => specialScore.Rks.ToString(userData.ShowFormat)));
 		}
-		for (int k = 0; k < b19.Length; k++)
+		for (int k = 0; k < sortedBests.Length; k++)
 		{
 			int i = k + 1;
-			CompleteScore score = b19[k];
+			CompleteScore score = sortedBests[k];
 			textMap.Add($"B20.Score.{i}", new(() => score.Score));
 			textMap.Add($"B20.Acc.{i}", new(() => score.Accuracy.ToString(userData.ShowFormat)));
 			textMap.Add($"B20.CC.{i}", new(() => score.ChartConstant));
 			textMap.Add($"B20.Diff.{i}", new(() => score.Difficulty));
 			textMap.Add($"B20.IdName.{i}", new(() => score.Id));
-			textMap.Add($"B20.Name.{i}", new(() => infos.TryGetValue(score.Id, out string? _str1) ? _str1 : score.Id));
+			textMap.Add($"B20.Name.{i}", new(() => idNameMap.TryGetValue(score.Id, out string? _str1) ? _str1 : score.Id));
 			textMap.Add($"B20.Status.{i}", new(() => score.Status));
 			textMap.Add($"B20.Rks.{i}", new(() => score.Rks.ToString(userData.ShowFormat)));
 		}
@@ -209,29 +209,29 @@ public class ImageGenerator : InjectableBase
 				: StaticImage.Default.Image) },
 			{ "User.Background.Image.LowRes", new Lazy<Image>(
 				() =>
-				Utils.TryLoadImage($"./Assets/Tracks/{infos.FirstOrDefault(p => p.Value == gameUserInfo.BackgroundId).Key}.0/IllustrationLowRes.png")
+				Utils.TryLoadImage($"./Assets/Tracks/{idNameMap.FirstOrDefault(p => p.Value == gameUserInfo.BackgroundId).Key}.0/IllustrationLowRes.png")
 				?? StaticImage.Default.Image) },
 			{ "User.Background.Image.Blurry", new Lazy<Image>(
 				() =>
-				Utils.TryLoadImage($"./Assets/Tracks/{infos.FirstOrDefault(p => p.Value == gameUserInfo.BackgroundId).Key}.0/IllustrationBlur.png")
+				Utils.TryLoadImage($"./Assets/Tracks/{idNameMap.FirstOrDefault(p => p.Value == gameUserInfo.BackgroundId).Key}.0/IllustrationBlur.png")
 				?? StaticImage.Default.Image) }
 		};
 
 		#region Add illustration/rank images
 		{
-			string path = $"./Assets/Tracks/{best.Id}.0/IllustrationLowRes.png";
+			string path = $"./Assets/Tracks/{specialScore.Id}.0/IllustrationLowRes.png";
 
-			imageMap.Add("B20.Rank.0", new(this.RankImages[best.Status]));
+			imageMap.Add("B20.Rank.0", new(this.RankImages[specialScore.Status]));
 			imageMap.Add("B20.Illustration.0", new(
 				() => Utils.TryLoadImage(path) ?? StaticImage.Default.Image)
 			);
 			if (!File.Exists(path))
-				this.Logger.Log<ImageGenerator>(LogLevel.Warning, $"Cannot find image for {best.Id}.0!", EventId, null!);
+				this.Logger.Log<ImageGenerator>(LogLevel.Warning, $"Cannot find image for {specialScore.Id}.0!", EventId, null!);
 		}
-		for (int j = 0; j < b19.Length; j++)
+		for (int j = 0; j < sortedBests.Length; j++)
 		{
 			int i = j + 1;
-			CompleteScore score = b19[j];
+			CompleteScore score = sortedBests[j];
 			string path = $"./Assets/Tracks/{score.Id}.0/IllustrationLowRes.png";
 
 			imageMap.Add($"B20.Rank.{i}", new(this.RankImages[score.Status]));
