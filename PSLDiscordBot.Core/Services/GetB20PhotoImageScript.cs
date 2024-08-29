@@ -89,7 +89,7 @@ public class GetB20PhotoImageScriptService : FileManagementServiceBase<ImageScri
 					new StaticImage() // template
 					{
 						Path = "./Assets/Misc/GetB20PhotoTemplate.png",
-						Size = new(896, 2048),
+						Size = new(934, 2048),
 						Position = new(0, 0)
 					},
 					new DynamicImage() // challenge image
@@ -122,7 +122,7 @@ public class GetB20PhotoImageScriptService : FileManagementServiceBase<ImageScri
 						Text = "{0}",
 						TextOptions = new()
 						{
-							Origin = new(634, 111),
+							Origin = new(653, 111),
 							HorizontalAlignment = HorizontalAlignment.Center,
 							VerticalAlignment = VerticalAlignment.Center
 						},
@@ -173,7 +173,7 @@ public class GetB20PhotoImageScriptService : FileManagementServiceBase<ImageScri
 					}
 					#endregion
 				},
-			Width = 896,
+			Width = 934,
 			Height = 2048
 		};
 		for (int i = 1; i < 20; i += 2)
