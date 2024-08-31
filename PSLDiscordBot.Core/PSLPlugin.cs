@@ -161,7 +161,7 @@ public class PSLPlugin : InjectableBase, IPlugin
 		program.AfterMainInitialize += this.Program_AfterMainInitialize;
 
 		this.CommandResolveService.BeforeSlashCommandExecutes += this.Program_BeforeSlashCommandExecutes;
-		this.CommandResolveService.OnSlashCommandError += async (_, e) => await this.OnException(e.Exception);
+		this.CommandResolveService.OnSlashCommandError += this.CommandResolveService_OnSlashCommandError; ;
 
 		program.AddArgReceiver(this.UpdateFiles);
 		program.AddArgReceiver(this.UpdateInfoAndDifficulty);
@@ -245,6 +245,26 @@ public class PSLPlugin : InjectableBase, IPlugin
 			$"Command received: {arg.CommandName} from: {arg.User.GlobalName} ({arg.User.Id})",
 			EventId,
 			this);
+	}
+	private async void CommandResolveService_OnSlashCommandError(object? sender, BasicCommandExceptionEventArgs<Framework.CommandBase.BasicCommandBase> e)
+	{
+		await this.OnException(e.Exception);
+		string formmated = $"This exception has been caught by global handler. Exception:\n{e.Exception}";
+		if (e.Arg is SocketSlashCommand ssc)
+		{
+			if (ssc.HasResponded) return;
+			await ssc.QuickReply(formmated);
+		}
+		else if (e.Arg is SocketUserCommand suc)
+		{
+			if (suc.HasResponded) return;
+			await suc.ModifyOriginalResponseAsync(x => x.Content = formmated);
+		}
+		else if (e.Arg is SocketMessageCommand smc)
+		{
+			if (smc.HasResponded) return;
+			await smc.ModifyOriginalResponseAsync(x => x.Content = formmated);
+		}
 	}
 
 	private async Task Client_Ready()
