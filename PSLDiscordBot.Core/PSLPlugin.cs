@@ -250,21 +250,9 @@ public class PSLPlugin : InjectableBase, IPlugin
 	{
 		await this.OnException(e.Exception);
 		string formmated = $"This exception has been caught by global handler. Exception:\n{e.Exception}";
-		if (e.Arg is SocketSlashCommand ssc)
-		{
-			if (ssc.HasResponded) return;
-			await ssc.QuickReply(formmated);
-		}
-		else if (e.Arg is SocketUserCommand suc)
-		{
-			if (suc.HasResponded) return;
-			await suc.ModifyOriginalResponseAsync(x => x.Content = formmated);
-		}
-		else if (e.Arg is SocketMessageCommand smc)
-		{
-			if (smc.HasResponded) return;
-			await smc.ModifyOriginalResponseAsync(x => x.Content = formmated);
-		}
+
+		if (!e.Arg.HasResponded)
+			await e.Arg.QuickReply(formmated);
 	}
 
 	private async Task Client_Ready()
