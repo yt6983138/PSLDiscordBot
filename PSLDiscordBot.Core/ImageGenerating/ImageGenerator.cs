@@ -77,7 +77,8 @@ public class ImageGenerator : InjectableBase
 		UserInfo userInfo,
 		double rks,
 		ImageScript script,
-		ulong userId)
+		ulong userId,
+		Action<Dictionary<string, Lazy<object>>, Dictionary<string, Lazy<Image>>>? mapPostProcessing = null)
 	{
 		using DataBaseService.DbDataRequester requester = this.DataBaseService.NewRequester();
 		Lazy<string[]> tags = new(() => requester.GetTagsCachedAsync(userId).GetAwaiter().GetResult() ?? []);
@@ -242,6 +243,8 @@ public class ImageGenerator : InjectableBase
 				this.Logger.Log<ImageGenerator>(LogLevel.Warning, $"Cannot find image for {score.Id}.0!", EventId, null!);
 		}
 		#endregion
+
+		mapPostProcessing?.Invoke(textMap, imageMap);
 
 		foreach (IDrawableComponent component in script.Components)
 		{
