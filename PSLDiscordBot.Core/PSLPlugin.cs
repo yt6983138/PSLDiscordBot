@@ -57,26 +57,20 @@ public class PSLPlugin : InjectableBase, IPlugin
 
 	#region Arg Info
 	public ArgParseInfo UpdateFiles => new(
-		"updateFiles",
-		"Update files.",
+		"updateAssets",
+		"Update assets and help.md.",
 		(_) => // using async here break shit
 		{
-			this._logger.Log(LogLevel.Information, EventIdInitialize, "Updating...");
+			this._logger.Log(LogLevel.Information, EventIdInitialize, "Updating assets and help.md...");
 			using HttpClient client = new();
-			Task<byte[]> diff =
-				client.GetByteArrayAsync(@"https://yt6983138.github.io/Assets/RksReader/Latest/difficulty.csv");
-			Task<byte[]> name =
-				client.GetByteArrayAsync(@"https://yt6983138.github.io/Assets/RksReader/Latest/info.csv");
+
 			Task<byte[]> help =
 				client.GetByteArrayAsync(@"https://raw.githubusercontent.com/yt6983138/PSLDiscordBot/master/help.md");
 			Task<byte[]> zip =
 				client.GetByteArrayAsync(@"https://github.com/yt6983138/PSLDiscordBot/raw/master/Assets.zip");
-			diff.Wait();
-			name.Wait();
 			help.Wait();
 			zip.Wait();
-			File.WriteAllBytes(this._configService.Data.DifficultyMapLocation, diff.Result);
-			File.WriteAllBytes(this._configService.Data.NameMapLocation, name.Result);
+
 			File.WriteAllBytes(this._configService.Data.HelpMDLocation, help.Result);
 			File.WriteAllBytes("./Assets.zip", zip.Result);
 			FastZip fastZip = new();
