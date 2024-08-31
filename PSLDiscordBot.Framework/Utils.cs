@@ -146,7 +146,7 @@ public static class Utils
 		return option.Value.Unbox<long>().CastTo<long, int>();
 	}
 	public static async Task QuickReply(
-		this SocketSlashCommand socketSlashCommand,
+		this IDiscordInteraction socketSlashCommand,
 		string message,
 		Action<MessageProperties>? additionalModification = null)
 	{
@@ -157,7 +157,7 @@ public static class Utils
 		});
 	}
 	public static async Task QuickReplyWithAttachments(
-		this SocketSlashCommand socketSlashCommand,
+		this IDiscordInteraction socketSlashCommand,
 		string message,
 		params FileAttachment[] attachments)
 	{
