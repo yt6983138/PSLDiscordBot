@@ -258,7 +258,7 @@ public class CommandResolveService : InjectableBase
 			() => this._program.RunningTasks.Remove(task),
 			(e) =>
 			{
-				this.OnSlashCommandError?.Invoke(this, new(e, command, task));
+				this.OnSlashCommandError?.Invoke(this, new(e, command, task, arg));
 			});
 		return Task.CompletedTask;
 	}
@@ -285,7 +285,7 @@ public class CommandResolveService : InjectableBase
 			() => this._program.RunningTasks.Remove(task),
 			(e) =>
 			{
-				this.OnUserCommandError?.Invoke(this, new(e, command, task));
+				this.OnUserCommandError?.Invoke(this, new(e, command, task, arg));
 			});
 		return Task.CompletedTask;
 	}
@@ -312,7 +312,7 @@ public class CommandResolveService : InjectableBase
 			() => this._program.RunningTasks.Remove(task),
 			(e) =>
 			{
-				this.OnMessageCommandError?.Invoke(this, new(e, command, task));
+				this.OnMessageCommandError?.Invoke(this, new(e, command, task, arg));
 			});
 		return Task.CompletedTask;
 	}
