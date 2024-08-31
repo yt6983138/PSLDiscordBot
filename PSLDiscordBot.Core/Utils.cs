@@ -75,7 +75,7 @@ internal static class Utils
 				await command.QuickReply(onNoSaves);
 				return null;
 			}
-			return await save.GetGameSaveAsync(difficultyMap, index);
+			return await save.GetGameSaveAsync(difficultyMap, index, GetGameSave_ExceptionHandler);
 		}
 		catch (MaxValueArgumentOutOfRangeException ex) when (ex.ActualValue is int && ex.MaxValue is int)
 		{
@@ -92,5 +92,20 @@ internal static class Utils
 			throw exception;
 
 		return null;
+	}
+	private static void GetGameSave_ExceptionHandler(string message, Exception? ex, object? extraArgs)
+	{
+		if (ex is not KeyNotFoundException knfex || extraArgs is not string str)
+		{
+			goto Throw;
+		}
+		if (str == "テリトリーバトル.ツユ")
+			return;
+
+		Throw:
+		if (ex is null)
+			throw new Exception(message);
+
+		throw ex;
 	}
 }
