@@ -422,7 +422,7 @@ public class AboutMeImageScriptService : FileManagementServiceBase<ImageScript>
 		{
 			this.Logger.Log(
 				LogLevel.Warning,
-				$"{nameof(GetB20PhotoImageScriptService)} Failed to deserialize",
+				$"{nameof(AboutMeImageScriptService)} Failed to deserialize",
 				EventId,
 				this,
 				ex);
