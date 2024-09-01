@@ -67,7 +67,7 @@ public class ImageGenerator : InjectableBase
 	}
 
 	public Image MakePhoto(
-		CompleteScore[] sortedBests,
+		IList<CompleteScore> sortedBests,
 		CompleteScore specialScore,
 		IReadOnlyDictionary<string, string> idNameMap,
 		UserData userData,
@@ -124,7 +124,7 @@ public class ImageGenerator : InjectableBase
 			{ "User.PlayStatistics.HDClearCount", new(() => sortedBests.Count(x => x.Difficulty == Difficulty.HD)) },
 			{ "User.PlayStatistics.INClearCount", new(() => sortedBests.Count(x => x.Difficulty == Difficulty.IN)) },
 			{ "User.PlayStatistics.ATClearCount", new(() => sortedBests.Count(x => x.Difficulty == Difficulty.AT)) },
-			{ "User.PlayStatistics.AllClearCount", new(() => sortedBests.Length) },
+			{ "User.PlayStatistics.AllClearCount", new(() => sortedBests.Count) },
 			{ "User.Tags.JoinedComma", new(() => string.Join(", ", tags.Value)) },
 			{ "User.Tags.JoinedNewLine", new(() => string.Join("\n", tags.Value)) },
 			{ "User.Tags.Count", new(() => tags.Value.Length) },
@@ -186,7 +186,7 @@ public class ImageGenerator : InjectableBase
 			textMap.Add($"B20.Status.0", new(() => specialScore.Status));
 			textMap.Add($"B20.Rks.0", new(() => specialScore.Rks.ToString(userData.ShowFormat)));
 		}
-		for (int k = 0; k < sortedBests.Length; k++)
+		for (int k = 0; k < sortedBests.Count; k++)
 		{
 			int i = k + 1;
 			CompleteScore score = sortedBests[k];
@@ -229,7 +229,7 @@ public class ImageGenerator : InjectableBase
 			if (!File.Exists(path))
 				this.Logger.Log<ImageGenerator>(LogLevel.Warning, $"Cannot find image for {specialScore.Id}.0!", EventId, null!);
 		}
-		for (int j = 0; j < sortedBests.Length; j++)
+		for (int j = 0; j < sortedBests.Count; j++)
 		{
 			int i = j + 1;
 			CompleteScore score = sortedBests[j];
