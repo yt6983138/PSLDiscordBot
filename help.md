@@ -1,4 +1,6 @@
-﻿## What is this?
+﻿# Requires cloud save (aka TapTap)
+
+## What is this?
 This is a **P**higros **S**core **L**ookup Discord bot (aka PSLDiscordBot),<br/>
 you can get your scores by using `/get-scores`, `/get-b20-photo` or `/query` etc.
 ## How to use this?
