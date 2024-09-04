@@ -15,6 +15,7 @@ public class Config
 	public string LogLocation { get; set; } = "./PSL/Latest.log";
 	public string GetB20PhotoImageScriptLocation { get; set; } = "./PSL/GetB20PhotoImageScript.json";
 	public string AboutMeImageScriptLocation { get; set; } = "./PSL/AboutMeImageScript.json";
+	public string SongScoresImageScriptLocation { get; set; } = "./PSL/SongScoresImageScript.json";
 
 	public string MainUserDataDbLocation { get; set; } = "./PSL/MainUserData.db";
 	public string MainUserDataTableName { get; set; } = "DiscordIdPhigrosTokenTable";

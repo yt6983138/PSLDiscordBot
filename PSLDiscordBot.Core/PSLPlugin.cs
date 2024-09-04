@@ -204,6 +204,7 @@ public class PSLPlugin : InjectableBase, IPlugin
 		InjectableBase.AddSingleton(new PhigrosDataService());
 		InjectableBase.AddSingleton(new GetB20PhotoImageScriptService());
 		InjectableBase.AddSingleton(new AboutMeImageScriptService());
+		InjectableBase.AddSingleton(new SongScoresImageScriptService());
 		InjectableBase.AddSingleton(new ImageGenerator());
 		InjectableBase.AddSingleton(new StatusService());
 	}

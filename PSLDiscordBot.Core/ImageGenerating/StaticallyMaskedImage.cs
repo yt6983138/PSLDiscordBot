@@ -9,8 +9,11 @@ public class StaticallyMaskedImage : IDrawableComponent
 	private static Dictionary<string, Image<Rgba32>> _sourceImageCache = new();
 	private static Dictionary<string, Image<Rgba32>> _maskCache = new();
 
+	private static readonly Image<Rgba32> _fallbackImage = StaticImage.Default.Image.CloneAs<Rgba32>();
+
 	public required string MaskPath { get; set; }
 	public required string ImagePathOrBindName { get; set; }
+	public string? FallBackBindOrPath { get; set; }
 	public bool IsDynamic { get; set; }
 	public bool AlwaysMaskFirst { get; set; }
 	public Size Size { get; set; }
@@ -19,7 +22,7 @@ public class StaticallyMaskedImage : IDrawableComponent
 	public HorizontalAlignment HorizonalAnchor { get; set; }
 	public VerticalAlignment VerticalAnchor { get; set; }
 
-	public void DrawOn(Image image, Func<string?, (Image Image, bool ShouldDispose)> imageGetter, bool shouldClone, bool disableCache = false)
+	public void DrawOn(Image image, Func<string?, string?, (Image Image, bool ShouldDispose)> imageGetter, bool shouldClone, bool disableCache = false)
 	{
 		// i know code here are extremely messy but my brain is not fucking working correctly
 
@@ -50,7 +53,11 @@ public class StaticallyMaskedImage : IDrawableComponent
 		{
 			if (!_sourceImageCache.TryGetValue(this.ImagePathOrBindName, out Image<Rgba32>? src))
 			{
-				src = Image.Load<Rgba32>(this.ImagePathOrBindName);
+				src = Utils.TryLoadImage<Rgba32>(this.ImagePathOrBindName);
+				if (this.FallBackBindOrPath is null)
+					src = _fallbackImage;
+				else src ??= Utils.TryLoadImage<Rgba32>(this.FallBackBindOrPath) ?? _fallbackImage;
+
 				if (!disableCache)
 					_maskCache.Add(this.ImagePathOrBindName, src);
 			}
@@ -74,7 +81,7 @@ public class StaticallyMaskedImage : IDrawableComponent
 		}
 
 
-		(Image image2, bool shouldDispose) = imageGetter(this.ImagePathOrBindName);
+		(Image image2, bool shouldDispose) = imageGetter(this.ImagePathOrBindName, this.FallBackBindOrPath);
 
 		if (this.AlwaysMaskFirst)
 		{

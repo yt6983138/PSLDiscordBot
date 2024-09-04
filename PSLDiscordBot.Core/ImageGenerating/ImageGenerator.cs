@@ -268,9 +268,26 @@ public class ImageGenerator : InjectableBase
 			}
 		}
 
+		foreach (KeyValuePair<string, Lazy<Image>> item in imageMap)
+		{
+			if (!item.Value.IsValueCreated)
+				continue;
+			Image value = item.Value.Value;
+			if (this.ChallengeRankImages.ContainsValue(value))
+				continue;
+			if (this.RankImages.ContainsValue(value))
+				continue;
+			if (this.Avatars.ContainsValue(value))
+				continue;
+			if (value == StaticImage.Default.Image)
+				continue;
+
+			value.Dispose();
+		}
+
 		return image;
 
-		(Image Image, bool ShouldDispose) ImageGetter(string? key)
+		(Image Image, bool ShouldDispose) ImageGetter(string? key, string? fallback)
 		{
 			if (key is not null && imageMap.TryGetValue(key, out Lazy<Image>? image))
 			{
@@ -279,7 +296,11 @@ public class ImageGenerator : InjectableBase
 
 				return (image.Value, false);
 			}
-			return (StaticImage.Default.Image, true);
+			if (fallback is not null && imageMap.TryGetValue(fallback, out Lazy<Image>? image2))
+			{
+				return (image2.Value, false);
+			}
+			return (StaticImage.Default.Image.Clone(_ => { }), true);
 		}
 		bool GetTextBind(string id, [NotNullWhen(true)] out Lazy<object>? @object)
 		{

@@ -3,6 +3,7 @@ using PhigrosLibraryCSharp;
 using PSLDiscordBot.Core.Services;
 using PSLDiscordBot.Framework;
 using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using Image = SixLabors.ImageSharp.Image;
 
@@ -16,6 +17,19 @@ internal static class Utils
 		try
 		{
 			Image i = Image.Load(path);
+			return i;
+		}
+		catch
+		{
+			return null;
+		}
+	}
+	internal static Image<T>? TryLoadImage<T>(string path)
+		where T : unmanaged, IPixel<T>
+	{
+		try
+		{
+			Image<T> i = Image.Load<T>(path);
 			return i;
 		}
 		catch

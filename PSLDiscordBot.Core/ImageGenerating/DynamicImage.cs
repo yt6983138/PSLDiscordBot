@@ -6,15 +6,16 @@ namespace PSLDiscordBot.Core.ImageGenerating;
 public class DynamicImage : IDrawableComponent
 {
 	public string? Bind { get; set; }
+	public string? FallBackBind { get; set; }
 	public Size Size { get; set; }
 	public PointF Position { get; set; }
 	public float Opacity { get; set; } = 1;
 	public HorizontalAlignment HorizonalAnchor { get; set; }
 	public VerticalAlignment VerticalAnchor { get; set; }
 
-	public void DrawOn(Image image, Func<string?, (Image Image, bool ShouldDispose)> imageGetter, bool shouldClone)
+	public void DrawOn(Image image, Func<string?, string?, (Image Image, bool ShouldDispose)> imageGetter, bool shouldClone)
 	{
-		(Image image2, bool shouldDispose) = imageGetter(this.Bind);
+		(Image image2, bool shouldDispose) = imageGetter.Invoke(this.Bind, this.FallBackBind);
 
 		if (image2.Size != this.Size)
 		{
