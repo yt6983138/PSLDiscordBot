@@ -241,9 +241,11 @@ public class PSLPlugin : InjectableBase, IPlugin
 	private void Program_BeforeSlashCommandExecutes(object? sender, SlashCommandEventArgs e)
 	{
 		SocketSlashCommand arg = e.SocketSlashCommand;
+		int i = 0;
 		this._logger.Log(
 			LogLevel.Information,
-			$"Command received: {arg.CommandName} from: {arg.User.GlobalName} ({arg.User.Id})",
+			$"Command received: {arg.CommandName} from: {arg.User.GlobalName} ({arg.User.Id}), " +
+			$"options: {string.Join(",", e.SocketSlashCommand.Data.Options.Select(x => $"{i++}_{x.Name}({x.Type}): {x.Value}"))}",
 			EventId,
 			this);
 	}
