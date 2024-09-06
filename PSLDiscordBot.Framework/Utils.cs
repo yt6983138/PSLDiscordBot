@@ -31,7 +31,7 @@ public static class Utils
 
 	}
 
-	public static void MergeWith<K, V>(this IDictionary<K, V> source, IDictionary<K, V> target)
+	public static void MergeWith<K, V>(this IDictionary<K, V> source, IReadOnlyDictionary<K, V> target)
 	{
 		foreach (KeyValuePair<K, V> pair in target)
 		{
