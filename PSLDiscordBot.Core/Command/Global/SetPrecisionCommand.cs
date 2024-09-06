@@ -21,7 +21,7 @@ public class SetPrecisionCommand : CommandBase
 			ApplicationCommandOptionType.Integer,
 			"Precision. Put 1 to get acc like 99.1, 2 to get acc like 99.12, repeat.",
 			isRequired: true,
-			maxValue: 16,
+			maxValue: 1077,
 			minValue: 1
 		);
 
