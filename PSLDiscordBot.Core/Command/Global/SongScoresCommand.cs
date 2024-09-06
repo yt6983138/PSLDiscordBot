@@ -137,36 +137,44 @@ public class SongScoresCommand : CommandBase
 
 		void PostProcess(Dictionary<string, Lazy<object>> textMap, Dictionary<string, Lazy<Image>> imageMap)
 		{
+			IEnumerable<IGrouping<string, CompleteScore>> grouped = scoresToShow.GroupBy(x => x.Id);
+
 			Image<Rgba32> empty = new(1, 1);
 
 			imageMap.Add("Empty", new(empty));
 			imageMap.Add("Rank.F", new(this.ImageGenerator.RankImages[ScoreStatus.False]));
 
-			CompleteScore firstScore = scoresToShow[0];
-			string path = $"./Assets/Tracks/{firstScore.Id}.0/IllustrationLowRes.png";
-
-			textMap.Add($"Searched.0.IdName", new(firstScore.Id));
-			textMap.Add($"Searched.0.Name", new(this.PhigrosDataService.IdNameMap.TryGetValue(firstScore.Id, out string? _str1) ? _str1 : firstScore.Id));
-
-			imageMap.Add($"Searched.0.Illustration", new(
-				() => Utils.TryLoadImage(path) ?? StaticImage.Default.Image)
-			);
-			if (!File.Exists(path))
-				this.Logger.Log(LogLevel.Warning, $"Cannot find image for {firstScore.Id}.0!", this.EventId, this);
-
-			foreach (CompleteScore item in scoresToShow)
+			int i = 0;
+			foreach (IGrouping<string, CompleteScore> group in grouped)
 			{
-				textMap.Add($"Searched.0.{item.Difficulty}.Score", new(item.Score));
-				textMap.Add($"Searched.0.{item.Difficulty}.Acc", new(item.Accuracy.ToString(data.ShowFormat)));
-				textMap.Add($"Searched.0.{item.Difficulty}.CC", new(item.ChartConstant));
-				textMap.Add($"Searched.0.{item.Difficulty}.Diff", new(item.Difficulty));
-				textMap.Add($"Searched.0.{item.Difficulty}.IdName", new(item.Id));
-				textMap.Add($"Searched.0.{item.Difficulty}.Name", new(this.PhigrosDataService.IdNameMap.TryGetValue(item.Id, out string? _str2) ? _str2 : item.Id));
-				textMap.Add($"Searched.0.{item.Difficulty}.Status", new(item.Status));
-				textMap.Add($"Searched.0.{item.Difficulty}.Rks", new(item.Rks.ToString(data.ShowFormat)));
+				CompleteScore firstScore = group.First();
+				string path = $"./Assets/Tracks/{firstScore.Id}.0/IllustrationLowRes.png";
+
+				textMap.Add($"Searched.{i}.IdName", new(firstScore.Id));
+				textMap.Add($"Searched.{i}.Name", new(this.PhigrosDataService.IdNameMap.TryGetValue(firstScore.Id, out string? _str1) ? _str1 : firstScore.Id));
+
+				imageMap.Add($"Searched.{i}.Illustration", new(
+					() => Utils.TryLoadImage(path) ?? StaticImage.Default.Image)
+				);
+				if (!File.Exists(path))
+					this.Logger.Log(LogLevel.Warning, $"Cannot find image for {firstScore.Id}.0!", this.EventId, this);
+
+				foreach (CompleteScore item in group)
+				{
+					textMap.Add($"Searched.{i}.{item.Difficulty}.Score", new(item.Score));
+					textMap.Add($"Searched.{i}.{item.Difficulty}.Acc", new(item.Accuracy.ToString(data.ShowFormat)));
+					textMap.Add($"Searched.{i}.{item.Difficulty}.CC", new(item.ChartConstant));
+					textMap.Add($"Searched.{i}.{item.Difficulty}.Diff", new(item.Difficulty));
+					textMap.Add($"Searched.{i}.{item.Difficulty}.IdName", new(item.Id));
+					textMap.Add($"Searched.{i}.{item.Difficulty}.Name", new(this.PhigrosDataService.IdNameMap.TryGetValue(item.Id, out string? _str2) ? _str2 : item.Id));
+					textMap.Add($"Searched.{i}.{item.Difficulty}.Status", new(item.Status));
+					textMap.Add($"Searched.{i}.{item.Difficulty}.Rks", new(item.Rks.ToString(data.ShowFormat)));
 
 
-				imageMap.Add($"Searched.0.{item.Difficulty}.Rank", new(this.ImageGenerator.RankImages[item.Status]));
+					imageMap.Add($"Searched.{i}.{item.Difficulty}.Rank", new(this.ImageGenerator.RankImages[item.Status]));
+				}
+
+				i++;
 			}
 		}
 	}
