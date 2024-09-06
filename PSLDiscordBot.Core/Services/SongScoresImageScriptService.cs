@@ -25,15 +25,12 @@ public class SongScoresImageScriptService : FileManagementServiceBase<ImageScrip
 	}
 	public override ImageScript Generate()
 	{
-		const int Width = 768;
-		const int Height = 405;
+		const int Width = 304;
+		const int Height = 570;
 
-		const int BackgroundWidth = 0;
+		const int BackgroundWidth = 1080;
 
-		const int Condensed23ID = 3;
-		const int Large36ID = 2;
-		const int Medium24ID = 1;
-		const int Small20ID = 0;
+		const int Small16ID = 0;
 
 		ImageScript script = new()
 		{
@@ -41,146 +38,360 @@ public class SongScoresImageScriptService : FileManagementServiceBase<ImageScrip
 			Height = Height,
 			FallBackFonts = new(),
 			Fonts =
+			{
+				{ Small16ID, new()
 				{
-					{ Small20ID, new()
-					{
-						FamilyName = "Saira",
-						FontSize = 20
-					} },
-					{ Medium24ID, new()
-					{
-						FamilyName = "Saira",
-						FontSize = 24
-					} },
-					{ Large36ID, new()
-					{
-						FamilyName = "Saira",
-						FontSize = 36
-					} },
-					{ Condensed23ID, new()
-					{
-						FamilyName = "Saira ExtraCondensed",
-						FontSize = 23
-					} }
-				},
+					FamilyName = "Saira",
+					FontSize = 16
+				} }
+			},
 			Components =
-				{
+			{
 #region Template and things
-					new DynamicImage()
+				new DynamicImage()
+				{
+					Bind = "User.Background.Image.Blurry",
+					Size = new(BackgroundWidth, Height),
+					HorizonalAnchor = HorizontalAlignment.Center,
+					VerticalAnchor = VerticalAlignment.Top,
+					Position = new(Width / 2f, 0)
+				},
+				new StaticImage()
+				{
+					Path = "./Assets/Misc/SongScoresTemplate.png",
+					Size = new(Width, Height)
+				},
+				#endregion
+#region Search static infos
+				new StaticallyMaskedImage()
+				{
+					MaskPath = "./Assets/Misc/LowResIllustrationParallelogramMask.png",
+					ImagePathOrBindName = "Searched.0.Illustration",
+					AlwaysMaskFirst = true,
+					IsDynamic = true,
+					Size = new(256, 135),
+					Position = new(24, 51)
+				},
+				new ImageText()
+				{
+					Text = "FOR: {0}",
+					FontID = Small16ID,
+					ColorBlue = 255,
+					ColorGreen = 255,
+					ColorRed = 255,
+					Bind = ["Searched.0.Name"],
+					TextOptions = new()
 					{
-						Bind = "User.Background.Image.Blurry",
-						Size = new(Width, BackgroundWidth),
-						HorizonalAnchor = HorizontalAlignment.Center,
-						VerticalAnchor = VerticalAlignment.Top,
-						Position = new(Width / 2f, 0)
-					},
-					new StaticImage()
+						WrappingLength = 268,
+						HorizontalAlignment = HorizontalAlignment.Left,
+						VerticalAlignment = VerticalAlignment.Center,
+						Origin = new(12, 220)
+					}
+				},
+				#endregion
+				#region EZ
+				new ImageText()
+				{
+					Text = "EZ {0}",
+					FontID = Small16ID,
+					ColorBlue = 0,
+					ColorGreen = 0,
+					ColorRed = 0,
+					Bind = ["Searched.0.EZ.CC"],
+					FallBackFormattingText = "NULL",
+					TextOptions = new()
 					{
-						Path = "./Assets/Misc/SongScoresTemplate.png",
-						Size = new(Width, Height)
-					},
+						HorizontalAlignment = HorizontalAlignment.Left,
+						VerticalAlignment = VerticalAlignment.Center,
+						Origin = new(12, 263 + 0)
+					}
+				},
+				new ImageText()
+				{
+					Text = "{0}",
+					FontID = Small16ID,
+					ColorBlue = 255,
+					ColorGreen = 255,
+					ColorRed = 255,
+					Bind = ["Searched.0.EZ.Score"],
+					FallBackFormattingText = "000000",
+					TextOptions = new()
+					{
+						HorizontalAlignment = HorizontalAlignment.Left,
+						VerticalAlignment = VerticalAlignment.Center,
+						Origin = new(12, 280 + 0)
+					}
+				},
+				new ImageText()
+				{
+					Text = "{0}%",
+					FontID = Small16ID,
+					ColorBlue = 255,
+					ColorGreen = 255,
+					ColorRed = 255,
+					Bind = ["Searched.0.EZ.Acc"],
+					FallBackFormattingText = "0",
+					TextOptions = new()
+					{
+						HorizontalAlignment = HorizontalAlignment.Left,
+						VerticalAlignment = VerticalAlignment.Center,
+						Origin = new(12, 297 + 0)
+					}
+				},
+				new ImageText()
+				{
+					Text = "{0}",
+					FontID = Small16ID,
+					ColorBlue = 255,
+					ColorGreen = 255,
+					ColorRed = 255,
+					Bind = ["Searched.0.EZ.Rks"],
+					FallBackFormattingText = "0",
+					TextOptions = new()
+					{
+						HorizontalAlignment = HorizontalAlignment.Left,
+						VerticalAlignment = VerticalAlignment.Center,
+						Origin = new(12, 313 + 0)
+					}
+				},
+				new DynamicImage()
+				{
+					Bind = "Searched.0.EZ.Rank",
+					FallBackBind = "Rank.F",
+					Size = new(32, 32),
+					Position = new(120, 289 + 0)
+				},
 #endregion
-#region Best performance
+				#region IN
+				new ImageText()
+				{
+					Text = "IN {0}",
+					FontID = Small16ID,
+					ColorBlue = 0,
+					ColorGreen = 0,
+					ColorRed = 0,
+					Bind = ["Searched.0.IN.CC"],
+					FallBackFormattingText = "NULL",
+					TextOptions = new()
+					{
+						HorizontalAlignment = HorizontalAlignment.Left,
+						VerticalAlignment = VerticalAlignment.Center,
+						Origin = new(12, 263 + 120)
+					}
+				},
+				new ImageText()
+				{
+					Text = "{0}",
+					FontID = Small16ID,
+					ColorBlue = 255,
+					ColorGreen = 255,
+					ColorRed = 255,
+					Bind = ["Searched.0.IN.Score"],
+					FallBackFormattingText = "000000",
+					TextOptions = new()
+					{
+						HorizontalAlignment = HorizontalAlignment.Left,
+						VerticalAlignment = VerticalAlignment.Center,
+						Origin = new(12, 280 + 120)
+					}
+				},
+				new ImageText()
+				{
+					Text = "{0}%",
+					FontID = Small16ID,
+					ColorBlue = 255,
+					ColorGreen = 255,
+					ColorRed = 255,
+					Bind = ["Searched.0.IN.Acc"],
+					FallBackFormattingText = "0",
+					TextOptions = new()
+					{
+						HorizontalAlignment = HorizontalAlignment.Left,
+						VerticalAlignment = VerticalAlignment.Center,
+						Origin = new(12, 297 + 120)
+					}
+				},
+				new ImageText()
+				{
+					Text = "{0}",
+					FontID = Small16ID,
+					ColorBlue = 255,
+					ColorGreen = 255,
+					ColorRed = 255,
+					Bind = ["Searched.0.IN.Rks"],
+					FallBackFormattingText = "0",
+					TextOptions = new()
+					{
+						HorizontalAlignment = HorizontalAlignment.Left,
+						VerticalAlignment = VerticalAlignment.Center,
+						Origin = new(12, 313 + 120)
+					}
+				},
+				new DynamicImage()
+				{
+					Bind = "Searched.0.IN.Rank",
+					FallBackBind = "Rank.F",
+					Size = new(32, 32),
+					Position = new(120, 289 + 120)
+				},
+				#endregion
+				#region HD
+				new ImageText()
+				{
+					Text = "HD {0}",
+					FontID = Small16ID,
+					ColorBlue = 0,
+					ColorGreen = 0,
+					ColorRed = 0,
+					Bind = ["Searched.0.HD.CC"],
+					FallBackFormattingText = "NULL",
+					TextOptions = new()
+					{
+						HorizontalAlignment = HorizontalAlignment.Right,
+						VerticalAlignment = VerticalAlignment.Center,
+						Origin = new(292, 263 + 60),
+						TextAlignment = TextAlignment.End
+					}
+				},
+				new ImageText()
+				{
+					Text = "{0}",
+					FontID = Small16ID,
+					ColorBlue = 255,
+					ColorGreen = 255,
+					ColorRed = 255,
+					Bind = ["Searched.0.HD.Score"],
+					FallBackFormattingText = "000000",
+					TextOptions = new()
+					{
+						HorizontalAlignment = HorizontalAlignment.Right,
+						VerticalAlignment = VerticalAlignment.Center,
+						Origin = new(292, 280 + 60),
+						TextAlignment = TextAlignment.End
+					}
+				},
+				new ImageText()
+				{
+					Text = "{0}%",
+					FontID = Small16ID,
+					ColorBlue = 255,
+					ColorGreen = 255,
+					ColorRed = 255,
+					Bind = ["Searched.0.HD.Acc"],
+					FallBackFormattingText = "0",
+					TextOptions = new()
+					{
+						HorizontalAlignment = HorizontalAlignment.Right,
+						VerticalAlignment = VerticalAlignment.Center,
+						Origin = new(292, 297 + 60),
+						TextAlignment = TextAlignment.End
+					}
+				},
+				new ImageText()
+				{
+					Text = "{0}",
+					FontID = Small16ID,
+					ColorBlue = 255,
+					ColorGreen = 255,
+					ColorRed = 255,
+					Bind = ["Searched.0.HD.Rks"],
+					FallBackFormattingText = "0",
+					TextOptions = new()
+					{
+						HorizontalAlignment = HorizontalAlignment.Right,
+						VerticalAlignment = VerticalAlignment.Center,
+						Origin = new(292, 313 + 60),
+						TextAlignment = TextAlignment.End
+					}
+				},
+				new DynamicImage()
+				{
+					Bind = "Searched.0.HD.Rank",
+					FallBackBind = "Rank.F",
+					Size = new(32, 32),
+					Position = new(174, 289 + 60),
+					HorizonalAnchor = HorizontalAlignment.Right
+				},
+				#endregion
+				#region AT 
+				new ImageText()
+				{
+					Text = "AT {0}",
+					FontID = Small16ID,
+					ColorBlue = 0,
+					ColorGreen = 0,
+					ColorRed = 0,
+					Bind = ["Searched.0.AT.CC"],
+					FallBackFormattingText = "NULL",
+					TextOptions = new()
+					{
+						HorizontalAlignment = HorizontalAlignment.Right,
+						VerticalAlignment = VerticalAlignment.Center,
+						Origin = new(292, 263 + 180),
+						TextAlignment = TextAlignment.End
+					}
+				},
+				new ImageText()
+				{
+					Text = "{0}",
+					FontID = Small16ID,
+					ColorBlue = 255,
+					ColorGreen = 255,
+					ColorRed = 255,
+					Bind = ["Searched.0.AT.Score"],
+					FallBackFormattingText = "000000",
+					TextOptions = new()
+					{
+						HorizontalAlignment = HorizontalAlignment.Right,
+						VerticalAlignment = VerticalAlignment.Center,
+						Origin = new(292, 280 + 180),
+						TextAlignment = TextAlignment.End
+					}
+				},
+				new ImageText()
+				{
+					Text = "{0}%",
+					FontID = Small16ID,
+					ColorBlue = 255,
+					ColorGreen = 255,
+					ColorRed = 255,
+					Bind = ["Searched.0.AT.Acc"],
+					FallBackFormattingText = "0",
+					TextOptions = new()
+					{
+						HorizontalAlignment = HorizontalAlignment.Right,
+						VerticalAlignment = VerticalAlignment.Center,
+						Origin = new(292, 297 + 180),
+						TextAlignment = TextAlignment.End
+					}
+				},
+				new ImageText()
+				{
+					Text = "{0}",
+					FontID = Small16ID,
+					ColorBlue = 255,
+					ColorGreen = 255,
+					ColorRed = 255,
+					Bind = ["Searched.0.AT.Rks"],
+					FallBackFormattingText = "0",
+					TextOptions = new()
+					{
+						HorizontalAlignment = HorizontalAlignment.Right,
+						VerticalAlignment = VerticalAlignment.Center,
+						Origin = new(292, 313 + 180),
+						TextAlignment = TextAlignment.End
+					}
+				},
+				new DynamicImage()
+				{
+					Bind = "Searched.0.AT.Rank",
+					FallBackBind = "Rank.F",
+					Size = new(32, 32),
+					Position = new(174, 289 + 180),
+					HorizonalAnchor = HorizontalAlignment.Right
+				},
 #endregion
-#region Avatar and challenge and misc
-					new DynamicImage() // avatar
-					{
-						Bind = "User.Avatar",
-						Size = new(160, 160),
-						Position = new(64, 48)
-					},
-					new DynamicImage() // challenge image
-					{
-						Bind = "User.Challenge.Image",
-						Position = new(144, 208),
-						Size = new(130, 64),
-						HorizonalAnchor = HorizontalAlignment.Center,
-						VerticalAnchor = VerticalAlignment.Center
-					},
-					new ImageText()
-					{
-						FontID = Medium24ID,
-						Bind = ["User.Challenge.Text"],
-						Text = "{0}",
-						ColorRed = 255,
-						ColorGreen = 255,
-						ColorBlue = 255,
-						TextOptions = new()
-						{
-							HorizontalAlignment = HorizontalAlignment.Center,
-							VerticalAlignment = VerticalAlignment.Center,
-							Origin = new(144, 208)
-						}
-					},
-					new ImageText()
-					{
-						FontID = Small20ID,
-						Bind = ["User.Currency.Combined"],
-						Text = "UserValue: {0}",
-						ColorRed = 255,
-						ColorGreen = 255,
-						ColorBlue = 255,
-						TextOptions = new()
-						{
-							Origin = new(35, 298)
-						}
-					},
-					new ImageText()
-					{
-						FontID = Small20ID,
-						Bind = ["User.ID"],
-						Text = "UserID: {0}",
-						ColorRed = 255,
-						ColorGreen = 255,
-						ColorBlue = 255,
-						TextOptions = new()
-						{
-							Origin = new(35, 276)
-						}
-					},
-					new ImageText()
-					{
-						FontID = Small20ID,
-						Bind = ["User.Nickname"],
-						Text = "UserName: {0}",
-						ColorRed = 255,
-						ColorGreen = 255,
-						ColorBlue = 255,
-						TextOptions = new()
-						{
-							Origin = new(35, 255)
-						}
-					},
-					new ImageText()
-					{
-						FontID = Medium24ID,
-						Bind = ["User.Rks"],
-						Text = "Current RKS: {0}",
-						ColorRed = 255,
-						ColorGreen = 255,
-						ColorBlue = 255,
-						TextOptions = new()
-						{
-							HorizontalAlignment = HorizontalAlignment.Left,
-							VerticalAlignment = VerticalAlignment.Top,
-							Origin = new(256, 184)
-						}
-					},
-					new ImageText() // time of now
-					{
-						FontID = Small20ID,
-						Bind = ["Time.Now"],
-						Text = "{0}",
-						TextOptions = new()
-						{
-							Origin = new(5, 381)
-						},
-						ColorRed = 255,
-						ColorGreen = 255,
-						ColorBlue = 255
-					},
-#endregion
-				}
+			}
 		};
 
 		return script;

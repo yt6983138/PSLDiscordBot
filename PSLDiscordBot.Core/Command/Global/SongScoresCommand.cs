@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using Microsoft.Extensions.Logging;
 using PhigrosLibraryCSharp.Cloud.DataStructure;
 using PhigrosLibraryCSharp.GameRecords;
 using PSLDiscordBot.Core.Command.Global.Base;
@@ -11,7 +12,10 @@ using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.CommandBase;
 using PSLDiscordBot.Framework.DependencyInjection;
 using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 using System.Text;
+using yt6983138.Common;
+using Image = SixLabors.ImageSharp.Image;
 
 namespace PSLDiscordBot.Core.Command.Global;
 
@@ -26,6 +30,8 @@ public class SongScoresCommand : CommandBase
 	public ImageGenerator ImageGenerator { get; set; }
 	[Inject]
 	public SongScoresImageScriptService SongScoresImageScriptService { get; set; }
+	[Inject]
+	public Logger Logger { get; set; }
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 	#endregion
 
@@ -95,7 +101,7 @@ public class SongScoresCommand : CommandBase
 			.Where(x => x.Id == scoresToShow[0].Id)
 			.ToArray();
 
-		SixLabors.ImageSharp.Image image = this.ImageGenerator.MakePhoto(
+		Image image = this.ImageGenerator.MakePhoto(
 			save.Records,
 			best,
 			this.PhigrosDataService.IdNameMap,
@@ -106,7 +112,8 @@ public class SongScoresCommand : CommandBase
 			outerUserInfo,
 			rks,
 			this.SongScoresImageScriptService.Data,
-			arg.User.Id
+			arg.User.Id,
+			mapPostProcessing: PostProcess
 			);
 
 		MemoryStream stream = new();
@@ -127,5 +134,40 @@ public class SongScoresCommand : CommandBase
 								data,
 								false,
 								false))),"Query.txt")]);
+
+		void PostProcess(Dictionary<string, Lazy<object>> textMap, Dictionary<string, Lazy<Image>> imageMap)
+		{
+			Image<Rgba32> empty = new(1, 1);
+
+			imageMap.Add("Empty", new(empty));
+			imageMap.Add("Rank.F", new(this.ImageGenerator.RankImages[ScoreStatus.False]));
+
+			CompleteScore firstScore = scoresToShow[0];
+			string path = $"./Assets/Tracks/{firstScore.Id}.0/IllustrationLowRes.png";
+
+			textMap.Add($"Searched.0.IdName", new(firstScore.Id));
+			textMap.Add($"Searched.0.Name", new(this.PhigrosDataService.IdNameMap.TryGetValue(firstScore.Id, out string? _str1) ? _str1 : firstScore.Id));
+
+			imageMap.Add($"Searched.0.Illustration", new(
+				() => Utils.TryLoadImage(path) ?? StaticImage.Default.Image)
+			);
+			if (!File.Exists(path))
+				this.Logger.Log(LogLevel.Warning, $"Cannot find image for {firstScore.Id}.0!", this.EventId, this);
+
+			foreach (CompleteScore item in scoresToShow)
+			{
+				textMap.Add($"Searched.0.{item.Difficulty}.Score", new(item.Score));
+				textMap.Add($"Searched.0.{item.Difficulty}.Acc", new(item.Accuracy.ToString(data.ShowFormat)));
+				textMap.Add($"Searched.0.{item.Difficulty}.CC", new(item.ChartConstant));
+				textMap.Add($"Searched.0.{item.Difficulty}.Diff", new(item.Difficulty));
+				textMap.Add($"Searched.0.{item.Difficulty}.IdName", new(item.Id));
+				textMap.Add($"Searched.0.{item.Difficulty}.Name", new(this.PhigrosDataService.IdNameMap.TryGetValue(item.Id, out string? _str2) ? _str2 : item.Id));
+				textMap.Add($"Searched.0.{item.Difficulty}.Status", new(item.Status));
+				textMap.Add($"Searched.0.{item.Difficulty}.Rks", new(item.Rks.ToString(data.ShowFormat)));
+
+
+				imageMap.Add($"Searched.0.{item.Difficulty}.Rank", new(this.ImageGenerator.RankImages[item.Status]));
+			}
+		}
 	}
 }
