@@ -23,10 +23,10 @@ public class ImageGenerator : InjectableBase
 	public DataBaseService DataBaseService { get; set; }
 	#endregion
 
-	private Dictionary<string, Image> ChallengeRankImages { get; } = new();
-	private Dictionary<ScoreStatus, Image> RankImages { get; } = new();
-	private Dictionary<string, Image> Avatars { get; } = new();
-	private Dictionary<string, Lazy<object>> SongDifficultyCount { get; }
+	public IReadOnlyDictionary<string, Image> ChallengeRankImages { get; }
+	public IReadOnlyDictionary<ScoreStatus, Image> RankImages { get; }
+	public IReadOnlyDictionary<string, Image> Avatars { get; } = new Dictionary<string, Image>();
+	public IReadOnlyDictionary<string, Lazy<object>> SongDifficultyCount { get; }
 
 	private static EventId EventId { get; } = new(114512, "ImageGenerator");
 
@@ -36,7 +36,11 @@ public class ImageGenerator : InjectableBase
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 	{
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
-		this.SongDifficultyCount = new()
+
+		Dictionary<ScoreStatus, Image> rankImages = new();
+		Dictionary<string, Image> challengeRankImages = new();
+
+		this.SongDifficultyCount = new Dictionary<string, Lazy<object>>()
 		{
 			{ "SongStatistics.EZCount", new(this.PhigrosDataService.DifficultiesMap.Count(x => x.Value.Length >= 1).ToString()) },
 			{ "SongStatistics.HDCount", new(this.PhigrosDataService.DifficultiesMap.Count(x => x.Value.Length >= 2).ToString()) },
@@ -50,7 +54,7 @@ public class ImageGenerator : InjectableBase
 		{
 			using Stream stream = File.Open($"./Assets/Misc/{i}.png", FileMode.Open);
 			Image image = Image.Load(stream);
-			this.ChallengeRankImages.Add(i.ToString(), image);
+			challengeRankImages.Add(i.ToString(), image);
 		}
 		ScoreStatus[] rankEnums = (ScoreStatus[])Enum.GetValues(typeof(ScoreStatus));
 		for (int i = 0; i < rankEnums.Length; i++)
@@ -62,8 +66,11 @@ public class ImageGenerator : InjectableBase
 			else
 				image = Image.Load($"./Assets/Misc/{current}.png");
 			image.Mutate(x => x.Resize(32, 32));
-			this.RankImages.Add(current, image);
+			rankImages.Add(current, image);
 		}
+
+		this.RankImages = rankImages;
+		this.ChallengeRankImages = challengeRankImages;
 	}
 
 	public Image MakePhoto(
@@ -90,6 +97,10 @@ public class ImageGenerator : InjectableBase
 
 		Image<Rgba32> image = new(script.Width, script.Height);
 
+		Dictionary<ScoreStatus, Image> castedRankImages = this.RankImages.CastTo<IReadOnlyDictionary<ScoreStatus, Image>, Dictionary<ScoreStatus, Image>>();
+		Dictionary<string, Image> castedAvatarImages = this.Avatars.CastTo<IReadOnlyDictionary<string, Image>, Dictionary<string, Image>>();
+		Dictionary<string, Image> castedChallengeRankImages = this.ChallengeRankImages.CastTo<IReadOnlyDictionary<string, Image>, Dictionary<string, Image>>();
+
 #pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
 		if (!this.Avatars.TryGetValue(summary.Avatar, out Image avatar))
 		{
@@ -97,13 +108,12 @@ public class ImageGenerator : InjectableBase
 			{
 				avatar = Image.Load($"./Assets/Avatar/{summary.Avatar}.png");
 				avatar.Mutate(x => x.Resize(112, 112));
-				this.Avatars.Add(summary.Avatar, avatar);
 			}
 			catch
 			{
 				avatar = Image.Load($"./Assets/Avatar/Introduction.png").MutateChain(x => x.Resize(112, 112));
-				this.Avatars.Add(summary.Avatar, avatar);
 			}
+			castedAvatarImages.Add(summary.Avatar, avatar);
 		}
 #pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
 
@@ -273,11 +283,11 @@ public class ImageGenerator : InjectableBase
 			if (!item.Value.IsValueCreated)
 				continue;
 			Image value = item.Value.Value;
-			if (this.ChallengeRankImages.ContainsValue(value))
+			if (castedChallengeRankImages.ContainsValue(value))
 				continue;
-			if (this.RankImages.ContainsValue(value))
+			if (castedRankImages.ContainsValue(value))
 				continue;
-			if (this.Avatars.ContainsValue(value))
+			if (castedAvatarImages.ContainsValue(value))
 				continue;
 			if (value == StaticImage.Default.Image)
 				continue;
