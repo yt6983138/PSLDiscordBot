@@ -34,7 +34,7 @@ public class MoreRksCommand : CommandBase
 			ApplicationCommandOptionType.Number,
 			"The least rks you wanted to get from each chart. (Default 0.01)",
 			minValue: double.Epsilon,
-			maxValue: 17,
+			maxValue: 17d / 20d,
 			isRequired: false)
 		.AddOption(
 			"count",
@@ -46,7 +46,7 @@ public class MoreRksCommand : CommandBase
 	public override async Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
 	{
 		int count = arg.GetIntegerOptionAsInt32OrDefault("count", 10);
-		double leastRks = arg.GetOptionOrDefault("give_me_at_least", 0.01d);
+		double leastRks = arg.GetOptionOrDefault("give_me_at_least", 0.01d) * 20d;
 
 		PhigrosLibraryCSharp.SaveSummaryPair? pair = await data.SaveCache.GetAndHandleSave(
 			arg,
@@ -63,14 +63,16 @@ public class MoreRksCommand : CommandBase
 
 		double rks = best.Rks * 0.05;
 
+		double twentyThRks = save.Records[Math.Min(19, save.Records.Count) - 1].Rks;
+
 		int i = 0;
 		save.Records.ForEach(x => { if (i < 19) rks += x.Rks * 0.05; i++; });
 
 		List<TargetRksScorePair> calculatedGrowableScores = save.Records
 			.Select(r =>
 			new TargetRksScorePair(
-				Math.Max(r.Rks + leastRks, rks + leastRks),
-				(45d * Math.Sqrt(Math.Max(r.Rks + leastRks, rks + leastRks) / r.ChartConstant)) + 55d,
+				Math.Max(r.Rks + leastRks, twentyThRks + leastRks),
+				(45d * Math.Sqrt(Math.Max(r.Rks + leastRks, twentyThRks + leastRks) / r.ChartConstant)) + 55d,
 				r))
 			.Where(r => 70 < r.TargetAcc && r.TargetAcc < 100)
 			.ToList();
@@ -92,21 +94,21 @@ public class MoreRksCommand : CommandBase
 			int maxUserShowLength = data.ShowFormat.Length + 2;
 
 			stringBuilder.Append(indexString);
-			stringBuilder.Append(' ', 3 - indexString.Length);
+			stringBuilder.Append(' ', Math.Max(0, 3 - indexString.Length));
 			stringBuilder.Append("| ");
 			stringBuilder.Append(oldAccString);
 			stringBuilder.Append('%');
-			stringBuilder.Append(' ', maxUserShowLength - oldAccString.Length);
+			stringBuilder.Append(' ', Math.Max(0, maxUserShowLength - oldAccString.Length));
 			stringBuilder.Append(" -> ");
 			stringBuilder.Append(newAccString);
 			stringBuilder.Append('%');
-			stringBuilder.Append(' ', maxUserShowLength - newAccString.Length);
+			stringBuilder.Append(' ', Math.Max(0, maxUserShowLength - newAccString.Length));
 			stringBuilder.Append(" | Rks: ");
 			stringBuilder.Append(oldRksString);
-			stringBuilder.Append(' ', maxUserShowLength - oldRksString.Length);
+			stringBuilder.Append(' ', Math.Max(0, maxUserShowLength - oldRksString.Length));
 			stringBuilder.Append(" -> ");
 			stringBuilder.Append(newRksString);
-			stringBuilder.Append(' ', maxUserShowLength - newRksString.Length);
+			stringBuilder.Append(' ', Math.Max(0, maxUserShowLength - newRksString.Length));
 			stringBuilder.Append(" | For song: ");
 			stringBuilder.Append(this.PhigrosDataService.IdNameMap.TryGetValue(item.Score.Id, out string? name) ? name : item.Score.Id);
 			stringBuilder.Append(" (");
