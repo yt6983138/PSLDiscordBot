@@ -76,7 +76,7 @@ internal static class Utils
 		int index = 0,
 		bool autoThrow = true,
 		string onOutOfRange = "Error: Expected index less than {0}, more or equal to 0. You entered {1}.",
-		string onOtherException = "Error: {0}\nYou may try again or report to author.",
+		string onOtherException = "Error: {0}\nYou may try again or report to author (`/report-problem`).",
 		string onNoSaves = "Error: There is no save on the cloud, did you use wrong account, or have not synced?")
 	{
 		Exception exception;
