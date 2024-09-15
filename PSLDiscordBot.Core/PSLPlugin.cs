@@ -333,7 +333,7 @@ public class PSLPlugin : InjectableBase, IPlugin
 				interactionMessage += interaction is SocketSlashCommand sc
 					? $" with option(s) `{string.Join(", ", sc.Data.Options.Select(x => $"{i++}_{x.Name}({x.Type}): {x.Value}"))}`"
 					: "";
-				await this.AdminUser.SendMessageAsync($"\n```\n{exception}```");
+				await this.AdminUser.SendMessageAsync($"{interactionMessage}\n```\n{exception}```");
 			}
 			catch { }
 		}
