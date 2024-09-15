@@ -62,13 +62,14 @@ public class MoreRksCommand : CommandBase
 
 		double rks = best.Rks * 0.05;
 
-		double leastRks = arg.GetOptionOrDefault("give_me_at_least", -1d);
-		leastRks = leastRks < 0 ? Math.Round(rks, MidpointRounding.ToEven) + 0.00500d - rks : leastRks;
-
 		double twentyThRks = save.Records[Math.Min(19, save.Records.Count) - 1].Rks;
 
 		int i = 0;
 		save.Records.ForEach(x => { if (i < 19) rks += x.Rks * 0.05; i++; });
+
+		double leastRks = arg.GetOptionOrDefault("give_me_at_least", -1d);
+		leastRks = leastRks < 0 ? Math.Round(rks, 2, MidpointRounding.ToEven) + 0.005d - rks : leastRks;
+		leastRks *= 20;
 
 		List<TargetRksScorePair> calculatedGrowableScores = save.Records
 			.Select(r =>
@@ -84,7 +85,7 @@ public class MoreRksCommand : CommandBase
 
 		StringBuilder stringBuilder = new();
 		stringBuilder.Append("Getting you to: ");
-		stringBuilder.AppendLine((rks + leastRks).ToString(data.ShowFormat));
+		stringBuilder.AppendLine((rks + (leastRks / 20d)).ToString(data.ShowFormat));
 
 		int maxUserShowLength = data.ShowFormat.Length + 2;
 		for (int j = 0; j < calculatedShowCounts; j++)
