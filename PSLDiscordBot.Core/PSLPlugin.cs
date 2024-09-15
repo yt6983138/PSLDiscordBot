@@ -252,12 +252,13 @@ public class PSLPlugin : InjectableBase, IPlugin
 	}
 	private async void CommandResolveService_OnSlashCommandError(object? sender, BasicCommandExceptionEventArgs<Framework.CommandBase.BasicCommandBase> e)
 	{
-		Task<IUserMessage> oringal = e.Arg.GetOriginalResponseAsync(); // speed up, idk why
-		await this.OnException(e.Exception);
-		string formmated = $"This exception has been caught by global handler. Exception:\n{e.Exception}";
+		Task<RestInteractionMessage> oringal = e.Arg.GetOriginalResponseAsync(); // speed up, idk why
+		await this.OnException(e.Exception, e.Arg);
+		string formmated = $"This exception has been caught by global handler. " +
+			$"Use `/report-problem` to report. Exception:\n```\n{e.Exception}\n```";
 
-		RestInteractionMessage? casted = await oringal as RestInteractionMessage;
-		if (casted is not null && (!e.Arg.HasResponded || casted.Flags.GetValueOrDefault().HasFlag(MessageFlags.Loading)))
+		RestInteractionMessage? awaited = await oringal;
+		if (awaited is not null && (!e.Arg.HasResponded || awaited.Flags.GetValueOrDefault().HasFlag(MessageFlags.Loading)))
 		{
 			await e.Arg.QuickReply(formmated);
 		}
@@ -318,14 +319,21 @@ public class PSLPlugin : InjectableBase, IPlugin
 	}
 	#endregion
 
-	private async Task OnException(Exception exception)
+	private async Task OnException(Exception exception, SocketCommandBase? interaction = null)
 	{
 		this._logger.Log(LogLevel.Error, EventId, this, exception);
 		if (this.AdminUser is not null)
 		{
 			try
 			{
-				await this.AdminUser.SendMessageAsync($"```\n{exception}```");
+				string interactionMessage = interaction is null
+					? ""
+					: $"<@{interaction.User.Id}> sent command `{interaction.CommandName}`";
+				int i = 0;
+				interactionMessage += interaction is SocketSlashCommand sc
+					? $" with option(s) `{string.Join(", ", sc.Data.Options.Select(x => $"{i++}_{x.Name}({x.Type}): {x.Value}"))}`"
+					: "";
+				await this.AdminUser.SendMessageAsync($"\n```\n{exception}```");
 			}
 			catch { }
 		}

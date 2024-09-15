@@ -1,4 +1,4 @@
-﻿using Discord;
+﻿using Discord.WebSocket;
 
 namespace PSLDiscordBot.Framework.MiscEventArgs;
 public sealed class BasicCommandExceptionEventArgs<TCommand> where TCommand : class
@@ -6,9 +6,9 @@ public sealed class BasicCommandExceptionEventArgs<TCommand> where TCommand : cl
 	public Exception Exception { get; init; }
 	public TCommand Command { get; init; }
 	public Task Task { get; init; }
-	public IDiscordInteraction Arg { get; init; }
+	public SocketCommandBase Arg { get; init; }
 
-	internal BasicCommandExceptionEventArgs(Exception exception, TCommand command, Task task, IDiscordInteraction arg)
+	internal BasicCommandExceptionEventArgs(Exception exception, TCommand command, Task task, SocketCommandBase arg)
 	{
 		this.Exception = exception;
 		this.Command = command;
