@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.Net;
+using Discord.Rest;
 using Discord.WebSocket;
 using ICSharpCode.SharpZipLib.Zip;
 using Microsoft.Extensions.Logging;
@@ -251,11 +252,15 @@ public class PSLPlugin : InjectableBase, IPlugin
 	}
 	private async void CommandResolveService_OnSlashCommandError(object? sender, BasicCommandExceptionEventArgs<Framework.CommandBase.BasicCommandBase> e)
 	{
+		Task<IUserMessage> oringal = e.Arg.GetOriginalResponseAsync(); // speed up, idk why
 		await this.OnException(e.Exception);
 		string formmated = $"This exception has been caught by global handler. Exception:\n{e.Exception}";
 
-		if (!e.Arg.HasResponded)
+		RestInteractionMessage? casted = await oringal as RestInteractionMessage;
+		if (casted is not null && (!e.Arg.HasResponded || casted.Flags.GetValueOrDefault().HasFlag(MessageFlags.Loading)))
+		{
 			await e.Arg.QuickReply(formmated);
+		}
 	}
 
 	private async Task Client_Ready()
