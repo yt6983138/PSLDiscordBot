@@ -32,7 +32,7 @@ public class MoreRksCommand : CommandBase
 		.AddOption(
 			"give_me_at_least",
 			ApplicationCommandOptionType.Number,
-			"The least rks you wanted to get from each chart. (Default 0.01)",
+			"The least rks you wanted to get from each chart. (Default: have Phigros shown +0.01)",
 			minValue: double.Epsilon,
 			maxValue: 17d / 20d,
 			isRequired: false)
@@ -46,7 +46,6 @@ public class MoreRksCommand : CommandBase
 	public override async Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
 	{
 		int count = arg.GetIntegerOptionAsInt32OrDefault("count", 10);
-		double leastRks = arg.GetOptionOrDefault("give_me_at_least", 0.01d) * 20d;
 
 		PhigrosLibraryCSharp.SaveSummaryPair? pair = await data.SaveCache.GetAndHandleSave(
 			arg,
@@ -62,6 +61,9 @@ public class MoreRksCommand : CommandBase
 		CompleteScore best = save.Records.FirstOrDefault(x => x.Status == ScoreStatus.Phi) ?? @default;
 
 		double rks = best.Rks * 0.05;
+
+		double leastRks = arg.GetOptionOrDefault("give_me_at_least", -1d);
+		leastRks = leastRks < 0 ? Math.Round(rks, MidpointRounding.ToEven) + 0.00501d - rks : leastRks;
 
 		double twentyThRks = save.Records[Math.Min(19, save.Records.Count) - 1].Rks;
 
