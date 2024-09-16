@@ -22,7 +22,7 @@ public class StaticallyMaskedImage : IDrawableComponent
 	public HorizontalAlignment HorizonalAnchor { get; set; }
 	public VerticalAlignment VerticalAnchor { get; set; }
 
-	public void DrawOn(Image image, Func<string?, string?, (Image Image, bool ShouldDispose)> imageGetter, bool shouldClone, bool disableCache = false)
+	public void DrawOn(Image image, Func<string?, string?, Image> imageGetter, bool shouldClone, bool disableCache = false)
 	{
 		// i know code here are extremely messy but my brain is not fucking working correctly
 
@@ -81,7 +81,7 @@ public class StaticallyMaskedImage : IDrawableComponent
 		}
 
 
-		(Image image2, bool shouldDispose) = imageGetter(this.ImagePathOrBindName, this.FallBackBindOrPath);
+		Image image2 = imageGetter(this.ImagePathOrBindName, this.FallBackBindOrPath);
 
 		if (this.AlwaysMaskFirst)
 		{
@@ -113,9 +113,6 @@ public class StaticallyMaskedImage : IDrawableComponent
 			image.Mutate(x => x.DrawImage(masked2, (this.Position - offset).ToIntPoint(), this.Opacity));
 			masked2.Dispose();
 		}
-
-		if (shouldDispose)
-			image2.Dispose();
 
 		if (disableCache)
 			mask.Dispose();

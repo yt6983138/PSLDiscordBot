@@ -297,20 +297,20 @@ public class ImageGenerator : InjectableBase
 
 		return image;
 
-		(Image Image, bool ShouldDispose) ImageGetter(string? key, string? fallback)
+		Image ImageGetter(string? key, string? fallback)
 		{
 			if (key is not null && imageMap.TryGetValue(key, out Lazy<Image>? image))
 			{
 				if (key.StartsWith("B20.Illustration") || key.StartsWith("User.Background"))
-					return (image.Value, true);
+					return image.Value;
 
-				return (image.Value, false);
+				return image.Value;
 			}
 			if (fallback is not null && imageMap.TryGetValue(fallback, out Lazy<Image>? image2))
 			{
-				return (image2.Value, false);
+				return image2.Value;
 			}
-			return (StaticImage.Default.Image.Clone(_ => { }), true);
+			return StaticImage.Default.Image.Clone(_ => { });
 		}
 		bool GetTextBind(string id, [NotNullWhen(true)] out Lazy<object>? @object)
 		{

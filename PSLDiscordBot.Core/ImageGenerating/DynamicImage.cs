@@ -13,9 +13,9 @@ public class DynamicImage : IDrawableComponent
 	public HorizontalAlignment HorizonalAnchor { get; set; }
 	public VerticalAlignment VerticalAnchor { get; set; }
 
-	public void DrawOn(Image image, Func<string?, string?, (Image Image, bool ShouldDispose)> imageGetter, bool shouldClone)
+	public void DrawOn(Image image, Func<string?, string?, Image> imageGetter, bool shouldClone)
 	{
-		(Image image2, bool shouldDispose) = imageGetter.Invoke(this.Bind, this.FallBackBind);
+		Image image2 = imageGetter.Invoke(this.Bind, this.FallBackBind);
 
 		if (image2.Size != this.Size)
 		{
@@ -41,8 +41,5 @@ public class DynamicImage : IDrawableComponent
 			}
 		};
 		image.Mutate(x => x.DrawImage(image2, (this.Position - offset).ToIntPoint(), this.Opacity));
-
-		if (shouldDispose)
-			image2.Dispose();
 	}
 }
