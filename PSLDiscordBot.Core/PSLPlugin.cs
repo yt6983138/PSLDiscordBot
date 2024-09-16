@@ -255,12 +255,12 @@ public class PSLPlugin : InjectableBase, IPlugin
 		Task<RestInteractionMessage> oringal = e.Arg.GetOriginalResponseAsync(); // speed up, idk why
 		await this.OnException(e.Exception, e.Arg);
 		string formmated = $"This exception has been caught by global handler. " +
-			$"Use `/report-problem` to report. Exception:\n```\n{e.Exception}\n```";
+			$"Use `/report-problem` to report. Exception:";
 
 		RestInteractionMessage? awaited = await oringal;
 		if (awaited is not null && (!e.Arg.HasResponded || awaited.Flags.GetValueOrDefault().HasFlag(MessageFlags.Loading)))
 		{
-			await e.Arg.QuickReply(formmated);
+			await e.Arg.QuickReplyWithAttachments(formmated, Utils.ToAttachment(e.Exception.ToString(), "StackTrace.txt"));
 		}
 	}
 
@@ -309,8 +309,8 @@ public class PSLPlugin : InjectableBase, IPlugin
 			and
 			{
 				InnerException:
-				not WebSocketClosedException
-				and not WebSocketException
+					not WebSocketClosedException
+					and not WebSocketException
 			})
 		{
 			this._logger.Log(LogLevel.Debug, msg.Exception!.GetType().FullName!, EventId, this);
@@ -333,7 +333,9 @@ public class PSLPlugin : InjectableBase, IPlugin
 				interactionMessage += interaction is SocketSlashCommand sc
 					? $" with option(s) `{string.Join(", ", sc.Data.Options.Select(x => $"{i++}_{x.Name}({x.Type}): {x.Value}"))}`"
 					: "";
-				await this.AdminUser.SendMessageAsync($"{interactionMessage}\n```\n{exception}```");
+				await Task.WhenAll(
+					this.AdminUser.SendMessageAsync(interactionMessage),
+					this.AdminUser.SendFileAsync(Utils.ToStream(exception.ToString()), "StackTrace.txt"));
 			}
 			catch { }
 		}
