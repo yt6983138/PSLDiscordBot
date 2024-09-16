@@ -28,7 +28,9 @@ public class AboutMeCommand : CommandBase
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 	#endregion
 
+	public override bool IsEphemeral => false;
 	public override bool RunOnDifferentThread => true;
+
 	public override string Name => "about-me";
 	public override string Description => "Get info about you in game.";
 

@@ -20,6 +20,9 @@ public class ToggleMaintenanceCommand : AdminCommandBase
 	public StatusService StatusService { get; set; }
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 	#endregion
+
+	public override bool IsEphemeral => false;
+
 	public override string Name => "toggle-maintenance";
 	public override string Description => "Toggle maintenance. [Admin command]";
 
