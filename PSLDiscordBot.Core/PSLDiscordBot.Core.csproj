@@ -21,11 +21,14 @@
 		<ProjectReference Include="..\..\PhigrosLibraryCSharp\PhigrosLibraryCSharp\PhigrosLibraryCSharp.csproj" />
 		<ProjectReference Include="..\..\yt6983138\yt6983138.csproj" />
 		<ProjectReference Include="..\PSLDiscordBot.Framework\PSLDiscordBot.Framework.csproj" />
+		<ProjectReference Include="..\PSLDiscordBot.Analyzer\PSLDiscordBot.Analyzer.csproj"
+						  PrivateAssets="all"
+						  OutputItemType="Analyzer" />
 	</ItemGroup>
-	
+
 	<PropertyGroup>
 	</PropertyGroup>
-	
+
 	<ItemGroup>
 		<CoreFiles Include="$(OutDir)$(ProjectName)*" />
 		<PhigrosLibraryFiles Include="$(OutDir)PhigrosLibraryCSharp*" />
