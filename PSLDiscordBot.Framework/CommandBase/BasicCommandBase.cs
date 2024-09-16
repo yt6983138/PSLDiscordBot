@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.Logging;
+using PSLDiscordBot.Analyzer;
 using PSLDiscordBot.Framework.DependencyInjection;
 
 namespace PSLDiscordBot.Framework.CommandBase;
@@ -9,7 +10,9 @@ public abstract class BasicCommandBase : InjectableBase
 	protected private static int EventIdCount;
 
 	protected virtual EventId EventId { get; }
+	[NoLongerThan(SlashCommandBuilder.MaxNameLength)]
 	public abstract string Name { get; }
+	[NoLongerThan(SlashCommandBuilder.MaxDescriptionLength)]
 	public abstract string Description { get; }
 	public virtual bool IsEphemeral => true;
 	public virtual bool RunOnDifferentThread => false;
