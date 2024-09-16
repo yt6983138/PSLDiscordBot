@@ -1,4 +1,6 @@
-﻿using Discord.WebSocket;
+﻿using Discord;
+using Discord.WebSocket;
+using PSLDiscordBot.Analyzer;
 using PSLDiscordBot.Core.Services;
 using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Framework.CommandBase;
@@ -22,6 +24,12 @@ public abstract class CommandBase : BasicCommandBase
 	{
 	}
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+
+	[NoLongerThan(SlashCommandBuilder.MaxNameLength)]
+	public abstract override string Name { get; }
+	[NoLongerThan(SlashCommandBuilder.MaxDescriptionLength)]
+	public abstract override string Description { get; }
+
 	public abstract Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer);
 	public override async Task Execute(SocketSlashCommand arg, object executer)
 	{
