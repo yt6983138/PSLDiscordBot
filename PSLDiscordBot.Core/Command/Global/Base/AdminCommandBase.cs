@@ -1,10 +1,20 @@
-﻿using Discord.WebSocket;
+﻿using Discord;
+using Discord.WebSocket;
 using PSLDiscordBot.Core.Services;
 using PSLDiscordBot.Core.UserDatas;
 
 namespace PSLDiscordBot.Core.Command.Global.Base;
 public abstract class AdminCommandBase : CommandBase
 {
+	public override InteractionContextType[] InteractionContextTypes =>
+	[
+		InteractionContextType.BotDm
+	];
+	public override ApplicationIntegrationType[] IntegrationTypes =>
+	[
+		ApplicationIntegrationType.GuildInstall
+	];
+
 	public override async Task Execute(SocketSlashCommand arg, object executer)
 	{
 		using DataBaseService.DbDataRequester requester = this.DataBaseService.NewRequester();
