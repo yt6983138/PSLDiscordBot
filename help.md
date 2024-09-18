@@ -13,4 +13,7 @@ There's also cool commands like `/song-info`, `/poke`, also `/add-alias` and `/a
 
 If you see any problem, use `/report-problem` to report it (I may contact you for more information)
 ## Command usage
-Please check the [github address](https://github.com/yt6983138/PSLDiscordBot/blob/master/usage.md), Recommend read them all before using. (I can't fit everything in a message with maximum length of 2000 :sob:)
+Please check the [github address](https://github.com/yt6983138/PSLDiscordBot/blob/master/usage.md), Recommend read them all before using. (I can't fit everything in a message with maximum length of 2000 :sob:) <br/>
+
+ToS: https://github.com/yt6983138/PSLDiscordBot/blob/master/TermsOfService.md <br/>
+Privacy Policy: https://github.com/yt6983138/PSLDiscordBot/blob/master/PrivacyPolicy.md
