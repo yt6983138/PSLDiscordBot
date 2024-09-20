@@ -21,6 +21,8 @@ public class ImageGenerator : InjectableBase
 	public Logger Logger { get; set; }
 	[Inject]
 	public DataBaseService DataBaseService { get; set; }
+	[Inject]
+	public AvatarHashMapService AvatarMapService { get; set; }
 	#endregion
 
 	public IReadOnlyDictionary<string, Image> ChallengeRankImages { get; }
@@ -103,16 +105,18 @@ public class ImageGenerator : InjectableBase
 
 		if (!this.Avatars.TryGetValue(summary.Avatar, out Image? avatar))
 		{
-			try
+			if (this.AvatarMapService.Data.TryGetValue(summary.Avatar, out string? hash))
 			{
-				avatar = Image.Load($"./Assets/Avatar/{summary.Avatar}.png");
+				avatar = Utils.TryLoadImage($"./Assets/Avatar/{hash}.png");
+				if (avatar is null) goto FailFindAvatar;
 				avatar.Mutate(x => x.Resize(112, 112));
+				goto AddDirectly;
 			}
-			catch
-			{
-				this.Logger.Log(LogLevel.Warning, $"Failed to find avatar {summary.Avatar}, defaulting to default.", EventId, this);
-				avatar = Image.Load($"./Assets/Avatar/Introduction.png").MutateChain(x => x.Resize(112, 112));
-			}
+		FailFindAvatar:
+			this.Logger.Log(LogLevel.Warning, $"Failed to find avatar {summary.Avatar}, defaulting to default.", EventId, this);
+			avatar = Image.Load($"./Assets/Avatar/{this.AvatarMapService.Data["Introduction"]}.png")
+				.MutateChain(x => x.Resize(112, 112));
+		AddDirectly:
 			castedAvatarImages.Add(summary.Avatar, avatar);
 		}
 
