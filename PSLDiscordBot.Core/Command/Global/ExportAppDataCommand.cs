@@ -51,7 +51,7 @@ public class ExportAppDataCommand : AdminCommandBase
 			msg =>
 			{
 				msg.Content = "Exported!";
-				msg.Attachments = new List<FileAttachment>() { new(memoryStream, "Data.zip") };
+				msg.Attachments = new List<FileAttachment>() { new(memoryStream, $"{DateTime.Now:yyyy-MM-dd__HH_mm}.zip") };
 			});
 	}
 }
