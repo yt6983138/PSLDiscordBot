@@ -101,8 +101,7 @@ public class ImageGenerator : InjectableBase
 		Dictionary<string, Image> castedAvatarImages = this.Avatars.CastTo<IReadOnlyDictionary<string, Image>, Dictionary<string, Image>>();
 		Dictionary<string, Image> castedChallengeRankImages = this.ChallengeRankImages.CastTo<IReadOnlyDictionary<string, Image>, Dictionary<string, Image>>();
 
-#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
-		if (!this.Avatars.TryGetValue(summary.Avatar, out Image avatar))
+		if (!this.Avatars.TryGetValue(summary.Avatar, out Image? avatar))
 		{
 			try
 			{
@@ -111,11 +110,11 @@ public class ImageGenerator : InjectableBase
 			}
 			catch
 			{
+				this.Logger.Log(LogLevel.Warning, $"Failed to find avatar {summary.Avatar}, defaulting to default.", EventId, this);
 				avatar = Image.Load($"./Assets/Avatar/Introduction.png").MutateChain(x => x.Resize(112, 112));
 			}
 			castedAvatarImages.Add(summary.Avatar, avatar);
 		}
-#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
 
 		Dictionary<string, Lazy<object>> textMap = new()
 		{
