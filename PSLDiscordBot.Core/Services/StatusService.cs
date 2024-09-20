@@ -68,6 +68,7 @@ public class StatusService : InjectableBase
 		if (this.CurrentStatus != Status.Normal
 			&& e.SocketSlashCommand.User.Id != this.ConfigService.Data.AdminUserId)
 		{
+			e.Canceled = true;
 			string message = this.CurrentStatus switch
 			{
 				Status.UnderMaintenance =>
@@ -76,7 +77,6 @@ public class StatusService : InjectableBase
 				_ => "Unprocessed error."
 			};
 			await e.SocketSlashCommand.RespondAsync(message, ephemeral: true);
-			e.Canceled = true;
 			return;
 		}
 	}
