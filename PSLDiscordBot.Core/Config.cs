@@ -17,6 +17,8 @@ public class Config
 	public string AboutMeImageScriptLocation { get; set; } = "./PSL/AboutMeImageScript.json";
 	public string SongScoresImageScriptLocation { get; set; } = "./PSL/SongScoresImageScript.json";
 
+	public string AvatarHashMapLocation { get; set; } = "./Assets/Avatar/AvatarInfo.json";
+
 	public string MainUserDataDbLocation { get; set; } = "./PSL/MainUserData.db";
 	public string MainUserDataTableName { get; set; } = "DiscordIdPhigrosTokenTable";
 
