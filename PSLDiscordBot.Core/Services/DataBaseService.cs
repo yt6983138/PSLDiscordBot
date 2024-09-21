@@ -43,10 +43,10 @@ public sealed class DataBaseService : InjectableBase
 		#endregion
 
 		#region Caches
-		private static readonly MemoryCache _tokenCache = new(nameof(_tokenCache));
-		private static readonly MemoryCache _userTagsCache = new(nameof(_userTagsCache));
-		private static readonly MemoryCache _songAliasCache = new(nameof(_songAliasCache));
-		private static readonly MemoryCache _userDataCache = new(nameof(_userDataCache));
+		private static MemoryCache _tokenCache = new(nameof(_tokenCache));
+		private static MemoryCache _userTagsCache = new(nameof(_userTagsCache));
+		private static MemoryCache _songAliasCache = new(nameof(_songAliasCache));
+		private static MemoryCache _userDataCache = new(nameof(_userDataCache));
 		#endregion
 
 		#region Helper methods
@@ -354,5 +354,13 @@ SELECT * FROM {this._config.SongAliasTableName} WHERE
 			this.Dispose();
 		}
 		#endregion
+
+		public static void ClearCache()
+		{
+			_tokenCache = new(nameof(_tokenCache));
+			_userTagsCache = new(nameof(_userTagsCache));
+			_songAliasCache = new(nameof(_songAliasCache));
+			_userDataCache = new(nameof(_userDataCache));
+		}
 	}
 }
