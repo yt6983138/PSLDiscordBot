@@ -1,7 +1,10 @@
-﻿using PSLDiscordBot.Framework;
+﻿using Discord.WebSocket;
+using Microsoft.Extensions.Logging;
+using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.BuiltInServices;
 using PSLDiscordBot.Framework.DependencyInjection;
 using PSLDiscordBot.Framework.MiscEventArgs;
+using yt6983138.Common;
 
 namespace PSLDiscordBot.Core.Services;
 
@@ -14,6 +17,8 @@ public enum Status
 }
 public class StatusService : InjectableBase
 {
+	private static EventId EventId = new(114514_114, nameof(StatusService));
+
 	private Status _status = Status.Normal;
 	private bool _detached = false;
 
@@ -24,6 +29,8 @@ public class StatusService : InjectableBase
 	public Program Program { get; set; }
 	[Inject]
 	public CommandResolveService CommandResolveService { get; set; }
+	[Inject]
+	public Logger Logger { get; set; }
 	#endregion
 
 	public Status CurrentStatus
@@ -68,6 +75,8 @@ public class StatusService : InjectableBase
 		if (this.CurrentStatus != Status.Normal
 			&& e.SocketSlashCommand.User.Id != this.ConfigService.Data.AdminUserId)
 		{
+			SocketSlashCommand arg = e.SocketSlashCommand;
+
 			e.Canceled = true;
 			string message = this.CurrentStatus switch
 			{
@@ -77,6 +86,8 @@ public class StatusService : InjectableBase
 				_ => "Unprocessed error."
 			};
 			await e.SocketSlashCommand.RespondAsync(message, ephemeral: true);
+			this.Logger.Log(LogLevel.Information, $"Blocked command {arg.CommandName} " +
+				$"from {arg.User.GlobalName}({arg.User.Id})", EventId, this);
 			return;
 		}
 	}
