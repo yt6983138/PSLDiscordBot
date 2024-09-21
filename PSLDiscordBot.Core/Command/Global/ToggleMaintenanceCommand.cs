@@ -22,6 +22,12 @@ public class ToggleMaintenanceCommand : AdminCommandBase
 	#endregion
 
 	public override bool IsEphemeral => false;
+	public override InteractionContextType[] InteractionContextTypes =>
+	[
+		InteractionContextType.Guild,
+		InteractionContextType.BotDm,
+		InteractionContextType.PrivateChannel
+	];
 
 	public override string Name => "toggle-maintenance";
 	public override string Description => "Toggle maintenance. [Admin command]";
