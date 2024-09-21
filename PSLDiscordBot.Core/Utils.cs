@@ -81,7 +81,6 @@ internal static class Utils
 		string onOtherException = "Error: {0}\nYou may try again or report to author (`/report-problem`).",
 		string onNoSaves = "Error: There is no save on the cloud, did you use wrong account, or have not synced?")
 	{
-		Exception exception;
 		try
 		{
 			List<PhigrosLibraryCSharp.Cloud.DataStructure.Raw.RawSave> rawSaves = (await save.GetRawSaveFromCloudAsync()).results;
@@ -95,18 +94,14 @@ internal static class Utils
 		}
 		catch (MaxValueArgumentOutOfRangeException ex) when (ex.ActualValue is int && ex.MaxValue is int)
 		{
-			exception = ex;
 			await command.QuickReply(string.Format(onOutOfRange, ex.MaxValue, ex.ActualValue));
-			return null;
 		}
 		catch (Exception ex)
 		{
 			await command.QuickReply(string.Format(onOtherException, ex.Message));
-			exception = ex;
+			if (autoThrow)
+				throw;
 		}
-		if (autoThrow)
-			throw exception;
-
 		return null;
 	}
 	private static void GetGameSave_ExceptionHandler(string message, Exception? ex, object? extraArgs)
