@@ -24,6 +24,8 @@ public class PSLPlugin : InjectableBase, IPlugin
 
 	private Logger _logger = null!;
 	private ConfigService _configService = null!;
+	private StatusService _statusService = null!;
+	private Program _program = null!;
 
 	#region Injection
 	[Inject]
@@ -155,7 +157,11 @@ public class PSLPlugin : InjectableBase, IPlugin
 
 	void IPlugin.Load(Program program, bool isDynamicLoading)
 	{
+		this._program = program;
+
 		AppDomain.CurrentDomain.UnhandledException += this.CurrentDomain_UnhandledException;
+
+		Console.CancelKeyPress += this.Console_CancelKeyPress;
 
 		program.AfterPluginsLoaded += this.Program_AfterPluginsLoaded;
 		program.AfterArgParse += this.Program_AfterArgParse;
@@ -191,6 +197,31 @@ public class PSLPlugin : InjectableBase, IPlugin
 		this._logger.Log(LogLevel.Critical, EventIdApp, this, ex);
 		Environment.Exit(ex.HResult);
 	}
+	private void Console_CancelKeyPress(object? sender, ConsoleCancelEventArgs e)
+	{
+		bool @break = e.SpecialKey == ConsoleSpecialKey.ControlBreak;
+		if (@break)
+		{
+			this._logger.Log(LogLevel.Critical, "Hard terminating application. (Ctrl-C to soft terminate)");
+			Environment.FailFast("Ctrl-break triggered, hard terminating.");
+			return;
+		}
+
+		e.Cancel = true;
+		this._statusService.CurrentStatus = Status.ShuttingDown;
+		while (this._program.RunningTasks.Count > 1)
+		{
+			Thread.Sleep(500);
+
+			if (this._statusService.CurrentStatus == Status.Normal)
+			{
+				return;
+			}
+		}
+
+		this._program.CancellationTokenSource.Cancel();
+	}
+
 	private void Program_AfterMainInitialize(object? sender, EventArgs e)
 	{
 		this.WriteAll();
@@ -208,7 +239,6 @@ public class PSLPlugin : InjectableBase, IPlugin
 		InjectableBase.AddSingleton(new AvatarHashMapService());
 		InjectableBase.AddSingleton(new SongScoresImageScriptService());
 		InjectableBase.AddSingleton(new ImageGenerator());
-		InjectableBase.AddSingleton(new StatusService());
 	}
 	private void Program_AfterPluginsLoaded(object? sender, EventArgs e)
 	{
@@ -216,6 +246,8 @@ public class PSLPlugin : InjectableBase, IPlugin
 		InjectableBase.AddSingleton(this._configService);
 		this._logger = new(this._configService.Data.LogLocation);
 		InjectableBase.AddSingleton(this._logger);
+		this._statusService = new();
+		InjectableBase.AddSingleton(this._statusService);
 
 		if (!this._configService.Data.Verbose)
 			this._logger.Disabled.Add(LogLevel.Debug);
