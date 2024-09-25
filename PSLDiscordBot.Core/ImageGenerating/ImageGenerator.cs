@@ -223,12 +223,10 @@ public class ImageGenerator : InjectableBase
 				: StaticImage.Default.Image) },
 			{ "User.Background.Image.LowRes", new Lazy<Image>(
 				() =>
-				Utils.TryLoadImage($"./Assets/Tracks/{idNameMap.FirstOrDefault(p => p.Value == gameUserInfo.BackgroundId).Key}.0/IllustrationLowRes.png")
-				?? StaticImage.Default.Image) },
+				this.LoadOrDefault($"./Assets/Tracks/{idNameMap.FirstOrDefault(p => p.Value == gameUserInfo.BackgroundId).Key}.0/IllustrationLowRes.png")) },
 			{ "User.Background.Image.Blurry", new Lazy<Image>(
 				() =>
-				Utils.TryLoadImage($"./Assets/Tracks/{idNameMap.FirstOrDefault(p => p.Value == gameUserInfo.BackgroundId).Key}.0/IllustrationBlur.png")
-				?? StaticImage.Default.Image) }
+				this.LoadOrDefault($"./Assets/Tracks/{idNameMap.FirstOrDefault(p => p.Value == gameUserInfo.BackgroundId).Key}.0/IllustrationBlur.png")) }
 		};
 
 		#region Add illustration/rank images
@@ -237,10 +235,8 @@ public class ImageGenerator : InjectableBase
 
 			imageMap.Add("B20.Rank.0", new(this.RankImages[specialScore.Status]));
 			imageMap.Add("B20.Illustration.0", new(
-				() => Utils.TryLoadImage(path) ?? StaticImage.Default.Image)
+				() => this.LoadOrDefault(path))
 			);
-			if (!File.Exists(path))
-				this.Logger.Log<ImageGenerator>(LogLevel.Warning, $"Cannot find image for {specialScore.Id}.0!", EventId, null!);
 		}
 		for (int j = 0; j < sortedBests.Count; j++)
 		{
@@ -250,10 +246,8 @@ public class ImageGenerator : InjectableBase
 
 			imageMap.Add($"B20.Rank.{i}", new(this.RankImages[score.Status]));
 			imageMap.Add($"B20.Illustration.{i}", new(
-				() => Utils.TryLoadImage(path) ?? StaticImage.Default.Image)
+				() => this.LoadOrDefault(path))
 			);
-			if (!File.Exists(path))
-				this.Logger.Log<ImageGenerator>(LogLevel.Warning, $"Cannot find image for {score.Id}.0!", EventId, null!);
 		}
 		#endregion
 
@@ -331,5 +325,17 @@ public class ImageGenerator : InjectableBase
 
 			return textMap.TryGetValue(id, out @object);
 		}
+	}
+
+	private Image LoadOrDefault(string path)
+	{
+		Image? image = Utils.TryLoadImage(path);
+		if (image is not null)
+		{
+			this.Logger.Log(LogLevel.Debug, $"Returning image {path}", EventId, this);
+			return image;
+		}
+		this.Logger.Log(LogLevel.Warning, $"Failed to find image {path}, defaulting to default.", EventId, this);
+		return StaticImage.Default.Image;
 	}
 }
