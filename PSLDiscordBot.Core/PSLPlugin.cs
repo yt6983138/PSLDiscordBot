@@ -202,19 +202,22 @@ public class PSLPlugin : InjectableBase, IPlugin
 		bool @break = e.SpecialKey == ConsoleSpecialKey.ControlBreak;
 		if (@break)
 		{
-			this._logger.Log(LogLevel.Critical, "Hard terminating application. (Ctrl-C to soft terminate)");
+			this._logger.Log(LogLevel.Critical, "Hard terminating application. (Ctrl-C to soft terminate)", EventIdApp, this);
 			Environment.FailFast("Ctrl-break triggered, hard terminating.");
 			return;
 		}
 
 		e.Cancel = true;
 		this._statusService.CurrentStatus = Status.ShuttingDown;
-		while (this._program.RunningTasks.Count > 1)
+		this._logger.Log(LogLevel.Information, "Soft terminate initialized. (Ctrl-break to hard terminate)", EventIdApp, this);
+		while (this._program.RunningTasks.Count > 0)
 		{
 			Thread.Sleep(500);
+			this._logger.Log(LogLevel.Information, $"{this._program.RunningTasks.Count} tasks running...", EventIdApp, this);
 
 			if (this._statusService.CurrentStatus == Status.Normal)
 			{
+				this._logger.Log(LogLevel.Information, "Operation canceled.", EventIdApp, this);
 				return;
 			}
 		}
