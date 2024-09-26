@@ -364,3 +364,6 @@ FodyWeavers.xsd
 
 # Secret - debugging purpose
 Secret.cs
+
+# launchSettings - debugging too
+/CoreRunHelper/Properties/launchSettings.json
