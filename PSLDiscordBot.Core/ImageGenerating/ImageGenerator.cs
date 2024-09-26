@@ -214,6 +214,10 @@ public class ImageGenerator : InjectableBase
 		}
 		#endregion
 
+		string formattedBgPath = "./Assets/Tracks/";
+		if (string.IsNullOrWhiteSpace(gameUserInfo.BackgroundId))
+			formattedBgPath += "Introduction";
+		else formattedBgPath += $"{idNameMap.FirstOrDefault(p => p.Value == gameUserInfo.BackgroundId).Key}.0";
 		Dictionary<string, Lazy<Image>> imageMap = new()
 		{
 			{ "User.Avatar", new Lazy<Image>(avatar) },
@@ -223,10 +227,10 @@ public class ImageGenerator : InjectableBase
 				: StaticImage.Default.Image) },
 			{ "User.Background.Image.LowRes", new Lazy<Image>(
 				() =>
-				this.LoadOrDefault($"./Assets/Tracks/{idNameMap.FirstOrDefault(p => p.Value == gameUserInfo.BackgroundId).Key}.0/IllustrationLowRes.png")) },
+				this.LoadOrDefault($"{formattedBgPath}/IllustrationLowRes.png")) },
 			{ "User.Background.Image.Blurry", new Lazy<Image>(
 				() =>
-				this.LoadOrDefault($"./Assets/Tracks/{idNameMap.FirstOrDefault(p => p.Value == gameUserInfo.BackgroundId).Key}.0/IllustrationBlur.png")) }
+				this.LoadOrDefault($"{formattedBgPath}/IllustrationBlur.png")) }
 		};
 
 		#region Add illustration/rank images
