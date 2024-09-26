@@ -28,8 +28,8 @@ public class Config
 	public string SongAliasDbLocation { get; set; } = "./PSL/SongAlias.db";
 	public string SongAliasTableName { get; set; } = "SongAliasTable";
 
-	public string DifficultyMapLocation { get; set; } = "./PSL/difficulty.csv";
-	public string NameMapLocation { get; set; } = "./PSL/info.csv";
+	public string DifficultyMapLocation { get; set; } = "./PSL/difficulty.tsv";
+	public string NameMapLocation { get; set; } = "./PSL/info.tsv";
 	public string HelpMDLocation { get; set; } = "./PSL/help.md";
 	public int MaxTagCount { get; set; } = 114;
 	public int MaxTagStringLength { get; set; } = 114;
