@@ -57,7 +57,7 @@ public class GetScoresCommand : CommandBase
 		string result = ScoresFormatter(
 			save.Records,
 			this.PhigrosDataService.IdNameMap,
-			arg.GetIntegerOptionAsInt32OrDefault("count"),
+			arg.GetIntegerOptionAsInt32OrDefault("count", 19),
 			data);
 
 		await arg.ModifyOriginalResponseAsync(
