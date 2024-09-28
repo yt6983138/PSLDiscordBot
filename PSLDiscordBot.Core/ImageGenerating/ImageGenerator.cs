@@ -215,9 +215,21 @@ public class ImageGenerator : InjectableBase
 		#endregion
 
 		string formattedBgPath = "./Assets/Tracks/";
-		if (string.IsNullOrWhiteSpace(gameUserInfo.BackgroundId))
+		string cutBgId = string.IsNullOrWhiteSpace(gameUserInfo.BackgroundId) ? "" : gameUserInfo.BackgroundId[..^1];
+		KeyValuePair<string, string> firstIdOccurrence = idNameMap.FirstOrDefault(p =>
+			p.Value == gameUserInfo.BackgroundId
+			|| p.Value == cutBgId);
+		if (string.IsNullOrEmpty(firstIdOccurrence.Key))
+		{
 			formattedBgPath += "Introduction";
-		else formattedBgPath += $"{idNameMap.FirstOrDefault(p => p.Value == gameUserInfo.BackgroundId).Key}.0";
+			this.Logger.Log(LogLevel.Warning, $"Failed to find background {gameUserInfo.BackgroundId}" +
+				", defaulting to introduction.", EventId, this);
+		}
+		else
+		{
+			formattedBgPath += $"{firstIdOccurrence.Key}.0";
+		}
+
 		Dictionary<string, Lazy<Image>> imageMap = new()
 		{
 			{ "User.Avatar", new Lazy<Image>(avatar) },
