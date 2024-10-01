@@ -222,8 +222,9 @@ public class ImageGenerator : InjectableBase
 		if (string.IsNullOrEmpty(firstIdOccurrence.Key))
 		{
 			formattedBgPath += "Introduction";
-			this.Logger.Log(LogLevel.Warning, $"Failed to find background {gameUserInfo.BackgroundId}" +
-				", defaulting to introduction.", EventId, this);
+			if (!gameUserInfo.BackgroundId.Contains("Introduction"))
+				this.Logger.Log(LogLevel.Warning, $"Failed to find background {gameUserInfo.BackgroundId}" +
+					", defaulting to introduction.", EventId, this);
 		}
 		else
 		{
