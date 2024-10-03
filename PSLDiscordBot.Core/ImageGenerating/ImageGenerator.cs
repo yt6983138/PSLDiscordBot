@@ -103,6 +103,7 @@ public class ImageGenerator : InjectableBase
 		Dictionary<string, Image> castedAvatarImages = this.Avatars.CastTo<IReadOnlyDictionary<string, Image>, Dictionary<string, Image>>();
 		Dictionary<string, Image> castedChallengeRankImages = this.ChallengeRankImages.CastTo<IReadOnlyDictionary<string, Image>, Dictionary<string, Image>>();
 
+		if (string.IsNullOrEmpty(summary.Avatar)) summary.Avatar = "Introduction";
 		if (!this.Avatars.TryGetValue(summary.Avatar, out Image? avatar))
 		{
 			if (this.AvatarMapService.Data.TryGetValue(summary.Avatar, out string? hash))
@@ -222,7 +223,7 @@ public class ImageGenerator : InjectableBase
 		if (string.IsNullOrEmpty(firstIdOccurrence.Key))
 		{
 			formattedBgPath += "Introduction";
-			if (!gameUserInfo.BackgroundId.Contains("Introduction"))
+			if (!gameUserInfo.BackgroundId.Contains("Introduc"))
 				this.Logger.Log(LogLevel.Warning, $"Failed to find background {gameUserInfo.BackgroundId}" +
 					", defaulting to introduction.", EventId, this);
 		}
