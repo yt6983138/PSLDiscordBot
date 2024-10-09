@@ -21,11 +21,11 @@ public class AvatarHashMapService : FileManagementServiceBase<Dictionary<string,
 
 	protected override bool Load(out Dictionary<string, string> data)
 	{
-		return TryLoadJsonAs(this.InfoOfFile, out data);
+		return this.TryLoadJsonAs(this.InfoOfFile, out data);
 	}
 
 	protected override void Save(Dictionary<string, string> data)
 	{
-		WriteToFile(this.InfoOfFile, data);
+		this.WriteJsonToFile(this.InfoOfFile, data);
 	}
 }

@@ -6,6 +6,11 @@ namespace PSLDiscordBot.Framework.ServiceBase;
 public abstract class FileManagementServiceBase<T> : InjectableBase
 {
 	private int _autoSaveInterval;
+	private protected JsonSerializerSettings _defaultSettings = new()
+	{
+		ObjectCreationHandling = ObjectCreationHandling.Replace,
+		Formatting = Formatting.Indented
+	};
 
 	/// <summary>
 	/// set to 0 to disable
@@ -72,8 +77,9 @@ public abstract class FileManagementServiceBase<T> : InjectableBase
 
 	public virtual void Save()
 		=> this.Save(this.Data);
-	public static bool TryLoadJsonAs<TFile>(FileInfo info, out TFile data)
+	public bool TryLoadJsonAs<TFile>(FileInfo info, out TFile data, JsonSerializerSettings? settings = null)
 	{
+		settings ??= this._defaultSettings;
 		FileStream? stream = null;
 		try
 		{
@@ -81,7 +87,7 @@ public abstract class FileManagementServiceBase<T> : InjectableBase
 			byte[] buffer = new byte[stream.Length];
 			stream.Read(buffer);
 
-			data = JsonConvert.DeserializeObject<TFile>(Encoding.UTF8.GetString(buffer))!;
+			data = JsonConvert.DeserializeObject<TFile>(Encoding.UTF8.GetString(buffer), settings)!;
 			if (data is null)
 				return false;
 
@@ -97,9 +103,10 @@ public abstract class FileManagementServiceBase<T> : InjectableBase
 			stream?.Dispose();
 		}
 	}
-	public static void WriteToFile<TFile>(FileInfo info, TFile data)
+	public void WriteJsonToFile<TFile>(FileInfo info, TFile data, JsonSerializerSettings? settings = null)
 	{
+		settings ??= this._defaultSettings;
 		using FileStream stream = info.OpenWrite();
-		stream.Write(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(data)));
+		stream.Write(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(data, settings)));
 	}
 }

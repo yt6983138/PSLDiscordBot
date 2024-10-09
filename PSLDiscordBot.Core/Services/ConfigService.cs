@@ -19,7 +19,7 @@ public class ConfigService : FileManagementServiceBase<Config>
 
 	protected override bool Load(out Config data)
 	{
-		bool success = TryLoadJsonAs(this.InfoOfFile, out data);
+		bool success = this.TryLoadJsonAs(this.InfoOfFile, out data);
 
 		this.FirstStart = !success;
 #if DEBUG
@@ -31,6 +31,6 @@ public class ConfigService : FileManagementServiceBase<Config>
 
 	protected override void Save(Config data)
 	{
-		WriteToFile(this.InfoOfFile, data);
+		this.WriteJsonToFile(this.InfoOfFile, data);
 	}
 }
