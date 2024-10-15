@@ -144,7 +144,7 @@ public class SongScoresCommand : CommandBase
 			Image<Rgba32> empty = new(1, 1);
 
 			imageMap.Add("Empty", new(empty));
-			imageMap.Add("Rank.F", new(this.ImageGenerator.RankImages[ScoreStatus.False]));
+			imageMap.Add("Rank.F", new(this.ImageGenerator.RankImagePaths[ScoreStatus.False]));
 
 			int i = 0;
 			foreach (IGrouping<string, CompleteScore> group in grouped)
@@ -173,7 +173,7 @@ public class SongScoresCommand : CommandBase
 					textMap.Add($"Searched.{i}.{item.Difficulty}.Rks", new(item.Rks.ToString(data.ShowFormat)));
 
 
-					imageMap.Add($"Searched.{i}.{item.Difficulty}.Rank", new(this.ImageGenerator.RankImages[item.Status]));
+					imageMap.Add($"Searched.{i}.{item.Difficulty}.Rank", new(this.ImageGenerator.RankImagePaths[item.Status]));
 				}
 
 				i++;

@@ -2,6 +2,7 @@
 using Discord.Net;
 using Discord.Rest;
 using Discord.WebSocket;
+using HtmlToImage.NET;
 using ICSharpCode.SharpZipLib.Zip;
 using Microsoft.Extensions.Logging;
 using PSLDiscordBot.Core.ImageGenerating;
@@ -236,6 +237,7 @@ public class PSLPlugin : InjectableBase, IPlugin
 	private void Program_AfterArgParse(object? sender, EventArgs e)
 	{
 		InjectableBase.AddSingleton(new DataBaseService());
+		InjectableBase.AddSingleton(new HtmlConverter("C:\\Users\\tgg\\Desktop\\Tools\\chrome\\chrome-win\\chrome.exe", 0, debug: true));
 		InjectableBase.AddSingleton(new PhigrosDataService());
 		InjectableBase.AddSingleton(new GetB20PhotoImageScriptService());
 		InjectableBase.AddSingleton(new AboutMeImageScriptService());

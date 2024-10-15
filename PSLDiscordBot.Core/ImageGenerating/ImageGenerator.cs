@@ -1,14 +1,12 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using HtmlToImage.NET;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using PhigrosLibraryCSharp.Cloud.DataStructure;
 using PhigrosLibraryCSharp.GameRecords;
 using PSLDiscordBot.Core.Services;
 using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.DependencyInjection;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp.Processing;
-using System.Diagnostics.CodeAnalysis;
 using yt6983138.Common;
 
 namespace PSLDiscordBot.Core.ImageGenerating;
@@ -20,15 +18,19 @@ public class ImageGenerator : InjectableBase
 	[Inject]
 	public Logger Logger { get; set; }
 	[Inject]
-	public DataBaseService DataBaseService { get; set; }
-	[Inject]
 	public AvatarHashMapService AvatarMapService { get; set; }
+	[Inject]
+	public ChromiumPoolService ChromiumPoolService { get; set; }
 	#endregion
 
-	public IReadOnlyDictionary<string, Image> ChallengeRankImages { get; }
-	public IReadOnlyDictionary<ScoreStatus, Image> RankImages { get; }
-	public IReadOnlyDictionary<string, Image> Avatars { get; } = new Dictionary<string, Image>();
-	public IReadOnlyDictionary<string, Lazy<object>> SongDifficultyCount { get; }
+	public delegate void MapProcessor(Dictionary<string, string> textMap, Dictionary<string, string> imageMap);
+
+	private Dictionary<ScoreStatus, string> _rankImagePaths = new();
+	private Dictionary<ChallengeRank, string> _challengeRankImagePaths = new();
+
+	public IReadOnlyDictionary<ChallengeRank, string> ChallengeRankImagePaths => this._challengeRankImagePaths;
+	public IReadOnlyDictionary<ScoreStatus, string> RankImagePaths => this._rankImagePaths;
+	public IReadOnlyDictionary<string, string> SongDifficultyCount { get; }
 
 	private static EventId EventId { get; } = new(114512, "ImageGenerator");
 
@@ -38,44 +40,32 @@ public class ImageGenerator : InjectableBase
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 	{
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
-
-		Dictionary<ScoreStatus, Image> rankImages = new();
-		Dictionary<string, Image> challengeRankImages = new();
-
-		this.SongDifficultyCount = new Dictionary<string, Lazy<object>>()
+		this.SongDifficultyCount = new Dictionary<string, string>()
 		{
-			{ "SongStatistics.EZCount", new(this.PhigrosDataService.DifficultiesMap.Count(x => x.Value.Length >= 1).ToString()) },
-			{ "SongStatistics.HDCount", new(this.PhigrosDataService.DifficultiesMap.Count(x => x.Value.Length >= 2).ToString()) },
-			{ "SongStatistics.INCount", new(this.PhigrosDataService.DifficultiesMap.Count(x => x.Value.Length >= 3).ToString()) },
-			{ "SongStatistics.ATCount", new(this.PhigrosDataService.DifficultiesMap.Count(x => x.Value.Length >= 4).ToString()) },
-			{ "SongStatistics.Count", new(this.PhigrosDataService.DifficultiesMap.Count.ToString()) }
+			{ "SongStatistics.EZCount", this.PhigrosDataService.DifficultiesMap.Count(x => x.Value.Length >= 1).ToString() },
+			{ "SongStatistics.HDCount", this.PhigrosDataService.DifficultiesMap.Count(x => x.Value.Length >= 2).ToString() },
+			{ "SongStatistics.INCount", this.PhigrosDataService.DifficultiesMap.Count(x => x.Value.Length >= 3).ToString() },
+			{ "SongStatistics.ATCount", this.PhigrosDataService.DifficultiesMap.Count(x => x.Value.Length >= 4).ToString() },
+			{ "SongStatistics.Count", this.PhigrosDataService.DifficultiesMap.Count.ToString() }
 		};
 #pragma warning restore CS8602 // Dereference of a possibly null reference.
+		string basicPath = "./Assets/Misc/".ToFullPath();
 
 		for (int i = 0; i < 6; i++)
-		{
-			using Stream stream = File.Open($"./Assets/Misc/{i}.png", FileMode.Open);
-			Image image = Image.Load(stream);
-			challengeRankImages.Add(i.ToString(), image);
-		}
-		ScoreStatus[] rankEnums = (ScoreStatus[])Enum.GetValues(typeof(ScoreStatus));
+			this._challengeRankImagePaths.Add((ChallengeRank)i, $"{basicPath}{i}.png");
+
+		ScoreStatus[] rankEnums = Enum.GetValues<ScoreStatus>();
 		for (int i = 0; i < rankEnums.Length; i++)
 		{
 			ScoreStatus current = rankEnums[i];
-			Image image;
 			if (current == ScoreStatus.Bugged || current == ScoreStatus.NotFc)
-				image = Image.Load($"./Assets/Misc/False.png");
+				this._rankImagePaths.Add(current, $"{basicPath}False.png");
 			else
-				image = Image.Load($"./Assets/Misc/{current}.png");
-			image.Mutate(x => x.Resize(32, 32));
-			rankImages.Add(current, image);
+				this._rankImagePaths.Add(current, $"{basicPath}{current}.png");
 		}
-
-		this.RankImages = rankImages;
-		this.ChallengeRankImages = challengeRankImages;
 	}
 
-	public Image MakePhoto(
+	public async Task<byte[]> MakePhoto(
 		IList<CompleteScore> sortedBests,
 		CompleteScore specialScore,
 		IReadOnlyDictionary<string, string> idNameMap,
@@ -84,69 +74,39 @@ public class ImageGenerator : InjectableBase
 		GameUserInfo gameUserInfo,
 		GameProgress progress,
 		UserInfo userInfo,
+		BasicHtmlImageInfo basicHtmlImageInfo,
+		string[] tags,
 		double rks,
-		ImageScript script,
-		ulong userId,
-		Action<Dictionary<string, Lazy<object>>, Dictionary<string, Lazy<Image>>>? mapPostProcessing = null)
+		HtmlConverter.Tab.PhotoType photoType,
+		byte quality,
+		MapProcessor? mapPostProcessing = null)
 	{
-		using DataBaseService.DbDataRequester requester = this.DataBaseService.NewRequester();
-		Lazy<string[]> tags = new(() => requester.GetTagsCachedAsync(userId).GetAwaiter().GetResult() ?? []);
-
-		Challenge challenge = summary.Challenge;
-		string challengeString = challenge.RawCode.ToString();
-		string rankType = challenge.Rank.CastTo<ChallengeRank, int>().ToString();
-		string challengeRankLevel = challenge.Level.ToString();
-
-		Image<Rgba32> image = new(script.Width, script.Height);
-
-		Dictionary<ScoreStatus, Image> castedRankImages = this.RankImages.CastTo<IReadOnlyDictionary<ScoreStatus, Image>, Dictionary<ScoreStatus, Image>>();
-		Dictionary<string, Image> castedAvatarImages = this.Avatars.CastTo<IReadOnlyDictionary<string, Image>, Dictionary<string, Image>>();
-		Dictionary<string, Image> castedChallengeRankImages = this.ChallengeRankImages.CastTo<IReadOnlyDictionary<string, Image>, Dictionary<string, Image>>();
-
-		if (string.IsNullOrEmpty(summary.Avatar)) summary.Avatar = "Introduction";
-		if (!this.Avatars.TryGetValue(summary.Avatar, out Image? avatar))
+		#region Textmap
+		Dictionary<string, string> textMap = new()
 		{
-			if (this.AvatarMapService.Data.TryGetValue(summary.Avatar, out string? hash))
-			{
-				avatar = Utils.TryLoadImage($"./Assets/Avatar/{hash}.png");
-				if (avatar is null) goto FailFindAvatar;
-				avatar.Mutate(x => x.Resize(112, 112));
-				goto AddDirectly;
-			}
-		FailFindAvatar:
-			this.Logger.Log(LogLevel.Warning, $"Failed to find avatar {summary.Avatar}, defaulting to default.", EventId, this);
-			avatar = Image.Load($"./Assets/Avatar/{this.AvatarMapService.Data["Introduction"]}.png")
-				.MutateChain(x => x.Resize(112, 112));
-		AddDirectly:
-			castedAvatarImages.Add(summary.Avatar, avatar);
-		}
-
-		Dictionary<string, Lazy<object>> textMap = new()
-		{
-			{ "User.Rks", new(() => rks.ToString(userData.ShowFormat)) },
-			{ "User.Nickname", new(() => userInfo.NickName) },
-			{ "User.ID", new(() => userInfo.UserName) },
-			{ "User.Challenge.Text", new(() => challengeRankLevel) },
-			{ "User.Intro", new(() => gameUserInfo.Intro) },
-			{ "User.Currency.KiB", new(() => progress.Money.KiB) },
-			{ "User.Currency.MiB", new(() => progress.Money.MiB) },
-			{ "User.Currency.GiB", new(() => progress.Money.GiB) },
-			{ "User.Currency.TiB", new(() => progress.Money.TiB) },
-			{ "User.Currency.PiB", new(() => progress.Money.PiB) },
-			{ "User.Currency.Combined", new(() => progress.Money) },
-			{ "User.PlayStatistics.EZClearCount", new(() => sortedBests.Count(x => x.Difficulty == Difficulty.EZ)) },
-			{ "User.PlayStatistics.HDClearCount", new(() => sortedBests.Count(x => x.Difficulty == Difficulty.HD)) },
-			{ "User.PlayStatistics.INClearCount", new(() => sortedBests.Count(x => x.Difficulty == Difficulty.IN)) },
-			{ "User.PlayStatistics.ATClearCount", new(() => sortedBests.Count(x => x.Difficulty == Difficulty.AT)) },
-			{ "User.PlayStatistics.AllClearCount", new(() => sortedBests.Count) },
-			{ "User.Tags.JoinedComma", new(() => string.Join(", ", tags.Value)) },
-			{ "User.Tags.JoinedNewLine", new(() => string.Join("\n", tags.Value)) },
-			{ "User.Tags.Count", new(() => tags.Value.Length) },
-			{ "Time.Now", new(() => DateTime.Now) }
+			{ "User.Rks", rks.ToString(userData.ShowFormat) },
+			{ "User.Nickname", userInfo.NickName },
+			{ "User.ID", userInfo.UserName },
+			{ "User.Challenge.Text", summary.Challenge.Level.ToString() },
+			{ "User.Intro", gameUserInfo.Intro },
+			{ "User.Currency.KiB", progress.Money.KiB.ToString() },
+			{ "User.Currency.MiB", progress.Money.MiB.ToString() },
+			{ "User.Currency.GiB", progress.Money.GiB.ToString() },
+			{ "User.Currency.TiB", progress.Money.TiB.ToString() },
+			{ "User.Currency.PiB", progress.Money.PiB.ToString() },
+			{ "User.Currency.Combined", progress.Money.ToString() },
+			{ "User.PlayStatistics.EZClearCount", sortedBests.Count(x => x.Difficulty == Difficulty.EZ).ToString() },
+			{ "User.PlayStatistics.HDClearCount", sortedBests.Count(x => x.Difficulty == Difficulty.HD).ToString() },
+			{ "User.PlayStatistics.INClearCount", sortedBests.Count(x => x.Difficulty == Difficulty.IN).ToString() },
+			{ "User.PlayStatistics.ATClearCount", sortedBests.Count(x => x.Difficulty == Difficulty.AT).ToString() },
+			{ "User.PlayStatistics.AllClearCount", sortedBests.Count.ToString() },
+			{ "User.Tags.JoinedComma", string.Join(", ", tags) },
+			{ "User.Tags.JoinedNewLine", string.Join("\n", tags) },
+			{ "User.Tags.Count", tags.Length.ToString() },
+			{ "Time.Now", DateTime.Now.ToString() }
 		};
 
 		textMap.MergeWith(this.SongDifficultyCount);
-
 		foreach (ScoreStatus status in (ScoreStatus[])Enum.GetValues(typeof(ScoreStatus)))
 		{
 			if (status == ScoreStatus.Bugged || status == ScoreStatus.NotFc) continue;
@@ -155,67 +115,79 @@ public class ImageGenerator : InjectableBase
 				ScoreStatus[] included = [ScoreStatus.Fc, ScoreStatus.Phi];
 
 				textMap.Add(
-				$"User.PlayStatistics.EZ{status}Count",
-				new(() => sortedBests.Count(x => x.Difficulty == Difficulty.EZ && included.Contains(x.Status))));
+					$"User.PlayStatistics.EZ{status}Count",
+					sortedBests.Count(x => x.Difficulty == Difficulty.EZ && included.Contains(x.Status)).ToString());
 				textMap.Add(
 					$"User.PlayStatistics.HD{status}Count",
-					new(() => sortedBests.Count(x => x.Difficulty == Difficulty.HD && included.Contains(x.Status))));
+					sortedBests.Count(x => x.Difficulty == Difficulty.HD && included.Contains(x.Status)).ToString());
 				textMap.Add(
 					$"User.PlayStatistics.IN{status}Count",
-					new(() => sortedBests.Count(x => x.Difficulty == Difficulty.IN && included.Contains(x.Status))));
+					sortedBests.Count(x => x.Difficulty == Difficulty.IN && included.Contains(x.Status)).ToString());
 				textMap.Add(
 					$"User.PlayStatistics.AT{status}Count",
-					new(() => sortedBests.Count(x => x.Difficulty == Difficulty.AT && included.Contains(x.Status))));
+					sortedBests.Count(x => x.Difficulty == Difficulty.AT && included.Contains(x.Status)).ToString());
 				textMap.Add(
 					$"User.PlayStatistics.All{status}Count",
-					new(() => sortedBests.Count(x => included.Contains(x.Status))));
+					sortedBests.Count(x => included.Contains(x.Status)).ToString());
 
 				continue;
 			}
 			textMap.Add(
 				$"User.PlayStatistics.EZ{status}Count",
-				new(() => sortedBests.Count(x => x.Difficulty == Difficulty.EZ && x.Status == status)));
+				sortedBests.Count(x => x.Difficulty == Difficulty.EZ && x.Status == status).ToString());
 			textMap.Add(
 				$"User.PlayStatistics.HD{status}Count",
-				new(() => sortedBests.Count(x => x.Difficulty == Difficulty.HD && x.Status == status)));
+				sortedBests.Count(x => x.Difficulty == Difficulty.HD && x.Status == status).ToString());
 			textMap.Add(
 				$"User.PlayStatistics.IN{status}Count",
-				new(() => sortedBests.Count(x => x.Difficulty == Difficulty.IN && x.Status == status)));
+				sortedBests.Count(x => x.Difficulty == Difficulty.IN && x.Status == status).ToString());
 			textMap.Add(
 				$"User.PlayStatistics.AT{status}Count",
-				new(() => sortedBests.Count(x => x.Difficulty == Difficulty.AT && x.Status == status)));
+				sortedBests.Count(x => x.Difficulty == Difficulty.AT && x.Status == status).ToString());
 			textMap.Add(
 				$"User.PlayStatistics.All{status}Count",
-				new(() => sortedBests.Count(x => x.Status == status)));
+				sortedBests.Count(x => x.Status == status).ToString());
 		}
 
 		#region B20 Textmap
 		{
-			textMap.Add($"B20.Score.0", new(() => specialScore.Score));
-			textMap.Add($"B20.Acc.0", new(() => specialScore.Accuracy.ToString(userData.ShowFormat)));
-			textMap.Add($"B20.CC.0", new(() => specialScore.ChartConstant));
-			textMap.Add($"B20.Diff.0", new(() => specialScore.Difficulty));
-			textMap.Add($"B20.IdName.0", new(() => specialScore.Id));
-			textMap.Add($"B20.Name.0", new(() => idNameMap.TryGetValue(specialScore.Id, out string? _str1) ? _str1 : specialScore.Id));
-			textMap.Add($"B20.Status.0", new(() => specialScore.Status));
-			textMap.Add($"B20.Rks.0", new(() => specialScore.Rks.ToString(userData.ShowFormat)));
+			textMap.Add($"B20.Score.0", specialScore.Score.ToString());
+			textMap.Add($"B20.Acc.0", specialScore.Accuracy.ToString(userData.ShowFormat));
+			textMap.Add($"B20.CC.0", specialScore.ChartConstant.ToString());
+			textMap.Add($"B20.Diff.0", specialScore.Difficulty.ToString());
+			textMap.Add($"B20.IdName.0", specialScore.Id);
+			textMap.Add($"B20.Name.0", idNameMap.TryGetValue(specialScore.Id, out string? _str1) ? _str1 : specialScore.Id);
+			textMap.Add($"B20.Status.0", specialScore.Status.ToString());
+			textMap.Add($"B20.Rks.0", specialScore.Rks.ToString(userData.ShowFormat));
 		}
 		for (int k = 0; k < sortedBests.Count; k++)
 		{
 			int i = k + 1;
 			CompleteScore score = sortedBests[k];
-			textMap.Add($"B20.Score.{i}", new(() => score.Score));
-			textMap.Add($"B20.Acc.{i}", new(() => score.Accuracy.ToString(userData.ShowFormat)));
-			textMap.Add($"B20.CC.{i}", new(() => score.ChartConstant));
-			textMap.Add($"B20.Diff.{i}", new(() => score.Difficulty));
-			textMap.Add($"B20.IdName.{i}", new(() => score.Id));
-			textMap.Add($"B20.Name.{i}", new(() => idNameMap.TryGetValue(score.Id, out string? _str1) ? _str1 : score.Id));
-			textMap.Add($"B20.Status.{i}", new(() => score.Status));
-			textMap.Add($"B20.Rks.{i}", new(() => score.Rks.ToString(userData.ShowFormat)));
+			textMap.Add($"B20.Score.{i}", score.Score.ToString());
+			textMap.Add($"B20.Acc.{i}", score.Accuracy.ToString(userData.ShowFormat));
+			textMap.Add($"B20.CC.{i}", score.ChartConstant.ToString());
+			textMap.Add($"B20.Diff.{i}", score.Difficulty.ToString());
+			textMap.Add($"B20.IdName.{i}", score.Id);
+			textMap.Add($"B20.Name.{i}", idNameMap.TryGetValue(score.Id, out string? _str1) ? _str1 : score.Id);
+			textMap.Add($"B20.Status.{i}", score.Status.ToString());
+			textMap.Add($"B20.Rks.{i}", score.Rks.ToString(userData.ShowFormat));
 		}
 		#endregion
 
-		string formattedBgPath = "./Assets/Tracks/";
+		#endregion
+
+		#region Image path map
+		string avatarPath = "./Assets/Avatar/".ToFullPath();
+		if (string.IsNullOrEmpty(summary.Avatar)) summary.Avatar = "Introduction";
+		if (!this.AvatarMapService.Data.TryGetValue(summary.Avatar, out string? hash))
+		{
+			this.Logger.Log(LogLevel.Warning, $"Failed to find avatar {summary.Avatar}, defaulting to default.", EventId, this);
+			avatarPath += $"{this.AvatarMapService.Data["Introduction"]}.png";
+		}
+		else avatarPath += $"{hash}.png";
+
+		string formattedBgPath = "./Assets/Tracks/".ToFullPath();
 		string cutBgId = string.IsNullOrWhiteSpace(gameUserInfo.BackgroundId) ? "" : gameUserInfo.BackgroundId[..^1];
 		KeyValuePair<string, string> firstIdOccurrence = idNameMap.FirstOrDefault(p =>
 			p.Value == gameUserInfo.BackgroundId
@@ -232,128 +204,90 @@ public class ImageGenerator : InjectableBase
 			formattedBgPath += $"{firstIdOccurrence.Key}.0";
 		}
 
-		Dictionary<string, Lazy<Image>> imageMap = new()
+		Dictionary<string, string> imagePathMap = new()
 		{
-			{ "User.Avatar", new Lazy<Image>(avatar) },
-			{ "User.Challenge.Image", new Lazy<Image>(
-				() => this.ChallengeRankImages.TryGetValue(rankType, out Image? val)
-		 		? val
-				: StaticImage.Default.Image) },
-			{ "User.Background.Image.LowRes", new Lazy<Image>(
-				() =>
-				this.LoadOrDefault($"{formattedBgPath}/IllustrationLowRes.png")) },
-			{ "User.Background.Image.Blurry", new Lazy<Image>(
-				() =>
-				this.LoadOrDefault($"{formattedBgPath}/IllustrationBlur.png")) }
+			{ "User.Avatar", avatarPath },
+			{ "User.Challenge.Image", this.ChallengeRankImagePaths[summary.Challenge.Rank] },
+			{ "User.Background.Image.LowRes", $"{formattedBgPath}/IllustrationLowRes.png" },
+			{ "User.Background.Image.Blurry", $"{formattedBgPath}/IllustrationBlur.png" }
 		};
 
 		#region Add illustration/rank images
 		{
-			string path = $"./Assets/Tracks/{specialScore.Id}.0/IllustrationLowRes.png";
+			string path = $"./Assets/Tracks/{specialScore.Id}.0/IllustrationLowRes.png".ToFullPath();
 
-			imageMap.Add("B20.Rank.0", new(this.RankImages[specialScore.Status]));
-			imageMap.Add("B20.Illustration.0", new(
-				() => this.LoadOrDefault(path))
-			);
+			imagePathMap.Add("B20.Rank.0", this.RankImagePaths[specialScore.Status]);
+			imagePathMap.Add("B20.Illustration.0", path);
 		}
 		for (int j = 0; j < sortedBests.Count; j++)
 		{
 			int i = j + 1;
 			CompleteScore score = sortedBests[j];
-			string path = $"./Assets/Tracks/{score.Id}.0/IllustrationLowRes.png";
+			string path = $"./Assets/Tracks/{score.Id}.0/IllustrationLowRes.png".ToFullPath();
 
-			imageMap.Add($"B20.Rank.{i}", new(this.RankImages[score.Status]));
-			imageMap.Add($"B20.Illustration.{i}", new(
-				() => this.LoadOrDefault(path))
-			);
+			imagePathMap.Add($"B20.Rank.{i}", this.RankImagePaths[score.Status]);
+			imagePathMap.Add($"B20.Illustration.{i}", path);
 		}
 		#endregion
 
-		mapPostProcessing?.Invoke(textMap, imageMap);
+		#endregion
 
-		foreach (IDrawableComponent component in script.Components)
+		mapPostProcessing?.Invoke(textMap, imagePathMap);
+
+		Dictionary<string, string> thingsToSet = new()
 		{
-			switch (component)
+			{ "CURRENT_DIRECTORY", Environment.CurrentDirectory },
+			{ "PSL_FILES", "./PSL/".ToFullPath() },
+			{ "RESOURCES_FOLDER", Path.TrimEndingDirectorySeparator(basicHtmlImageInfo.ResourcePath.ToFullPath()) + Path.DirectorySeparatorChar },
+			{ "INFO_IMAGE_PATHS", JsonConvert.SerializeObject(imagePathMap) },
+			{ "INFO_TEXTS", JsonConvert.SerializeObject(textMap) },
+		};
+
+		using ChromiumPoolService.TabUsageBlock t = this.ChromiumPoolService.GetFreeTab();
+		HtmlConverter.Tab tab = t.Tab;
+
+		await tab.SetViewPortSize(basicHtmlImageInfo.InitialWidth, basicHtmlImageInfo.InitialHeight, 1, false);
+
+		await tab.SendCommand("Debugger.enable");
+		await tab.NavigateTo("file:///" + basicHtmlImageInfo.HtmlPath,
+			async () =>
 			{
-				case StaticImage @static:
-					@static.DrawOn(image);
-					break;
-				case ImageText text:
-					text.DrawOn(GetTextBind, script.Fonts, image, script.FallBackFonts);
-					break;
-				case DynamicImage dynamicImage:
-					dynamicImage.DrawOn(image, ImageGetter, false);
-					break;
-				case StaticallyMaskedImage staticallyMaskedImage:
-					staticallyMaskedImage.DrawOn(image, ImageGetter, false);
-					break;
-				default:
-					image.Dispose();
-					throw new Exception($"Invalid component {component}");
+				await tab.EvaluateJavaScript(string.Join(';', thingsToSet.Select(x => $"window.{x.Key}={x.Value}")));
+				await tab.SendCommand("Debugger.resume");
+			});
+
+
+		this.Logger.Log(LogLevel.Debug, tab.CdpInfo.ToString(), EventId, this);
+
+		if (basicHtmlImageInfo.DynamicSize)
+		{
+			Newtonsoft.Json.Linq.JToken widthJson = await tab.EvaluateJavaScript("window.pslToWidth");
+			Newtonsoft.Json.Linq.JToken heightJson = await tab.EvaluateJavaScript("window.pslToHeight");
+
+			int width;
+			int height;
+			if ((string)widthJson["result"]!["type"]! == "number")
+			{
+				width = (int)(double)widthJson["result"]!["value"]!;
 			}
-		}
-
-		foreach (KeyValuePair<string, Lazy<Image>> item in imageMap)
-		{
-			if (!item.Value.IsValueCreated)
-				continue;
-			Image value = item.Value.Value;
-			if (castedChallengeRankImages.ContainsValue(value))
-				continue;
-			if (castedRankImages.ContainsValue(value))
-				continue;
-			if (castedAvatarImages.ContainsValue(value))
-				continue;
-			if (value == StaticImage.Default.Image)
-				continue;
-
-			value.Dispose();
-		}
-
-		return image;
-
-		Image ImageGetter(string? key, string? fallback)
-		{
-			if (key is not null && imageMap.TryGetValue(key, out Lazy<Image>? image))
+			else
 			{
-				if (key.StartsWith("B20.Illustration") || key.StartsWith("User.Background"))
-					return image.Value;
-
-				return image.Value;
+				this.Logger.Log(LogLevel.Warning, "Incorrect type for dynamic width!", EventId, this);
+				width = basicHtmlImageInfo.InitialWidth;
 			}
-			if (fallback is not null && imageMap.TryGetValue(fallback, out Lazy<Image>? image2))
+			if ((string)heightJson["result"]!["type"]! == "number")
 			{
-				return image2.Value;
+				height = (int)(double)heightJson["result"]!["value"]!;
 			}
-			return StaticImage.Default.Image.Clone(_ => { });
-		}
-		bool GetTextBind(string id, [NotNullWhen(true)] out Lazy<object>? @object)
-		{
-			if (id.StartsWith("User.Tags."))
+			else
 			{
-				bool result = int.TryParse(id.Replace("User.Tags.", ""), out int num);
-				if (num >= tags.Value.Length)
-				{
-					@object = null;
-					return false;
-				}
-				@object = new(tags.Value[num]);
-				return true;
+				this.Logger.Log(LogLevel.Warning, "Incorrect type for dynamic height!", EventId, this);
+				height = basicHtmlImageInfo.InitialHeight;
 			}
 
-			return textMap.TryGetValue(id, out @object);
+			await tab.SetViewPortSize(width, height, 1, false);
 		}
-	}
 
-	private Image LoadOrDefault(string path)
-	{
-		Image? image = Utils.TryLoadImage(path);
-		if (image is not null)
-		{
-			this.Logger.Log(LogLevel.Debug, $"Returning image {path}", EventId, this);
-			return image;
-		}
-		this.Logger.Log(LogLevel.Warning, $"Failed to find image {path}, defaulting to default.", EventId, this);
-		return StaticImage.Default.Image;
+		return await tab.TakePhotoOfCurrentPage(photoType, quality);
 	}
 }

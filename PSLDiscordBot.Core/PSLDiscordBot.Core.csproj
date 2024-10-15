@@ -18,15 +18,15 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\..\HtmlToImage.NET\HtmlToImage.NET\HtmlToImage.NET.csproj" />
 		<ProjectReference Include="..\..\PhigrosLibraryCSharp\PhigrosLibraryCSharp\PhigrosLibraryCSharp.csproj" />
 		<ProjectReference Include="..\..\yt6983138\yt6983138.csproj" />
 		<ProjectReference Include="..\PSLDiscordBot.Framework\PSLDiscordBot.Framework.csproj" />
-		<ProjectReference Include="..\PSLDiscordBot.Analyzer\PSLDiscordBot.Analyzer.csproj"
-						  PrivateAssets="all"
-						  OutputItemType="Analyzer" />
+		<ProjectReference Include="..\PSLDiscordBot.Analyzer\PSLDiscordBot.Analyzer.csproj" PrivateAssets="all" OutputItemType="Analyzer" />
 	</ItemGroup>
 
 	<PropertyGroup>
+		<NoWarn>HTI0001</NoWarn>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -36,6 +36,7 @@
 
 		<SixLaborsFiles Include="$(OutDir)SixLabors*" />
 		<SharpZipLibFiles Include="$(OutDir)SharpZipLib*" />
+		<HtmlToImageFiles Include="$(OutDir)HtmlToImage*" />
 	</ItemGroup>
 
 	<Target Name="MovePluginFiles" AfterTargets="Publish">
@@ -45,5 +46,6 @@
 		<Move DestinationFolder="$(OutDir)Plugins\0100.PSL" SourceFiles="@(yt6983138Files)"></Move>
 		<Move DestinationFolder="$(OutDir)Plugins\0100.PSL" SourceFiles="@(SixLaborsFiles)"></Move>
 		<Move DestinationFolder="$(OutDir)Plugins\0100.PSL" SourceFiles="@(SharpZipLibFiles)"></Move>
+		<Move DestinationFolder="$(OutDir)Plugins\0100.PSL" SourceFiles="@(HtmlToImageFiles)"></Move>
 	</Target>
 </Project>
