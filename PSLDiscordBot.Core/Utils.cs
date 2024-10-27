@@ -1,6 +1,8 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using PhigrosLibraryCSharp;
+using PhigrosLibraryCSharp.Cloud.DataStructure;
+using PhigrosLibraryCSharp.GameRecords;
 using PSLDiscordBot.Core.Services;
 using PSLDiscordBot.Framework;
 using SixLabors.ImageSharp;
@@ -10,7 +12,7 @@ using System.Text;
 using Image = SixLabors.ImageSharp.Image;
 
 namespace PSLDiscordBot.Core;
-internal static class Utils
+public static class Utils
 {
 	internal static Point ToIntPoint(this PointF val)
 		=> new((int)val.X, (int)val.Y);
@@ -115,9 +117,24 @@ internal static class Utils
 
 		Throw:
 		if (ex is null)
-			throw new Exception(message);
+			throw new Exception(message, ex);
 
 		throw ex;
+	}
+	public static (CompleteScore Best, double Rks) SortRecord(GameSave save)
+	{
+		save.Records.Sort();
+		save.Records.Reverse();
+		CompleteScore @default = new(0, 0, 0, "NULL", Difficulty.EZ, ScoreStatus.Bugged);
+
+		CompleteScore best = save.Records.FirstOrDefault(x => x.Status == ScoreStatus.Phi) ?? @default;
+
+		double rks = best.Rks * 0.05;
+
+		int i = 0;
+		save.Records.ForEach(x => { if (i < 19) rks += x.Rks * 0.05; i++; });
+
+		return (best, rks);
 	}
 	/// <summary>
 	/// utf-8 default

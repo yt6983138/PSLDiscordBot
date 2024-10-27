@@ -1,4 +1,5 @@
-﻿using SixLabors.ImageSharp;
+﻿using Newtonsoft.Json;
+using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Advanced;
 using SixLabors.ImageSharp.PixelFormats;
 
@@ -6,6 +7,10 @@ namespace PSLDiscordBot.Core.ImageGenerating;
 public static class ImageGeneratorExtension
 {
 	public static string ToFullPath(this string str) => Path.GetFullPath(str);
+	public static string MakeJSString(this string input)
+	{
+		return JsonConvert.SerializeObject(input);
+	}
 
 	/// <summary>
 	/// Does not mutate mask image and original image

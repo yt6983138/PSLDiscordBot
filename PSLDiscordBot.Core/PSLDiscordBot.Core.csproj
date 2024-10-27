@@ -26,7 +26,6 @@
 	</ItemGroup>
 
 	<PropertyGroup>
-		<NoWarn>HTI0001</NoWarn>
 	</PropertyGroup>
 
 	<ItemGroup>

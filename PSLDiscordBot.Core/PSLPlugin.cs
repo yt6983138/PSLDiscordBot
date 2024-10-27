@@ -117,14 +117,7 @@ public class PSLPlugin : InjectableBase, IPlugin
 			Program program = InjectableBase.GetSingleton<Program>();
 			program.AfterMainInitialize += (sender, args) =>
 			{
-				AboutMeImageScriptService about =
-					InjectableBase.GetSingleton<AboutMeImageScriptService>();
-				about.Data = about.Generate();
-				about.Save();
-				GetB20PhotoImageScriptService b20 =
-					InjectableBase.GetSingleton<GetB20PhotoImageScriptService>();
-				b20.Data = b20.Generate();
-				b20.Save();
+				// reserved
 			};
 		}, null);
 	public ArgParseInfo UpdateInfoAndDifficulty => new(
@@ -239,10 +232,7 @@ public class PSLPlugin : InjectableBase, IPlugin
 		InjectableBase.AddSingleton(new DataBaseService());
 		InjectableBase.AddSingleton(new HtmlConverter("C:\\Users\\tgg\\Desktop\\Tools\\chrome\\chrome-win\\chrome.exe", 0, debug: true));
 		InjectableBase.AddSingleton(new PhigrosDataService());
-		InjectableBase.AddSingleton(new GetB20PhotoImageScriptService());
-		InjectableBase.AddSingleton(new AboutMeImageScriptService());
 		InjectableBase.AddSingleton(new AvatarHashMapService());
-		InjectableBase.AddSingleton(new SongScoresImageScriptService());
 		InjectableBase.AddSingleton(new ImageGenerator());
 	}
 	private void Program_AfterPluginsLoaded(object? sender, EventArgs e)
@@ -382,7 +372,5 @@ public class PSLPlugin : InjectableBase, IPlugin
 	{
 		this._configService.Save();
 		//InjectableBase.GetSingleton<DataBaseService>().Save();
-		InjectableBase.GetSingleton<AboutMeImageScriptService>().Save();
-		InjectableBase.GetSingleton<GetB20PhotoImageScriptService>().Save();
 	}
 }
