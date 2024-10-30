@@ -109,7 +109,6 @@ public class SongScoresCommand : CommandBase
 			progress,
 			outerUserInfo,
 			new(),
-			await requester.GetTagsAsync(arg.User.Id) ?? [],
 			rks,
 			HtmlToImage.NET.HtmlConverter.Tab.PhotoType.Jpeg,
 			100

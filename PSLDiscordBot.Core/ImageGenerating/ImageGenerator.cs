@@ -58,7 +58,6 @@ public class ImageGenerator : InjectableBase
 		GameProgress progress,
 		UserInfo userInfo,
 		BasicHtmlImageInfo basicHtmlImageInfo,
-		string[] tags,
 		double rks,
 		HtmlConverter.Tab.PhotoType photoType,
 		byte quality,
@@ -78,8 +77,7 @@ public class ImageGenerator : InjectableBase
 					{ "INClearCount", sortedBests.Count(x => x.Difficulty == Difficulty.IN) },
 					{ "ATClearCount", sortedBests.Count(x => x.Difficulty == Difficulty.AT) },
 				},
-				Data = userData,
-				Tags = tags
+				Data = userData
 			},
 			UserInfo = userInfo,
 			UserProgress = progress,
@@ -165,7 +163,8 @@ public class ImageGenerator : InjectableBase
 		{
 			User = new
 			{
-				Avatar = avatarPath
+				Avatar = avatarPath,
+				BackgroundBasePath = formattedBgPath
 			}
 		};
 		#endregion
