@@ -1,7 +1,8 @@
-﻿namespace PSLDiscordBot.Core;
+﻿using HtmlToImage.NET;
+
+namespace PSLDiscordBot.Core;
 public class Config
 {
-	public int AutoSaveInterval { get; set; } = 20 * 1000 * 60; // 20min
 	public bool DMAdminAboutErrors { get; set; } = true;
 #if DEBUG
 	public bool Verbose { get; set; } = true;
@@ -13,9 +14,6 @@ public class Config
 	public ulong AdminUserId { get; set; }
 #endif
 	public string LogLocation { get; set; } = "./PSL/Latest.log";
-	public string GetB20PhotoImageScriptLocation { get; set; } = "./PSL/GetB20PhotoImageScript.json";
-	public string AboutMeImageScriptLocation { get; set; } = "./PSL/AboutMeImageScript.json";
-	public string SongScoresImageScriptLocation { get; set; } = "./PSL/SongScoresImageScript.json";
 
 	public string AvatarHashMapLocation { get; set; } = "./Assets/Avatar/AvatarInfo.json";
 
@@ -31,6 +29,10 @@ public class Config
 	public string DifficultyMapLocation { get; set; } = "./PSL/difficulty.tsv";
 	public string NameMapLocation { get; set; } = "./PSL/info.tsv";
 	public string HelpMDLocation { get; set; } = "./PSL/help.md";
-	public int MaxTagCount { get; set; } = 114;
-	public int MaxTagStringLength { get; set; } = 114;
+
+	public TimeSpan GetPhotoCoolDown { get; set; } = TimeSpan.FromMinutes(69);
+	public int GetPhotoCoolDownWhenLargerThan { get; set; } = 69;
+
+	public byte RenderQuality { get; set; } = 75;
+	public HtmlConverter.Tab.PhotoType DefaultRenderImageType { get; set; } = HtmlConverter.Tab.PhotoType.Jpeg;
 }

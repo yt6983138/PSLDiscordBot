@@ -8,6 +8,7 @@ using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.DependencyInjection;
 using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats.Png;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using yt6983138.Common;
@@ -280,7 +281,9 @@ public class ImageGenerator : InjectableBase
 		else if (photoType == HtmlConverter.Tab.PhotoType.Jpeg)
 			bigImage.SaveAsJpeg(stream, new() { Quality = quality });
 		else
-			bigImage.SaveAsPng(stream);
+			bigImage.SaveAsPng(stream,
+				new() { TransparentColorMode = PngTransparentColorMode.Clear, ColorType = PngColorType.Rgb, BitDepth = PngBitDepth.Bit8 });
+
 
 		return stream.ToArray();
 	}

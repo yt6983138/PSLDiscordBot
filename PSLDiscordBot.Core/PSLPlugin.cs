@@ -88,9 +88,7 @@ public class PSLPlugin : InjectableBase, IPlugin
 			this._logger.Log(LogLevel.Information, "Resetting config... (partial)", EventIdInitialize, this);
 			Config @default = new();
 			this._configService.Data.LogLocation = @default.LogLocation;
-			this._configService.Data.AutoSaveInterval = @default.AutoSaveInterval;
 			this._configService.Data.DifficultyMapLocation = @default.DifficultyMapLocation;
-			this._configService.Data.GetB20PhotoImageScriptLocation = @default.GetB20PhotoImageScriptLocation;
 			this._configService.Data.HelpMDLocation = @default.HelpMDLocation;
 			this._configService.Data.NameMapLocation = @default.NameMapLocation;
 			this._configService.Data.Verbose = @default.Verbose;

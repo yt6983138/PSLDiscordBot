@@ -35,8 +35,6 @@ public class ExportAppDataCommand : AdminCommandBase
 		zipStream.PutFile(ConfigService.ConfigLocation);
 		zipStream.PutFile(this.ConfigService.Data.DifficultyMapLocation);
 		zipStream.PutFile(this.ConfigService.Data.NameMapLocation);
-		zipStream.PutFile(this.ConfigService.Data.AboutMeImageScriptLocation);
-		zipStream.PutFile(this.ConfigService.Data.GetB20PhotoImageScriptLocation);
 		zipStream.PutFile(this.ConfigService.Data.LogLocation);
 		zipStream.PutFile(this.ConfigService.Data.HelpMDLocation);
 

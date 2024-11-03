@@ -41,6 +41,10 @@ public class AboutMeCommand : CommandBase
 
 	public override async Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
 	{
+		await arg.QuickReply("Sorry, this command is currently not available.");
+		return;
+
+
 		int index = arg.GetIntegerOptionAsInt32OrDefault("index");
 
 		PhigrosLibraryCSharp.SaveSummaryPair? pair = await data.SaveCache.GetAndHandleSave(
@@ -66,8 +70,8 @@ public class AboutMeCommand : CommandBase
 			outerUserInfo,
 			new(),
 			rks,
-			HtmlToImage.NET.HtmlConverter.Tab.PhotoType.Jpeg,
-			100
+			this.ConfigService.Data.DefaultRenderImageType,
+			this.ConfigService.Data.RenderQuality
 		);
 
 		await arg.QuickReplyWithAttachments("Generated!", new FileAttachment(new MemoryStream(image), "Score.png"));

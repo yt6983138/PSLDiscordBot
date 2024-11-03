@@ -110,8 +110,8 @@ public class SongScoresCommand : CommandBase
 			outerUserInfo,
 			new(),
 			rks,
-			HtmlToImage.NET.HtmlConverter.Tab.PhotoType.Jpeg,
-			100
+			this.ConfigService.Data.DefaultRenderImageType,
+			this.ConfigService.Data.RenderQuality
 		);
 
 		await arg.QuickReplyWithAttachments(
