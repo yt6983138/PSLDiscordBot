@@ -60,7 +60,7 @@ public class AboutMeCommand : CommandBase
 
 		(CompleteScore? best, double rks) = Utils.SortRecord(save);
 
-		byte[] image = await this.ImageGenerator.MakePhoto(
+		MemoryStream image = await this.ImageGenerator.MakePhoto(
 			save.Records,
 			best,
 			data,
@@ -68,12 +68,13 @@ public class AboutMeCommand : CommandBase
 			userInfo,
 			progress,
 			outerUserInfo,
-			new(),
+			this.ConfigService.Data.AboutMeRenderInfo,
 			rks,
 			this.ConfigService.Data.DefaultRenderImageType,
-			this.ConfigService.Data.RenderQuality
+			this.ConfigService.Data.RenderQuality,
+			cancellationToken: this.ConfigService.Data.RenderTimeoutCTS.Token
 		);
 
-		await arg.QuickReplyWithAttachments("Generated!", new FileAttachment(new MemoryStream(image), "Score.png"));
+		await arg.QuickReplyWithAttachments("Generated!", new FileAttachment(image, "Score.png"));
 	}
 }

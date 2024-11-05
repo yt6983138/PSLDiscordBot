@@ -90,7 +90,7 @@ public class GetPhotoCommand : CommandBase
 
 		(CompleteScore? best, double rks) = Utils.SortRecord(save);
 
-		byte[] image = await this.ImageGenerator.MakePhoto(
+		MemoryStream image = await this.ImageGenerator.MakePhoto(
 			save.Records,
 			best,
 			data,
@@ -98,10 +98,15 @@ public class GetPhotoCommand : CommandBase
 			userInfo,
 			progress,
 			outerUserInfo,
-			new(),
+			this.ConfigService.Data.GetPhotoRenderInfo,
 			rks,
 			message is null ? this.ConfigService.Data.DefaultRenderImageType : PhotoType.Png,
-			this.ConfigService.Data.RenderQuality
+			this.ConfigService.Data.RenderQuality,
+			extraArguments: new
+			{
+				ShowCount = count
+			},
+			cancellationToken: this.ConfigService.Data.RenderTimeoutCTS.Token
 		);
 
 		if (message is not null)
@@ -111,7 +116,7 @@ public class GetPhotoCommand : CommandBase
 				await message.ModifyAsync(x =>
 				{
 					x.Content = "Generated!";
-					x.Attachments = new List<FileAttachment>() { new(new MemoryStream(image), "Score.png") };
+					x.Attachments = new List<FileAttachment>() { new(image, "Score.png") };
 				});
 			}
 			catch (Exception ex)
@@ -122,6 +127,6 @@ public class GetPhotoCommand : CommandBase
 			return;
 		}
 
-		await arg.QuickReplyWithAttachments("Generated!", new FileAttachment(new MemoryStream(image), "Score.jpg"));
+		await arg.QuickReplyWithAttachments("Generated!", new FileAttachment(image, "Score.jpg"));
 	}
 }

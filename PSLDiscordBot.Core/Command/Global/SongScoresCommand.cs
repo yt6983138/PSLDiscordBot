@@ -86,7 +86,7 @@ public class SongScoresCommand : CommandBase
 			.Where(x => x.Id == scoresToShow[0].Id)
 			.ToArray();
 
-		#region Image preprocessing 
+		#region Score preprocessing 
 		var extraArg = new
 		{
 			Searched = new Dictionary<string, CompleteScore[]>()
@@ -100,7 +100,7 @@ public class SongScoresCommand : CommandBase
 		}
 		#endregion
 
-		byte[] image = await this.ImageGenerator.MakePhoto(
+		MemoryStream image = await this.ImageGenerator.MakePhoto(
 			save.Records,
 			best,
 			data,
@@ -108,16 +108,18 @@ public class SongScoresCommand : CommandBase
 			userInfo,
 			progress,
 			outerUserInfo,
-			new(),
+			this.ConfigService.Data.SongScoresRenderInfo,
 			rks,
 			this.ConfigService.Data.DefaultRenderImageType,
-			this.ConfigService.Data.RenderQuality
+			this.ConfigService.Data.RenderQuality,
+			cancellationToken: this.ConfigService.Data.RenderTimeoutCTS.Token,
+			extraArguments: extraArg
 		);
 
 		await arg.QuickReplyWithAttachments(
 			$"You looked for song `{search}`, showing...",
 			[
-				new(new MemoryStream(image), "ScoreAnalysis.png"),
+				new(image, "ScoreAnalysis.png"),
 				Utils.ToAttachment(
 					GetScoresCommand.ScoresFormatter(
 						scoresToShow,

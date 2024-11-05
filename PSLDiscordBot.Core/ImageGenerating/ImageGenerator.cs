@@ -50,7 +50,7 @@ public class ImageGenerator : InjectableBase
 #pragma warning restore CS8602 // Dereference of a possibly null reference.
 	}
 
-	public async Task<byte[]> MakePhoto(
+	public async Task<MemoryStream> MakePhoto(
 		IList<CompleteScore> sortedBests,
 		CompleteScore specialScore,
 		UserData userData,
@@ -63,7 +63,8 @@ public class ImageGenerator : InjectableBase
 		HtmlConverter.Tab.PhotoType photoType,
 		byte quality,
 		object? extraArguments = null,
-		MapProcessor? mapPostProcessing = null)
+		MapProcessor? mapPostProcessing = null,
+		CancellationToken cancellationToken = default)
 	{
 		#region Textmap
 		var map = new
@@ -164,8 +165,8 @@ public class ImageGenerator : InjectableBase
 		{
 			User = new
 			{
-				Avatar = avatarPath,
-				BackgroundBasePath = formattedBgPath
+				Avatar = avatarPath.ToFullPath(),
+				BackgroundBasePath = formattedBgPath.ToFullPath()
 			}
 		};
 		#endregion
@@ -186,18 +187,19 @@ public class ImageGenerator : InjectableBase
 		using ChromiumPoolService.TabUsageBlock t = this.ChromiumPoolService.GetFreeTab();
 		HtmlConverter.Tab tab = t.Tab;
 
-		await tab.SetViewPortSize(basicHtmlImageInfo.InitialWidth, basicHtmlImageInfo.InitialHeight, basicHtmlImageInfo.DeviceScaleFactor, false);
+		await tab.SetViewPortSize(basicHtmlImageInfo.InitialWidth, basicHtmlImageInfo.InitialHeight, basicHtmlImageInfo.DeviceScaleFactor, false, cancellationToken);
 
-		await tab.SendCommand("Debugger.enable");
-		await tab.NavigateTo("file:///" + basicHtmlImageInfo.HtmlPath,
-			async () =>
+		await tab.SendCommand("Log.enable", cancellationToken: cancellationToken);
+		await tab.SendCommand("Log.clear", cancellationToken: cancellationToken);
+		await tab.SendCommand("Debugger.enable", cancellationToken: cancellationToken);
+		await tab.NavigateTo("file:///" + basicHtmlImageInfo.HtmlPath.ToFullPath(), async () =>
 			{
 				while (tab.Queue.FirstOrDefault(x => (string)x["method"]! == "Debugger.paused") is null)
-					await tab.ReadOneMessage();
+					await tab.ReadOneMessage(cancellationToken);
 				string str = string.Join(';', thingsToSet.Select(x => $"window.{x.Key}={JsonConvert.SerializeObject(x.Value)}"));
-				await tab.EvaluateJavaScript(str);
-				await tab.SendCommand("Debugger.resume");
-			});
+				await tab.EvaluateJavaScript(str, cancellationToken);
+				await tab.SendCommand("Debugger.resume", cancellationToken: cancellationToken);
+			}, cancellationToken);
 
 
 		this.Logger.Log(LogLevel.Debug, tab.CdpInfo.ToString(), EventId, this);
@@ -207,12 +209,12 @@ public class ImageGenerator : InjectableBase
 		bool ready = false;
 		do
 		{
-			System.Text.Json.Nodes.JsonNode readyJson = await tab.EvaluateJavaScript("window.pslReady");
+			System.Text.Json.Nodes.JsonNode readyJson = await tab.EvaluateJavaScript("window.pslReady", cancellationToken);
 			if ((string)readyJson["result"]!["type"]! != "boolean")
 				throw new InvalidDataException("Ready is invalid type.");
 			ready = (bool)readyJson["result"]!["value"]!;
 
-			await Task.Delay(50);
+			await Task.Delay(50, cancellationToken);
 		}
 		while (!ready);
 
@@ -220,8 +222,8 @@ public class ImageGenerator : InjectableBase
 		int height = basicHtmlImageInfo.InitialHeight;
 		if (basicHtmlImageInfo.DynamicSize)
 		{
-			System.Text.Json.Nodes.JsonNode widthJson = await tab.EvaluateJavaScript("window.pslToWidth");
-			System.Text.Json.Nodes.JsonNode heightJson = await tab.EvaluateJavaScript("window.pslToHeight");
+			System.Text.Json.Nodes.JsonNode widthJson = await tab.EvaluateJavaScript("window.pslToWidth", cancellationToken);
+			System.Text.Json.Nodes.JsonNode heightJson = await tab.EvaluateJavaScript("window.pslToHeight", cancellationToken);
 
 			if ((string)widthJson["result"]!["type"]! == "number")
 				width = (int)(double)widthJson["result"]!["value"]!;
@@ -234,13 +236,16 @@ public class ImageGenerator : InjectableBase
 				this.Logger.Log(LogLevel.Warning, "Incorrect type for dynamic height!", EventId, this);
 
 			if (!(basicHtmlImageInfo.UseXScrollWhenTooBig || basicHtmlImageInfo.UseYScrollWhenTooBig))
-				await tab.SetViewPortSize(width, height, basicHtmlImageInfo.DeviceScaleFactor, false);
+				await tab.SetViewPortSize(width, height, basicHtmlImageInfo.DeviceScaleFactor, false, cancellationToken);
 		}
 
 		int BlockSize = basicHtmlImageInfo.MaxSizePerBlock;
 
 		if (height < BlockSize && width < BlockSize)
-			return await tab.TakePhotoOfCurrentPage(photoType, quality);
+		{
+			await tab.SetViewPortSize(width, height, basicHtmlImageInfo.DeviceScaleFactor, false, cancellationToken);
+			return await tab.TakePhotoOfCurrentPage(photoType, quality, ct: cancellationToken);
+		}
 
 		using Image<Rgba32> bigImage = new(width, height);
 
@@ -256,9 +261,9 @@ public class ImageGenerator : InjectableBase
 
 				if (basicHtmlImageInfo.UseXScrollWhenTooBig || basicHtmlImageInfo.UseYScrollWhenTooBig)
 				{
-					await tab.SetViewPortSize(clipWidth, clipHeight, basicHtmlImageInfo.DeviceScaleFactor, false);
+					await tab.SetViewPortSize(clipWidth, clipHeight, basicHtmlImageInfo.DeviceScaleFactor, false, cancellationToken);
 					await tab.EvaluateJavaScript($"window.scrollTo({(basicHtmlImageInfo.UseXScrollWhenTooBig ? vpX : 0)}, " +
-						$"{(basicHtmlImageInfo.UseYScrollWhenTooBig ? vpY : 0)});");
+						$"{(basicHtmlImageInfo.UseYScrollWhenTooBig ? vpY : 0)});", cancellationToken);
 				}
 
 				HtmlConverter.Tab.ViewPort clip = new(
@@ -268,23 +273,37 @@ public class ImageGenerator : InjectableBase
 					clipHeight,
 					1);
 
-				byte[] raw = await tab.TakePhotoOfCurrentPage(photoType, quality, clip);
+				using MemoryStream raw = await tab.TakePhotoOfCurrentPage(photoType, quality, clip, cancellationToken);
 
-				using Image rawImage = Image.Load(raw);
+				using Image rawImage = await Image.LoadAsync(raw, cancellationToken);
 
 				bigImage.Mutate(x => x.DrawImage(rawImage, new Point(vpX, vpY), 1));
 			}
 		}
-		using MemoryStream stream = new();
+		MemoryStream stream = new();
 		if (photoType == HtmlConverter.Tab.PhotoType.Webp)
-			bigImage.SaveAsWebp(stream);
+		{
+			await bigImage.SaveAsWebpAsync(stream, cancellationToken);
+		}
 		else if (photoType == HtmlConverter.Tab.PhotoType.Jpeg)
-			bigImage.SaveAsJpeg(stream, new() { Quality = quality });
+		{
+			await bigImage.SaveAsJpegAsync(
+				stream,
+				new() { Quality = quality },
+				cancellationToken);
+		}
 		else
-			bigImage.SaveAsPng(stream,
-				new() { TransparentColorMode = PngTransparentColorMode.Clear, ColorType = PngColorType.Rgb, BitDepth = PngBitDepth.Bit8 });
+		{
+			await bigImage.SaveAsPngAsync(stream,
+				new()
+				{
+					TransparentColorMode = PngTransparentColorMode.Clear,
+					ColorType = PngColorType.Rgb,
+					BitDepth = PngBitDepth.Bit8
+				},
+				cancellationToken);
+		}
 
-
-		return stream.ToArray();
+		return stream;
 	}
 }
