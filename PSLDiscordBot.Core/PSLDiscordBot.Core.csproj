@@ -28,7 +28,7 @@
 	<PropertyGroup>
 	</PropertyGroup>
 
-	<ItemGroup>
+	<!--<ItemGroup>
 		<CoreFiles Include="$(OutDir)$(ProjectName)*" />
 		<PhigrosLibraryFiles Include="$(OutDir)PhigrosLibraryCSharp*" />
 		<yt6983138Files Include="$(OutDir)yt6983138*" />
@@ -46,5 +46,5 @@
 		<Move DestinationFolder="$(OutDir)Plugins\0100.PSL" SourceFiles="@(SixLaborsFiles)"></Move>
 		<Move DestinationFolder="$(OutDir)Plugins\0100.PSL" SourceFiles="@(SharpZipLibFiles)"></Move>
 		<Move DestinationFolder="$(OutDir)Plugins\0100.PSL" SourceFiles="@(HtmlToImageFiles)"></Move>
-	</Target>
+	</Target>-->
 </Project>
