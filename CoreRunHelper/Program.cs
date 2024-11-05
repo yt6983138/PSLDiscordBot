@@ -5,14 +5,20 @@ internal class Program
 	private static async Task Main(string[] args)
 	{
 		string? assetsToCopy = Environment.GetEnvironmentVariable("ASSETS_COPY_PATH");
-		if (!string.IsNullOrEmpty(assetsToCopy))
+		if (string.IsNullOrEmpty(assetsToCopy)) throw new ArgumentException("Must specify asset copy path");
+
+		Console.WriteLine("Copy asset start");
+		CopyFolder(new(Path.Combine(assetsToCopy, "Assets")), Directory.CreateDirectory("./Assets"));
+		Console.WriteLine("Copy asset done");
+
+		DirectoryInfo pslDir = Directory.CreateDirectory("./PSL");
+		List<string> filesToMoveToPslDir = ["./difficulty.tsv", "./info.tsv"];
+		foreach (string item in filesToMoveToPslDir)
 		{
-			Console.WriteLine("Copy asset start");
-			CopyFolder(new(assetsToCopy), Directory.CreateDirectory("./Assets"));
-			Console.WriteLine("Copy asset done");
+			FileInfo info = new(Path.Combine(assetsToCopy!, item));
+			info.CopyTo(Path.Combine(pslDir.FullName, info.Name), true);
 		}
 
-		Directory.CreateDirectory("./PSL");
 		DirectoryInfo plugin = Directory.CreateDirectory("./Plugins/0100.PSL");
 		plugin.Delete(true);
 		plugin.Create();
@@ -23,6 +29,7 @@ internal class Program
 		files.AddRange(current.GetFiles("yt6983138*"));
 		files.AddRange(current.GetFiles("*SharpZipLib*"));
 		files.AddRange(current.GetFiles("PSLDiscordBot.Core*"));
+		files.AddRange(current.GetFiles("HtmlToImage*"));
 
 		foreach (FileInfo item in files)
 		{
