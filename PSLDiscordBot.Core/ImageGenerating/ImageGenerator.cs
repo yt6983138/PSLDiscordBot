@@ -315,9 +315,9 @@ public class ImageGenerator : InjectableBase
 
 		using Image<Rgba32> bigImage = new(width, height);
 
-		for (int x = 0; x < width / blockSize + 1; x++)
+		for (int x = 0; x < (width / blockSize) + 1; x++)
 		{
-			for (int y = 0; y < height / blockSize + 1; y++)
+			for (int y = 0; y < (height / blockSize) + 1; y++)
 			{
 				int vpX = x * blockSize;
 				int vpY = y * blockSize;
