@@ -9,6 +9,8 @@ public class UserData
 
 	[JsonIgnore]
 	public Save SaveCache { get; init; }
+	[JsonIgnore]
+	public DateTime GetPhotoCoolDownUntil { get; set; } = default;
 	public UserData(string token)
 	{
 		this.Token = token;

@@ -1,21 +1,15 @@
 ﻿using Discord;
 using Discord.WebSocket;
-using Microsoft.Extensions.Logging;
 using PhigrosLibraryCSharp.Cloud.DataStructure;
 using PhigrosLibraryCSharp.GameRecords;
 using PSLDiscordBot.Core.Command.Global.Base;
 using PSLDiscordBot.Core.ImageGenerating;
-using PSLDiscordBot.Core.ImageGenerating.TMPTag.Elements;
 using PSLDiscordBot.Core.Services;
 using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.CommandBase;
 using PSLDiscordBot.Framework.DependencyInjection;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
-using System.Text;
 using yt6983138.Common;
-using Image = SixLabors.ImageSharp.Image;
 
 namespace PSLDiscordBot.Core.Command.Global;
 
@@ -28,8 +22,6 @@ public class SongScoresCommand : CommandBase
 	public PhigrosDataService PhigrosDataService { get; set; }
 	[Inject]
 	public ImageGenerator ImageGenerator { get; set; }
-	[Inject]
-	public SongScoresImageScriptService SongScoresImageScriptService { get; set; }
 	[Inject]
 	public Logger Logger { get; set; }
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
@@ -77,17 +69,8 @@ public class SongScoresCommand : CommandBase
 		GameUserInfo userInfo = await data.SaveCache.GetGameUserInfoAsync(index);
 		GameProgress progress = await data.SaveCache.GetGameProgressAsync(index);
 		UserInfo outerUserInfo = await data.SaveCache.GetUserInfoAsync();
-		outerUserInfo.NickName = string.Join("", TMPTagElementHelper.Parse(outerUserInfo.NickName).Select(x => x.ToTextOnly()));
 
-		save.Records.Sort((x, y) => y.Rks.CompareTo(x.Rks));
-		CompleteScore @default = new(0, 0, 0, "", Difficulty.EZ, ScoreStatus.Bugged);
-
-		CompleteScore best = save.Records.FirstOrDefault(x => x.Status == ScoreStatus.Phi) ?? @default;
-
-		double rks = best.Rks * 0.05;
-
-		int i = 0;
-		save.Records.ForEach(x => { if (i < 19) rks += x.Rks * 0.05; i++; });
+		(CompleteScore? best, double rks) = Utils.SortRecord(save);
 
 		List<CompleteScore> scoresToShow = save.Records
 			.Where(x =>
@@ -99,85 +82,55 @@ public class SongScoresCommand : CommandBase
 			await arg.QuickReply("Sorry, you seems haven't played the songs you have been searching for.");
 			return;
 		}
+
+		#region Score preprocessing 
+
 		CompleteScore[] scoresSameToFirstId = scoresToShow
 			.Where(x => x.Id == scoresToShow[0].Id)
 			.ToArray();
 
-		Image image = this.ImageGenerator.MakePhoto(
+		var extraArg = new
+		{
+			Searched = new Dictionary<string, CompleteScore[]>()
+		};
+
+		IEnumerable<IGrouping<string, CompleteScore>> grouped = scoresToShow.GroupBy(x => x.Id);
+
+		foreach (IGrouping<string, CompleteScore> item in grouped)
+		{
+			extraArg.Searched.Add(item.Key, item.ToArray());
+		}
+		#endregion
+
+		MemoryStream image = await this.ImageGenerator.MakePhoto(
 			save.Records,
 			best,
-			this.PhigrosDataService.IdNameMap,
 			data,
 			summary,
 			userInfo,
 			progress,
 			outerUserInfo,
+			this.ConfigService.Data.SongScoresRenderInfo,
 			rks,
-			this.SongScoresImageScriptService.Data,
-			arg.User.Id,
-			mapPostProcessing: PostProcess
-			);
-
-		MemoryStream stream = new();
-		await image.SaveAsPngAsync(stream);
-		image.Dispose();
+			this.ConfigService.Data.DefaultRenderImageType,
+			this.ConfigService.Data.RenderQuality,
+			cancellationToken: this.ConfigService.Data.RenderTimeoutCTS.Token,
+			extraArguments: extraArg
+		);
 
 		await arg.QuickReplyWithAttachments(
 			$"You looked for song `{search}`, showing...",
 			[
-				new(stream, "ScoreAnalysis.png"),
-				new(
-					new MemoryStream(
-						Encoding.UTF8.GetBytes(
-							GetScoresCommand.ScoresFormatter(
-								scoresToShow,
-								this.PhigrosDataService.IdNameMap,
-								int.MaxValue,
-								data,
-								false,
-								false))),"Query.txt")]);
-
-		void PostProcess(Dictionary<string, Lazy<object>> textMap, Dictionary<string, Lazy<Image>> imageMap)
-		{
-			IEnumerable<IGrouping<string, CompleteScore>> grouped = scoresToShow.GroupBy(x => x.Id);
-
-			Image<Rgba32> empty = new(1, 1);
-
-			imageMap.Add("Empty", new(empty));
-			imageMap.Add("Rank.F", new(this.ImageGenerator.RankImages[ScoreStatus.False]));
-
-			int i = 0;
-			foreach (IGrouping<string, CompleteScore> group in grouped)
-			{
-				CompleteScore firstScore = group.First();
-				string path = $"./Assets/Tracks/{firstScore.Id}.0/IllustrationLowRes.png";
-
-				textMap.Add($"Searched.{i}.IdName", new(firstScore.Id));
-				textMap.Add($"Searched.{i}.Name", new(this.PhigrosDataService.IdNameMap.TryGetValue(firstScore.Id, out string? _str1) ? _str1 : firstScore.Id));
-
-				imageMap.Add($"Searched.{i}.Illustration", new(
-					() => Utils.TryLoadImage(path) ?? StaticImage.Default.Image)
-				);
-				if (!File.Exists(path))
-					this.Logger.Log(LogLevel.Warning, $"Cannot find image for {firstScore.Id}.0!", this.EventId, this);
-
-				foreach (CompleteScore item in group)
-				{
-					textMap.Add($"Searched.{i}.{item.Difficulty}.Score", new(item.Score));
-					textMap.Add($"Searched.{i}.{item.Difficulty}.Acc", new(item.Accuracy.ToString(data.ShowFormat)));
-					textMap.Add($"Searched.{i}.{item.Difficulty}.CC", new(item.ChartConstant));
-					textMap.Add($"Searched.{i}.{item.Difficulty}.Diff", new(item.Difficulty));
-					textMap.Add($"Searched.{i}.{item.Difficulty}.IdName", new(item.Id));
-					textMap.Add($"Searched.{i}.{item.Difficulty}.Name", new(this.PhigrosDataService.IdNameMap.TryGetValue(item.Id, out string? _str2) ? _str2 : item.Id));
-					textMap.Add($"Searched.{i}.{item.Difficulty}.Status", new(item.Status));
-					textMap.Add($"Searched.{i}.{item.Difficulty}.Rks", new(item.Rks.ToString(data.ShowFormat)));
-
-
-					imageMap.Add($"Searched.{i}.{item.Difficulty}.Rank", new(this.ImageGenerator.RankImages[item.Status]));
-				}
-
-				i++;
-			}
-		}
+				new(image, "ScoreAnalysis.png"),
+				Utils.ToAttachment(
+					GetScoresCommand.ScoresFormatter(
+						scoresToShow,
+						this.PhigrosDataService.IdNameMap,
+						int.MaxValue,
+						data,
+						false,
+						false),
+					"Query.txt")
+			]);
 	}
 }

@@ -2,7 +2,6 @@
 using Discord.WebSocket;
 using Microsoft.Extensions.Logging;
 using PSLDiscordBot.Core.Command.Global.Base;
-using PSLDiscordBot.Core.ImageGenerating;
 using PSLDiscordBot.Core.Services;
 using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Framework;
@@ -73,7 +72,7 @@ public class SongInfoCommand : GuestCommandBase
 		if (!File.Exists(returnImgPath))
 		{
 			this.Logger.Log(LogLevel.Warning, $"Cannot locate image {returnImgPath}!", this.EventId, this);
-			returnImgPath = StaticImage.Default.Path;
+			returnImgPath = "./Assets/Tracks/NULL.0/IllustrationLowRes.png";
 		}
 		await arg.QuickReplyWithAttachments($"Found {i} match(es).",
 			new(new MemoryStream(Encoding.UTF8.GetBytes(sb.ToString())), "Query.txt"),
