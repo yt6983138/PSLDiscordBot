@@ -33,6 +33,12 @@ public class Config
 	public string NameMapLocation { get; set; } = "./PSL/info.tsv";
 	public string HelpMDLocation { get; set; } = "./PSL/help.md";
 
+	public string DifficultyMapGrabLocation { get; set; } = "https://raw.githubusercontent.com/7aGiven/Phigros_Resource/refs/heads/info/difficulty.tsv";
+	public string NameMapGrabLocation { get; set; } = "https://raw.githubusercontent.com/7aGiven/Phigros_Resource/refs/heads/info/info.tsv";
+	public string HelpMDGrabLocation { get; set; } = "https://raw.githubusercontent.com/yt6983138/PSLDiscordBot/master/help.md";
+	public string AssetGrabLocation { get; set; } = "https://github.com/yt6983138/PSLDiscordBot_Resources/archive/refs/heads/main.zip";
+	public bool AssetGrabRemoveParent { get; set; } = true;
+
 	public int DefaultChromiumTabCacheCount { get; set; } = 5;
 	public ushort ChromiumPort { get; set; } = 0;
 #if DEBUG

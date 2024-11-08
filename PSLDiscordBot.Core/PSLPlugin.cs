@@ -74,21 +74,32 @@ public class PSLPlugin : InjectableBase, IPlugin
 			using HttpClient client = new();
 
 			Task<byte[]> help =
-				client.GetByteArrayAsync(@"https://raw.githubusercontent.com/yt6983138/PSLDiscordBot/master/help.md");
+				client.GetByteArrayAsync(this._configService.Data.HelpMDGrabLocation);
 			Task<byte[]> zip =
-				client.GetByteArrayAsync(@"https://github.com/yt6983138/PSLDiscordBot/raw/master/Assets.zip");
+				client.GetByteArrayAsync(this._configService.Data.AssetGrabLocation);
 			help.Wait();
 			zip.Wait();
 
 			File.WriteAllBytes(this._configService.Data.HelpMDLocation, help.Result);
 			File.WriteAllBytes("./Assets.zip", zip.Result);
 			FastZip fastZip = new();
-			fastZip.ExtractZip("./Assets.zip", ".", "");
+			if (this._configService.Data.AssetGrabRemoveParent)
+			{
+				DirectoryInfo tmp = Directory.CreateDirectory("./tmp");
+				fastZip.ExtractZip("./Assets.zip", "./tmp/", "");
+				DirectoryInfo first = tmp.GetDirectories()[0].GetDirectories()[0];
+				first.MoveTo(".");
+				tmp.Delete(true);
+			}
+			else
+			{
+				fastZip.ExtractZip("./Assets.zip", ".", "");
+			}
 		},
 		null);
 	public ArgParseInfo ResetConfig => new(
 		"resetConfig",
-		"Reset configuration (only part)",
+		"Reset configuration (only partially)",
 		(_) =>
 		{
 			this._logger.Log(LogLevel.Information, "Resetting config... (partial)", EventIdInitialize, this);
@@ -98,6 +109,31 @@ public class PSLPlugin : InjectableBase, IPlugin
 			this._configService.Data.HelpMDLocation = @default.HelpMDLocation;
 			this._configService.Data.NameMapLocation = @default.NameMapLocation;
 			this._configService.Data.Verbose = @default.Verbose;
+
+			this._configService.Data.AvatarHashMapLocation = @default.AvatarHashMapLocation;
+			this._configService.Data.MainUserDataDbLocation = @default.MainUserDataDbLocation;
+			this._configService.Data.MainUserDataTableName = @default.MainUserDataTableName;
+			this._configService.Data.UserMiscInfoDbLocation = @default.UserMiscInfoDbLocation;
+			this._configService.Data.UserMiscInfoTableName = @default.UserMiscInfoTableName;
+			this._configService.Data.SongAliasDbLocation = @default.SongAliasDbLocation;
+			this._configService.Data.SongAliasTableName = @default.SongAliasTableName;
+			this._configService.Data.DifficultyMapGrabLocation = @default.DifficultyMapGrabLocation;
+			this._configService.Data.NameMapGrabLocation = @default.NameMapGrabLocation;
+			this._configService.Data.HelpMDGrabLocation = @default.HelpMDGrabLocation;
+			this._configService.Data.AssetGrabLocation = @default.AssetGrabLocation;
+			this._configService.Data.AssetGrabRemoveParent = @default.AssetGrabRemoveParent;
+			this._configService.Data.DefaultChromiumTabCacheCount = @default.DefaultChromiumTabCacheCount;
+			this._configService.Data.ChromiumPort = @default.ChromiumPort;
+			this._configService.Data.ChromiumLocation = @default.ChromiumLocation;
+			this._configService.Data.RenderTimeout = @default.RenderTimeout;
+			this._configService.Data.GetPhotoCoolDown = @default.GetPhotoCoolDown;
+			this._configService.Data.GetPhotoCoolDownWhenLargerThan = @default.GetPhotoCoolDownWhenLargerThan;
+			this._configService.Data.RenderQuality = @default.RenderQuality;
+			this._configService.Data.DefaultRenderImageType = @default.DefaultRenderImageType;
+			this._configService.Data.GetPhotoRenderInfo = @default.GetPhotoRenderInfo;
+			this._configService.Data.SongScoresRenderInfo = @default.SongScoresRenderInfo;
+			this._configService.Data.AboutMeRenderInfo = @default.AboutMeRenderInfo;
+
 
 			this._configService.Save();
 		},
@@ -113,20 +149,6 @@ public class PSLPlugin : InjectableBase, IPlugin
 			this._configService.Save();
 		},
 		null);
-	public ArgParseInfo ResetScripts => new(
-		"resetScripts",
-		"Reset all image scripts.",
-		(_) =>
-		{
-			this._logger.Log(LogLevel.Information, "Resetting image scripts...", EventIdInitialize, this);
-
-			Program program = GetSingleton<Program>();
-			program.AfterMainInitialize += (sender, args) =>
-			{
-				// reserved
-			};
-		},
-		null);
 	public ArgParseInfo UpdateInfoAndDifficulty => new(
 		"updateInfoAndDifficulty",
 		"Update info.csv/tsv and difficulty.csv/tsv.",
@@ -134,11 +156,11 @@ public class PSLPlugin : InjectableBase, IPlugin
 		{
 			using HttpClient client = new();
 			byte[] diff =
-				client.GetByteArrayAsync(@"https://yt6983138.github.io/Assets/RksReader/Latest/difficulty.csv")
+				client.GetByteArrayAsync(this._configService.Data.DifficultyMapGrabLocation)
 					.GetAwaiter()
 					.GetResult();
 			byte[] info =
-				client.GetByteArrayAsync(@"https://yt6983138.github.io/Assets/RksReader/Latest/info.csv")
+				client.GetByteArrayAsync(this._configService.Data.NameMapGrabLocation)
 					.GetAwaiter()
 					.GetResult();
 
@@ -182,7 +204,6 @@ public class PSLPlugin : InjectableBase, IPlugin
 		program.AddArgReceiver(this.UpdateInfoAndDifficulty);
 		program.AddArgReceiver(this.ResetConfig);
 		program.AddArgReceiver(this.ResetConfigFull);
-		program.AddArgReceiver(this.ResetScripts);
 
 		AddSingleton(this);
 
