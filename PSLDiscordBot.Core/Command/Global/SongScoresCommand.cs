@@ -82,11 +82,13 @@ public class SongScoresCommand : CommandBase
 			await arg.QuickReply("Sorry, you seems haven't played the songs you have been searching for.");
 			return;
 		}
+
+		#region Score preprocessing 
+
 		CompleteScore[] scoresSameToFirstId = scoresToShow
 			.Where(x => x.Id == scoresToShow[0].Id)
 			.ToArray();
 
-		#region Score preprocessing 
 		var extraArg = new
 		{
 			Searched = new Dictionary<string, CompleteScore[]>()

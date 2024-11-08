@@ -20,6 +20,7 @@ namespace PSLDiscordBot.Core.Command.Global;
 public class GetPhotoCommand : CommandBase
 {
 	#region Injection
+
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 	[Inject]
 	public PhigrosDataService PhigrosDataService { get; set; }
@@ -28,6 +29,7 @@ public class GetPhotoCommand : CommandBase
 	[Inject]
 	public DiscordClientService DiscordClientService { get; set; }
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+
 	#endregion
 
 	public override bool IsEphemeral => false;
@@ -38,20 +40,23 @@ public class GetPhotoCommand : CommandBase
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder.AddOption(
-			"index",
-			ApplicationCommandOptionType.Integer,
-			"Save time converted to index, 0 is always latest. Do /get-time-index to get other index.",
-			isRequired: false,
-			minValue: 0)
-		.AddOption(
-			"count",
-			ApplicationCommandOptionType.Integer,
-			"Counts to show. (Defualt: 23)",
-			isRequired: false,
-			minValue: 0,
-			maxValue: int.MaxValue);
+				"index",
+				ApplicationCommandOptionType.Integer,
+				"Save time converted to index, 0 is always latest. Do /get-time-index to get other index.",
+				false,
+				minValue: 0)
+			.AddOption(
+				"count",
+				ApplicationCommandOptionType.Integer,
+				"Counts to show. (Default: 23)",
+				false,
+				minValue: 0,
+				maxValue: int.MaxValue);
 
-	public override async Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
+	public override async Task Callback(SocketSlashCommand arg,
+		UserData data,
+		DataBaseService.DbDataRequester requester,
+		object executer)
 	{
 		int index = arg.GetIntegerOptionAsInt32OrDefault("index");
 		int count = arg.GetIntegerOptionAsInt32OrDefault("count", 23);
@@ -59,20 +64,24 @@ public class GetPhotoCommand : CommandBase
 		RestInteractionMessage? message = null;
 		if (count > this.ConfigService.Data.GetPhotoCoolDownWhenLargerThan)
 		{
-			if (DateTime.Now > data.GetPhotoCoolDownUntil)
+			if (DateTime.Now < data.GetPhotoCoolDownUntil)
 			{
 				await arg.QuickReply($"Sorry, due to memory issues there is a cooldown " +
 					$"when count > {this.ConfigService.Data.GetPhotoCoolDownWhenLargerThan}, " +
 					$"{data.GetPhotoCoolDownUntil - DateTime.Now} remain.");
 				return;
 			}
-			if (arg.GuildId is null || this.DiscordClientService.SocketClient.GetGuild(arg.GuildId.Value).PremiumSubscriptionCount < 7)
+
+			if (arg.GuildId is null ||
+				this.DiscordClientService.SocketClient.GetGuild(arg.GuildId.Value).PremiumSubscriptionCount < 7)
 			{
-				await arg.QuickReply("Sorry, the channel you are requesting this from does not allow me to send images larger than 50mb :(");
+				await arg.QuickReply(
+					"Sorry, the channel you are requesting this from does not allow me to send images larger than 50mb :(");
 				return;
 			}
 
-			message = await arg.ModifyOriginalResponseAsync(x => x.Content = "Successfully queried, this can take a really long time, " +
+			message = await arg.ModifyOriginalResponseAsync(x => x.Content =
+				"Successfully queried, this can take a really long time, " +
 				"note: I can still fail to send the image if the image is too large!");
 			data.GetPhotoCoolDownUntil = DateTime.Now + this.ConfigService.Data.GetPhotoCoolDown;
 		}
@@ -102,7 +111,7 @@ public class GetPhotoCommand : CommandBase
 			rks,
 			message is null ? this.ConfigService.Data.DefaultRenderImageType : PhotoType.Png,
 			this.ConfigService.Data.RenderQuality,
-			extraArguments: new
+			new
 			{
 				ShowCount = count
 			},
@@ -116,14 +125,20 @@ public class GetPhotoCommand : CommandBase
 				await message.ModifyAsync(x =>
 				{
 					x.Content = "Generated!";
-					x.Attachments = new List<FileAttachment>() { new(image, "Score.png") };
+					x.Attachments = new List<FileAttachment>()
+					{
+						new(image, "Score.png")
+					};
 				});
 			}
 			catch (Exception ex)
 			{
 				await message.ModifyAsync(x => x.Attachments = new List<FileAttachment>()
-					{ new(new MemoryStream(Encoding.UTF8.GetBytes(ex.ToString())), "StackTrace.txt") });
+				{
+					new(new MemoryStream(Encoding.UTF8.GetBytes(ex.ToString())), "StackTrace.txt")
+				});
 			}
+
 			return;
 		}
 

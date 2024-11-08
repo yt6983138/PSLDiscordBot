@@ -14,9 +14,11 @@ using SixLabors.ImageSharp.Processing;
 using yt6983138.Common;
 
 namespace PSLDiscordBot.Core.ImageGenerating;
+
 public class ImageGenerator : InjectableBase
 {
 	#region Injection
+
 	[Inject]
 	public PhigrosDataService PhigrosDataService { get; set; }
 	[Inject]
@@ -25,6 +27,7 @@ public class ImageGenerator : InjectableBase
 	public AvatarHashMapService AvatarMapService { get; set; }
 	[Inject]
 	public ChromiumPoolService ChromiumPoolService { get; set; }
+
 	#endregion
 
 	public delegate void MapProcessor(object map, object image);
@@ -41,11 +44,21 @@ public class ImageGenerator : InjectableBase
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
 		this.SongDifficultyCount = new Dictionary<string, object>()
 		{
-			{ "TotalSongEZCount", this.PhigrosDataService.DifficultiesMap.Count(x => x.Value.Length >= 1) },
-			{ "TotalSongHDCount", this.PhigrosDataService.DifficultiesMap.Count(x => x.Value.Length >= 2) },
-			{ "TotalSongINCount", this.PhigrosDataService.DifficultiesMap.Count(x => x.Value.Length >= 3) },
-			{ "TotalSongATCount", this.PhigrosDataService.DifficultiesMap.Count(x => x.Value.Length >= 4) },
-			{ "TotalSongCount", this.PhigrosDataService.DifficultiesMap.Count }
+			{
+				"TotalSongEZCount", this.PhigrosDataService.DifficultiesMap.Count(x => x.Value.Length >= 1)
+			},
+			{
+				"TotalSongHDCount", this.PhigrosDataService.DifficultiesMap.Count(x => x.Value.Length >= 2)
+			},
+			{
+				"TotalSongINCount", this.PhigrosDataService.DifficultiesMap.Count(x => x.Value.Length >= 3)
+			},
+			{
+				"TotalSongATCount", this.PhigrosDataService.DifficultiesMap.Count(x => x.Value.Length >= 4)
+			},
+			{
+				"TotalSongCount", this.PhigrosDataService.DifficultiesMap.Count
+			}
 		};
 #pragma warning restore CS8602 // Dereference of a possibly null reference.
 	}
@@ -67,6 +80,7 @@ public class ImageGenerator : InjectableBase
 		CancellationToken cancellationToken = default)
 	{
 		#region Textmap
+
 		var map = new
 		{
 			User = new
@@ -74,10 +88,18 @@ public class ImageGenerator : InjectableBase
 				Rks = rks,
 				PlayStatistics = new Dictionary<string, object>()
 				{
-					{ "EZClearCount", sortedBests.Count(x => x.Difficulty == Difficulty.EZ) },
-					{ "HDClearCount", sortedBests.Count(x => x.Difficulty == Difficulty.HD) },
-					{ "INClearCount", sortedBests.Count(x => x.Difficulty == Difficulty.IN) },
-					{ "ATClearCount", sortedBests.Count(x => x.Difficulty == Difficulty.AT) },
+					{
+						"EZClearCount", sortedBests.Count(x => x.Difficulty == Difficulty.EZ)
+					},
+					{
+						"HDClearCount", sortedBests.Count(x => x.Difficulty == Difficulty.HD)
+					},
+					{
+						"INClearCount", sortedBests.Count(x => x.Difficulty == Difficulty.IN)
+					},
+					{
+						"ATClearCount", sortedBests.Count(x => x.Difficulty == Difficulty.AT)
+					}
 				},
 				Data = userData
 			},
@@ -86,7 +108,7 @@ public class ImageGenerator : InjectableBase
 			Summary = summary,
 			GameUserInfo = gameUserInfo,
 			Records = new List<CompleteScore>([specialScore, .. sortedBests]),
-			ExtraArguments = extraArguments,
+			ExtraArguments = extraArguments
 			//GameSettings = 
 		};
 		map.User.PlayStatistics.MergeWith(this.SongDifficultyCount);
@@ -115,6 +137,7 @@ public class ImageGenerator : InjectableBase
 
 				continue;
 			}
+
 			map.User.PlayStatistics.Add(
 				$"TotalEZ{status}Count",
 				sortedBests.Count(x => x.Difficulty == Difficulty.EZ && x.Status == status));
@@ -135,11 +158,15 @@ public class ImageGenerator : InjectableBase
 		#endregion
 
 		#region Image map
+
 		string avatarPath = "./Assets/Avatar/".ToFullPath();
 		if (string.IsNullOrEmpty(summary.Avatar)) summary.Avatar = "Introduction";
 		if (!this.AvatarMapService.Data.TryGetValue(summary.Avatar, out string? hash))
 		{
-			this.Logger.Log(LogLevel.Warning, $"Failed to find avatar {summary.Avatar}, defaulting to default.", EventId, this);
+			this.Logger.Log(LogLevel.Warning,
+				$"Failed to find avatar {summary.Avatar}, defaulting to default.",
+				EventId,
+				this);
 			avatarPath += $"{this.AvatarMapService.Data["Introduction"]}.png";
 		}
 		else avatarPath += $"{hash}.png";
@@ -153,8 +180,13 @@ public class ImageGenerator : InjectableBase
 		{
 			formattedBgPath += "Introduction";
 			if (!gameUserInfo.BackgroundId.Contains("Introduc"))
-				this.Logger.Log(LogLevel.Warning, $"Failed to find background {gameUserInfo.BackgroundId}" +
-					", defaulting to introduction.", EventId, this);
+			{
+				this.Logger.Log(LogLevel.Warning,
+					$"Failed to find background {gameUserInfo.BackgroundId}" +
+					", defaulting to introduction.",
+					EventId,
+					this);
+			}
 		}
 		else
 		{
@@ -169,47 +201,73 @@ public class ImageGenerator : InjectableBase
 				BackgroundBasePath = formattedBgPath.ToFullPath()
 			}
 		};
+
 		#endregion
 
 		mapPostProcessing?.Invoke(map, image);
 
 		Dictionary<string, object> thingsToSet = new()
 		{
-			{ "CURRENT_DIRECTORY", Environment.CurrentDirectory },
-			{ "PSL_FILES", "./PSL/".ToFullPath() },
-			{ "ASSET_FOLDER", "./Assets/".ToFullPath() },
-			{ "INFO_IMAGE_PATHS", image },
-			{ "INFO", map },
-			{ "INFO_MAP_DIFFICULTY", this.PhigrosDataService.DifficultiesMap },
-			{ "INFO_MAP_ID_NAME", this.PhigrosDataService.IdNameMap },
+			{
+				"CURRENT_DIRECTORY", Environment.CurrentDirectory
+			},
+			{
+				"PSL_FILES", "./PSL/".ToFullPath()
+			},
+			{
+				"ASSET_FOLDER", "./Assets/".ToFullPath()
+			},
+			{
+				"INFO_IMAGE_PATHS", image
+			},
+			{
+				"INFO", map
+			},
+			{
+				"INFO_MAP_DIFFICULTY", this.PhigrosDataService.DifficultiesMap
+			},
+			{
+				"INFO_MAP_ID_NAME", this.PhigrosDataService.IdNameMap
+			}
 		};
 
 		using ChromiumPoolService.TabUsageBlock t = this.ChromiumPoolService.GetFreeTab();
 		HtmlConverter.Tab tab = t.Tab;
 
-		await tab.SetViewPortSize(basicHtmlImageInfo.InitialWidth, basicHtmlImageInfo.InitialHeight, basicHtmlImageInfo.DeviceScaleFactor, false, cancellationToken);
+		await tab.SetViewPortSize(basicHtmlImageInfo.InitialWidth,
+			basicHtmlImageInfo.InitialHeight,
+			basicHtmlImageInfo.DeviceScaleFactor,
+			false,
+			cancellationToken);
 
 		await tab.SendCommand("Log.enable", cancellationToken: cancellationToken);
 		await tab.SendCommand("Log.clear", cancellationToken: cancellationToken);
 		await tab.SendCommand("Debugger.enable", cancellationToken: cancellationToken);
-		await tab.NavigateTo("file:///" + basicHtmlImageInfo.HtmlPath.ToFullPath(), async () =>
+		await tab.NavigateTo("file:///" + basicHtmlImageInfo.HtmlPath.ToFullPath(),
+			async () =>
 			{
 				while (tab.Queue.FirstOrDefault(x => (string)x["method"]! == "Debugger.paused") is null)
 					await tab.ReadOneMessage(cancellationToken);
-				string str = string.Join(';', thingsToSet.Select(x => $"window.{x.Key}={JsonConvert.SerializeObject(x.Value)}"));
+				string str = string.Join(';',
+					thingsToSet.Select(x => $"window.{x.Key}={JsonConvert.SerializeObject(x.Value)}"));
 				await tab.EvaluateJavaScript(str, cancellationToken);
 				await tab.SendCommand("Debugger.resume", cancellationToken: cancellationToken);
-			}, cancellationToken);
+			},
+			cancellationToken);
 
 
 		this.Logger.Log(LogLevel.Debug, tab.CdpInfo.ToString(), EventId, this);
-		this.Logger.Log(LogLevel.Debug, $"localhost:{this.ChromiumPoolService.Chromium.CdpPort}{tab.CdpInfo.DevToolsFrontendUrl}", EventId, this);
+		this.Logger.Log(LogLevel.Debug,
+			$"localhost:{this.ChromiumPoolService.Chromium.CdpPort}{tab.CdpInfo.DevToolsFrontendUrl}",
+			EventId,
+			this);
 
 
 		bool ready = false;
 		do
 		{
-			System.Text.Json.Nodes.JsonNode readyJson = await tab.EvaluateJavaScript("window.pslReady", cancellationToken);
+			System.Text.Json.Nodes.JsonNode readyJson =
+				await tab.EvaluateJavaScript("window.pslReady", cancellationToken);
 			if ((string)readyJson["result"]!["type"]! != "boolean")
 				throw new InvalidDataException("Ready is invalid type.");
 			ready = (bool)readyJson["result"]!["value"]!;
@@ -222,8 +280,10 @@ public class ImageGenerator : InjectableBase
 		int height = basicHtmlImageInfo.InitialHeight;
 		if (basicHtmlImageInfo.DynamicSize)
 		{
-			System.Text.Json.Nodes.JsonNode widthJson = await tab.EvaluateJavaScript("window.pslToWidth", cancellationToken);
-			System.Text.Json.Nodes.JsonNode heightJson = await tab.EvaluateJavaScript("window.pslToHeight", cancellationToken);
+			System.Text.Json.Nodes.JsonNode widthJson =
+				await tab.EvaluateJavaScript("window.pslToWidth", cancellationToken);
+			System.Text.Json.Nodes.JsonNode heightJson =
+				await tab.EvaluateJavaScript("window.pslToHeight", cancellationToken);
 
 			if ((string)widthJson["result"]!["type"]! == "number")
 				width = (int)(double)widthJson["result"]!["value"]!;
@@ -236,12 +296,18 @@ public class ImageGenerator : InjectableBase
 				this.Logger.Log(LogLevel.Warning, "Incorrect type for dynamic height!", EventId, this);
 
 			if (!(basicHtmlImageInfo.UseXScrollWhenTooBig || basicHtmlImageInfo.UseYScrollWhenTooBig))
-				await tab.SetViewPortSize(width, height, basicHtmlImageInfo.DeviceScaleFactor, false, cancellationToken);
+			{
+				await tab.SetViewPortSize(width,
+					height,
+					basicHtmlImageInfo.DeviceScaleFactor,
+					false,
+					cancellationToken);
+			}
 		}
 
-		int BlockSize = basicHtmlImageInfo.MaxSizePerBlock;
+		int blockSize = basicHtmlImageInfo.MaxSizePerBlock;
 
-		if (height < BlockSize && width < BlockSize)
+		if (height < blockSize && width < blockSize)
 		{
 			await tab.SetViewPortSize(width, height, basicHtmlImageInfo.DeviceScaleFactor, false, cancellationToken);
 			return await tab.TakePhotoOfCurrentPage(photoType, quality, ct: cancellationToken);
@@ -249,26 +315,33 @@ public class ImageGenerator : InjectableBase
 
 		using Image<Rgba32> bigImage = new(width, height);
 
-		for (int x = 0; x < (width / BlockSize) + 1; x++)
+		for (int x = 0; x < width / blockSize + 1; x++)
 		{
-			for (int y = 0; y < (height / BlockSize) + 1; y++)
+			for (int y = 0; y < height / blockSize + 1; y++)
 			{
-				int vpX = x * BlockSize;
-				int vpY = y * BlockSize;
+				int vpX = x * blockSize;
+				int vpY = y * blockSize;
 
-				int clipWidth = Math.Min(BlockSize, width - vpX);
-				int clipHeight = Math.Min(BlockSize, height - vpY);
+				int clipWidth = Math.Min(blockSize, width - vpX);
+				int clipHeight = Math.Min(blockSize, height - vpY);
 
 				if (basicHtmlImageInfo.UseXScrollWhenTooBig || basicHtmlImageInfo.UseYScrollWhenTooBig)
 				{
-					await tab.SetViewPortSize(clipWidth, clipHeight, basicHtmlImageInfo.DeviceScaleFactor, false, cancellationToken);
-					await tab.EvaluateJavaScript($"window.scrollTo({(basicHtmlImageInfo.UseXScrollWhenTooBig ? vpX : 0)}, " +
-						$"{(basicHtmlImageInfo.UseYScrollWhenTooBig ? vpY : 0)});", cancellationToken);
+					await tab.SetViewPortSize(clipWidth,
+						clipHeight,
+						basicHtmlImageInfo.DeviceScaleFactor,
+						false,
+						cancellationToken);
+					await tab.EvaluateJavaScript(
+						$"window.scrollTo({(basicHtmlImageInfo.UseXScrollWhenTooBig ? vpX : 0)}, " +
+						$"{(basicHtmlImageInfo.UseYScrollWhenTooBig ? vpY : 0)});",
+						cancellationToken);
 				}
 
 				HtmlConverter.Tab.ViewPort clip = new(
 					/*basicHtmlImageInfo.UseXScrollWhenTooBig ? 0 : */vpX,
-					/*basicHtmlImageInfo.UseYScrollWhenTooBig ? 0 : */vpY,
+					/*basicHtmlImageInfo.UseYScrollWhenTooBig ? 0 : */
+					vpY,
 					clipWidth,
 					clipHeight,
 					1);
@@ -277,9 +350,10 @@ public class ImageGenerator : InjectableBase
 
 				using Image rawImage = await Image.LoadAsync(raw, cancellationToken);
 
-				bigImage.Mutate(x => x.DrawImage(rawImage, new Point(vpX, vpY), 1));
+				bigImage.Mutate(c => c.DrawImage(rawImage, new Point(vpX, vpY), 1));
 			}
 		}
+
 		MemoryStream stream = new();
 		if (photoType == HtmlConverter.Tab.PhotoType.Webp)
 		{
@@ -289,7 +363,10 @@ public class ImageGenerator : InjectableBase
 		{
 			await bigImage.SaveAsJpegAsync(
 				stream,
-				new() { Quality = quality },
+				new()
+				{
+					Quality = quality
+				},
 				cancellationToken);
 		}
 		else

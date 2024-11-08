@@ -2,12 +2,14 @@
 using PSLDiscordBot.Framework.DependencyInjection;
 
 namespace PSLDiscordBot.Core.Services;
+
 public class ChromiumPoolService : InjectableBase
 {
 	public record class TabInfoPair(HtmlConverter.Tab Tab, bool Occupied)
 	{
 		public bool Occupied { get; internal set; } = Occupied;
 	}
+
 	public sealed class TabUsageBlock(TabInfoPair tab, Action<TabInfoPair> onDispose) : IDisposable
 	{
 		private readonly TabInfoPair _tab = tab;
@@ -16,7 +18,10 @@ public class ChromiumPoolService : InjectableBase
 
 		public HtmlConverter.Tab Tab => this._tab.Tab;
 
-		~TabUsageBlock() => this.Dispose();
+		~TabUsageBlock()
+		{
+			this.Dispose();
+		}
 		public void Dispose()
 		{
 			if (this._disposed) return;
@@ -31,16 +36,25 @@ public class ChromiumPoolService : InjectableBase
 	public IReadOnlyList<TabInfoPair> ChromiumTabPairs => this._chromiumTabPairs;
 	public HtmlConverter Chromium { get; private set; }
 
-	public ChromiumPoolService(string chromiumPath, int defaultTabCount, bool debug = false, bool showChromiumOutput = false)
+	public ChromiumPoolService(string chromiumPath,
+		int defaultTabCount,
+		ushort port,
+		bool debug = false,
+		bool showChromiumOutput = false)
 	{
-		this.Chromium = new(chromiumPath, 0, debug: debug, showChromiumOutput: showChromiumOutput, extraArgs: [
-			"--allow-file-access-from-files",
-			"--no-sandbox",
-			"--no-first-run",
-			"--no-default-browser-check",
-			"--no-default-browser-check",
-			"--disable-extensions",
-			"--disable-backing-store-limit"
+		this.Chromium = new(chromiumPath,
+			port,
+			debug: debug,
+			showChromiumOutput: showChromiumOutput,
+			extraArgs:
+			[
+				"--allow-file-access-from-files",
+				"--no-sandbox",
+				"--no-first-run",
+				"--no-default-browser-check",
+				"--no-default-browser-check",
+				"--disable-extensions",
+				"--disable-backing-store-limit"
 			]);
 		List<TabInfoPair> tabs = new();
 		Parallel.For(0, defaultTabCount, _ => this._chromiumTabPairs.Add(new(this.Chromium.NewTab(), false)));
@@ -57,6 +71,7 @@ public class ChromiumPoolService : InjectableBase
 				this._chromiumTabPairs.Add(info);
 				return new(info, TabFinalizer);
 			}
+
 			return new(first, TabFinalizer);
 		}
 	}

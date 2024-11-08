@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using PSLDiscordBot.Core.ImageGenerating;
 
 namespace PSLDiscordBot.Core;
+
 public class Config
 {
 	public bool DMAdminAboutErrors { get; set; } = true;
@@ -32,7 +33,15 @@ public class Config
 	public string NameMapLocation { get; set; } = "./PSL/info.tsv";
 	public string HelpMDLocation { get; set; } = "./PSL/help.md";
 
+	public int DefaultChromiumTabCacheCount { get; set; } = 5;
+	public ushort ChromiumPort { get; set; } = 0;
+#if DEBUG
+	public string ChromiumLocation { get; set; } = Environment.GetEnvironmentVariable("DEBUG_CHROME_LOCATION")!;
+	public TimeSpan RenderTimeout { get; set; } = TimeSpan.FromSeconds(600);
+#else
+	public string ChromiumLocation { get; set; } = "";
 	public TimeSpan RenderTimeout { get; set; } = TimeSpan.FromSeconds(32);
+#endif
 	[JsonIgnore]
 	public CancellationTokenSource RenderTimeoutCTS => new(this.RenderTimeout);
 
