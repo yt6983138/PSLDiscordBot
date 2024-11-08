@@ -367,3 +367,6 @@ Secret.cs
 
 # launchSettings - debugging too
 /CoreRunHelper/Properties/launchSettings.json
+
+# rider
+.idea
