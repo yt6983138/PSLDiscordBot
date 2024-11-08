@@ -1,5 +1,4 @@
 ﻿using Discord;
-using Discord.Rest;
 using Discord.WebSocket;
 using PhigrosLibraryCSharp.Cloud.DataStructure;
 using PhigrosLibraryCSharp.GameRecords;
@@ -11,7 +10,6 @@ using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.BuiltInServices;
 using PSLDiscordBot.Framework.CommandBase;
 using PSLDiscordBot.Framework.DependencyInjection;
-using System.Text;
 using static HtmlToImage.NET.HtmlConverter.Tab;
 
 namespace PSLDiscordBot.Core.Command.Global;
@@ -96,8 +94,8 @@ public class GetPhotoCommand : CommandBase
 
 		(CompleteScore? best, double rks) = Utils.SortRecord(save);
 
-		RestInteractionMessage message = await arg.ModifyOriginalResponseAsync(x => x.Content =
-				"Making right now, this can take a bit of time!");
+		// TODO: arg.Reply works, no need for saving message
+		await arg.QuickReply("Making right now, this can take a bit of time!");
 		MemoryStream image = await this.ImageGenerator.MakePhoto(
 			save.Records,
 			best,
@@ -121,21 +119,11 @@ public class GetPhotoCommand : CommandBase
 		{
 			try
 			{
-				await message.ModifyAsync(x =>
-				{
-					x.Content = "Generated!";
-					x.Attachments = new List<FileAttachment>()
-					{
-						new(image, "Score.png")
-					};
-				});
+				await arg.QuickReplyWithAttachments("Generated!", new FileAttachment(image, "Score.png"));
 			}
 			catch (Exception ex)
 			{
-				await message.ModifyAsync(x => x.Attachments = new List<FileAttachment>()
-				{
-					new(new MemoryStream(Encoding.UTF8.GetBytes(ex.ToString())), "StackTrace.txt")
-				});
+				await arg.QuickReplyWithAttachments("Error occurred during uploading:", Utils.ToAttachment(ex.ToString(), "StackTrace.txt"));
 			}
 
 			return;
