@@ -61,8 +61,8 @@ public class GetPhotoCommand : CommandBase
 		int index = arg.GetIntegerOptionAsInt32OrDefault("index");
 		int count = arg.GetIntegerOptionAsInt32OrDefault("count", 23);
 
-		RestInteractionMessage? message = null;
-		if (count > this.ConfigService.Data.GetPhotoCoolDownWhenLargerThan)
+		bool isLarge = count > this.ConfigService.Data.GetPhotoCoolDownWhenLargerThan;
+		if (isLarge)
 		{
 			if (DateTime.Now < data.GetPhotoCoolDownUntil)
 			{
@@ -76,13 +76,10 @@ public class GetPhotoCommand : CommandBase
 				this.DiscordClientService.SocketClient.GetGuild(arg.GuildId.Value).PremiumSubscriptionCount < 7)
 			{
 				await arg.QuickReply(
-					"Sorry, the channel you are requesting this from does not allow me to send images larger than 50mb :(");
+					$"Sorry, the channel you are requesting this from does not allow me to send images larger than 50mb :(\n" +
+					$"Please either use count lower or equal to {this.ConfigService.Data.GetPhotoCoolDownWhenLargerThan} or find other servers with boost.");
 				return;
 			}
-
-			message = await arg.ModifyOriginalResponseAsync(x => x.Content =
-				"Successfully queried, this can take a really long time, " +
-				"note: I can still fail to send the image if the image is too large!");
 			data.GetPhotoCoolDownUntil = DateTime.Now + this.ConfigService.Data.GetPhotoCoolDown;
 		}
 
@@ -99,6 +96,8 @@ public class GetPhotoCommand : CommandBase
 
 		(CompleteScore? best, double rks) = Utils.SortRecord(save);
 
+		RestInteractionMessage message = await arg.ModifyOriginalResponseAsync(x => x.Content =
+				"Making right now, this can take a bit of time!");
 		MemoryStream image = await this.ImageGenerator.MakePhoto(
 			save.Records,
 			best,
@@ -109,7 +108,7 @@ public class GetPhotoCommand : CommandBase
 			outerUserInfo,
 			this.ConfigService.Data.GetPhotoRenderInfo,
 			rks,
-			message is null ? this.ConfigService.Data.DefaultRenderImageType : PhotoType.Png,
+			isLarge ? PhotoType.Png : this.ConfigService.Data.DefaultRenderImageType,
 			this.ConfigService.Data.RenderQuality,
 			new
 			{
@@ -118,7 +117,7 @@ public class GetPhotoCommand : CommandBase
 			cancellationToken: this.ConfigService.Data.RenderTimeoutCTS.Token
 		);
 
-		if (message is not null)
+		if (isLarge)
 		{
 			try
 			{
