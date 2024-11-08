@@ -2,14 +2,14 @@
 
 ## What is this?
 This is a **P**higros **S**core **L**ookup Discord bot (aka PSLDiscordBot),<br/>
-you can get your scores by using `/get-scores`, `/get-b20-photo` or `/query` etc.
+you can get your scores by using `/get-photo`, `/get-scores` or `/export-scores` etc.<br/>
 ## How to use this?
 If you are first time using this, please follow the guide.
 1. Use `/login` to link your account first. Having problem? See `/login` usage.
 2. (Optional) Set your score precision using `/set-precision`.
-3. Now, you can get your scores by using `/get-scores` or `/get-b20-photo`, 
- if you wanna share your statistics, you can also execute `/about-me`. <br/>
-There's also cool commands like `/song-info`, `/poke`, also `/add-alias` and `/add-tag` etc. <br/>
+3. Now, you can get your scores by using `/get-scores` or `/get-photo`, 
+ if you wanna share your statistics, you can also run `/about-me`. <br/>
+There's also cool commands like `/song-info`, `/song-scores`, `/poke`, also `/add-alias` etc. <br/>
 
 If you see any problem, use `/report-problem` to report it (I may contact you for more information)
 ## Command usage

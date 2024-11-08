@@ -1,12 +1,12 @@
 ﻿## What is this?
 This is a **P**higros **S**core **L**ookup Discord bot (aka PSLDiscordBot), <br/>
-you can get your scores by using `/get-scores` or `/get-all-scores` etc.
+you can get your scores by using `/get-scores` or `/get-photo` etc.
 ## How to use this?
 If you are first time using this, please follow the guide.
 1. Use `/link-token <token>` or `/login` to link your account first. Having problem? See `/link-token` or `/login` usage.
 2. (Optional) Set your score precision using `/set-precision`.
 3. (Optional, this is almost optional in every case) Use `/get-time-index` to find the save you want to see (See `/get-time-index` usage)
-4. Now, you can get your scores by using `/get-scores [index]` or `/get-b20-photo [index]`.
+4. Now, you can get your scores by using `/get-scores [index]` or `/get-photo [index]`.
 ## Command usage
 
 Options in `<example>` are _required_ options, in `[example]` are _optional_ options.
@@ -58,7 +58,7 @@ Use an Android device temporally and follow the upper part.
 ### /get-time-index
 Usage: `/get-time-index` <br/>
 It prints out all your save time and index that means it, 0 is always latest. You must do `/link-token` or `/login` first.
-### /get-all-scores
+### /export-scores
 Usage: `/get-all-scores [index]` <br/>
 Example: `/get-all-scores 0` <br/>
 It gives you a CSV attachment that has all your scores. You must do `/link-token` or `/login` first.
@@ -77,14 +77,14 @@ You also must do `/link-token` first.
 ### /get-token
 Usage: `/get-token` <br/>
 Get your token. You must do `/link-token` or `/login` first.
-### /query
-Usage: `/query <search> [index]` <br/>
-Example: `/query volcanic 0` <br/>
+### /song-scores
+Usage: `/song-scores <search> [index]` <br/>
+Example: `/song-scores volcanic 0` <br/>
 It searches all your scores, you can input song name, a song alias, or song id to find the song. 
 You must do `/link-token` or `/login` first. <br/>
-### /get-b20-photo
-Usage: `/get-b20-photo [index]` <br/>
-Example: `/get-b20-photo 0` <br/>
+### /get-photo
+Usage: `/get-photo [count] [index]` <br/>
+Example: `/get-photo 69 0` <br/>
 Gives you a cool picture about your b19&1phi scores. You must do `/link-token` or `/login` first.
 ### /about-me
 Usage: `/about-me [index]` <br/>
@@ -94,6 +94,11 @@ Gives you a cool picture about your statistics. You must do `/link-token` or `/l
 Usage: `/song-info <search>` <br/>
 Example: `/song-info 321` <br/>
 It searches songs in database, you can input song name, a song alias, or song id to find the song. 
+You must do `/link-token` or `/login` first. <br/>
+### /song-scores
+Usage: `/song-scores <search> [index]` <br/>
+Example: `/song-scores 2085 0` <br/>
+It searches songs in database, you can input song name, a song alias, or song id to find the song, and show your score in cool images.
 You must do `/link-token` or `/login` first. <br/>
 ### /poke
 Usage: `/poke` <br/>

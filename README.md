@@ -2,9 +2,9 @@
 
 # What is this?
 This is a **P**higros **S**core **L**ookup Discord bot (aka PSLDiscordBot),<br/>
-you can get your scores by using `/get-b20-photo`, `/get-b20` or `/get-all-scores` etc.<br/>
+you can get your scores by using `/get-photo`, `/get-scores` or `/export-scores` etc.<br/>
 Here are some pictures showcasing: <br/>
-`/get-b20-photo`, huge thanks to discord user Foxtrot for ui rework!
+`/get-photo`, huge thanks to discord user Foxtrot for UI rework!
 ![image](https://github.com/user-attachments/assets/03a8c9d4-cca7-4398-85ec-3e9d6e138ff3) <br/>
 `/get-scores`
 ![image](https://github.com/yt6983138/PSLDiscordBot/assets/83499886/5aa82534-e8c1-41d7-9637-626032242d4b) <br/>
@@ -15,6 +15,7 @@ Here are some pictures showcasing: <br/>
 # How to use this?
 Check help.md
 # For developer
+Resources are in https://github.com/yt6983138/PSLDiscordBot_Resources <br/>
 You can add your custom command by adding function in Dictionary Commands in Program.cs, please see following example:
 ```c#
 // look at CommandBase.cs for more info
