@@ -44,7 +44,6 @@ public sealed class DataBaseService : InjectableBase
 
 		#region Caches
 		private static MemoryCache _tokenCache = new(nameof(_tokenCache));
-		private static MemoryCache _userTagsCache = new(nameof(_userTagsCache));
 		private static MemoryCache _songAliasCache = new(nameof(_songAliasCache));
 		private static MemoryCache _userDataCache = new(nameof(_userDataCache));
 		#endregion
@@ -87,7 +86,7 @@ CREATE TABLE IF NOT EXISTS {this._config.MainUserDataTableName} (
 			this._logger.Log(LogLevel.Debug, $"{nameof(CreateConnection_UserTokenDataBase)}: End ({traceId})", _eventId, this);
 			return dat;
 		}
-		private SqliteConnection CreateConnection_UserMiscInfoDataBase()
+		private SqliteConnection CreateConnection_UserMiscInfoDataBase() // currently reserved for future use
 		{
 			int traceId = Random.Shared.Next();
 			this._logger.Log(LogLevel.Debug, $"{nameof(CreateConnection_UserMiscInfoDataBase)}: Start ({traceId})", _eventId, this);
@@ -186,54 +185,8 @@ SELECT * FROM {this._config.MainUserDataTableName} WHERE
 		}
 		#endregion
 
-		#region Tags operation
-		public async Task<string[]?> GetTagsAsync(ulong id)
-		{
-			int traceId = Random.Shared.Next();
-			this._logger.Log(LogLevel.Debug, $"{nameof(GetTagsAsync)}: Start ({traceId})", _eventId, this);
+		#region Misc info operation
 
-			SqliteConnection connection = this._userMiscInfoDataBase.Value;
-			SqliteCommand command = new($@"
-SELECT * FROM {this._config.UserMiscInfoTableName} WHERE
-	Id = {UncheckedConvertToLong(id)};", connection);
-			using SqliteDataReader reader = await command.ExecuteReaderAsync();
-			if (!await reader.ReadAsync())
-				return null;
-
-			this._logger.Log(LogLevel.Debug, $"{nameof(GetTagsAsync)}: End ({traceId})", _eventId, this);
-			return FromNormalizedSqlString(reader.GetString(1));
-		}
-		public async Task<int> AddOrReplaceTagsAsync(ulong id, params string[] tags)
-		{
-			int traceId = Random.Shared.Next();
-			this._logger.Log(LogLevel.Debug, $"{nameof(AddOrReplaceTagsAsync)}: Start ({traceId})", _eventId, this);
-
-			SqliteConnection connection = this._userMiscInfoDataBase.Value;
-			SqliteCommand command = new($@"
-INSERT OR REPLACE INTO {this._config.UserMiscInfoTableName}(Id, Tags) VALUES(
-	{UncheckedConvertToLong(id)}, $value);", connection);
-			command.Parameters.AddWithValue("$value", NormalizeToSqlString(tags));
-
-			this._logger.Log(LogLevel.Debug, $"{nameof(AddOrReplaceTagsAsync)}: End ({traceId})", _eventId, this);
-			return await command.ExecuteNonQueryAsync();
-		}
-		public async Task<string[]?> GetTagsCachedAsync(ulong id)
-		{
-			object cache;
-			if ((cache = _userTagsCache[id.ToString()]) is not null)
-				return (string[])cache;
-
-			string[]? data = await this.GetTagsAsync(id);
-			if (data == null) return null;
-
-			_userTagsCache[id.ToString()] = data;
-			return data;
-		}
-		public async Task<int> AddOrReplaceTagsCachedAsync(ulong id, params string[] tags)
-		{
-			_userTagsCache[id.ToString()] = tags;
-			return await this.AddOrReplaceTagsAsync(id, tags);
-		}
 		#endregion
 
 		#region Song alias
@@ -358,7 +311,6 @@ SELECT * FROM {this._config.SongAliasTableName} WHERE
 		public static void ClearCache()
 		{
 			_tokenCache = new(nameof(_tokenCache));
-			_userTagsCache = new(nameof(_userTagsCache));
 			_songAliasCache = new(nameof(_songAliasCache));
 			_userDataCache = new(nameof(_userDataCache));
 		}

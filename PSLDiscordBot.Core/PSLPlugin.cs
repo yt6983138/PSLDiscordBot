@@ -16,6 +16,7 @@ using System.Text;
 using yt6983138.Common;
 
 namespace PSLDiscordBot.Core;
+
 public class PSLPlugin : InjectableBase, IPlugin
 {
 	private static EventId EventId { get; } = new(114511, "PSL");
@@ -28,10 +29,12 @@ public class PSLPlugin : InjectableBase, IPlugin
 	private Program _program = null!;
 
 	#region Injection
+
 	[Inject]
 	public DiscordClientService DiscordClientService { get; set; }
 	[Inject]
 	public CommandResolveService CommandResolveService { get; set; }
+
 	#endregion
 
 	public IUser? AdminUser { get; set; }
@@ -47,6 +50,7 @@ public class PSLPlugin : InjectableBase, IPlugin
 	#region Interface
 
 	#region Properties
+
 	string IPlugin.Name => "PSLDiscordBot Core";
 	string IPlugin.Description => "Core implementation for PSLDiscord bot";
 	string IPlugin.Version => "1.2.0.0";
@@ -56,9 +60,11 @@ public class PSLPlugin : InjectableBase, IPlugin
 	bool IPlugin.CanBeDynamicallyLoaded => false;
 	bool IPlugin.CanBeDynamicallyUnloaded => false;
 	int IPlugin.Priority => -1;
+
 	#endregion
 
 	#region Arg Info
+
 	public ArgParseInfo UpdateFiles => new(
 		"updateAssets",
 		"Update assets and help.md.",
@@ -78,7 +84,8 @@ public class PSLPlugin : InjectableBase, IPlugin
 			File.WriteAllBytes("./Assets.zip", zip.Result);
 			FastZip fastZip = new();
 			fastZip.ExtractZip("./Assets.zip", ".", "");
-		}, null);
+		},
+		null);
 	public ArgParseInfo ResetConfig => new(
 		"resetConfig",
 		"Reset configuration (only part)",
@@ -87,15 +94,14 @@ public class PSLPlugin : InjectableBase, IPlugin
 			this._logger.Log(LogLevel.Information, "Resetting config... (partial)", EventIdInitialize, this);
 			Config @default = new();
 			this._configService.Data.LogLocation = @default.LogLocation;
-			this._configService.Data.AutoSaveInterval = @default.AutoSaveInterval;
 			this._configService.Data.DifficultyMapLocation = @default.DifficultyMapLocation;
-			this._configService.Data.GetB20PhotoImageScriptLocation = @default.GetB20PhotoImageScriptLocation;
 			this._configService.Data.HelpMDLocation = @default.HelpMDLocation;
 			this._configService.Data.NameMapLocation = @default.NameMapLocation;
 			this._configService.Data.Verbose = @default.Verbose;
 
 			this._configService.Save();
-		}, null);
+		},
+		null);
 	public ArgParseInfo ResetConfigFull => new(
 		"resetConfigFull",
 		"Reset configuration completely.",
@@ -105,7 +111,8 @@ public class PSLPlugin : InjectableBase, IPlugin
 			this._configService.Data = new();
 
 			this._configService.Save();
-		}, null);
+		},
+		null);
 	public ArgParseInfo ResetScripts => new(
 		"resetScripts",
 		"Reset all image scripts.",
@@ -113,19 +120,13 @@ public class PSLPlugin : InjectableBase, IPlugin
 		{
 			this._logger.Log(LogLevel.Information, "Resetting image scripts...", EventIdInitialize, this);
 
-			Program program = InjectableBase.GetSingleton<Program>();
+			Program program = GetSingleton<Program>();
 			program.AfterMainInitialize += (sender, args) =>
 			{
-				AboutMeImageScriptService about =
-					InjectableBase.GetSingleton<AboutMeImageScriptService>();
-				about.Data = about.Generate();
-				about.Save();
-				GetB20PhotoImageScriptService b20 =
-					InjectableBase.GetSingleton<GetB20PhotoImageScriptService>();
-				b20.Data = b20.Generate();
-				b20.Save();
+				// reserved
 			};
-		}, null);
+		},
+		null);
 	public ArgParseInfo UpdateInfoAndDifficulty => new(
 		"updateInfoAndDifficulty",
 		"Update info.csv/tsv and difficulty.csv/tsv.",
@@ -134,17 +135,21 @@ public class PSLPlugin : InjectableBase, IPlugin
 			using HttpClient client = new();
 			byte[] diff =
 				client.GetByteArrayAsync(@"https://yt6983138.github.io/Assets/RksReader/Latest/difficulty.csv")
-				.GetAwaiter().GetResult();
+					.GetAwaiter()
+					.GetResult();
 			byte[] info =
 				client.GetByteArrayAsync(@"https://yt6983138.github.io/Assets/RksReader/Latest/info.csv")
-				.GetAwaiter().GetResult();
+					.GetAwaiter()
+					.GetResult();
 
 			string diffStr = Encoding.UTF8.GetString(diff);
 			string infoStr = Encoding.UTF8.GetString(info);
-			if (this._configService.Data.DifficultyMapLocation.EndsWith(".tsv", StringComparison.InvariantCultureIgnoreCase))
+			if (this._configService.Data.DifficultyMapLocation.EndsWith(".tsv",
+				StringComparison.InvariantCultureIgnoreCase))
 			{
 				diffStr = diffStr.Replace(",", "\t");
 			}
+
 			if (this._configService.Data.NameMapLocation.EndsWith(".tsv", StringComparison.InvariantCultureIgnoreCase))
 			{
 				infoStr = infoStr.Replace("\\", "\t");
@@ -152,7 +157,9 @@ public class PSLPlugin : InjectableBase, IPlugin
 
 			File.WriteAllText(this._configService.Data.DifficultyMapLocation, diffStr);
 			File.WriteAllText(this._configService.Data.NameMapLocation, infoStr);
-		}, null);
+		},
+		null);
+
 	#endregion
 
 	void IPlugin.Load(Program program, bool isDynamicLoading)
@@ -168,7 +175,8 @@ public class PSLPlugin : InjectableBase, IPlugin
 		program.AfterMainInitialize += this.Program_AfterMainInitialize;
 
 		this.CommandResolveService.BeforeSlashCommandExecutes += this.Program_BeforeSlashCommandExecutes;
-		this.CommandResolveService.OnSlashCommandError += this.CommandResolveService_OnSlashCommandError; ;
+		this.CommandResolveService.OnSlashCommandError += this.CommandResolveService_OnSlashCommandError;
+		;
 
 		program.AddArgReceiver(this.UpdateFiles);
 		program.AddArgReceiver(this.UpdateInfoAndDifficulty);
@@ -176,7 +184,7 @@ public class PSLPlugin : InjectableBase, IPlugin
 		program.AddArgReceiver(this.ResetConfigFull);
 		program.AddArgReceiver(this.ResetScripts);
 
-		InjectableBase.AddSingleton(this);
+		AddSingleton(this);
 
 		this.DiscordClientService.SocketClient.Ready += this.Client_Ready;
 		this.DiscordClientService.SocketClient.Log += this.Log;
@@ -187,9 +195,11 @@ public class PSLPlugin : InjectableBase, IPlugin
 		this._logger.Log(LogLevel.Information, "Service shutting down...", EventIdApp, this);
 		this.WriteAll();
 	}
+
 	#endregion
 
 	#region Event Handler
+
 	private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
 	{
 		Exception ex = e.ExceptionObject.Unbox<Exception>();
@@ -202,18 +212,27 @@ public class PSLPlugin : InjectableBase, IPlugin
 		bool @break = e.SpecialKey == ConsoleSpecialKey.ControlBreak;
 		if (@break)
 		{
-			this._logger.Log(LogLevel.Critical, "Hard terminating application. (Ctrl-C to soft terminate)", EventIdApp, this);
+			this._logger.Log(LogLevel.Critical,
+				"Hard terminating application. (Ctrl-C to soft terminate)",
+				EventIdApp,
+				this);
 			Environment.FailFast("Ctrl-break triggered, hard terminating.");
 			return;
 		}
 
 		e.Cancel = true;
 		this._statusService.CurrentStatus = Status.ShuttingDown;
-		this._logger.Log(LogLevel.Information, "Soft terminate initialized. (Ctrl-break to hard terminate)", EventIdApp, this);
+		this._logger.Log(LogLevel.Information,
+			"Soft terminate initialized. (Ctrl-break to hard terminate)",
+			EventIdApp,
+			this);
 		while (this._program.RunningTasks.Count > 0)
 		{
 			Thread.Sleep(500);
-			this._logger.Log(LogLevel.Information, $"{this._program.RunningTasks.Count} tasks running...", EventIdApp, this);
+			this._logger.Log(LogLevel.Information,
+				$"{this._program.RunningTasks.Count} tasks running...",
+				EventIdApp,
+				this);
 
 			if (this._statusService.CurrentStatus == Status.Normal)
 			{
@@ -235,22 +254,24 @@ public class PSLPlugin : InjectableBase, IPlugin
 	}
 	private void Program_AfterArgParse(object? sender, EventArgs e)
 	{
-		InjectableBase.AddSingleton(new DataBaseService());
-		InjectableBase.AddSingleton(new PhigrosDataService());
-		InjectableBase.AddSingleton(new GetB20PhotoImageScriptService());
-		InjectableBase.AddSingleton(new AboutMeImageScriptService());
-		InjectableBase.AddSingleton(new AvatarHashMapService());
-		InjectableBase.AddSingleton(new SongScoresImageScriptService());
-		InjectableBase.AddSingleton(new ImageGenerator());
+		AddSingleton(new DataBaseService());
+		AddSingleton(new ChromiumPoolService(this._configService.Data.ChromiumLocation,
+			this._configService.Data.DefaultChromiumTabCacheCount,
+			this._configService.Data.ChromiumPort,
+			this._configService.Data.Verbose,
+			this._configService.Data.Verbose));
+		AddSingleton(new PhigrosDataService());
+		AddSingleton(new AvatarHashMapService());
+		AddSingleton(new ImageGenerator());
 	}
 	private void Program_AfterPluginsLoaded(object? sender, EventArgs e)
 	{
 		this._configService = new();
-		InjectableBase.AddSingleton(this._configService);
+		AddSingleton(this._configService);
 		this._logger = new(this._configService.Data.LogLocation);
-		InjectableBase.AddSingleton(this._logger);
+		AddSingleton(this._logger);
 		this._statusService = new();
-		InjectableBase.AddSingleton(this._statusService);
+		AddSingleton(this._statusService);
 
 		if (!this._configService.Data.Verbose)
 			this._logger.Disabled.Add(LogLevel.Debug);
@@ -286,7 +307,8 @@ public class PSLPlugin : InjectableBase, IPlugin
 			EventId,
 			this);
 	}
-	private async void CommandResolveService_OnSlashCommandError(object? sender, BasicCommandExceptionEventArgs<Framework.CommandBase.BasicCommandBase> e)
+	private async void CommandResolveService_OnSlashCommandError(object? sender,
+		BasicCommandExceptionEventArgs<Framework.CommandBase.BasicCommandBase> e)
 	{
 		Task<RestInteractionMessage> oringal = e.Arg.GetOriginalResponseAsync(); // speed up, idk why
 		await this.OnException(e.Exception, e.Arg);
@@ -294,15 +316,17 @@ public class PSLPlugin : InjectableBase, IPlugin
 			$"Use `/report-problem` to report. Exception:";
 
 		RestInteractionMessage? awaited = await oringal;
-		if (awaited is not null && (!e.Arg.HasResponded || awaited.Flags.GetValueOrDefault().HasFlag(MessageFlags.Loading)))
+		if (awaited is not null &&
+			(!e.Arg.HasResponded || awaited.Flags.GetValueOrDefault().HasFlag(MessageFlags.Loading)))
 		{
-			await e.Arg.QuickReplyWithAttachments(formmated, Utils.ToAttachment(e.Exception.ToString(), "StackTrace.txt"));
+			await e.Arg.QuickReplyWithAttachments(formmated,
+				Utils.ToAttachment(e.Exception.ToString(), "StackTrace.txt"));
 		}
 	}
 
 	private async Task Client_Ready()
 	{
-		Program program = InjectableBase.GetSingleton<Program>();
+		Program program = GetSingleton<Program>();
 
 		if (this.Initialized) goto Final;
 
@@ -315,7 +339,10 @@ public class PSLPlugin : InjectableBase, IPlugin
 
 		if (admin is null)
 		{
-			this._logger.Log<PSLPlugin>(LogLevel.Warning, EventIdInitialize, "Admin {0} user not found!", this._configService.Data.AdminUserId);
+			this._logger.Log<PSLPlugin>(LogLevel.Warning,
+				EventIdInitialize,
+				"Admin {0} user not found!",
+				this._configService.Data.AdminUserId);
 			goto BypassAdminCheck;
 		}
 
@@ -331,6 +358,7 @@ public class PSLPlugin : InjectableBase, IPlugin
 		{
 			this._logger.Log(LogLevel.Warning, EventIdInitialize, this, ex);
 		}
+
 	BypassAdminCheck:
 	Final:
 		this._logger.Log(LogLevel.Information, "Bot started!", EventIdInitialize, this);
@@ -345,14 +373,15 @@ public class PSLPlugin : InjectableBase, IPlugin
 			and
 			{
 				InnerException:
-					not WebSocketClosedException
-					and not WebSocketException
+				not WebSocketClosedException
+				and not WebSocketException
 			})
 		{
 			this._logger.Log(LogLevel.Debug, msg.Exception!.GetType().FullName!, EventId, this);
 			await this.OnException(msg.Exception);
 		}
 	}
+
 	#endregion
 
 	private async Task OnException(Exception exception, SocketCommandBase? interaction = null)
@@ -373,14 +402,14 @@ public class PSLPlugin : InjectableBase, IPlugin
 					this.AdminUser.SendMessageAsync(interactionMessage),
 					this.AdminUser.SendFileAsync(Utils.ToStream(exception.ToString()), "StackTrace.txt"));
 			}
-			catch { }
+			catch
+			{
+			}
 		}
 	}
 	private void WriteAll()
 	{
 		this._configService.Save();
 		//InjectableBase.GetSingleton<DataBaseService>().Save();
-		InjectableBase.GetSingleton<AboutMeImageScriptService>().Save();
-		InjectableBase.GetSingleton<GetB20PhotoImageScriptService>().Save();
 	}
 }

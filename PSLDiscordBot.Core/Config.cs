@@ -1,7 +1,11 @@
-﻿namespace PSLDiscordBot.Core;
+﻿using HtmlToImage.NET;
+using Newtonsoft.Json;
+using PSLDiscordBot.Core.ImageGenerating;
+
+namespace PSLDiscordBot.Core;
+
 public class Config
 {
-	public int AutoSaveInterval { get; set; } = 20 * 1000 * 60; // 20min
 	public bool DMAdminAboutErrors { get; set; } = true;
 #if DEBUG
 	public bool Verbose { get; set; } = true;
@@ -13,9 +17,6 @@ public class Config
 	public ulong AdminUserId { get; set; }
 #endif
 	public string LogLocation { get; set; } = "./PSL/Latest.log";
-	public string GetB20PhotoImageScriptLocation { get; set; } = "./PSL/GetB20PhotoImageScript.json";
-	public string AboutMeImageScriptLocation { get; set; } = "./PSL/AboutMeImageScript.json";
-	public string SongScoresImageScriptLocation { get; set; } = "./PSL/SongScoresImageScript.json";
 
 	public string AvatarHashMapLocation { get; set; } = "./Assets/Avatar/AvatarInfo.json";
 
@@ -31,6 +32,44 @@ public class Config
 	public string DifficultyMapLocation { get; set; } = "./PSL/difficulty.tsv";
 	public string NameMapLocation { get; set; } = "./PSL/info.tsv";
 	public string HelpMDLocation { get; set; } = "./PSL/help.md";
-	public int MaxTagCount { get; set; } = 114;
-	public int MaxTagStringLength { get; set; } = 114;
+
+	public int DefaultChromiumTabCacheCount { get; set; } = 5;
+	public ushort ChromiumPort { get; set; } = 0;
+#if DEBUG
+	public string ChromiumLocation { get; set; } = Environment.GetEnvironmentVariable("DEBUG_CHROME_LOCATION")!;
+	public TimeSpan RenderTimeout { get; set; } = TimeSpan.FromSeconds(600);
+#else
+	public string ChromiumLocation { get; set; } = "";
+	public TimeSpan RenderTimeout { get; set; } = TimeSpan.FromSeconds(32);
+#endif
+	[JsonIgnore]
+	public CancellationTokenSource RenderTimeoutCTS => new(this.RenderTimeout);
+
+	public TimeSpan GetPhotoCoolDown { get; set; } = TimeSpan.FromMinutes(69);
+	public int GetPhotoCoolDownWhenLargerThan { get; set; } = 69;
+
+	public byte RenderQuality { get; set; } = 75;
+	public HtmlConverter.Tab.PhotoType DefaultRenderImageType { get; set; } = HtmlConverter.Tab.PhotoType.Jpeg;
+
+	public BasicHtmlImageInfo GetPhotoRenderInfo { get; set; } = new()
+	{
+		DynamicSize = true,
+		InitialWidth = 623,
+		InitialHeight = 1024,
+		HtmlPath = "./Assets/Misc/Html/GetPhoto.html"
+	};
+	public BasicHtmlImageInfo SongScoresRenderInfo { get; set; } = new()
+	{
+		DynamicSize = false,
+		InitialWidth = 304,
+		InitialHeight = 570,
+		HtmlPath = "./Assets/Misc/Html/SongScores.html"
+	};
+	public BasicHtmlImageInfo AboutMeRenderInfo { get; set; } = new()
+	{
+		DynamicSize = false,
+		InitialWidth = 1,
+		InitialHeight = 1,
+		HtmlPath = "./Assets/Misc/Html/.html"
+	};
 }

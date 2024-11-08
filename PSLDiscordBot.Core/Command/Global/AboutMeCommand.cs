@@ -4,13 +4,11 @@ using PhigrosLibraryCSharp.Cloud.DataStructure;
 using PhigrosLibraryCSharp.GameRecords;
 using PSLDiscordBot.Core.Command.Global.Base;
 using PSLDiscordBot.Core.ImageGenerating;
-using PSLDiscordBot.Core.ImageGenerating.TMPTag.Elements;
 using PSLDiscordBot.Core.Services;
 using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.CommandBase;
 using PSLDiscordBot.Framework.DependencyInjection;
-using SixLabors.ImageSharp;
 
 namespace PSLDiscordBot.Core.Command.Global;
 
@@ -21,8 +19,6 @@ public class AboutMeCommand : CommandBase
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 	[Inject]
 	public PhigrosDataService PhigrosDataService { get; set; }
-	[Inject]
-	public AboutMeImageScriptService AboutMeImageScriptService { get; set; }
 	[Inject]
 	public ImageGenerator ImageGenerator { get; set; }
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
@@ -45,6 +41,10 @@ public class AboutMeCommand : CommandBase
 
 	public override async Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
 	{
+		await arg.QuickReply("Sorry, this command is currently not available.");
+		return;
+
+
 		int index = arg.GetIntegerOptionAsInt32OrDefault("index");
 
 		PhigrosLibraryCSharp.SaveSummaryPair? pair = await data.SaveCache.GetAndHandleSave(
@@ -57,44 +57,24 @@ public class AboutMeCommand : CommandBase
 		GameUserInfo userInfo = await data.SaveCache.GetGameUserInfoAsync(index);
 		GameProgress progress = await data.SaveCache.GetGameProgressAsync(index);
 		UserInfo outerUserInfo = await data.SaveCache.GetUserInfoAsync();
-		outerUserInfo.NickName = string.Join("", TMPTagElementHelper.Parse(outerUserInfo.NickName).Select(x => x.ToTextOnly()));
 
-		const string RealCoolName = "NULL";
-		save.Records.Sort((x, y) => y.Rks.CompareTo(x.Rks));
+		(CompleteScore? best, double rks) = Utils.SortRecord(save);
 
-		CompleteScore @default = new(0, 0, 0, RealCoolName, Difficulty.EZ, ScoreStatus.Bugged);
-
-		CompleteScore best = save.Records.FirstOrDefault(x => x.Status == ScoreStatus.Phi) ?? @default;
-
-		double rks = best.Rks * 0.05;
-
-		int i = 0;
-		save.Records.ForEach(x => { if (i < 19) rks += x.Rks * 0.05; i++; });
-
-		SixLabors.ImageSharp.Image image = this.ImageGenerator.MakePhoto(
-			save.Records.ToArray(),
+		MemoryStream image = await this.ImageGenerator.MakePhoto(
+			save.Records,
 			best,
-			this.PhigrosDataService.IdNameMap,
 			data,
 			summary,
 			userInfo,
 			progress,
 			outerUserInfo,
+			this.ConfigService.Data.AboutMeRenderInfo,
 			rks,
-			this.AboutMeImageScriptService.Data,
-			arg.User.Id
+			this.ConfigService.Data.DefaultRenderImageType,
+			this.ConfigService.Data.RenderQuality,
+			cancellationToken: this.ConfigService.Data.RenderTimeoutCTS.Token
 		);
-		MemoryStream stream = new();
 
-		await image.SaveAsPngAsync(stream);
-
-		image.Dispose();
-
-		await arg.ModifyOriginalResponseAsync(
-			(msg) =>
-			{
-				msg.Content = "Generated!";
-				msg.Attachments = new List<FileAttachment>() { new(stream, "Scores.png") };
-			});
+		await arg.QuickReplyWithAttachments("Generated!", new FileAttachment(image, "Score.png"));
 	}
 }
