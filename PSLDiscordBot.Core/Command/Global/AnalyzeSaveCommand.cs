@@ -10,7 +10,7 @@ using PSLDiscordBot.Framework.CommandBase;
 using PSLDiscordBot.Framework.DependencyInjection;
 using System.Text;
 
-namespace PSLDiscordBot.Core.Command.Global.Template;
+namespace PSLDiscordBot.Core.Command.Global;
 
 [AddToGlobal]
 public class AnalyzeSaveCommand : AdminCommandBase

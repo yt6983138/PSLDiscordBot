@@ -8,7 +8,7 @@ using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.CommandBase;
 using System.Reflection;
 
-namespace PSLDiscordBot.Core.Command.Global.Template;
+namespace PSLDiscordBot.Core.Command.Global;
 
 [AddToGlobal]
 public class ConfigCommand : AdminCommandBase
@@ -18,7 +18,7 @@ public class ConfigCommand : AdminCommandBase
 		typeof(Config)
 		.GetProperties()
 		.Where(x =>
-			x.GetCustomAttribute<Newtonsoft.Json.JsonIgnoreAttribute>() is null
+			x.GetCustomAttribute<JsonIgnoreAttribute>() is null
 			&& x.GetCustomAttribute<System.Text.Json.Serialization.JsonIgnoreAttribute>() is null)
 		.ToDictionary(x => x.Name, x => x);
 
