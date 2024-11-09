@@ -68,7 +68,7 @@ public class GetPhotoCommand : CommandBase
 		{
 			await arg.QuickReply(
 				$"Sorry, the channel you are requesting this from does not allow me to send images larger than 10mb :(\n" +
-				$"Please either use count lower or equal to {this.ConfigService.Data.GetPhotoCoolDownWhenLargerThan} or find other servers with boost.");
+				$"Please either use count lower or equal to {this.ConfigService.Data.GetPhotoUsePngWhenLargerThan} or find other servers with boost.");
 			return;
 		}
 		if (shouldUseCoolDown)
