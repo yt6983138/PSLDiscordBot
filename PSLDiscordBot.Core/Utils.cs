@@ -156,4 +156,14 @@ public static class Utils
 	{
 		return new(ToStream(str, encoding), filename, description, spoiler);
 	}
+	public static bool HasValueAnd<T>(this Nullable<T> self, Func<T, bool> predicate) where T : struct
+	{
+		if (!self.HasValue) return false;
+		return predicate.Invoke(self.Value);
+	}
+	public static bool IsNotNullAnd<T>(this T? self, Func<T, bool> predicate) where T : class
+	{
+		if (self is null) return false;
+		return predicate.Invoke(self);
+	}
 }

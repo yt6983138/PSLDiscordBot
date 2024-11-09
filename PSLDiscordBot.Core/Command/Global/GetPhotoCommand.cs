@@ -70,11 +70,12 @@ public class GetPhotoCommand : CommandBase
 				return;
 			}
 
-			if (arg.GuildId is null ||
-				this.DiscordClientService.SocketClient.GetGuild(arg.GuildId.Value).PremiumSubscriptionCount < 7)
+			if (arg.GuildId
+				.HasValueAnd(i => this.DiscordClientService.SocketClient.GetGuild(i)
+					.IsNotNullAnd(a => a.PremiumSubscriptionCount < 7)))
 			{
 				await arg.QuickReply(
-					$"Sorry, the channel you are requesting this from does not allow me to send images larger than 50mb :(\n" +
+					$"Sorry, the channel you are requesting this from does not allow me to send images larger than 10mb :(\n" +
 					$"Please either use count lower or equal to {this.ConfigService.Data.GetPhotoCoolDownWhenLargerThan} or find other servers with boost.");
 				return;
 			}
