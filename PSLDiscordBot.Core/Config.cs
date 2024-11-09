@@ -53,6 +53,7 @@ public class Config
 
 	public TimeSpan GetPhotoCoolDown { get; set; } = TimeSpan.FromMinutes(69);
 	public int GetPhotoCoolDownWhenLargerThan { get; set; } = 69;
+	public int GetPhotoUsePngWhenLargerThan { get; set; } = 69;
 
 	public byte RenderQuality { get; set; } = 75;
 	public HtmlConverter.Tab.PhotoType DefaultRenderImageType { get; set; } = HtmlConverter.Tab.PhotoType.Jpeg;

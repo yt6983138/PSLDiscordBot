@@ -59,24 +59,25 @@ public class GetPhotoCommand : CommandBase
 		int index = arg.GetIntegerOptionAsInt32OrDefault("index");
 		int count = arg.GetIntegerOptionAsInt32OrDefault("count", 23);
 
-		bool isLarge = count > this.ConfigService.Data.GetPhotoCoolDownWhenLargerThan;
-		if (isLarge)
+		bool usePng = count > this.ConfigService.Data.GetPhotoUsePngWhenLargerThan;
+		bool shouldUseCoolDown = count > this.ConfigService.Data.GetPhotoCoolDownWhenLargerThan;
+
+		if (usePng && !arg.GuildId
+			.HasValueAnd(i => this.DiscordClientService.SocketClient.GetGuild(i)
+				.IsNotNullAnd(a => a.PremiumSubscriptionCount >= 7)))
+		{
+			await arg.QuickReply(
+				$"Sorry, the channel you are requesting this from does not allow me to send images larger than 10mb :(\n" +
+				$"Please either use count lower or equal to {this.ConfigService.Data.GetPhotoCoolDownWhenLargerThan} or find other servers with boost.");
+			return;
+		}
+		if (shouldUseCoolDown)
 		{
 			if (DateTime.Now < data.GetPhotoCoolDownUntil)
 			{
 				await arg.QuickReply($"Sorry, due to memory issues there is a cooldown " +
 					$"when count > {this.ConfigService.Data.GetPhotoCoolDownWhenLargerThan}, " +
 					$"{data.GetPhotoCoolDownUntil - DateTime.Now} remain.");
-				return;
-			}
-
-			if (arg.GuildId
-				.HasValueAnd(i => this.DiscordClientService.SocketClient.GetGuild(i)
-					.IsNotNullAnd(a => a.PremiumSubscriptionCount < 7)))
-			{
-				await arg.QuickReply(
-					$"Sorry, the channel you are requesting this from does not allow me to send images larger than 10mb :(\n" +
-					$"Please either use count lower or equal to {this.ConfigService.Data.GetPhotoCoolDownWhenLargerThan} or find other servers with boost.");
 				return;
 			}
 			data.GetPhotoCoolDownUntil = DateTime.Now + this.ConfigService.Data.GetPhotoCoolDown;
@@ -107,7 +108,7 @@ public class GetPhotoCommand : CommandBase
 			outerUserInfo,
 			this.ConfigService.Data.GetPhotoRenderInfo,
 			rks,
-			isLarge ? PhotoType.Png : this.ConfigService.Data.DefaultRenderImageType,
+			usePng ? PhotoType.Png : this.ConfigService.Data.DefaultRenderImageType,
 			this.ConfigService.Data.RenderQuality,
 			new
 			{
@@ -116,7 +117,7 @@ public class GetPhotoCommand : CommandBase
 			cancellationToken: this.ConfigService.Data.RenderTimeoutCTS.Token
 		);
 
-		if (isLarge)
+		if (usePng)
 		{
 			try
 			{
