@@ -81,7 +81,8 @@ public static class Utils
 		bool autoThrow = true,
 		string onOutOfRange = "Error: Expected index less than {0}, more or equal to 0. You entered {1}.",
 		string onOtherException = "Error: {0}\nYou may try again or report to author (`/report-problem`).",
-		string onNoSaves = "Error: There is no save on the cloud, did you use wrong account, or have not synced?")
+		string onNoSaves = "Error: There is no save on the cloud, did you use wrong account, or have not synced?",
+		string onPhiLibUriException = "Error: {0}\n*This sometimes can indicate save corruption. Please try few more times.*")
 	{
 		try
 		{
@@ -97,6 +98,10 @@ public static class Utils
 		catch (MaxValueArgumentOutOfRangeException ex) when (ex.ActualValue is int && ex.MaxValue is int)
 		{
 			await command.QuickReply(string.Format(onOutOfRange, ex.MaxValue, ex.ActualValue));
+		}
+		catch (InvalidOperationException ex) when (ex.Message.Contains("invalid request URI was provided"))
+		{
+			await command.QuickReply(string.Format(onPhiLibUriException, ex.Message));
 		}
 		catch (Exception ex)
 		{
