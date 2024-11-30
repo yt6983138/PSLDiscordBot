@@ -5,6 +5,7 @@ using PhigrosLibraryCSharp.Cloud.Login;
 using PSLDiscordBot.Core.Command.Global.Base;
 using PSLDiscordBot.Core.Services;
 using PSLDiscordBot.Core.UserDatas;
+using PSLDiscordBot.Core.Utility;
 using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.CommandBase;
 using System.Net.NetworkInformation;
@@ -86,6 +87,6 @@ public class PingCommand : GuestCommandBase
 			output.AppendLine();
 		}
 
-		await arg.QuickReplyWithAttachments("Ping complete, result:", Utils.ToAttachment(output.ToString(), "Result.txt"));
+		await arg.QuickReplyWithAttachments("Ping complete, result:", PSLUtils.ToAttachment(output.ToString(), "Result.txt"));
 	}
 }

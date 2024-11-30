@@ -11,8 +11,8 @@ using SixLabors.ImageSharp.Processing;
 using System.Text;
 using Image = SixLabors.ImageSharp.Image;
 
-namespace PSLDiscordBot.Core;
-public static class Utils
+namespace PSLDiscordBot.Core.Utility;
+public static class PSLUtils
 {
 	internal static Point ToIntPoint(this PointF val)
 		=> new((int)val.X, (int)val.Y);
@@ -161,7 +161,7 @@ public static class Utils
 	{
 		return new(ToStream(str, encoding), filename, description, spoiler);
 	}
-	public static bool HasValueAnd<T>(this Nullable<T> self, Func<T, bool> predicate) where T : struct
+	public static bool HasValueAnd<T>(this T? self, Func<T, bool> predicate) where T : struct
 	{
 		if (!self.HasValue) return false;
 		return predicate.Invoke(self.Value);

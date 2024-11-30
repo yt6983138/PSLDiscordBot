@@ -6,6 +6,7 @@ using PSLDiscordBot.Core.Command.Global.Base;
 using PSLDiscordBot.Core.ImageGenerating;
 using PSLDiscordBot.Core.Services;
 using PSLDiscordBot.Core.UserDatas;
+using PSLDiscordBot.Core.Utility;
 using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.CommandBase;
 using PSLDiscordBot.Framework.DependencyInjection;
@@ -70,7 +71,7 @@ public class SongScoresCommand : CommandBase
 		GameProgress progress = await data.SaveCache.GetGameProgressAsync(index);
 		UserInfo outerUserInfo = await data.SaveCache.GetUserInfoAsync();
 
-		(CompleteScore? best, double rks) = Utils.SortRecord(save);
+		(CompleteScore? best, double rks) = PSLUtils.SortRecord(save);
 
 		List<CompleteScore> scoresToShow = save.Records
 			.Where(x =>
@@ -122,7 +123,7 @@ public class SongScoresCommand : CommandBase
 			$"You looked for song `{search}`, showing...",
 			[
 				new(image, "ScoreAnalysis.png"),
-				Utils.ToAttachment(
+				PSLUtils.ToAttachment(
 					GetScoresCommand.ScoresFormatter(
 						scoresToShow,
 						this.PhigrosDataService.IdNameMap,

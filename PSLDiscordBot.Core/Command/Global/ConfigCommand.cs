@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using PSLDiscordBot.Core.Command.Global.Base;
 using PSLDiscordBot.Core.Services;
 using PSLDiscordBot.Core.UserDatas;
+using PSLDiscordBot.Core.Utility;
 using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.CommandBase;
 using System.Reflection;
@@ -46,7 +47,7 @@ public class ConfigCommand : AdminCommandBase
 		if (propertyName == "all")
 		{
 			await arg.QuickReplyWithAttachments($"Current full configs:",
-				Utils.ToAttachment(JsonConvert.SerializeObject(this.ConfigService.Data, Formatting.Indented), "Config.json"));
+				PSLUtils.ToAttachment(JsonConvert.SerializeObject(this.ConfigService.Data, Formatting.Indented), "Config.json"));
 			return;
 		}
 		else if (propertyName == "save")

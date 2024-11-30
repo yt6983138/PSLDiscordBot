@@ -6,6 +6,7 @@ using ICSharpCode.SharpZipLib.Zip;
 using Microsoft.Extensions.Logging;
 using PSLDiscordBot.Core.ImageGenerating;
 using PSLDiscordBot.Core.Services;
+using PSLDiscordBot.Core.Utility;
 using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.BuiltInServices;
 using PSLDiscordBot.Framework.DependencyInjection;
@@ -341,7 +342,7 @@ public class PSLPlugin : InjectableBase, IPlugin
 			(!e.Arg.HasResponded || awaited.Flags.GetValueOrDefault().HasFlag(MessageFlags.Loading)))
 		{
 			await e.Arg.QuickReplyWithAttachments(formmated,
-				Utils.ToAttachment(e.Exception.ToString(), "StackTrace.txt"));
+				PSLUtils.ToAttachment(e.Exception.ToString(), "StackTrace.txt"));
 		}
 	}
 
@@ -421,7 +422,7 @@ public class PSLPlugin : InjectableBase, IPlugin
 					: "";
 				await Task.WhenAll(
 					this.AdminUser.SendMessageAsync(interactionMessage),
-					this.AdminUser.SendFileAsync(Utils.ToStream(exception.ToString()), "StackTrace.txt"));
+					this.AdminUser.SendFileAsync(PSLUtils.ToStream(exception.ToString()), "StackTrace.txt"));
 			}
 			catch
 			{

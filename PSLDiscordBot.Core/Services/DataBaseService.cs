@@ -1,15 +1,29 @@
 ﻿using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
 using PSLDiscordBot.Core.UserDatas;
+using PSLDiscordBot.Core.Utility;
 using PSLDiscordBot.Framework.DependencyInjection;
-using System.Runtime.Caching;
+using System.Runtime.CompilerServices;
 using yt6983138.Common;
 
 namespace PSLDiscordBot.Core.Services;
 
 public record class SongAliasPair(string SongId, string[] Alias);
+// TODO: refactor this entire shit
 public sealed class DataBaseService : InjectableBase
 {
+	private sealed class LogTracer(Action _onDispose) : IDisposable
+	{
+		private bool _disposed;
+		~LogTracer() => this.Dispose();
+		public void Dispose()
+		{
+			if (!this._disposed) _onDispose.Invoke();
+			this._disposed = true;
+			GC.SuppressFinalize(this);
+		}
+	}
+
 	[Inject]
 	private ConfigService Config { get; set; }
 
@@ -29,6 +43,8 @@ public sealed class DataBaseService : InjectableBase
 
 	public sealed class DbDataRequester : IDisposable
 	{
+		private record class MiscInfoCache(int DefaultGetPhotoShowCount);
+
 		public const string StringArrayDelimiter = "\x1F";
 		private static readonly EventId _eventId = new(114, nameof(DbDataRequester));
 
@@ -43,9 +59,9 @@ public sealed class DataBaseService : InjectableBase
 		#endregion
 
 		#region Caches
-		private static MemoryCache _tokenCache = new(nameof(_tokenCache));
-		private static MemoryCache _songAliasCache = new(nameof(_songAliasCache));
-		private static MemoryCache _userDataCache = new(nameof(_userDataCache));
+		private static GenericMemoryCache<ulong, UserData> _userDataCache = new(nameof(_userDataCache));
+		private static GenericMemoryCache<ulong, MiscInfoCache> _userMiscInfoCache = new(nameof(_userMiscInfoCache));
+		private static GenericMemoryCache<string, string[]> _songAliasCache = new(nameof(_songAliasCache));
 		#endregion
 
 		#region Helper methods
@@ -70,163 +86,137 @@ public sealed class DataBaseService : InjectableBase
 		}
 		private SqliteConnection CreateConnection_UserTokenDataBase()
 		{
-			int traceId = Random.Shared.Next();
-			this._logger.Log(LogLevel.Debug, $"{nameof(CreateConnection_UserTokenDataBase)}: Start ({traceId})", _eventId, this);
-
-			SqliteConnection dat = new($"Data Source={this._config.MainUserDataDbLocation}");
-			dat.Open();
-
-			string tableCreateCommand = $@"
-CREATE TABLE IF NOT EXISTS {this._config.MainUserDataTableName} (
-	Id INTEGER PRIMARY KEY NOT NULL, Token varchar(25) NOT NULL, ShowFormat TEXT NOT NULL
-);";
-			SqliteCommand command = new(tableCreateCommand, dat);
-			command.ExecuteNonQuery();
-
-			this._logger.Log(LogLevel.Debug, $"{nameof(CreateConnection_UserTokenDataBase)}: End ({traceId})", _eventId, this);
-			return dat;
+			return this.QuickCreate(
+				this._config.MainUserDataDbLocation,
+				this._config.MainUserDataTableName,
+				"Id INTEGER PRIMARY KEY NOT NULL, Token varchar(25) NOT NULL, ShowFormat TEXT NOT NULL");
 		}
-		private SqliteConnection CreateConnection_UserMiscInfoDataBase() // currently reserved for future use
+		private SqliteConnection CreateConnection_UserMiscInfoDataBase()
 		{
-			int traceId = Random.Shared.Next();
-			this._logger.Log(LogLevel.Debug, $"{nameof(CreateConnection_UserMiscInfoDataBase)}: Start ({traceId})", _eventId, this);
-
-			SqliteConnection dat = new($"Data Source={this._config.UserMiscInfoDbLocation}");
-			dat.Open();
-
-			string tableCreateCommand = $@"
-CREATE TABLE IF NOT EXISTS {this._config.UserMiscInfoTableName} (
-	Id INTEGER PRIMARY KEY NOT NULL, Tags TEXT NOT NULL
-);";
-
-			SqliteCommand command = new(tableCreateCommand, dat);
-			command.ExecuteNonQuery();
-
-			this._logger.Log(LogLevel.Debug, $"{nameof(CreateConnection_UserMiscInfoDataBase)}: End ({traceId})", _eventId, this);
-			return dat;
+			return this.QuickCreate(
+				 this._config.UserMiscInfoDbLocation,
+				 this._config.UserMiscInfoTableName,
+				 "Id INTEGER PRIMARY KEY NOT NULL, DefaultGetPhotoShowCount INTEGER NOT NULL");
 		}
 		private SqliteConnection CreateConnection_SongAliasDataBase()
 		{
-			int traceId = Random.Shared.Next();
-			this._logger.Log(LogLevel.Debug, $"{nameof(CreateConnection_SongAliasDataBase)}: Start ({traceId})", _eventId, this);
-
-			SqliteConnection dat = new($"Data Source={this._config.SongAliasDbLocation}");
-			dat.Open();
-
-			string tableCreateCommand = $@"
-CREATE TABLE IF NOT EXISTS {this._config.SongAliasTableName} (
-	SongId TEXT PRIMARY KEY NOT NULL, Alias TEXT NOT NULL
-);";
-
-			SqliteCommand command = new(tableCreateCommand, dat);
-			command.ExecuteNonQuery();
-
-			this._logger.Log(LogLevel.Debug, $"{nameof(CreateConnection_SongAliasDataBase)}: End ({traceId})", _eventId, this);
-			return dat;
+			return this.QuickCreate(
+				 this._config.SongAliasDbLocation,
+				 this._config.SongAliasTableName,
+				 "SongId TEXT PRIMARY KEY NOT NULL, Alias TEXT NOT NULL");
 		}
 		#endregion
 
 		#region Token/show format operation
-		public async Task<int> AddOrReplaceTokenAsync(ulong id, string token, string? showFormat = null)
+		public async Task<int> AddOrReplaceUserDataAsync(ulong id, UserData userData)
 		{
-			int traceId = Random.Shared.Next();
-			this._logger.Log(LogLevel.Debug, $"{nameof(AddOrReplaceTokenAsync)}: Start ({traceId})", _eventId, this);
-
-			SqliteConnection connection = this._userTokenDataBase.Value;
-			SqliteCommand command = new($@"
-INSERT OR REPLACE INTO {this._config.MainUserDataTableName}(Id, Token, ShowFormat) VALUES(
-	{UncheckedConvertToLong(id)}, '{token}', '{showFormat ?? ".00"}');", connection);
-
-			this._logger.Log(LogLevel.Debug, $"{nameof(AddOrReplaceTokenAsync)}: End ({traceId})", _eventId, this);
-			return await command.ExecuteNonQueryAsync();
+			return await this.QuickExecute(this._userTokenDataBase.Value, $@"
+				INSERT OR REPLACE INTO {this._config.MainUserDataTableName}(Id, Token, ShowFormat) VALUES(
+					{UncheckedConvertToLong(id)}, '{userData.Token}', '{userData.ShowFormat}');");
 		}
-		public async Task<string?> GetTokenDirectlyAsync(ulong id)
+		public async Task<UserData?> GetUserDataDirectlyAsync(ulong id)
 		{
-			int traceId = Random.Shared.Next();
-			this._logger.Log(LogLevel.Debug, $"{nameof(GetTokenDirectlyAsync)}: Start ({traceId})", _eventId, this);
+			using SqliteDataReader reader = await this.QuickRead(this._userTokenDataBase.Value, $@"
+				SELECT * FROM {this._config.MainUserDataTableName} WHERE
+					Id = {UncheckedConvertToLong(id)};");
 
-			SqliteConnection connection = this._userTokenDataBase.Value;
-			SqliteCommand command = new($@"
-SELECT * FROM {this._config.MainUserDataTableName} WHERE
-	Id = {UncheckedConvertToLong(id)};", connection);
-			using SqliteDataReader reader = await command.ExecuteReaderAsync();
 			if (!await reader.ReadAsync())
 				return null;
 
-			this._logger.Log(LogLevel.Debug, $"{nameof(GetTokenDirectlyAsync)}: End ({traceId})", _eventId, this);
-			return reader.GetString(1);
-		}
-		public async Task<UserData?> GetUserDataCachedAsync(ulong id)
-		{
-			object cache;
-			if ((cache = _userDataCache[id.ToString()]) is not null)
-				return (UserData)cache;
-
-			SqliteConnection connection = this._userTokenDataBase.Value;
-			SqliteCommand command = new($@"
-SELECT * FROM {this._config.MainUserDataTableName} WHERE
-	Id = {UncheckedConvertToLong(id)};", connection);
-			using SqliteDataReader reader = await command.ExecuteReaderAsync();
-			if (!await reader.ReadAsync())
-				return null;
-
-			UserData data = new(reader.GetString(1))
+			return new(reader.GetString(1))
 			{
 				ShowFormat = reader.GetString(2)
 			};
-			_userDataCache[id.ToString()] = data;
+		}
+		public async Task<UserData?> GetUserDataCachedAsync(ulong id)
+		{
+			UserData? cache = _userDataCache[id];
+			if (cache is not null)
+				return cache;
+
+			UserData? data = await this.GetUserDataDirectlyAsync(id);
+			if (data is null) return null;
+
+			_userDataCache[id] = data;
 			return data;
 		}
 		public async Task<int> AddOrReplaceUserDataCachedAsync(ulong id, UserData data)
 		{
-			_userDataCache[id.ToString()] = data;
+			_userDataCache[id] = data;
 
-			return await this.AddOrReplaceTokenAsync(id, data.Token, data.ShowFormat);
+			return await this.AddOrReplaceUserDataAsync(id, data);
 		}
 		#endregion
 
 		#region Misc info operation
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <returns>null if id not exist</returns>
+		public async Task<int?> GetDefaultGetPhotoShowCountDirectly(ulong id)
+		{
+			using SqliteDataReader reader = await this.QuickRead(this._userMiscInfoDataBase.Value, $@"
+				SELECT * FROM {this._config.UserMiscInfoTableName} WHERE
+					Id = {UncheckedConvertToLong(id)};");
 
+			if (!await reader.ReadAsync())
+				return null;
+
+			return reader.GetInt32(1);
+		}
+		public async Task<int> SetDefaultGetPhotoShowCountDirectly(ulong id, int count)
+		{
+			return await this.QuickExecute(this._userMiscInfoDataBase.Value, $@"
+				INSERT OR REPLACE INTO {this._config.UserMiscInfoTableName}(Id, DefaultGetPhotoShowCount) VALUES(
+					{UncheckedConvertToLong(id)}, {count});");
+		}
+
+		public async Task<int?> GetDefaultGetPhotoShowCountCached(ulong id)
+		{
+			MiscInfoCache? cache = _userMiscInfoCache[id];
+			if (cache is not null)
+				return cache.DefaultGetPhotoShowCount;
+
+			int? count = await this.GetDefaultGetPhotoShowCountDirectly(id);
+			if (count is null) return null;
+
+			MiscInfoCache data = new(count.Value);
+			_userMiscInfoCache[id] = data;
+			return data.DefaultGetPhotoShowCount;
+		}
+		public async Task<int> SetDefaultGetPhotoShowCountCached(ulong id, int count)
+		{
+			_userMiscInfoCache[id] = new MiscInfoCache(count);
+
+			return await this.SetDefaultGetPhotoShowCountDirectly(id, count);
+		}
 		#endregion
 
 		#region Song alias
 		public async Task<string[]?> GetSongAliasAsync(string songId)
 		{
-			int traceId = Random.Shared.Next();
-			this._logger.Log(LogLevel.Debug, $"{nameof(GetSongAliasAsync)}: Start ({traceId})", _eventId, this);
+			using SqliteDataReader reader = await this.QuickRead(this._songAliasDataBase.Value, $@"
+				SELECT * FROM {this._config.SongAliasTableName} WHERE
+					SongId = $songId;",
+				new() { { "$songId", songId } });
 
-			SqliteConnection connection = this._songAliasDataBase.Value;
-			SqliteCommand command = new($@"
-SELECT * FROM {this._config.SongAliasTableName} WHERE
-	SongId = $songId;", connection);
-			command.Parameters.AddWithValue("$songId", songId);
-			using SqliteDataReader reader = await command.ExecuteReaderAsync();
 			if (!await reader.ReadAsync())
 				return null;
 
-			this._logger.Log(LogLevel.Debug, $"{nameof(GetSongAliasAsync)}: End ({traceId})", _eventId, this);
 			return FromNormalizedSqlString(reader.GetString(1));
 		}
 		public async Task<int> AddOrReplaceSongAliasAsync(string songId, string[] alias)
 		{
-			int traceId = Random.Shared.Next();
-			this._logger.Log(LogLevel.Debug, $"{nameof(AddOrReplaceSongAliasAsync)}: Start ({traceId})", _eventId, this);
-
-			SqliteConnection connection = this._songAliasDataBase.Value;
-			SqliteCommand command = new($@"
-INSERT OR REPLACE INTO {this._config.SongAliasTableName} VALUES(
-	$songId, $value);", connection);
-			command.Parameters.AddWithValue("$songId", songId);
-			command.Parameters.AddWithValue("$value", NormalizeToSqlString(alias));
-
-			this._logger.Log(LogLevel.Debug, $"{nameof(AddOrReplaceSongAliasAsync)}: End ({traceId})", _eventId, this);
-			return await command.ExecuteNonQueryAsync();
+			return await this.QuickExecute(this._songAliasDataBase.Value, $@"
+				SELECT * FROM {this._config.SongAliasTableName} WHERE
+					instr(lower(Alias), lower($alias)) > 0;",
+				new() { { "$songId", songId }, { "$value", NormalizeToSqlString(alias) } });
 		}
 		public async Task<string[]?> GetSongAliasCachedAsync(string id)
 		{
-			object cache;
-			if ((cache = _songAliasCache[id]) is not null)
-				return (string[])cache;
+			string[]? cache = _songAliasCache[id];
+			if (cache is not null)
+				return cache;
 
 			string[]? data = await this.GetSongAliasAsync(id);
 			if (data is null) return null;
@@ -247,15 +237,9 @@ INSERT OR REPLACE INTO {this._config.SongAliasTableName} VALUES(
 		/// <returns></returns>
 		public async Task<List<SongAliasPair>> FindSongAliasAsync(string alias)
 		{
-			int traceId = Random.Shared.Next();
-			this._logger.Log(LogLevel.Debug, $"{nameof(FindSongAliasAsync)}: Start ({traceId})", _eventId, this);
-
-			SqliteConnection connection = this._songAliasDataBase.Value;
-			SqliteCommand command = new($@"
+			using SqliteDataReader reader = await this.QuickRead(this._songAliasDataBase.Value, $@"
 SELECT * FROM {this._config.SongAliasTableName} WHERE
-	instr(lower(Alias), lower($alias)) > 0;", connection);
-			command.Parameters.AddWithValue("$alias", alias);
-			using SqliteDataReader reader = await command.ExecuteReaderAsync();
+	instr(lower(Alias), lower($alias)) > 0;", new() { { "$alias", alias } });
 
 			List<SongAliasPair> pairs = new();
 			while (await reader.ReadAsync())
@@ -263,28 +247,29 @@ SELECT * FROM {this._config.SongAliasTableName} WHERE
 				pairs.Add(new(reader.GetString(0), FromNormalizedSqlString(reader.GetString(1))));
 			}
 
-			this._logger.Log(LogLevel.Debug, $"{nameof(FindSongAliasAsync)}: End ({traceId})", _eventId, this);
 			return pairs;
 		}
 		[Obsolete("I think theres something wrong here, as some caches might miss and return things without the cache even it exists")]
 		public async Task<List<SongAliasPair>> FindSongAliasCachedAsync(string alias)
 		{
-			List<SongAliasPair> matchesInCaches = _songAliasCache
-				.Select(x => new SongAliasPair(x.Key, (string[])x.Value))
-				.Where(x => x.Alias.Contains(alias))
-				.ToList();
+			await Task.Delay(0);
+			throw new NotSupportedException();
+			//List<SongAliasPair> matchesInCaches = _songAliasCache
+			//	.Select(x => new SongAliasPair(x.Key, (string[])x.Value))
+			//	.Where(x => x.Alias.Contains(alias))
+			//	.ToList();
 
-			if (matchesInCaches.Count != 0)
-				return matchesInCaches;
+			//if (matchesInCaches.Count != 0)
+			//	return matchesInCaches;
 
-			List<SongAliasPair> results = await this.FindSongAliasAsync(alias);
+			//List<SongAliasPair> results = await this.FindSongAliasAsync(alias);
 
-			foreach (SongAliasPair item in results)
-			{
-				_songAliasCache[item.SongId] = item.Alias;
-			}
+			//foreach (SongAliasPair item in results)
+			//{
+			//	_songAliasCache[item.SongId] = item.Alias;
+			//}
 
-			return results;
+			//return results;
 		}
 		#endregion
 
@@ -308,9 +293,65 @@ SELECT * FROM {this._config.SongAliasTableName} WHERE
 		}
 		#endregion
 
+		#region Utility
+		private SqliteConnection QuickCreate(string source, string tableName, string columns, [CallerMemberName] string methodName = "<undefined>")
+		{
+			using LogTracer _ = this.LogTracing(methodName);
+
+			SqliteConnection dat = new($"Data Source={source}");
+			dat.Open();
+
+			string tableCreateCommand = $@"CREATE TABLE IF NOT EXISTS {tableName} ({columns});";
+			SqliteCommand command = new(tableCreateCommand, dat);
+			command.ExecuteNonQuery();
+
+			return dat;
+		}
+		private async Task<SqliteDataReader> QuickRead(
+			SqliteConnection connection,
+			string selector,
+			Dictionary<string, object>? parameters = null,
+			[CallerMemberName] string caller = "<undefined>")
+		{
+			using LogTracer _ = this.LogTracing(caller);
+
+			SqliteCommand command = new(selector, connection);
+			if (parameters is not null)
+			{
+				foreach (KeyValuePair<string, object> pair in parameters)
+					command.Parameters.AddWithValue(pair.Key, pair.Value);
+			}
+			return await command.ExecuteReaderAsync();
+		}
+		private async Task<int> QuickExecute(
+			SqliteConnection connection,
+			string selector,
+			Dictionary<string, object>? parameters = null,
+			[CallerMemberName] string caller = "<undefined>")
+		{
+			using LogTracer _ = this.LogTracing(caller);
+
+			SqliteCommand command = new(selector, connection);
+			if (parameters is not null)
+			{
+				foreach (KeyValuePair<string, object> pair in parameters)
+					command.Parameters.AddWithValue(pair.Key, pair.Value);
+			}
+			return await command.ExecuteNonQueryAsync();
+		}
+
+		private LogTracer LogTracing([CallerMemberName] string methodName = "<undefined>")
+		{
+			int traceId = Random.Shared.Next();
+			this._logger.Log(LogLevel.Debug, $"{methodName}: Start ({traceId})", _eventId, this);
+			return new LogTracer(() =>
+				this._logger.Log(LogLevel.Debug, $"{methodName}: End ({traceId})", _eventId, this));
+		}
+		#endregion
+
 		public static void ClearCache()
 		{
-			_tokenCache = new(nameof(_tokenCache));
+			_userMiscInfoCache = new(nameof(_userMiscInfoCache));
 			_songAliasCache = new(nameof(_songAliasCache));
 			_userDataCache = new(nameof(_userDataCache));
 		}

@@ -6,6 +6,7 @@ using PSLDiscordBot.Core.Command.Global.Base;
 using PSLDiscordBot.Core.ImageGenerating;
 using PSLDiscordBot.Core.Services;
 using PSLDiscordBot.Core.UserDatas;
+using PSLDiscordBot.Core.Utility;
 using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.BuiltInServices;
 using PSLDiscordBot.Framework.CommandBase;
@@ -57,7 +58,8 @@ public class GetPhotoCommand : CommandBase
 		object executer)
 	{
 		int index = arg.GetIntegerOptionAsInt32OrDefault("index");
-		int count = arg.GetIntegerOptionAsInt32OrDefault("count", 23);
+		int count = arg.GetIntegerOptionAsInt32OrDefault("count",
+			(await requester.GetDefaultGetPhotoShowCountCached(arg.User.Id)).GetValueOrDefault(23));
 
 		bool usePng = count > this.ConfigService.Data.GetPhotoUsePngWhenLargerThan;
 		bool shouldUseCoolDown = count > this.ConfigService.Data.GetPhotoCoolDownWhenLargerThan;
@@ -94,7 +96,7 @@ public class GetPhotoCommand : CommandBase
 		GameProgress progress = await data.SaveCache.GetGameProgressAsync(index);
 		UserInfo outerUserInfo = await data.SaveCache.GetUserInfoAsync();
 
-		(CompleteScore? best, double rks) = Utils.SortRecord(save);
+		(CompleteScore? best, double rks) = PSLUtils.SortRecord(save);
 
 		// TODO: arg.Reply works, no need for saving message
 		await arg.QuickReply("Making right now, this can take a bit of time!");
@@ -125,7 +127,7 @@ public class GetPhotoCommand : CommandBase
 			}
 			catch (Exception ex)
 			{
-				await arg.QuickReplyWithAttachments("Error occurred during uploading:", Utils.ToAttachment(ex.ToString(), "StackTrace.txt"));
+				await arg.QuickReplyWithAttachments("Error occurred during uploading:", PSLUtils.ToAttachment(ex.ToString(), "StackTrace.txt"));
 			}
 
 			return;

@@ -6,6 +6,7 @@ using PSLDiscordBot.Core.Command.Global.Base;
 using PSLDiscordBot.Core.ImageGenerating;
 using PSLDiscordBot.Core.Services;
 using PSLDiscordBot.Core.UserDatas;
+using PSLDiscordBot.Core.Utility;
 using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.CommandBase;
 using PSLDiscordBot.Framework.DependencyInjection;
@@ -58,7 +59,7 @@ public class AboutMeCommand : CommandBase
 		GameProgress progress = await data.SaveCache.GetGameProgressAsync(index);
 		UserInfo outerUserInfo = await data.SaveCache.GetUserInfoAsync();
 
-		(CompleteScore? best, double rks) = Utils.SortRecord(save);
+		(CompleteScore? best, double rks) = PSLUtils.SortRecord(save);
 
 		MemoryStream image = await this.ImageGenerator.MakePhoto(
 			save.Records,
