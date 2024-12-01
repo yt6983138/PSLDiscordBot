@@ -39,8 +39,9 @@ public class DownloadAssetCommand : GuestCommandBase
 			isRequired: true)
 		.AddOption(
 			"pez_chart_type",
-			ApplicationCommandOptionType.String,
-			"Which chart for the pez to pack. Valid values: EZ, HD, IN, AT, other values are ignored.",
+			ApplicationCommandOptionType.Integer,
+			"Which chart for the pez to pack.",
+			choices: Utils.CreateChoicesFromEnum<Difficulty>(),
 			isRequired: false);
 
 	public override async Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
@@ -79,8 +80,9 @@ public class DownloadAssetCommand : GuestCommandBase
 		}
 		@return.Remove(@return.Length - 2, 2);
 
-		if (Enum.TryParse(arg.GetOptionOrDefault<string>("pez_chart_type"), out Difficulty parsed) &&
-			!(!hasAT && parsed == Difficulty.AT))
+		int rawDiff = arg.GetIntegerOptionAsInt32OrDefault("pez_chart_type", -1);
+		Difficulty parsed = (Difficulty)rawDiff;
+		if (rawDiff > -1 && !(!hasAT && parsed == Difficulty.AT))
 		{
 			using HttpClient client = new();
 			Stream chart = await client.GetStreamAsync(chartUrls[parsed]);

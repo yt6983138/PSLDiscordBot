@@ -167,4 +167,11 @@ public static class Utils
 			msg.Attachments = attachments;
 		});
 	}
+	public static ApplicationCommandOptionChoiceProperties CreateChoice(string name, object val)
+		=> new() { Name = name, Value = val };
+	public static ApplicationCommandOptionChoiceProperties[] CreateChoicesFromEnum<T>(T[]? allowedValues = null) where T : struct, Enum
+	{
+		allowedValues ??= Enum.GetValues<T>();
+		return allowedValues.Select(x => CreateChoice(x.ToString(), x)).ToArray();
+	}
 }
