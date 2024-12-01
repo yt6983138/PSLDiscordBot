@@ -49,13 +49,23 @@ public class SongInfoCommand : GuestCommandBase
 			return;
 		}
 
+		StringBuilder query = BuildReturnQueryString(foundAlias, this.PhigrosDataService);
+
+		await arg.QuickReplyWithAttachments($"Found {foundAlias.Count} match(es). " +
+			$"[Illustration]({BuildAssetUrl(foundAlias[0].SongId, "illustration", "png")})",
+			[PSLUtils.ToAttachment(query.ToString(), "Query.txt")]);
+	}
+
+	public static StringBuilder BuildReturnQueryString(List<SongAliasPair> foundAlias, PhigrosDataService service)
+	{
 		SongAliasPair first = foundAlias[0];
-		SongInfo firstInfo = this.PhigrosDataService.SongInfoMap[first.SongId];
+		SongInfo firstInfo = service.SongInfoMap[first.SongId];
+
 		StringBuilder query = new($"""
 			Id: {first.SongId}
 			Name: {firstInfo.Name}
 			Alias: {string.Join(", ", first.Alias)}
-			Chart Constant: {string.Join(", ", this.PhigrosDataService.DifficultiesMap[first.SongId])}
+			Chart Constant: {string.Join(", ", service.DifficultiesMap[first.SongId])}
 			Artist: {firstInfo.Artist}
 			Illustrator: {firstInfo.Illustrator}
 			Charters: {firstInfo.CharterEZ}, {firstInfo.CharterHD}, {firstInfo.CharterHD}
@@ -70,19 +80,15 @@ public class SongInfoCommand : GuestCommandBase
 				SongAliasPair found = foundAlias[i];
 				query.Append(found.SongId);
 				query.Append('(');
-				query.Append(this.PhigrosDataService.SongInfoMap[found.SongId].Name);
+				query.Append(service.SongInfoMap[found.SongId].Name);
 				query.Append("), ");
 			}
 			query.Remove(query.Length - 2, 2);
 		}
-
-		await arg.QuickReplyWithAttachments($"Found {foundAlias.Count} match(es). " +
-			$"[Illustration]({BuildAssetUrl(first.SongId, "illustration", "png")})",
-			[PSLUtils.ToAttachment(query.ToString(), "Query.txt")]);
+		return query;
 	}
-
 	public static string BuildAssetUrl(string id, string branch, string ext)
-		=> $"https://raw.githubusercontent.com/7aGiven/Phigros_Resource/refs/heads/{branch}/{id}.{ext}";
+	   => $"https://raw.githubusercontent.com/7aGiven/Phigros_Resource/refs/heads/{branch}/{id}.{ext}";
 	public static string BuildChartUrl(string id, Difficulty difficulty)
-		=> $"https://raw.githubusercontent.com/7aGiven/Phigros_Resource/refs/heads/chart/{id}/{difficulty}.json";
+		=> $"https://raw.githubusercontent.com/7aGiven/Phigros_Resource/refs/heads/chart/{id}.0/{difficulty}.json";
 }

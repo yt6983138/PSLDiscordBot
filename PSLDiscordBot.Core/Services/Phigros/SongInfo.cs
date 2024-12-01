@@ -15,4 +15,13 @@ public class SongInfo(
 	public string CharterHD { get; set; } = charterHD;
 	public string CharterIN { get; set; } = charterIN;
 	public string CharterAT { get; set; } = charterAT;
+
+	public string GetCharterByIndex(int index) => index switch
+	{
+		0 => this.CharterEZ,
+		1 => this.CharterHD,
+		2 => this.CharterIN,
+		3 => this.CharterAT,
+		_ => throw new ArgumentOutOfRangeException(nameof(index))
+	};
 }
