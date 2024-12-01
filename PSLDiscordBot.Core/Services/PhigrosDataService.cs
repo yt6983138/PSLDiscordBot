@@ -1,4 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
+using PSLDiscordBot.Core.Services.Phigros;
+using PSLDiscordBot.Core.Utility;
 using PSLDiscordBot.Framework.DependencyInjection;
 using yt6983138.Common;
 
@@ -12,55 +14,81 @@ public class PhigrosDataService : InjectableBase
 	[Inject]
 	public ConfigService Config { get; set; }
 
-	public Dictionary<string, float[]> DifficultiesMap { get; set; }
-	public Dictionary<string, string> IdNameMap { get; set; }
+	/// <summary>
+	/// For compatibility, newer api should use <see cref="CheckedDifficulties"/>.
+	/// </summary>
+	public IReadOnlyDictionary<string, float[]> DifficultiesMap { get; }
+	/// <summary>
+	/// For compatibility, newer api should use <see cref="SongInfoMap"/>.
+	/// </summary>
+	public IReadOnlyDictionary<string, string> IdNameMap { get; }
+
+	public Dictionary<string, DifficultyCCCollection> CheckedDifficulties { get; }
+	public Dictionary<string, SongInfo> SongInfoMap { get; }
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 	public PhigrosDataService()
 		: base()
 	{
-		(this.DifficultiesMap, this.IdNameMap) = this.ReadDatas(this.Config!.Data.DifficultyMapLocation, this.Config!.Data.NameMapLocation);
+		(this.CheckedDifficulties, this.SongInfoMap) =
+			this.ReadDatas(this.Config!.Data.DifficultyMapLocation, this.Config!.Data.NameMapLocation);
+
+		this.DifficultiesMap = new ReadOnlyDictionaryWrapper<string, DifficultyCCCollection, string, float[]>(this.CheckedDifficulties)
+		{
+			EnumeratorTransformer = src => src.Select(x => new KeyValuePair<string, float[]>(x.Key, x.Value.ToFloats())).GetEnumerator(),
+			ValuesTransformer = src => src.Values.Select(x => x.ToFloats()),
+			CountTransformer = src => src.Count,
+			KeysTransformer = src => src.Keys,
+			TryGetTransformer = (src, key) => src.TryGetValue(key, out DifficultyCCCollection val) ? (true, val.ToFloats()) : (false, []),
+			KeyToValueTransformer = (src, key) => src[key].ToFloats(),
+			ContainsTransformer = (src, key) => src.ContainsKey(key)
+		};
+		this.IdNameMap = new ReadOnlyDictionaryWrapper<string, SongInfo, string, string>(this.SongInfoMap)
+		{
+			EnumeratorTransformer = src => src.Select(x => new KeyValuePair<string, string>(x.Key, x.Value.Name)).GetEnumerator(),
+			ValuesTransformer = src => src.Values.Select(x => x.Name),
+			CountTransformer = src => src.Count,
+			KeysTransformer = src => src.Keys,
+			TryGetTransformer = (src, key) => src.TryGetValue(key, out SongInfo? val) ? (true, val.Name) : (false, ""),
+			KeyToValueTransformer = (src, key) => src[key].Name,
+			ContainsTransformer = (src, key) => src.ContainsKey(key)
+		};
 	}
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
-	public (Dictionary<string, float[]>, Dictionary<string, string>) ReadDatas(string diffLocation, string nameLocation)
+	public (Dictionary<string, DifficultyCCCollection>, Dictionary<string, SongInfo>) ReadDatas(string diffLocation, string nameLocation)
 	{
-		string[] csvFile = File.ReadAllLines(diffLocation);
-		Dictionary<string, float[]> diffculties = new();
-		char separatorDiff = diffLocation.EndsWith(".tsv", StringComparison.InvariantCultureIgnoreCase) ? '\t' : ',';
-		foreach (string line in csvFile)
-		{
-			try
-			{
-				float[] diffcultys = new float[4];
-				string[] splitted = line.Split(separatorDiff);
-				for (byte i = 0; i < splitted.Length; i++)
-				{
-					if (i > 4 || i == 0) continue; if (!float.TryParse(splitted[i], out diffcultys[i - 1]))
-						this.Logger.Log(LogLevel.Warning, $"Error processing {splitted[i]}", EventId, this);
-				}
-				diffculties.Add(splitted[0], diffcultys);
-			}
-			catch (Exception ex)
-			{
-				this.Logger.Log(LogLevel.Error, EventId, "Error while reading difficulties csv: ", ex);
-			}
-		}
+		CsvReader difficultyReader = new(File.ReadAllText(diffLocation), IsTsv(diffLocation) ? "\t" : ",");
+		CsvReader infoReader = new(File.ReadAllText(nameLocation), IsTsv(nameLocation) ? "\t" : ",");
 
-		string[] csvFile2 = File.ReadAllLines(nameLocation);
-		char separatorName = nameLocation.EndsWith(".tsv", StringComparison.InvariantCultureIgnoreCase) ? '\t' : '\\';
-		Dictionary<string, string> names = new();
-		foreach (string line in csvFile2)
+		Dictionary<string, SongInfo> names = new();
+		Dictionary<string, DifficultyCCCollection> diffculties = new();
+
+		while (difficultyReader.TryReadRow(out _))
 		{
-			try
+			string name = difficultyReader.ReadColumn();
+			DifficultyCCCollection diff = new();
+			for (int i = 0; difficultyReader.TryReadColumn(out string? current); i++)
 			{
-				string[] splitted = line.Split(separatorName);
-				names.Add(splitted[0], splitted[1]);
+				diff[i] = float.Parse(current);
 			}
-			catch (Exception ex)
-			{
-				this.Logger.Log(LogLevel.Error, EventId, "Error while reading info csv: ", ex);
-			}
+
+			diffculties[name] = diff;
+		}
+		while (infoReader.TryReadRow(out _))
+		{
+			string id = infoReader.ReadColumn();
+			SongInfo info = new(
+				infoReader.ReadColumn(),
+				infoReader.ReadColumn(),
+				infoReader.ReadColumn(),
+				infoReader.ReadColumn(),
+				infoReader.ReadColumn(),
+				infoReader.ReadColumn(),
+				infoReader.TryReadColumn(out string? at) ? at : "");
+			names[id] = info;
 		}
 		return (diffculties, names);
 	}
+	public static bool IsTsv(string filename)
+		=> filename.EndsWith(".tsv", StringComparison.InvariantCultureIgnoreCase);
 }

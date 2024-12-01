@@ -56,7 +56,7 @@ public class ExportScoresCommand : CommandBase
 				};
 			});
 	}
-	public static string ExportCSV(List<CompleteScore> scores, Dictionary<string, string> map, int countToExport = 0)
+	public static string ExportCSV(List<CompleteScore> scores, IReadOnlyDictionary<string, string> map, int countToExport = 0)
 	{
 		CsvBuilder builder = new();
 		builder.AddHeader("ID", "Name", "Difficulty", "Chart Constant", "Score", "Acc", "Rks Given", "Stat");
@@ -75,6 +75,6 @@ public class ExportScoresCommand : CommandBase
 				scores[i].Status.ToString()
 			);
 		}
-		return builder.Compile();
+		return builder.ToString();
 	}
 }

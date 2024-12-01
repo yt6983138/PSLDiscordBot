@@ -71,7 +71,7 @@ public class GetScoresCommand : CommandBase
 				};
 			});
 	}
-	public static string ScoresFormatter(List<CompleteScore> scores, Dictionary<string, string> map, int shouldAddCount, in UserData userData, bool calculateRks = true, bool showLineNumber = true)
+	public static string ScoresFormatter(List<CompleteScore> scores, IReadOnlyDictionary<string, string> map, int shouldAddCount, in UserData userData, bool calculateRks = true, bool showLineNumber = true)
 	{
 		(int index, CompleteScore score) highest = (0, new(0, 0, 0, "None", Difficulty.EZ, ScoreStatus.Bugged));
 		List<string> realNames = new();

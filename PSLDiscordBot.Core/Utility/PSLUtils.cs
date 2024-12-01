@@ -52,7 +52,7 @@ public static class PSLUtils
 	public static async Task<List<SongAliasPair>> FindFromIdOrAlias(
 		this DataBaseService.DbDataRequester requester,
 		string idOrAlias,
-		IDictionary<string, string> idNameMap)
+		IReadOnlyDictionary<string, string> idNameMap)
 	{
 		string? tryFindInMap = idNameMap
 			.FirstOrDefault(x => x.Value.Equals(idOrAlias, StringComparison.InvariantCultureIgnoreCase))
