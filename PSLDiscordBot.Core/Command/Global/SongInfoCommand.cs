@@ -1,6 +1,6 @@
 ﻿using Discord;
 using Discord.WebSocket;
-using Microsoft.Extensions.Logging;
+using PhigrosLibraryCSharp.GameRecords;
 using PSLDiscordBot.Core.Command.Global.Base;
 using PSLDiscordBot.Core.Services;
 using PSLDiscordBot.Core.Services.Phigros;
@@ -39,45 +39,50 @@ public class SongInfoCommand : GuestCommandBase
 
 	public override async Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
 	{
-		StringBuilder sb = new();
-		int i = 0;
-		List<SongAliasPair> foundAlias;
-		try
-		{
-			foundAlias = await requester.FindFromIdOrAlias(
-				arg.GetOption<string>("search"),
-				this.PhigrosDataService.IdNameMap);
+		List<SongAliasPair> foundAlias = await requester.FindFromIdOrAlias(
+			arg.GetOption<string>("search"),
+			this.PhigrosDataService.IdNameMap);
 
-			foreach (SongAliasPair item in foundAlias)
-			{
-				i++;
-				sb.Append(item.SongId);
-				sb.Append(" aka ");
-				sb.Append(this.PhigrosDataService.IdNameMap[item.SongId]);
-				sb.Append(", Chart constants: ");
-				sb.Append(string.Join(", ", this.PhigrosDataService.DifficultiesMap[item.SongId]));
-				sb.Append(", Alias: ");
-				sb.AppendLine(string.Join(", ", item.Alias));
-			}
-		}
-		catch (Exception ex)
-		{
-			await arg.ModifyOriginalResponseAsync(msg => msg.Content = $"Error: {ex.Message}\nYou may try again or report to author.");
-			throw;
-		}
-		if (i == 0)
+		if (foundAlias.Count == 0)
 		{
 			await arg.QuickReply("Sorry, no matches found.");
 			return;
 		}
-		string returnImgPath = $"./Assets/Tracks/{foundAlias[0].SongId}.0/IllustrationLowRes.png";
-		if (!File.Exists(returnImgPath))
+
+		SongAliasPair first = foundAlias[0];
+		SongInfo firstInfo = this.PhigrosDataService.SongInfoMap[first.SongId];
+		StringBuilder query = new($"""
+			Id: {first.SongId}
+			Name: {firstInfo.Name}
+			Alias: {string.Join(", ", first.Alias)}
+			Chart Constant: {string.Join(", ", this.PhigrosDataService.DifficultiesMap[first.SongId])}
+			Artist: {firstInfo.Artist}
+			Illustrator: {firstInfo.Illustrator}
+			Charters: {firstInfo.CharterEZ}, {firstInfo.CharterHD}, {firstInfo.CharterHD}
+			""");
+		if (!string.IsNullOrEmpty(firstInfo.CharterAT)) query.Append($", {firstInfo.CharterAT}");
+
+		if (foundAlias.Count > 1)
 		{
-			this.Logger.Log(LogLevel.Warning, $"Cannot locate image {returnImgPath}!", this.EventId, this);
-			returnImgPath = "./Assets/Tracks/NULL.0/IllustrationLowRes.png";
+			query.Append("\n\nOther matches: ");
+			for (int i = 1; i < foundAlias.Count; i++)
+			{
+				SongAliasPair found = foundAlias[i];
+				query.Append(found.SongId);
+				query.Append('(');
+				query.Append(this.PhigrosDataService.SongInfoMap[found.SongId].Name);
+				query.Append("), ");
+			}
+			query.Remove(query.Length - 2, 2);
 		}
-		await arg.QuickReplyWithAttachments($"Found {i} match(es).",
-			new(new MemoryStream(Encoding.UTF8.GetBytes(sb.ToString())), "Query.txt"),
-			new(returnImgPath));
+
+		await arg.QuickReplyWithAttachments($"Found {foundAlias.Count} match(es). " +
+			$"[Illustration]({BuildAssetUrl(first.SongId, "illustration", "png")})",
+			[PSLUtils.ToAttachment(query.ToString(), "Query.txt")]);
 	}
+
+	public static string BuildAssetUrl(string id, string branch, string ext)
+		=> $"https://raw.githubusercontent.com/7aGiven/Phigros_Resource/refs/heads/{branch}/{id}.{ext}";
+	public static string BuildChartUrl(string id, Difficulty difficulty)
+		=> $"https://raw.githubusercontent.com/7aGiven/Phigros_Resource/refs/heads/chart/{id}/{difficulty}.json";
 }
