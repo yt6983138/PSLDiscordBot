@@ -1,10 +1,9 @@
 ﻿using Microsoft.Extensions.Logging;
-using PSLDiscordBot.Core.Services.Phigros;
 using PSLDiscordBot.Core.Utility;
 using PSLDiscordBot.Framework.DependencyInjection;
 using yt6983138.Common;
 
-namespace PSLDiscordBot.Core.Services;
+namespace PSLDiscordBot.Core.Services.Phigros;
 public class PhigrosDataService : InjectableBase
 {
 	private static EventId EventId { get; } = new(114510, nameof(PhigrosDataService));

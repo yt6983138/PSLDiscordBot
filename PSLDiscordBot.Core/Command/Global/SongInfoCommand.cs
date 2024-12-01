@@ -3,6 +3,7 @@ using Discord.WebSocket;
 using Microsoft.Extensions.Logging;
 using PSLDiscordBot.Core.Command.Global.Base;
 using PSLDiscordBot.Core.Services;
+using PSLDiscordBot.Core.Services.Phigros;
 using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Core.Utility;
 using PSLDiscordBot.Framework;

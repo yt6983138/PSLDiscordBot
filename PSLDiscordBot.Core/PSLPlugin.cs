@@ -6,6 +6,7 @@ using ICSharpCode.SharpZipLib.Zip;
 using Microsoft.Extensions.Logging;
 using PSLDiscordBot.Core.ImageGenerating;
 using PSLDiscordBot.Core.Services;
+using PSLDiscordBot.Core.Services.Phigros;
 using PSLDiscordBot.Core.Utility;
 using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.BuiltInServices;

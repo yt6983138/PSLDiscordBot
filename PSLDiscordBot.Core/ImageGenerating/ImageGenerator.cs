@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using PhigrosLibraryCSharp.Cloud.DataStructure;
 using PhigrosLibraryCSharp.GameRecords;
 using PSLDiscordBot.Core.Services;
+using PSLDiscordBot.Core.Services.Phigros;
 using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.DependencyInjection;
