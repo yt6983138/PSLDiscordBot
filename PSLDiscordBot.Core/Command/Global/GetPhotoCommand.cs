@@ -48,10 +48,22 @@ public class GetPhotoCommand : CommandBase
 			.AddOption(
 				"count",
 				ApplicationCommandOptionType.Integer,
-				"Counts to show. (Default: 23)",
+				"Counts to show. (Default: 23, or set through /set-count-or-default)",
 				false,
 				minValue: 0,
-				maxValue: int.MaxValue);
+				maxValue: int.MaxValue)
+			.AddOption(
+				"lower_bound",
+				ApplicationCommandOptionType.Integer,
+				"The lower bound of the show range. ex. lower_bound: 69 and count: 42 show scores from 69 to 110.",
+				isRequired: false,
+				minValue: 0,
+				maxValue: int.MaxValue)
+			.AddOption(
+				"show_what_grades",
+				ApplicationCommandOptionType.String,
+				"Change what grades to show. Default: Show all. Use comma-separated list, ex. S, Phi, Vu, Fc, False.",
+				isRequired: false);
 
 	public override async Task Callback(SocketSlashCommand arg,
 		UserData data,
@@ -61,6 +73,23 @@ public class GetPhotoCommand : CommandBase
 		int index = arg.GetIntegerOptionAsInt32OrDefault("index");
 		int count = arg.GetIntegerOptionAsInt32OrDefault("count",
 			(await requester.GetDefaultGetPhotoShowCountCached(arg.User.Id)).GetValueOrDefault(23));
+		int lowerBound = arg.GetIntegerOptionAsInt32OrDefault("lower_bound");
+		string? showingGrades = arg.GetOptionOrDefault<string>("show_what_grades");
+		ScoreStatus[]? showingGradesParsed = null;
+		if (!string.IsNullOrWhiteSpace(showingGrades))
+		{
+			IEnumerable<(bool, ScoreStatus parsed)> parsed = showingGrades
+				.Split(',')
+				.Select(x => (Enum.TryParse(x.Trim(), out ScoreStatus parsed), parsed));
+			if (!parsed.Any() || parsed.Any(x => !x.Item1))
+			{
+				await arg.QuickReply($"Failed to parse showing grades. " +
+					$"Valid values: {string.Join(", ", Enum.GetValues<ScoreStatus>().Skip(1).SkipLast(1))}"); // do not show Bugged and NotFc
+				return;
+			}
+			showingGradesParsed = parsed.Select(x => x.parsed).ToArray();
+		}
+		showingGradesParsed ??= Enum.GetValues<ScoreStatus>();
 
 		bool usePng = count > this.ConfigService.Data.GetPhotoUsePngWhenLargerThan;
 		bool shouldUseCoolDown = count > this.ConfigService.Data.GetPhotoCoolDownWhenLargerThan;
@@ -99,7 +128,6 @@ public class GetPhotoCommand : CommandBase
 
 		(CompleteScore? best, double rks) = PSLUtils.SortRecord(save);
 
-		// TODO: arg.Reply works, no need for saving message
 		await arg.QuickReply("Making right now, this can take a bit of time!");
 		MemoryStream image = await this.ImageGenerator.MakePhoto(
 			save.Records,
@@ -115,7 +143,9 @@ public class GetPhotoCommand : CommandBase
 			this.ConfigService.Data.RenderQuality,
 			new
 			{
-				ShowCount = count
+				ShowCount = count,
+				LowerBound = lowerBound,
+				AllowedGrades = showingGradesParsed
 			},
 			cancellationToken: this.ConfigService.Data.RenderTimeoutCTS.Token
 		);
