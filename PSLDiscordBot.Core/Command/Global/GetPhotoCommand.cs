@@ -80,7 +80,7 @@ public class GetPhotoCommand : CommandBase
 		{
 			IEnumerable<(bool, ScoreStatus parsed)> parsed = showingGrades
 				.Split(',')
-				.Select(x => (Enum.TryParse(x.Trim(), out ScoreStatus parsed), parsed));
+				.Select(x => (Enum.TryParse(x.Trim().ToPascalCase(), out ScoreStatus parsed), parsed));
 			if (!parsed.Any() || parsed.Any(x => !x.Item1))
 			{
 				await arg.QuickReply($"Failed to parse showing grades. " +

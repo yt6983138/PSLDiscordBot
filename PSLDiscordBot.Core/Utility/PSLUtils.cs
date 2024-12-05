@@ -199,4 +199,12 @@ public static class PSLUtils
 		}
 		return sb.ToString();
 	}
+	public static string ToPascalCase(this string text)
+	{
+		if (text.Length == 0) return text;
+
+		char[] chars = text.ToLower().ToCharArray();
+		chars[0] = char.ToUpper(chars[0]);
+		return new(chars);
+	}
 }
