@@ -9,6 +9,7 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using System.Text;
+using System.Text.Json;
 using Image = SixLabors.ImageSharp.Image;
 
 namespace PSLDiscordBot.Core.Utility;
@@ -82,7 +83,8 @@ public static class PSLUtils
 		string onOutOfRange = "Error: Expected index less than {0}, more or equal to 0. You entered {1}.",
 		string onOtherException = "Error: {0}\nYou may try again or report to author (`/report-problem`).",
 		string onNoSaves = "Error: There is no save on the cloud, did you use wrong account, or have not synced?",
-		string onPhiLibUriException = "Error: {0}\n*This sometimes can indicate save corruption. Please try few more times.*")
+		string onPhiLibUriException = "Error: {0}\n*This sometimes can indicate save corruption. Please try few more times.*",
+		string onPhiLibJsonException = "Error: {0}\n*This sometimes can indicate save corruption. Please try few more times.*")
 	{
 		try
 		{
@@ -102,6 +104,10 @@ public static class PSLUtils
 		catch (InvalidOperationException ex) when (ex.Message.Contains("invalid request URI was provided"))
 		{
 			await command.QuickReply(string.Format(onPhiLibUriException, ex.Message));
+		}
+		catch (JsonException ex)
+		{
+			await command.QuickReply(string.Format(onPhiLibJsonException, ex.Message));
 		}
 		catch (Exception ex)
 		{
