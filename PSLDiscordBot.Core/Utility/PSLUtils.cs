@@ -209,7 +209,7 @@ public static class PSLUtils
 	{
 		if (text.Length == 0) return text;
 
-		char[] chars = text.ToLower().ToCharArray();
+		char[] chars = text.ToCharArray();
 		chars[0] = char.ToUpper(chars[0]);
 		return new(chars);
 	}

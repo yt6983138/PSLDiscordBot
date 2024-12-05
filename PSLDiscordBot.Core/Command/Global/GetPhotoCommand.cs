@@ -32,6 +32,15 @@ public class GetPhotoCommand : CommandBase
 
 	#endregion
 
+	public static Dictionary<string, ScoreStatus> ScoreStatusAlias { get; set; } = new()
+	{
+		{ "p", ScoreStatus.Phi },
+		{ "ph", ScoreStatus.Phi },
+		{ "φ", ScoreStatus.Phi },
+		{ "v", ScoreStatus.Vu },
+		{ "f", ScoreStatus.False },
+	};
+
 	public override bool IsEphemeral => false;
 	public override bool RunOnDifferentThread => true;
 
@@ -78,16 +87,16 @@ public class GetPhotoCommand : CommandBase
 		ScoreStatus[]? showingGradesParsed = null;
 		if (!string.IsNullOrWhiteSpace(showingGrades))
 		{
-			IEnumerable<(bool, ScoreStatus parsed)> parsed = showingGrades
+			IEnumerable<ScoreStatus?> parsed = showingGrades
 				.Split(',')
-				.Select(x => (Enum.TryParse(x.Trim().ToPascalCase(), out ScoreStatus parsed), parsed));
-			if (!parsed.Any() || parsed.Any(x => !x.Item1))
+				.Select(ParseScoreStatus);
+			if (!parsed.Any() || parsed.Any(x => !x.HasValue))
 			{
 				await arg.QuickReply($"Failed to parse showing grades. " +
 					$"Valid values: {string.Join(", ", Enum.GetValues<ScoreStatus>().Skip(1).SkipLast(1))}"); // do not show Bugged and NotFc
 				return;
 			}
-			showingGradesParsed = parsed.Select(x => x.parsed).ToArray();
+			showingGradesParsed = parsed.Select(x => x!.Value).ToArray();
 		}
 		showingGradesParsed ??= Enum.GetValues<ScoreStatus>();
 
@@ -165,5 +174,14 @@ public class GetPhotoCommand : CommandBase
 		}
 
 		await arg.QuickReplyWithAttachments("Generated!", new FileAttachment(image, "Score.jpg"));
+	}
+
+	public static ScoreStatus? ParseScoreStatus(string str)
+	{
+		str = str.Trim().ToLower();
+		if (ScoreStatusAlias.TryGetValue(str, out ScoreStatus scoreStatus)) return scoreStatus;
+
+		str = str.ToPascalCase();
+		return Enum.TryParse(str, out ScoreStatus stat) ? stat : null;
 	}
 }
