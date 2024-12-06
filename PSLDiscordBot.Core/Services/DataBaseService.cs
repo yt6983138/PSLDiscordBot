@@ -210,7 +210,7 @@ public sealed class DataBaseService : InjectableBase
 			return await this.QuickExecute(this._songAliasDataBase.Value, $@"
 				SELECT * FROM {this._config.SongAliasTableName} WHERE
 					instr(lower(Alias), lower($alias)) > 0;",
-				new() { { "$songId", songId }, { "$value", NormalizeToSqlString(alias) } });
+				new() { { "$songId", songId }, { "$alias", NormalizeToSqlString(alias) } });
 		}
 		public async Task<string[]?> GetSongAliasCachedAsync(string id)
 		{
