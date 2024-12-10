@@ -208,8 +208,8 @@ public sealed class DataBaseService : InjectableBase
 		public async Task<int> AddOrReplaceSongAliasAsync(string songId, string[] alias)
 		{
 			return await this.QuickExecute(this._songAliasDataBase.Value, $@"
-				SELECT * FROM {this._config.SongAliasTableName} WHERE
-					instr(lower(Alias), lower($alias)) > 0;",
+				INSERT OR REPLACE INTO {this._config.SongAliasTableName} VALUES(
+					$songId, $alias);",
 				new() { { "$songId", songId }, { "$alias", NormalizeToSqlString(alias) } });
 		}
 		public async Task<string[]?> GetSongAliasCachedAsync(string id)
