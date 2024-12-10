@@ -21,6 +21,8 @@ namespace PSLDiscordBot.Core;
 
 public class PSLPlugin : InjectableBase, IPlugin
 {
+	public const string SafeLockLocation = "./SAFE_LOCK";
+
 	private static EventId EventId { get; } = new(114511, "PSL");
 	private static EventId EventIdInitialize { get; } = new(114511, "PSL.Initializing");
 	private static EventId EventIdApp { get; } = new(114509, "PSL.Application");
@@ -188,6 +190,8 @@ public class PSLPlugin : InjectableBase, IPlugin
 
 	void IPlugin.Load(Program program, bool isDynamicLoading)
 	{
+		File.Create(SafeLockLocation);
+
 		this._program = program;
 
 		AppDomain.CurrentDomain.UnhandledException += this.CurrentDomain_UnhandledException;
@@ -200,7 +204,6 @@ public class PSLPlugin : InjectableBase, IPlugin
 
 		this.CommandResolveService.BeforeSlashCommandExecutes += this.Program_BeforeSlashCommandExecutes;
 		this.CommandResolveService.OnSlashCommandError += this.CommandResolveService_OnSlashCommandError;
-		;
 
 		program.AddArgReceiver(this.UpdateFiles);
 		program.AddArgReceiver(this.UpdateInfoAndDifficulty);
@@ -217,6 +220,8 @@ public class PSLPlugin : InjectableBase, IPlugin
 	{
 		this._logger.Log(LogLevel.Information, "Service shutting down...", EventIdApp, this);
 		this.WriteAll();
+
+		File.Delete(SafeLockLocation);
 	}
 
 	#endregion
