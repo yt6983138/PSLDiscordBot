@@ -2,23 +2,23 @@
 using Newtonsoft.Json.Linq;
 
 namespace PSLDiscordBot.Framework.Localization;
-public class LocalizationNewtonsoftSerializer : JsonConverter<Localization>
+public class LocalizationNewtonsoftSerializer : JsonConverter<LocalizationManager>
 {
-	public override Localization? ReadJson(JsonReader reader, Type objectType, Localization? existingValue, bool hasExistingValue, JsonSerializer serializer)
+	public override LocalizationManager? ReadJson(JsonReader reader, Type objectType, LocalizationManager? existingValue, bool hasExistingValue, JsonSerializer serializer)
 	{
 		if (reader.TokenType == JsonToken.Null) return null;
 
-		Localization ret = new();
+		LocalizationManager ret = new();
 		ret.FallbackLanguages.Clear();
 		JToken obj = JObject.ReadFrom(reader);
 
-		string[] fallbackLangs = obj[nameof(Localization.FallbackLanguages)]!.ToObject<string[]>()!;
+		string[] fallbackLangs = obj[nameof(LocalizationManager.FallbackLanguages)]!.ToObject<string[]>()!;
 		foreach (string item in fallbackLangs)
 		{
 			ret.FallbackLanguages.Add(LocalizationHelper.FromCode(item));
 		}
 
-		Dictionary<string, JObject> localizedStrings = obj[nameof(Localization.LocalizedStrings)]!.ToObject<Dictionary<string, JObject>>()!;
+		Dictionary<string, JObject> localizedStrings = obj[nameof(LocalizationManager.LocalizedStrings)]!.ToObject<Dictionary<string, JObject>>()!;
 		foreach (KeyValuePair<string, JObject> item in localizedStrings)
 		{
 			string key = item.Key;
@@ -31,7 +31,7 @@ public class LocalizationNewtonsoftSerializer : JsonConverter<Localization>
 		return ret;
 	}
 
-	public override void WriteJson(JsonWriter writer, Localization? value, JsonSerializer serializer)
+	public override void WriteJson(JsonWriter writer, LocalizationManager? value, JsonSerializer serializer)
 	{
 		if (value is null)
 		{
@@ -41,13 +41,13 @@ public class LocalizationNewtonsoftSerializer : JsonConverter<Localization>
 
 		writer.WriteStartObject();
 		{
-			writer.WritePropertyName(nameof(Localization.FallbackLanguages));
+			writer.WritePropertyName(nameof(LocalizationManager.FallbackLanguages));
 			writer.WriteStartArray();
 			foreach (Language item in value.FallbackLanguages)
 				writer.WriteValue(item.GetCode());
 			writer.WriteEndArray();
 
-			writer.WritePropertyName(nameof(Localization.LocalizedStrings));
+			writer.WritePropertyName(nameof(LocalizationManager.LocalizedStrings));
 			{
 				serializer.Serialize(writer, value._localization);
 			}

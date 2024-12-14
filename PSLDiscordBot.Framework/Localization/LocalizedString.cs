@@ -7,7 +7,7 @@ namespace PSLDiscordBot.Framework.Localization;
 [JsonConverter(typeof(LocalizedStringNewtonsoftSerializer))]
 public class LocalizedString : IDictionary<string, string>, IReadOnlyDictionary<string, string>
 {
-	internal Localization? _parent;
+	internal LocalizationManager? _parent;
 	internal string? _code;
 
 	public Dictionary<Language, string> LocalizedStrings { get; } = new();
@@ -87,7 +87,7 @@ public class LocalizedString : IDictionary<string, string>, IReadOnlyDictionary<
 
 		return false;
 	}
-	public bool CanBelongTo(Localization localization, string code)
+	public bool CanBelongTo(LocalizationManager localization, string code)
 	{
 		if (this._parent is null && this._code is null)
 			return true;
@@ -96,25 +96,25 @@ public class LocalizedString : IDictionary<string, string>, IReadOnlyDictionary<
 
 		return false;
 	}
-	public void ThrowIfCanNotBelongTo(Localization localization, string code)
+	public void ThrowIfCanNotBelongTo(LocalizationManager localization, string code)
 	{
 		if (!this.CanBelongTo(localization, code))
 			throw new ArgumentException("Other Localization manager already own this string.", nameof(localization));
 	}
 
-	internal LocalizedString(Localization? localization, string? code)
+	internal LocalizedString(LocalizationManager? localization, string? code)
 	{
 		this._parent = localization;
 		this._code = code;
 	}
-	internal LocalizedString(string value, Localization? localization, string? code)
+	internal LocalizedString(string value, LocalizationManager? localization, string? code)
 		: this(default, value, localization, code) { }
-	internal LocalizedString(Language lang, string value, Localization? localization, string? code)
+	internal LocalizedString(Language lang, string value, LocalizationManager? localization, string? code)
 		: this(localization, code)
 	{
 		this.LocalizedStrings.Add(lang, value);
 	}
-	internal LocalizedString(Localization? localization, Dictionary<Language, string> localizedStrings, string? code)
+	internal LocalizedString(LocalizationManager? localization, Dictionary<Language, string> localizedStrings, string? code)
 		: this(localization, code)
 	{
 		this.LocalizedStrings = localizedStrings;

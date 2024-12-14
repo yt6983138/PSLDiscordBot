@@ -3,7 +3,7 @@
 namespace PSLDiscordBot.Framework.Localization;
 
 [JsonConverter(typeof(LocalizationNewtonsoftSerializer))]
-public class Localization
+public class LocalizationManager
 {
 	internal Dictionary<string, LocalizedString> _localization = new();
 
@@ -16,8 +16,8 @@ public class Localization
 		set => this.Set(key, value);
 	}
 
-	public Localization() { }
-	public Localization(IReadOnlyDictionary<string, LocalizedString> localized)
+	public LocalizationManager() { }
+	public LocalizationManager(IReadOnlyDictionary<string, LocalizedString> localized)
 	{
 		foreach (KeyValuePair<string, LocalizedString> item in localized)
 		{
