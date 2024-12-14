@@ -14,9 +14,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\PSLDiscordBot.Analyzer\PSLDiscordBot.Analyzer.csproj"
-						  PrivateAssets="all"
-						  OutputItemType="Analyzer" />
+		<ProjectReference Include="..\PSLDiscordBot.Analyzer\PSLDiscordBot.Analyzer.csproj" PrivateAssets="all" OutputItemType="Analyzer" />
 	</ItemGroup>
 
 	<Target Name="PreBuild" BeforeTargets="PreBuildEvent">
