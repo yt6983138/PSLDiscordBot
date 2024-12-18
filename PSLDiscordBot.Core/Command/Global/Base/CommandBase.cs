@@ -3,8 +3,10 @@ using Discord.WebSocket;
 using PSLDiscordBot.Analyzer;
 using PSLDiscordBot.Core.Services;
 using PSLDiscordBot.Core.UserDatas;
+using PSLDiscordBot.Core.Utility;
 using PSLDiscordBot.Framework.CommandBase;
 using PSLDiscordBot.Framework.DependencyInjection;
+using PSLDiscordBot.Framework.Localization;
 
 namespace PSLDiscordBot.Core.Command.Global.Base;
 public abstract class CommandBase : BasicCommandBase
@@ -16,6 +18,8 @@ public abstract class CommandBase : BasicCommandBase
 	public ConfigService ConfigService { get; set; }
 	[Inject]
 	public DataBaseService DataBaseService { get; set; }
+	[Inject]
+	public LocalizationManager Localization { get; set; }
 	#endregion
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
@@ -25,10 +29,18 @@ public abstract class CommandBase : BasicCommandBase
 	}
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
+	public virtual IDictionary<string, string>? NameLocalization => null;
+	public virtual IDictionary<string, string>? DescriptionLocalization => null;
+
 	[NoLongerThan(SlashCommandBuilder.MaxNameLength)]
 	public abstract override string Name { get; }
 	[NoLongerThan(SlashCommandBuilder.MaxDescriptionLength)]
 	public abstract override string Description { get; }
+
+	protected override SlashCommandBuilder BasicBuilder =>
+		base.BasicBuilder
+			.DoIfNotNull(this.NameLocalization, (x, o) => x.WithNameLocalizations(o))
+			.DoIfNotNull(this.DescriptionLocalization, (x, o) => x.WithDescriptionLocalizations(o));
 
 	public abstract Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer);
 	public override async Task Execute(SocketSlashCommand arg, object executer)

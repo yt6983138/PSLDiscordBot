@@ -49,6 +49,11 @@ public static class PSLUtils
 	}
 	internal static Size ToIntSize(this SizeF val)
 		=> new((int)val.Width, (int)val.Height);
+	internal static SlashCommandBuilder DoIfNotNull<T>(this SlashCommandBuilder builder, T? obj, Action<SlashCommandBuilder, T> action)
+	{
+		if (obj is not null) action.Invoke(builder, obj);
+		return builder;
+	}
 
 	public static async Task<List<SongAliasPair>> FindFromIdOrAlias(
 		this DataBaseService.DbDataRequester requester,
