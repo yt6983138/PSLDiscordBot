@@ -7,7 +7,6 @@ using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Core.Utility;
 using PSLDiscordBot.Framework.CommandBase;
 using PSLDiscordBot.Framework.DependencyInjection;
-using PSLDiscordBot.Framework.Localization;
 using yt6983138.Common;
 
 namespace PSLDiscordBot.Core.Command.Global.Base;
@@ -21,7 +20,7 @@ public abstract class CommandBase : BasicCommandBase
 	[Inject]
 	public DataBaseService DataBaseService { get; set; }
 	[Inject]
-	public LocalizationManager Localization { get; set; }
+	public LocalizationService Localization { get; set; }
 	[Inject]
 	public Logger Logger { get; set; }
 	[Inject]
