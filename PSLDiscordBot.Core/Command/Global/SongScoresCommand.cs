@@ -5,13 +5,11 @@ using PhigrosLibraryCSharp.GameRecords;
 using PSLDiscordBot.Core.Command.Global.Base;
 using PSLDiscordBot.Core.ImageGenerating;
 using PSLDiscordBot.Core.Services;
-using PSLDiscordBot.Core.Services.Phigros;
 using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Core.Utility;
 using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.CommandBase;
 using PSLDiscordBot.Framework.DependencyInjection;
-using yt6983138.Common;
 
 namespace PSLDiscordBot.Core.Command.Global;
 
@@ -21,11 +19,7 @@ public class SongScoresCommand : CommandBase
 	#region Injection
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 	[Inject]
-	public PhigrosDataService PhigrosDataService { get; set; }
-	[Inject]
 	public ImageGenerator ImageGenerator { get; set; }
-	[Inject]
-	public Logger Logger { get; set; }
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 	#endregion
 

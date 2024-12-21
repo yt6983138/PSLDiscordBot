@@ -4,12 +4,10 @@ using PhigrosLibraryCSharp.Cloud.DataStructure;
 using PhigrosLibraryCSharp.GameRecords;
 using PSLDiscordBot.Core.Command.Global.Base;
 using PSLDiscordBot.Core.Services;
-using PSLDiscordBot.Core.Services.Phigros;
 using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Core.Utility;
 using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.CommandBase;
-using PSLDiscordBot.Framework.DependencyInjection;
 using System.Text;
 
 namespace PSLDiscordBot.Core.Command.Global;
@@ -18,13 +16,6 @@ namespace PSLDiscordBot.Core.Command.Global;
 public class MoreRksCommand : CommandBase
 {
 	private record struct TargetRksScorePair(double TargetRks, double TargetAcc, CompleteScore Score);
-
-	#region Injection
-#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
-	[Inject]
-	public PhigrosDataService PhigrosDataService { get; set; }
-#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
-	#endregion
 
 	public override string Name => "more-rks";
 	public override string Description => "Show you a list of possible chart to push to get more rks.";

@@ -9,21 +9,12 @@ using PSLDiscordBot.Core.Services;
 using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.CommandBase;
-using PSLDiscordBot.Framework.DependencyInjection;
-using yt6983138.Common;
 
 namespace PSLDiscordBot.Core.Command.Global;
 
 [AddToGlobal]
 public class LoginCommand : GuestCommandBase
 {
-	#region Injection
-#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
-	[Inject]
-	public Logger Logger { get; set; }
-#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
-	#endregion
-
 	public override bool RunOnDifferentThread => true;
 
 	public override string Name => "login";

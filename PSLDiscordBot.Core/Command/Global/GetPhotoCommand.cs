@@ -5,7 +5,6 @@ using PhigrosLibraryCSharp.GameRecords;
 using PSLDiscordBot.Core.Command.Global.Base;
 using PSLDiscordBot.Core.ImageGenerating;
 using PSLDiscordBot.Core.Services;
-using PSLDiscordBot.Core.Services.Phigros;
 using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Core.Utility;
 using PSLDiscordBot.Framework;
@@ -22,8 +21,6 @@ public class GetPhotoCommand : CommandBase
 	#region Injection
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
-	[Inject]
-	public PhigrosDataService PhigrosDataService { get; set; }
 	[Inject]
 	public ImageGenerator ImageGenerator { get; set; }
 	[Inject]

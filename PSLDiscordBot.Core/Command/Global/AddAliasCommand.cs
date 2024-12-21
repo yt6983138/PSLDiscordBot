@@ -2,23 +2,16 @@
 using Discord.WebSocket;
 using PSLDiscordBot.Core.Command.Global.Base;
 using PSLDiscordBot.Core.Services;
-using PSLDiscordBot.Core.Services.Phigros;
 using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Core.Utility;
 using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.CommandBase;
-using PSLDiscordBot.Framework.DependencyInjection;
 
 namespace PSLDiscordBot.Core.Command.Global;
 
 [AddToGlobal]
 public class AddAliasCommand : CommandBase
 {
-#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
-	[Inject]
-	public PhigrosDataService PhigrosDataService { get; set; }
-#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
-
 	public override string Name => "add-alias";
 	public override string Description => "Add a song alias, for example alias Destruction 3.2.1 to 321";
 

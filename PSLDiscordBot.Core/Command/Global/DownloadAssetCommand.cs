@@ -8,25 +8,14 @@ using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Core.Utility;
 using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.CommandBase;
-using PSLDiscordBot.Framework.DependencyInjection;
 using System.IO.Compression;
 using System.Text;
-using yt6983138.Common;
 
 namespace PSLDiscordBot.Core.Command.Global;
 
 [AddToGlobal]
 public class DownloadAssetCommand : GuestCommandBase
 {
-	#region Injection
-#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
-	[Inject]
-	public PhigrosDataService PhigrosDataService { get; set; }
-	[Inject]
-	public Logger Logger { get; set; }
-#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
-	#endregion
-
 	public override string Name => "download-asset";
 	public override string Description => "Download assets about song.";
 

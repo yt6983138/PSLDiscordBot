@@ -2,11 +2,13 @@
 using Discord.WebSocket;
 using PSLDiscordBot.Analyzer;
 using PSLDiscordBot.Core.Services;
+using PSLDiscordBot.Core.Services.Phigros;
 using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Core.Utility;
 using PSLDiscordBot.Framework.CommandBase;
 using PSLDiscordBot.Framework.DependencyInjection;
 using PSLDiscordBot.Framework.Localization;
+using yt6983138.Common;
 
 namespace PSLDiscordBot.Core.Command.Global.Base;
 public abstract class CommandBase : BasicCommandBase
@@ -20,6 +22,10 @@ public abstract class CommandBase : BasicCommandBase
 	public DataBaseService DataBaseService { get; set; }
 	[Inject]
 	public LocalizationManager Localization { get; set; }
+	[Inject]
+	public Logger Logger { get; set; }
+	[Inject]
+	public PhigrosDataService PhigrosDataService { get; set; }
 	#endregion
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
