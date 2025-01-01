@@ -41,6 +41,7 @@ public class AnalyzeSaveCommand : AdminCommandBase
 		PhigrosLibraryCSharp.SaveSummaryPair? pair = await userData.SaveCache.GetAndHandleSave(
 			arg,
 			this.PhigrosDataService.DifficultiesMap,
+			this.Localization,
 			index);
 		if (pair is null)
 			return;

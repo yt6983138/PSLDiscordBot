@@ -3,6 +3,7 @@ using Discord.WebSocket;
 using PhigrosLibraryCSharp.Cloud.DataStructure;
 using PhigrosLibraryCSharp.GameRecords;
 using PSLDiscordBot.Core.Command.Global.Base;
+using PSLDiscordBot.Core.Localization;
 using PSLDiscordBot.Core.Services;
 using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Core.Utility;
@@ -22,12 +23,11 @@ public class GetScoresCommand : CommandBase
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder.AddOption(
-			"index",
-			ApplicationCommandOptionType.Integer,
-			"Save time converted to index, 0 is always latest. Do /get-time-index to get other index.",
-			isRequired: false,
-			minValue: 0
-		)
+				this.Localization[PSLCommonOptionKey.IndexOptionName],
+				ApplicationCommandOptionType.Integer,
+				this.Localization[PSLCommonOptionKey.IndexOptionDescription],
+				isRequired: false,
+				minValue: 0)
 		.AddOption(
 			"count",
 			ApplicationCommandOptionType.Integer,
@@ -42,6 +42,7 @@ public class GetScoresCommand : CommandBase
 		PhigrosLibraryCSharp.SaveSummaryPair? pair = await data.SaveCache.GetAndHandleSave(
 			arg,
 			this.PhigrosDataService.DifficultiesMap,
+			this.Localization,
 			arg.GetIntegerOptionAsInt32OrDefault("index"));
 		if (pair is null)
 			return;

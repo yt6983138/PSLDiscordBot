@@ -4,6 +4,7 @@ using PhigrosLibraryCSharp.Cloud.DataStructure;
 using PhigrosLibraryCSharp.GameRecords;
 using PSLDiscordBot.Core.Command.Global.Base;
 using PSLDiscordBot.Core.ImageGenerating;
+using PSLDiscordBot.Core.Localization;
 using PSLDiscordBot.Core.Services;
 using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Core.Utility;
@@ -46,10 +47,10 @@ public class GetPhotoCommand : CommandBase
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder.AddOption(
-				"index",
+				this.Localization[PSLCommonOptionKey.IndexOptionName],
 				ApplicationCommandOptionType.Integer,
-				"Save time converted to index, 0 is always latest. Do /get-time-index to get other index.",
-				false,
+				this.Localization[PSLCommonOptionKey.IndexOptionDescription],
+				isRequired: false,
 				minValue: 0)
 			.AddOption(
 				"count",
@@ -124,6 +125,7 @@ public class GetPhotoCommand : CommandBase
 		PhigrosLibraryCSharp.SaveSummaryPair? pair = await data.SaveCache.GetAndHandleSave(
 			arg,
 			this.PhigrosDataService.DifficultiesMap,
+			this.Localization,
 			index);
 		if (pair is null)
 			return;

@@ -1,12 +1,14 @@
 ﻿using Discord;
 using Discord.WebSocket;
-using PSLDiscordBot.Analyzer;
+using PSLDiscordBot.Core.Localization;
 using PSLDiscordBot.Core.Services;
 using PSLDiscordBot.Core.Services.Phigros;
 using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Core.Utility;
+using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.CommandBase;
 using PSLDiscordBot.Framework.DependencyInjection;
+using PSLDiscordBot.Framework.Localization;
 using yt6983138.Common;
 
 namespace PSLDiscordBot.Core.Command.Global.Base;
@@ -34,13 +36,15 @@ public abstract class CommandBase : BasicCommandBase
 	}
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
-	public virtual IDictionary<string, string>? NameLocalization => null;
-	public virtual IDictionary<string, string>? DescriptionLocalization => null;
+	public virtual LocalizedString? NameLocalization => null;
+	public virtual LocalizedString? DescriptionLocalization => null;
 
-	[NoLongerThan(SlashCommandBuilder.MaxNameLength)]
-	public abstract override string Name { get; }
-	[NoLongerThan(SlashCommandBuilder.MaxDescriptionLength)]
-	public abstract override string Description { get; }
+#pragma warning disable PSL3 // The expression used is not supported.
+	public override string Name => this.NameLocalization?.Default
+		?? throw new InvalidOperationException($"{nameof(this.Name)}{nameof(this.NameLocalization)} not overridden!");
+	public override string Description => this.DescriptionLocalization?.Default
+		?? throw new InvalidOperationException($"{nameof(this.Description)}{nameof(this.DescriptionLocalization)} not overridden!");
+#pragma warning restore PSL3 // The expression used is not supported.
 
 	protected override SlashCommandBuilder BasicBuilder =>
 		base.BasicBuilder
@@ -52,20 +56,21 @@ public abstract class CommandBase : BasicCommandBase
 	{
 		using DataBaseService.DbDataRequester requester = this.DataBaseService.NewRequester();
 		await arg.DeferAsync(ephemeral: this.IsEphemeral);
-		if (!CheckHasRegisteredAndReply(arg, requester, out UserData? userData))
+		if (!this.CheckHasRegisteredAndReply(arg, out UserData? userData))
 			return;
 
 		await this.Callback(arg, userData!, requester, executer);
 	}
 
-	public static bool CheckHasRegisteredAndReply(in SocketSlashCommand task, in DataBaseService.DbDataRequester requester, out UserData? userData)
+	public bool CheckHasRegisteredAndReply(SocketSlashCommand task, out UserData? userData)
 	{
 		ulong userId = task.User.Id;
+		using DataBaseService.DbDataRequester requester = this.DataBaseService.NewRequester();
 
 		userData = requester.GetUserDataCachedAsync(userId).GetAwaiter().GetResult();
 		if (userData is null)
 		{
-			task.ModifyOriginalResponseAsync(msg => msg.Content = "You haven't logged in/linked token. Please use /login or /link-token first.");
+			_ = task.QuickReply(this.Localization[PSLCommonKey.CommandBaseNotRegistered][task.UserLocale]);
 			userData = default!;
 			return false;
 		}
@@ -76,7 +81,7 @@ public abstract class CommandBase : BasicCommandBase
 		if (command.User.Id == this.ConfigService.Data.AdminUserId)
 			return true;
 
-		await command.ModifyOriginalResponseAsync(x => x.Content = "Permission denied.");
+		await command.QuickReply(this.Localization[PSLCommonKey.AdminCommandBasePermissionDenied][command.UserLocale]);
 		return false;
 	}
 }

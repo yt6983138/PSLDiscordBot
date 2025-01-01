@@ -3,6 +3,7 @@ using Discord.WebSocket;
 using PhigrosLibraryCSharp;
 using PhigrosLibraryCSharp.Cloud.DataStructure;
 using PSLDiscordBot.Core.Command.Global.Base;
+using PSLDiscordBot.Core.Localization;
 using PSLDiscordBot.Core.Services;
 using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Framework;
@@ -18,12 +19,11 @@ public class GetMoneyCommand : CommandBase
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder.AddOption(
-			"index",
-			ApplicationCommandOptionType.Integer,
-			"Save time converted to index, 0 is always latest. Do /get-time-index to get other index.",
-			isRequired: false,
-			minValue: 0
-		);
+				this.Localization[PSLCommonOptionKey.IndexOptionName],
+				ApplicationCommandOptionType.Integer,
+				this.Localization[PSLCommonOptionKey.IndexOptionDescription],
+				isRequired: false,
+				minValue: 0);
 
 	public override async Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
 	{

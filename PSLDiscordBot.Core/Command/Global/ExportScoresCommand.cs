@@ -33,6 +33,7 @@ public class ExportScoresCommand : CommandBase
 		PhigrosLibraryCSharp.SaveSummaryPair? pair = await data.SaveCache.GetAndHandleSave(
 			arg,
 			this.PhigrosDataService.DifficultiesMap,
+			this.Localization,
 			arg.GetIntegerOptionAsInt32OrDefault("index"));
 		if (pair is null)
 			return;

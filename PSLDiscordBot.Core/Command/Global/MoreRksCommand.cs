@@ -43,6 +43,7 @@ public class MoreRksCommand : CommandBase
 		PhigrosLibraryCSharp.SaveSummaryPair? pair = await data.SaveCache.GetAndHandleSave(
 			arg,
 			this.PhigrosDataService.DifficultiesMap,
+			this.Localization,
 			arg.GetIntegerOptionAsInt32OrDefault("index"));
 		if (pair is null)
 			return;
@@ -68,7 +69,7 @@ public class MoreRksCommand : CommandBase
 			.Select(r =>
 			new TargetRksScorePair(
 				Math.Max(r.Rks + leastRks, twentyThRks + leastRks),
-				45d * Math.Sqrt(Math.Max(r.Rks + leastRks, twentyThRks + leastRks) / r.ChartConstant) + 55d,
+				(45d * Math.Sqrt(Math.Max(r.Rks + leastRks, twentyThRks + leastRks) / r.ChartConstant)) + 55d,
 				r))
 			.Where(r => 70 < r.TargetAcc && r.TargetAcc < 100)
 			.ToList();
@@ -78,7 +79,7 @@ public class MoreRksCommand : CommandBase
 
 		StringBuilder stringBuilder = new();
 		stringBuilder.Append("Getting you to: ");
-		stringBuilder.AppendLine((rks + leastRks / 20d).ToString(data.ShowFormat));
+		stringBuilder.AppendLine((rks + (leastRks / 20d)).ToString(data.ShowFormat));
 
 		int maxUserShowLength = data.ShowFormat.Length + 2;
 		for (int j = 0; j < calculatedShowCounts; j++)

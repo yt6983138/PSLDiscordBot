@@ -4,12 +4,14 @@ using PhigrosLibraryCSharp.Cloud.DataStructure;
 using PhigrosLibraryCSharp.GameRecords;
 using PSLDiscordBot.Core.Command.Global.Base;
 using PSLDiscordBot.Core.ImageGenerating;
+using PSLDiscordBot.Core.Localization;
 using PSLDiscordBot.Core.Services;
 using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Core.Utility;
 using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.CommandBase;
 using PSLDiscordBot.Framework.DependencyInjection;
+using PSLDiscordBot.Framework.Localization;
 
 namespace PSLDiscordBot.Core.Command.Global;
 
@@ -25,39 +27,38 @@ public class SongScoresCommand : CommandBase
 
 	public override bool IsEphemeral => false;
 
-	public override string Name => "song-scores";
-	public override string Description => "Get scores for a specified song(s).";
+	public override LocalizedString? NameLocalization => this.Localization[PSLNormalCommandKey.SongScoresName];
+	public override LocalizedString? DescriptionLocalization => this.Localization[PSLNormalCommandKey.SongScoresDescription];
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder.AddOption(
-			"search",
+			this.Localization[PSLCommonOptionKey.SongSearchOptionName],
 			ApplicationCommandOptionType.String,
-			"Searching strings, you can either put id, put alias, or put the song name.",
-			isRequired: true
-		)
+			this.Localization[PSLCommonOptionKey.SongSearchOptionDescription],
+			isRequired: true)
 		.AddOption(
-			"index",
+			this.Localization[PSLCommonOptionKey.IndexOptionName],
 			ApplicationCommandOptionType.Integer,
-			"Save time converted to index, 0 is always latest. Do /get-time-index to get other index.",
+			this.Localization[PSLCommonOptionKey.IndexOptionDescription],
 			isRequired: false,
-			minValue: 0
-		);
+			minValue: 0);
 
 	public override async Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
 	{
-		string search = arg.GetOption<string>("search");
-		int index = arg.GetIntegerOptionAsInt32OrDefault("index");
+		string search = arg.GetOption<string>(this.Localization[PSLCommonOptionKey.SongSearchOptionName]);
+		int index = arg.GetIntegerOptionAsInt32OrDefault(this.Localization[PSLCommonOptionKey.IndexOptionName]);
 
 		List<SongAliasPair> searchResult = await requester.FindFromIdOrAlias(search, this.PhigrosDataService.IdNameMap);
 		if (searchResult.Count == 0)
 		{
-			await arg.QuickReply("Sorry, nothing matched your query.");
+			await arg.QuickReply(this.Localization[PSLCommonMessageKey.SongSearchNoMatch]);
 			return;
 		}
 
 		PhigrosLibraryCSharp.SaveSummaryPair? pair = await data.SaveCache.GetAndHandleSave(
 			arg,
 			this.PhigrosDataService.DifficultiesMap,
+			this.Localization,
 			arg.GetIntegerOptionAsInt32OrDefault("index"));
 		if (pair is null)
 			return;
@@ -75,7 +76,7 @@ public class SongScoresCommand : CommandBase
 
 		if (scoresToShow.Count == 0)
 		{
-			await arg.QuickReply("Sorry, you seems haven't played the songs you have been searching for.");
+			await arg.QuickReply(this.Localization[PSLNormalCommandKey.SongScoresSongNotPlayed]);
 			return;
 		}
 
@@ -115,9 +116,7 @@ public class SongScoresCommand : CommandBase
 		);
 
 		await arg.QuickReplyWithAttachments(
-			$"You looked for song `{search}`, showing...",
-			[
-				new(image, "ScoreAnalysis.png"),
+			[new(image, "ScoreAnalysis.png"),
 				PSLUtils.ToAttachment(
 					GetScoresCommand.ScoresFormatter(
 						scoresToShow,
@@ -126,7 +125,8 @@ public class SongScoresCommand : CommandBase
 						data,
 						false,
 						false),
-					"Query.txt")
-			]);
+					"Query.txt")],
+			this.Localization[PSLNormalCommandKey.SongScoresQueryResult],
+			search);
 	}
 }

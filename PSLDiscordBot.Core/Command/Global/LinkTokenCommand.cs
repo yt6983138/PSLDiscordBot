@@ -1,26 +1,29 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.Logging;
+using PhigrosLibraryCSharp;
 using PSLDiscordBot.Core.Command.Global.Base;
+using PSLDiscordBot.Core.Localization;
 using PSLDiscordBot.Core.Services;
 using PSLDiscordBot.Core.UserDatas;
+using PSLDiscordBot.Core.Utility;
 using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.CommandBase;
-using System.Net;
+using PSLDiscordBot.Framework.Localization;
 
 namespace PSLDiscordBot.Core.Command.Global;
 
 [AddToGlobal]
 public class LinkTokenCommand : GuestCommandBase
 {
-	public override string Name => "link-token";
-	public override string Description => "Link account by token.";
+	public override LocalizedString? NameLocalization => this.Localization[PSLGuestCommandKey.LinkTokenName];
+	public override LocalizedString? DescriptionLocalization => this.Localization[PSLGuestCommandKey.LinkTokenDescription];
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder.AddOption(
-			"token",
+			this.Localization[PSLGuestCommandKey.LinkTokenOptionTokenName],
 			ApplicationCommandOptionType.String,
-			"Your Phigros token",
+			this.Localization[PSLGuestCommandKey.LinkTokenOptionTokenDescription],
 			isRequired: true,
 			maxLength: 25,
 			minLength: 25
@@ -29,38 +32,37 @@ public class LinkTokenCommand : GuestCommandBase
 	public override async Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
 	{
 		ulong userId = arg.User.Id;
-		string token = arg.Data.Options.ElementAt(0).Value.Unbox<string>();
-		UserData tmp;
-		Exception exception;
-		try
+		string token = arg.GetOption<string>(this.Localization[PSLGuestCommandKey.LinkTokenOptionTokenName]);
+
+		if (!Save.IsSemanticallyValidToken(token))
 		{
-			tmp = new(token);
-			_ = await tmp.SaveCache.GetUserInfoAsync();
-			if (data is not null)
-				await arg.ModifyOriginalResponseAsync(msg => msg.Content = $"You have already registered, but still linked successfully!");
-			else
-			{
-				await arg.ModifyOriginalResponseAsync(msg => msg.Content = $"Linked successfully!");
-			}
-			await requester.AddOrReplaceUserDataCachedAsync(userId, tmp);
-			this.Logger.Log<LinkTokenCommand>(LogLevel.Information, this.EventId, $"User {arg.User.GlobalName}({userId}) registered. Token: {token}");
+			await arg.QuickReply(this.Localization[PSLGuestCommandKey.LinkTokenInvalidToken]);
 			return;
 		}
-		catch (HttpRequestException ex) when (ex.StatusCode is not null && ex.StatusCode == HttpStatusCode.BadRequest)
+
+		UserData tmp = new(token);
+		SaveSummaryPair? fetched = await tmp.SaveCache.GetAndHandleSave(
+			arg,
+			this.PhigrosDataService.DifficultiesMap,
+			this.Localization,
+			autoThrow: false);
+
+		if (fetched is null)
 		{
-			await arg.ModifyOriginalResponseAsync(msg => msg.Content = $"Invalid token!");
-			exception = ex;
+			await arg.QuickReply(this.Localization[PSLGuestCommandKey.LinkTokenInvalidToken]);
+			return;
 		}
-		catch (ArgumentException ex)
+
+		if (data is not null)
 		{
-			await arg.ModifyOriginalResponseAsync(msg => msg.Content = $"Invalid token!");
-			exception = ex;
+			await arg.QuickReply(this.Localization[PSLGuestCommandKey.LinkTokenSuccessButOverwritten]);
 		}
-		catch (Exception ex)
+		else
 		{
-			await arg.ModifyOriginalResponseAsync(msg => msg.Content = $"Error: {ex}, you may try again or report to author.");
-			exception = ex;
+			await arg.QuickReply(this.Localization[PSLGuestCommandKey.LinkTokenSuccess]);
 		}
-		this.Logger.Log<LinkTokenCommand>(LogLevel.Debug, this.EventId, "Error while initializing for user {0}({1})", exception, arg.User.GlobalName, userId);
+		await requester.AddOrReplaceUserDataCachedAsync(userId, tmp);
+		this.Logger.Log<LinkTokenCommand>(LogLevel.Information, this.EventId, $"User {arg.User.GlobalName}({userId}) registered. Token: {token}");
+		// TODO: Remove those logs (from like all registering commands)
 	}
 }

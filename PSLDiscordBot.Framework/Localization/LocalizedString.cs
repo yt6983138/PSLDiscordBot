@@ -13,6 +13,10 @@ public class LocalizedString : IDictionary<string, string>, IReadOnlyDictionary<
 	public Dictionary<Language, string> LocalizedStrings { get; } = new();
 	public List<Language> FallBackLanguages { get; internal set; } = [Language.EnglishUS];
 
+	public string Default => this.FallBackLanguages.Count > 0
+		? this.Get(this.FallBackLanguages[0])
+		: this.Get(default(Language));
+
 	#region Interface Implementation
 	public string this[string key]
 	{
@@ -73,6 +77,14 @@ public class LocalizedString : IDictionary<string, string>, IReadOnlyDictionary<
 		if (this.TryGetValue(lang, out string? value)) return value;
 
 		return this._code ?? throw new KeyNotFoundException($"Key '{lang}' was not found.");
+	}
+	public string GetFormatted(string key, params object?[] format)
+	{
+		return string.Format(this.Get(key), format);
+	}
+	public string GetFormatted(Language lang, params object?[] format)
+	{
+		return string.Format(this.Get(lang), format);
 	}
 	public bool TryGetValue(Language lang, [MaybeNullWhen(false)][NotNullWhen(true)] out string? str)
 	{

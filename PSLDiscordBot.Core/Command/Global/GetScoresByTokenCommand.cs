@@ -50,6 +50,7 @@ public class GetScoresByTokenCommand : AdminCommandBase
 		PhigrosLibraryCSharp.SaveSummaryPair? pair = await userData.SaveCache.GetAndHandleSave(
 			arg,
 			this.PhigrosDataService.DifficultiesMap,
+			this.Localization,
 			arg.GetIntegerOptionAsInt32OrDefault("index"));
 		if (pair is null)
 			return;
