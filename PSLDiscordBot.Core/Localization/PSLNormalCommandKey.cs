@@ -92,6 +92,10 @@ public static partial class PSLNormalCommandKey
 	public static partial string GetPhotoOptionLowerBoundDescription { get; }
 	public static partial string GetPhotoOptionGradesToShowName { get; }
 	public static partial string GetPhotoOptionGradesToShowDescription { get; }
+	public static partial string GetPhotoOptionCCFilterLowerBoundName { get; }
+	public static partial string GetPhotoOptionCCFilterLowerBoundDescription { get; }
+	public static partial string GetPhotoOptionCCFilterHigherBoundName { get; }
+	public static partial string GetPhotoOptionCCFilterHigherBoundDescription { get; }
 
 	public static partial string GetPhotoFailedParsingGrades { get; }
 	public static partial string GetPhotoImageTooBig { get; }

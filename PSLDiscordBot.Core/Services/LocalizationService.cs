@@ -147,6 +147,10 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 			[GetPhotoOptionLowerBoundDescription] = LocalizedString.CreateDefault("The lower bound of the show range. ex. lower_bound: 69 and count: 42 show scores from 69 to 110."),
 			[GetPhotoOptionGradesToShowName] = LocalizedString.CreateDefault("show_what_grades"),
 			[GetPhotoOptionGradesToShowDescription] = LocalizedString.CreateDefault("Change what grades to show. Default: Show all. Use comma-separated list, ex. S, Phi, Vu, Fc, False."),
+			[GetPhotoOptionCCFilterLowerBoundName] = LocalizedString.CreateDefault("cc_lower_bound"),
+			[GetPhotoOptionCCFilterLowerBoundDescription] = LocalizedString.CreateDefault("Change the lower bound of scores' CC to show. Inclusive."),
+			[GetPhotoOptionCCFilterHigherBoundName] = LocalizedString.CreateDefault("cc_higher_bound"),
+			[GetPhotoOptionCCFilterHigherBoundDescription] = LocalizedString.CreateDefault("Change the higher bound of scores' CC to show. Inclusive."),
 			[GetPhotoFailedParsingGrades] = LocalizedString.CreateDefault("Failed to parse showing grades. Valid values: {0}"),
 			[GetPhotoImageTooBig] = LocalizedString.CreateDefault("Sorry, the channel you are requesting this from does not allow me to send images larger than 10mb :(\n" +
 				"Please either use count lower or equal to {0} or find other servers with boost."),

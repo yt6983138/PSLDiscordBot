@@ -71,7 +71,21 @@ public class GetPhotoCommand : CommandBase
 				this.Localization[PSLNormalCommandKey.GetPhotoOptionGradesToShowName],
 				ApplicationCommandOptionType.String,
 				this.Localization[PSLNormalCommandKey.GetPhotoOptionGradesToShowDescription],
-				isRequired: false);
+				isRequired: false)
+			.AddOption(
+				this.Localization[PSLNormalCommandKey.GetPhotoOptionCCFilterLowerBoundName],
+				ApplicationCommandOptionType.String,
+				this.Localization[PSLNormalCommandKey.GetPhotoOptionCCFilterLowerBoundDescription],
+				isRequired: false,
+				minValue: 0,
+				maxValue: 17)
+			.AddOption(
+				this.Localization[PSLNormalCommandKey.GetPhotoOptionCCFilterHigherBoundName],
+				ApplicationCommandOptionType.String,
+				this.Localization[PSLNormalCommandKey.GetPhotoOptionCCFilterHigherBoundDescription],
+				isRequired: false,
+				minValue: 0,
+				maxValue: 17);
 
 	public override async Task Callback(SocketSlashCommand arg,
 		UserData data,
@@ -82,6 +96,8 @@ public class GetPhotoCommand : CommandBase
 		int count = arg.GetIntegerOptionAsInt32OrDefault(this.Localization[PSLCommonOptionKey.IndexOptionName],
 			(await requester.GetDefaultGetPhotoShowCountCached(arg.User.Id)).GetValueOrDefault(23));
 		int lowerBound = arg.GetIntegerOptionAsInt32OrDefault(this.Localization[PSLNormalCommandKey.GetPhotoOptionLowerBoundName]);
+		int ccLowerBound = arg.GetIntegerOptionAsInt32OrDefault(this.Localization[PSLNormalCommandKey.GetPhotoOptionCCFilterLowerBoundName], 0);
+		int ccHigherBound = arg.GetIntegerOptionAsInt32OrDefault(this.Localization[PSLNormalCommandKey.GetPhotoOptionCCFilterHigherBoundName], int.MaxValue);
 		string? showingGrades = arg.GetOptionOrDefault<string>(this.Localization[PSLNormalCommandKey.GetPhotoOptionGradesToShowDescription]);
 		ScoreStatus[]? showingGradesParsed = null;
 		if (!string.IsNullOrWhiteSpace(showingGrades))
@@ -153,7 +169,9 @@ public class GetPhotoCommand : CommandBase
 			{
 				ShowCount = count,
 				LowerBound = lowerBound,
-				AllowedGrades = showingGradesParsed
+				AllowedGrades = showingGradesParsed,
+				CCLowerBound = ccLowerBound,
+				CCHigherBound = ccHigherBound
 			},
 			cancellationToken: this.ConfigService.Data.RenderTimeoutCTS.Token
 		);
