@@ -1,10 +1,12 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using PSLDiscordBot.Core.Command.Global.Base;
+using PSLDiscordBot.Core.Localization;
 using PSLDiscordBot.Core.Services;
 using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.CommandBase;
+using PSLDiscordBot.Framework.Localization;
 using System.Text;
 
 namespace PSLDiscordBot.Core.Command.Global;
@@ -12,14 +14,14 @@ namespace PSLDiscordBot.Core.Command.Global;
 [AddToGlobal]
 public class SetPrecisionCommand : CommandBase
 {
-	public override string Name => "set-precision";
-	public override string Description => "Set precision of value shown on /get-b20.";
+	public override LocalizedString? NameLocalization => this.Localization[PSLNormalCommandKey.SetPrecisionName];
+	public override LocalizedString? DescriptionLocalization => this.Localization[PSLNormalCommandKey.SetPrecisionDescription];
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder.AddOption(
-			"precision",
+			this.Localization[PSLNormalCommandKey.SetPrecisionOptionPrecisionName],
 			ApplicationCommandOptionType.Integer,
-			"Precision. Put 1 to get acc like 99.1, 2 to get acc like 99.12, repeat.",
+			this.Localization[PSLNormalCommandKey.SetPrecisionOptionPrecisionDescription],
 			isRequired: true,
 			maxValue: 1077,
 			minValue: 1
@@ -28,13 +30,9 @@ public class SetPrecisionCommand : CommandBase
 	public override async Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
 	{
 		StringBuilder sb = new(".");
-		sb.Append('0', arg.Data.Options.ElementAt(0).Value.Unbox<long>().CastTo<long, int>());
+		sb.Append('0', arg.GetIntegerOptionAsInt32(this.Localization[PSLNormalCommandKey.SetPrecisionOptionPrecisionName]));
 		data.ShowFormat = sb.ToString();
 		await requester.AddOrReplaceUserDataCachedAsync(arg.User.Id, data);
-		await arg.ModifyOriginalResponseAsync(
-			(msg) =>
-			{
-				msg.Content = "Operation done successfully.";
-			});
+		await arg.QuickReply(this.Localization[PSLCommonMessageKey.OperationDone]);
 	}
 }

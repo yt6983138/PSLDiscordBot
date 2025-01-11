@@ -1,9 +1,5 @@
-﻿using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Diagnostics;
-using System;
+﻿using Microsoft.CodeAnalysis.Diagnostics;
 using System.Collections.Immutable;
-using System.Linq;
 
 namespace PSLDiscordBot.Analyzer;
 
@@ -14,16 +10,8 @@ public class PSLDiscordBotAnalyzer : DiagnosticAnalyzer
 
 	private static int _counter;
 
-	private static readonly DiagnosticDescriptor TestRule = new(
-		"Test",
-		"Test",
-		"{0}",
-		"Design",
-		DiagnosticSeverity.Warning,
-		true);
-
 	private static readonly DiagnosticDescriptor InvalidTypeRule = new(
-		DiagnosticId + _counter++.ToString(),
+		$"{DiagnosticId}{_counter++}",
 		$"Invalid usage of {typeof(NoLongerThanAttribute).Name}.",
 		$"Invalid usage of {typeof(NoLongerThanAttribute).Name}, the attribute is only valid for string properties.",
 		"Design",
@@ -31,7 +19,7 @@ public class PSLDiscordBotAnalyzer : DiagnosticAnalyzer
 		true,
 		description: $"Invalid usage of {typeof(NoLongerThanAttribute).Name}, the attribute is only valid for string properties.");
 	private static readonly DiagnosticDescriptor InvalidPropertyAccessorRule = new(
-		DiagnosticId + _counter++.ToString(),
+		$"{DiagnosticId}{_counter++}",
 		$"Invalid usage of {typeof(NoLongerThanAttribute).Name}.",
 		$"Invalid usage of {typeof(NoLongerThanAttribute).Name}, only properties with only get accessor are supported.",
 		"Design",
@@ -39,16 +27,16 @@ public class PSLDiscordBotAnalyzer : DiagnosticAnalyzer
 		true,
 		description: $"Invalid usage of {typeof(NoLongerThanAttribute).Name}, only properties with only get accessor are supported.");
 	private static readonly DiagnosticDescriptor TooLongRule = new(
-		DiagnosticId + _counter++.ToString(),
-		"String is too long.",
-		"The string returned by this property is too long, the limit is {0}.",
+		$"{DiagnosticId}{_counter++}",
+		"String is too long",
+		"The string returned by this property is too long, the limit is {0}",
 		"Design",
 		DiagnosticSeverity.Warning,
 		true,
 		description: "The string returned by this property is too long.");
 	private static readonly DiagnosticDescriptor UnsupportedUsageRule = new(
-		DiagnosticId + _counter++.ToString(),
-		$"The expression used is not supported.",
+		$"{DiagnosticId}{_counter++}",
+		$"The expression used is not supported",
 		$"The usage of {typeof(NoLongerThanAttribute).Name}, is unsupported, {{0}}",
 		"Design",
 		DiagnosticSeverity.Error,
@@ -56,21 +44,15 @@ public class PSLDiscordBotAnalyzer : DiagnosticAnalyzer
 		description: $"The usage of {typeof(NoLongerThanAttribute).Name}, is unsupported.");
 	private static readonly DiagnosticDescriptor NoDefinitionProvidedRule = new(
 		DiagnosticId + _counter++.ToString(),
-		$"No definition for this property.",
-		$"No definition for this property.",
+		$"No definition for this property",
+		$"No definition for this property",
 		"Design",
 		DiagnosticSeverity.Error,
 		true,
 		description: $"No definition for this property.");
 
 	public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
-		ImmutableArray.Create(
-			TooLongRule,
-			InvalidTypeRule,
-			InvalidPropertyAccessorRule,
-			TestRule,
-			UnsupportedUsageRule,
-			NoDefinitionProvidedRule);
+		[TooLongRule, InvalidTypeRule, InvalidPropertyAccessorRule, UnsupportedUsageRule, NoDefinitionProvidedRule];
 
 	public override void Initialize(AnalysisContext context)
 	{
@@ -97,13 +79,13 @@ public class PSLDiscordBotAnalyzer : DiagnosticAnalyzer
 		{
 			ImmutableArray<AttributeData> attributes = item.GetAttributes();
 
-			INamedTypeSymbol @base = symbol.BaseType;
+			INamedTypeSymbol @base = symbol.BaseType!;
 			AttributeData? lengthAttribute = null;
 			while (true)
 			{
 				if (@base is null)
 					break;
-				IPropertySymbol? sameProperty = (IPropertySymbol)@base.GetMembers().FirstOrDefault(x => x.Kind == SymbolKind.Property
+				IPropertySymbol? sameProperty = (IPropertySymbol?)@base.GetMembers().FirstOrDefault(x => x.Kind == SymbolKind.Property
 						&& x.Name == item.Name
 						&& SymbolEqualityComparer.Default.Equals(((IPropertySymbol)x).Type, item.Type));
 				if (sameProperty is null)
@@ -112,7 +94,7 @@ public class PSLDiscordBotAnalyzer : DiagnosticAnalyzer
 				lengthAttribute = GetAttributeOrDefault<NoLongerThanAttribute>(sameProperty, compilation);
 				if (lengthAttribute is not null)
 					break;
-				@base = @base.BaseType;
+				@base = @base.BaseType!;
 			}
 			if (lengthAttribute is null)
 				continue;
@@ -129,7 +111,7 @@ public class PSLDiscordBotAnalyzer : DiagnosticAnalyzer
 			}
 			PropertyDeclarationSyntax propertyStx = (PropertyDeclarationSyntax)item.DeclaringSyntaxReferences[0].GetSyntax();
 
-			int lengthLimit = (int)lengthAttribute.ConstructorArguments[0].Value;
+			int lengthLimit = (int)lengthAttribute.ConstructorArguments[0].Value!;
 
 			HandleProperty(context, item, propertyStx, lengthLimit);
 		}
@@ -140,8 +122,8 @@ public class PSLDiscordBotAnalyzer : DiagnosticAnalyzer
 		PropertyDeclarationSyntax syntax,
 		int lengthLimit)
 	{
-		ArrowExpressionClauseSyntax expressionBody = syntax.ExpressionBody;
-		EqualsValueClauseSyntax initializer = syntax.Initializer;
+		ArrowExpressionClauseSyntax expressionBody = syntax.ExpressionBody!;
+		EqualsValueClauseSyntax initializer = syntax.Initializer!;
 
 		string realDeclaredConstant;
 		if (initializer is not null)
@@ -186,7 +168,7 @@ public class PSLDiscordBotAnalyzer : DiagnosticAnalyzer
 			context.ReportDiagnostic(diagnostic);
 		}
 	}
-	private static AttributeData? GetAttributeOrDefault<T>(ISymbol symbol, Compilation compilation)
+	internal static AttributeData? GetAttributeOrDefault<T>(ISymbol symbol, Compilation compilation)
 	{
 		return symbol.GetAttributes().FirstOrDefault(
 				x => SymbolEqualityComparer.Default.Equals(x.AttributeClass, compilation.GetTypeByMetadataName(typeof(T).FullName)));

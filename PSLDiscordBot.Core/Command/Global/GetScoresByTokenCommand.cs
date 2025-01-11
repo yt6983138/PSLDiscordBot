@@ -3,12 +3,10 @@ using Discord.WebSocket;
 using PhigrosLibraryCSharp.Cloud.DataStructure;
 using PSLDiscordBot.Core.Command.Global.Base;
 using PSLDiscordBot.Core.Services;
-using PSLDiscordBot.Core.Services.Phigros;
 using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Core.Utility;
 using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.CommandBase;
-using PSLDiscordBot.Framework.DependencyInjection;
 using System.Text;
 
 namespace PSLDiscordBot.Core.Command.Global;
@@ -16,13 +14,6 @@ namespace PSLDiscordBot.Core.Command.Global;
 [AddToGlobal]
 public class GetScoresByTokenCommand : AdminCommandBase
 {
-	#region Injection
-#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
-	[Inject]
-	public PhigrosDataService PhigrosDataService { get; set; }
-#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
-	#endregion
-
 	public override string Name => "get-scores-by-token";
 	public override string Description => "Get scores. [Admin command]";
 
@@ -59,6 +50,7 @@ public class GetScoresByTokenCommand : AdminCommandBase
 		PhigrosLibraryCSharp.SaveSummaryPair? pair = await userData.SaveCache.GetAndHandleSave(
 			arg,
 			this.PhigrosDataService.DifficultiesMap,
+			this.Localization,
 			arg.GetIntegerOptionAsInt32OrDefault("index"));
 		if (pair is null)
 			return;

@@ -89,7 +89,7 @@ public class PSLPlugin : InjectableBase, IPlugin
 			FastZip fastZip = new();
 			if (this._configService.Data.AssetGrabRemoveParent)
 			{
-				DirectoryInfo tmp = Directory.CreateDirectory("./tmp");
+				DirectoryInfo tmp = Directory.CreateDirectory("./tmp"); // TODO: fix broken
 				fastZip.ExtractZip("./Assets.zip", "./tmp/", "");
 				DirectoryInfo first = tmp.GetDirectories()[0].GetDirectories()[0];
 				first.MoveTo(".");
@@ -283,6 +283,7 @@ public class PSLPlugin : InjectableBase, IPlugin
 	private void Program_AfterArgParse(object? sender, EventArgs e)
 	{
 		AddSingleton(new DataBaseService());
+		AddSingleton(new LocalizationService());
 		AddSingleton(new ChromiumPoolService(this._configService.Data.ChromiumLocation,
 			this._configService.Data.DefaultChromiumTabCacheCount,
 			this._configService.Data.ChromiumPort,

@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using PSLDiscordBot.Framework.Localization;
 
 namespace PSLDiscordBot.Framework;
 public static class Utils
@@ -123,6 +124,8 @@ public static class Utils
 	{
 		return socketSlashCommand.Data.Options.First(x => x.Name == name).Value.Unbox<T>();
 	}
+	public static T GetOption<T>(this SocketSlashCommand socketSlashCommand, LocalizedString name)
+		=> socketSlashCommand.GetOption<T>(name.Default);
 	public static T GetOptionOrDefault<T>(this SocketSlashCommand socketSlashCommand, string name, T defaultValue = default) where T : struct
 	{
 		SocketSlashCommandDataOption? option = socketSlashCommand.Data.Options.FirstOrDefault(x => x.Name == name);
@@ -130,14 +133,20 @@ public static class Utils
 			return defaultValue;
 		return option.Value.Unbox<T>();
 	}
+	public static T GetOptionOrDefault<T>(this SocketSlashCommand socketSlashCommand, LocalizedString name, T defaultValue = default) where T : struct
+		=> socketSlashCommand.GetOptionOrDefault(name.Default, defaultValue);
 	public static T? GetOptionOrDefault<T>(this SocketSlashCommand socketSlashCommand, string name) where T : class
 	{
 		return socketSlashCommand.Data.Options.FirstOrDefault(x => x.Name == name)?.Value.Unbox<T>();
 	}
+	public static T? GetOptionOrDefault<T>(this SocketSlashCommand socketSlashCommand, LocalizedString name) where T : class
+		=> socketSlashCommand.GetOptionOrDefault<T>(name.Default);
 	public static int GetIntegerOptionAsInt32(this SocketSlashCommand socketSlashCommand, string name)
 	{
 		return socketSlashCommand.Data.Options.First(x => x.Name == name).Value.Unbox<long>().CastTo<long, int>();
 	}
+	public static int GetIntegerOptionAsInt32(this SocketSlashCommand socketSlashCommand, LocalizedString name)
+		=> socketSlashCommand.GetIntegerOptionAsInt32(name.Default);
 	public static int GetIntegerOptionAsInt32OrDefault(this SocketSlashCommand socketSlashCommand, string name, int defaultValue = default)
 	{
 		SocketSlashCommandDataOption? option = socketSlashCommand.Data.Options.FirstOrDefault(x => x.Name == name);
@@ -145,6 +154,9 @@ public static class Utils
 			return defaultValue;
 		return option.Value.Unbox<long>().CastTo<long, int>();
 	}
+	public static int GetIntegerOptionAsInt32OrDefault(this SocketSlashCommand socketSlashCommand, LocalizedString name, int defaultValue = default)
+		=> socketSlashCommand.GetIntegerOptionAsInt32OrDefault(name.Default, defaultValue);
+
 	public static async Task QuickReply(
 		this IDiscordInteraction socketSlashCommand,
 		string message,
@@ -154,6 +166,16 @@ public static class Utils
 		{
 			msg.Content = message;
 			additionalModification?.Invoke(msg);
+		});
+	}
+	public static async Task QuickReply(
+		this IDiscordInteraction socketSlashCommand,
+		LocalizedString message,
+		params object?[] format)
+	{
+		await socketSlashCommand.ModifyOriginalResponseAsync(msg =>
+		{
+			msg.Content = message.GetFormatted(socketSlashCommand.UserLocale, format);
 		});
 	}
 	public static async Task QuickReplyWithAttachments(
@@ -167,11 +189,56 @@ public static class Utils
 			msg.Attachments = attachments;
 		});
 	}
+	public static async Task QuickReplyWithAttachments(
+		this IDiscordInteraction socketSlashCommand,
+		FileAttachment[] attachments,
+		LocalizedString message,
+		params object?[] format)
+	{
+		await socketSlashCommand.ModifyOriginalResponseAsync(msg =>
+		{
+			msg.Content = message.GetFormatted(socketSlashCommand.UserLocale, format);
+			msg.Attachments = attachments;
+		});
+	}
 	public static ApplicationCommandOptionChoiceProperties CreateChoice(string name, object val)
 		=> new() { Name = name, Value = val };
 	public static ApplicationCommandOptionChoiceProperties[] CreateChoicesFromEnum<T>(T[]? allowedValues = null) where T : struct, Enum
 	{
 		allowedValues ??= Enum.GetValues<T>();
 		return allowedValues.Select(x => CreateChoice(x.ToString(), x)).ToArray();
+	}
+	public static SlashCommandBuilder AddOption(
+		this SlashCommandBuilder builder,
+		LocalizedString name,
+		ApplicationCommandOptionType type,
+		LocalizedString description,
+		bool? isRequired = null,
+		bool? isDefault = null,
+		bool isAutocomplete = false,
+		double? minValue = null,
+		double? maxValue = null,
+		List<SlashCommandOptionBuilder>? options = null,
+		List<ChannelType>? channelTypes = null,
+		int? minLength = null,
+		int? maxLength = null,
+		params ApplicationCommandOptionChoiceProperties[] choices)
+	{
+		return builder.AddOption(
+			name.Default,
+			type,
+			description.Default,
+			isRequired,
+			isDefault,
+			isAutocomplete,
+			minValue,
+			maxValue,
+			options,
+			channelTypes,
+			name,
+			description,
+			minLength,
+			minLength,
+			choices);
 	}
 }

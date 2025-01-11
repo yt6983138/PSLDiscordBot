@@ -2,57 +2,47 @@
 using Discord.WebSocket;
 using PhigrosLibraryCSharp.GameRecords;
 using PSLDiscordBot.Core.Command.Global.Base;
+using PSLDiscordBot.Core.Localization;
 using PSLDiscordBot.Core.Services;
 using PSLDiscordBot.Core.Services.Phigros;
 using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Core.Utility;
 using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.CommandBase;
-using PSLDiscordBot.Framework.DependencyInjection;
+using PSLDiscordBot.Framework.Localization;
 using System.IO.Compression;
 using System.Text;
-using yt6983138.Common;
 
 namespace PSLDiscordBot.Core.Command.Global;
 
 [AddToGlobal]
 public class DownloadAssetCommand : GuestCommandBase
 {
-	#region Injection
-#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
-	[Inject]
-	public PhigrosDataService PhigrosDataService { get; set; }
-	[Inject]
-	public Logger Logger { get; set; }
-#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
-	#endregion
-
-	public override string Name => "download-asset";
-	public override string Description => "Download assets about song.";
+	public override LocalizedString? NameLocalization => this.Localization[PSLGuestCommandKey.DownloadAssetName];
+	public override LocalizedString? DescriptionLocalization => this.Localization[PSLGuestCommandKey.DownloadAssetDescription];
 
 	public override SlashCommandBuilder CompleteBuilder =>
-		this.BasicBuilder
-		.AddOption(
-			"search",
+		this.BasicBuilder.AddOption(
+			this.Localization[PSLCommonOptionKey.SongSearchOptionName],
 			ApplicationCommandOptionType.String,
-			"Searching strings, you can either put id, put alias, or put the song name.",
+			this.Localization[PSLCommonOptionKey.SongSearchOptionDescription],
 			isRequired: true)
 		.AddOption(
-			"pez_chart_type",
+			this.Localization[PSLGuestCommandKey.DownloadAssetOptionDownloadPEZName],
 			ApplicationCommandOptionType.Integer,
-			"Which chart for the pez to pack.",
+			this.Localization[PSLGuestCommandKey.DownloadAssetOptionDownloadPEZDescription],
 			choices: Utils.CreateChoicesFromEnum<Difficulty>(),
 			isRequired: false);
 
 	public override async Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
 	{
 		List<SongAliasPair> foundAlias = await requester.FindFromIdOrAlias(
-			arg.GetOption<string>("search"),
+			arg.GetOption<string>(this.Localization[PSLCommonOptionKey.SongSearchOptionName]),
 			this.PhigrosDataService.IdNameMap);
 
 		if (foundAlias.Count == 0)
 		{
-			await arg.QuickReply("Sorry, no matches found.");
+			await arg.QuickReply(this.Localization[PSLCommonMessageKey.SongSearchNoMatch]);
 			return;
 		}
 
@@ -74,7 +64,7 @@ public class DownloadAssetCommand : GuestCommandBase
 			$"[Music]({musicUrl}), ");
 
 		for (int i = 0; i < 4 && this.PhigrosDataService.CheckedDifficulties[id][i] != 0; i++)
-		{
+		{ // UNDONE: localize those
 			Difficulty difficulty = (Difficulty)i;
 			@return.Append($"[Chart {difficulty}](<{chartUrls[difficulty]}>), ");
 		}

@@ -2,54 +2,45 @@
 using Discord.WebSocket;
 using PhigrosLibraryCSharp.GameRecords;
 using PSLDiscordBot.Core.Command.Global.Base;
+using PSLDiscordBot.Core.Localization;
 using PSLDiscordBot.Core.Services;
 using PSLDiscordBot.Core.Services.Phigros;
 using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Core.Utility;
 using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.CommandBase;
-using PSLDiscordBot.Framework.DependencyInjection;
+using PSLDiscordBot.Framework.Localization;
 using System.Text;
-using yt6983138.Common;
 
 namespace PSLDiscordBot.Core.Command.Global;
 
 [AddToGlobal]
 public class SongInfoCommand : GuestCommandBase
 {
-	#region Injection
-#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
-	[Inject]
-	public PhigrosDataService PhigrosDataService { get; set; }
-	[Inject]
-	public Logger Logger { get; set; }
-#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
-	#endregion
-
-	public override string Name => "song-info";
-	public override string Description => "Search about song.";
+	public override LocalizedString? NameLocalization => this.Localization[PSLGuestCommandKey.SongInfoName];
+	public override LocalizedString? DescriptionLocalization => this.Localization[PSLGuestCommandKey.SongInfoDescription];
 
 	public override SlashCommandBuilder CompleteBuilder =>
-		this.BasicBuilder
-		.AddOption(
-			"search",
+		this.BasicBuilder.AddOption(
+			this.Localization[PSLCommonOptionKey.SongSearchOptionName],
 			ApplicationCommandOptionType.String,
-			"Searching strings, you can either put id, put alias, or put the song name.",
+			this.Localization[PSLCommonOptionKey.SongSearchOptionDescription],
 			isRequired: true);
 
 	public override async Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
 	{
 		List<SongAliasPair> foundAlias = await requester.FindFromIdOrAlias(
-			arg.GetOption<string>("search"),
+			arg.GetOption<string>(this.Localization[PSLCommonOptionKey.SongSearchOptionName]),
 			this.PhigrosDataService.IdNameMap);
 
 		if (foundAlias.Count == 0)
 		{
-			await arg.QuickReply("Sorry, no matches found.");
+			await arg.QuickReply(this.Localization[PSLCommonMessageKey.SongSearchNoMatch]);
 			return;
 		}
 
 		StringBuilder query = BuildReturnQueryString(foundAlias, this.PhigrosDataService);
+		// UNDONE: localize those builder based messages
 
 		await arg.QuickReplyWithAttachments($"Found {foundAlias.Count} match(es). " +
 			$"[Illustration]({BuildAssetUrl(foundAlias[0].SongId, "illustration", "png")})",

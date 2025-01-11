@@ -1,31 +1,35 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using PSLDiscordBot.Core.Command.Global.Base;
+using PSLDiscordBot.Core.Localization;
 using PSLDiscordBot.Core.Services;
 using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.CommandBase;
+using PSLDiscordBot.Framework.Localization;
 
-namespace PSLDiscordBot.Core.Command.Global.Template;
+namespace PSLDiscordBot.Core.Command.Global;
 
 [AddToGlobal]
 public class SetShowCountDefaultCommand : CommandBase
 {
-	public override string Name => "set-show-count-default";
-	public override string Description => "Set the default show count for /get-photo.";
+	public override LocalizedString? NameLocalization => this.Localization[PSLNormalCommandKey.SetShowCountDefaultOptionCountName];
+	public override LocalizedString? DescriptionLocalization => this.Localization[PSLNormalCommandKey.SetShowCountDefaultDescription];
 
 	public override SlashCommandBuilder CompleteBuilder =>
-		this.BasicBuilder
-		.AddOption("count",
+		this.BasicBuilder.AddOption(
+			this.Localization[PSLNormalCommandKey.SetShowCountDefaultOptionCountName],
 			ApplicationCommandOptionType.Integer,
-			"The default count going to be set. Put 20 for the classic b20 view.",
+			this.Localization[PSLNormalCommandKey.SetShowCountDefaultOptionCountDescription],
 			isRequired: true,
 			minValue: 0,
 			maxValue: int.MaxValue);
 
 	public override async Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
 	{
-		await requester.SetDefaultGetPhotoShowCountCached(arg.User.Id, arg.GetIntegerOptionAsInt32("count"));
-		await arg.QuickReply("The operation has done successfully.");
+		await requester.SetDefaultGetPhotoShowCountCached(
+			arg.User.Id,
+			arg.GetIntegerOptionAsInt32(this.Localization[PSLNormalCommandKey.SetShowCountDefaultOptionCountName]));
+		await arg.QuickReply(this.Localization[PSLCommonMessageKey.OperationDone]);
 	}
 }

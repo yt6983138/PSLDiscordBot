@@ -4,13 +4,14 @@ using PhigrosLibraryCSharp.Cloud.DataStructure;
 using PhigrosLibraryCSharp.GameRecords;
 using PSLDiscordBot.Core.Command.Global.Base;
 using PSLDiscordBot.Core.ImageGenerating;
+using PSLDiscordBot.Core.Localization;
 using PSLDiscordBot.Core.Services;
-using PSLDiscordBot.Core.Services.Phigros;
 using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Core.Utility;
 using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.CommandBase;
 using PSLDiscordBot.Framework.DependencyInjection;
+using PSLDiscordBot.Framework.Localization;
 
 namespace PSLDiscordBot.Core.Command.Global;
 
@@ -20,8 +21,6 @@ public class AboutMeCommand : CommandBase
 	#region Injection
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 	[Inject]
-	public PhigrosDataService PhigrosDataService { get; set; }
-	[Inject]
 	public ImageGenerator ImageGenerator { get; set; }
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 	#endregion
@@ -29,29 +28,29 @@ public class AboutMeCommand : CommandBase
 	public override bool IsEphemeral => false;
 	public override bool RunOnDifferentThread => true;
 
-	public override string Name => "about-me";
-	public override string Description => "Get info about you in game.";
+	public override LocalizedString? NameLocalization => this.Localization[PSLNormalCommandKey.AboutMeName];
+	public override LocalizedString? DescriptionLocalization => this.Localization[PSLNormalCommandKey.AboutMeDescription];
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder.AddOption(
-			"index",
+			this.Localization[PSLCommonOptionKey.IndexOptionName],
 			ApplicationCommandOptionType.Integer,
-			"Save time converted to index, 0 is always latest. Do /get-time-index to get other index.",
+			this.Localization[PSLCommonOptionKey.IndexOptionDescription],
 			isRequired: false,
-			minValue: 0
-		);
+			minValue: 0);
 
 	public override async Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
 	{
-		await arg.QuickReply("Sorry, this command is currently not available.");
+		await arg.QuickReply(this.Localization[PSLCommonMessageKey.CommandUnavailable]);
 		return;
 
 
-		int index = arg.GetIntegerOptionAsInt32OrDefault("index");
+		int index = arg.GetIndexOption(this.Localization);
 
 		PhigrosLibraryCSharp.SaveSummaryPair? pair = await data.SaveCache.GetAndHandleSave(
 			arg,
 			this.PhigrosDataService.DifficultiesMap,
+			this.Localization,
 			index);
 		if (pair is null)
 			return;
@@ -77,6 +76,7 @@ public class AboutMeCommand : CommandBase
 			cancellationToken: this.ConfigService.Data.RenderTimeoutCTS.Token
 		);
 
-		await arg.QuickReplyWithAttachments("Generated!", new FileAttachment(image, "Score.png"));
+		await arg.QuickReplyWithAttachments([new(image, "Score.png")],
+			this.Localization[PSLCommonMessageKey.ImageGenerated]);
 	}
 }

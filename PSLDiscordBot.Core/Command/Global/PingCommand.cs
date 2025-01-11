@@ -3,11 +3,13 @@ using Discord.WebSocket;
 using PhigrosLibraryCSharp;
 using PhigrosLibraryCSharp.Cloud.Login;
 using PSLDiscordBot.Core.Command.Global.Base;
+using PSLDiscordBot.Core.Localization;
 using PSLDiscordBot.Core.Services;
 using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Core.Utility;
 using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.CommandBase;
+using PSLDiscordBot.Framework.Localization;
 using System.Net.NetworkInformation;
 using System.Text;
 
@@ -23,8 +25,10 @@ public class PingCommand : GuestCommandBase
 		{ "Dns and Github", [new("http://8.8.8.8/"), new("https://github.com")] }
 	};
 
-	public override string Name => "ping";
-	public override string Description => "Check the availability of the core services.";
+	public override LocalizedString? NameLocalization => this.Localization[PSLGuestCommandKey.PingName];
+	public override LocalizedString? DescriptionLocalization => this.Localization[PSLGuestCommandKey.PingDescription];
+
+	public override bool IsEphemeral => false;
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder;
@@ -33,17 +37,18 @@ public class PingCommand : GuestCommandBase
 	{
 		const int TestCount = 5;
 		const string Indention = "    ";
+		const int ICMPTimeout = 5000;
 
-		await arg.QuickReply("Pinging... This can take a while.");
+		await arg.QuickReply(this.Localization[PSLGuestCommandKey.PingPinging]);
 
 		List<(string, StringBuilder)> pingResults = new(_domainsToCheck.Sum(x => x.Value.Count));
 		List<Task> tasks = new();
-		foreach (KeyValuePair<string, List<Uri>> item in _domainsToCheck)
+		foreach (KeyValuePair<string, List<Uri>> item in _domainsToCheck) // TODO: refactor this shit
 		{
+			string groupName = item.Key;
+			List<Uri> urls = item.Value;
 			Task task = Task.Run(async () =>
 			{
-				string groupName = item.Key;
-				List<Uri> urls = item.Value;
 				List<Task> moreTasks = new();
 				foreach (Uri url in urls)
 				{
@@ -54,14 +59,14 @@ public class PingCommand : GuestCommandBase
 						Ping ping = new();
 						for (int i = 0; i < TestCount; i++)
 						{
-							PingReply result = await ping.SendPingAsync(url.Host);
+							PingReply result = await ping.SendPingAsync(url.Host, ICMPTimeout);
 							if (result.Status == IPStatus.Success)
 							{
 								sb.AppendLine($"{Indention}{Indention}Ping success, latency: {result.RoundtripTime}ms.");
 							}
 							else
 							{
-								sb.AppendLine($"{Indention}{Indention}Ping failed with reason {result.Status} after {result.RoundtripTime}ms.");
+								sb.AppendLine($"{Indention}{Indention}Ping failed with reason {result.Status} after {ICMPTimeout}ms.");
 							}
 						}
 					}));
@@ -87,6 +92,8 @@ public class PingCommand : GuestCommandBase
 			output.AppendLine();
 		}
 
-		await arg.QuickReplyWithAttachments("Ping complete, result:", PSLUtils.ToAttachment(output.ToString(), "Result.txt"));
+		await arg.QuickReplyWithAttachments(
+			[PSLUtils.ToAttachment(output.ToString(), "Result.txt")],
+			this.Localization[PSLGuestCommandKey.PingPingDone]);
 	}
 }

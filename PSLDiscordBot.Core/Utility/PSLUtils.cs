@@ -3,6 +3,7 @@ using Discord.WebSocket;
 using PhigrosLibraryCSharp;
 using PhigrosLibraryCSharp.Cloud.DataStructure;
 using PhigrosLibraryCSharp.GameRecords;
+using PSLDiscordBot.Core.Localization;
 using PSLDiscordBot.Core.Services;
 using PSLDiscordBot.Framework;
 using SixLabors.ImageSharp;
@@ -49,6 +50,16 @@ public static class PSLUtils
 	}
 	internal static Size ToIntSize(this SizeF val)
 		=> new((int)val.Width, (int)val.Height);
+	internal static SlashCommandBuilder DoIfNotNull<T>(this SlashCommandBuilder builder, T? obj, Action<SlashCommandBuilder, T> action)
+	{
+		if (obj is not null) action.Invoke(builder, obj);
+		return builder;
+	}
+
+	public static int GetIndexOption(this SocketSlashCommand command, LocalizationService service, int @default = default)
+	{
+		return command.GetIntegerOptionAsInt32OrDefault(service[PSLCommonOptionKey.IndexOptionName], @default);
+	}
 
 	public static async Task<List<SongAliasPair>> FindFromIdOrAlias(
 		this DataBaseService.DbDataRequester requester,
@@ -78,14 +89,16 @@ public static class PSLUtils
 		this Save save,
 		SocketSlashCommand command,
 		IReadOnlyDictionary<string, float[]> difficultyMap,
+		LocalizationService localizationService,
 		int index = 0,
-		bool autoThrow = true,
-		string onOutOfRange = "Error: Expected index less than {0}, more or equal to 0. You entered {1}.",
-		string onOtherException = "Error: {0}\nYou may try again or report to author (`/report-problem`).",
-		string onNoSaves = "Error: There is no save on the cloud, did you use wrong account, or have not synced?",
-		string onPhiLibUriException = "Error: {0}\n*This sometimes can indicate save corruption. Please try few more times or re-sync.*",
-		string onPhiLibJsonException = "Error: {0}\n*This sometimes can indicate save corruption. Please try few more times or re-sync.*")
+		bool autoThrow = true)
 	{
+		string onOutOfRange = localizationService[PSLCommonKey.SaveHandlerOnOutOfRange][command.UserLocale];
+		string onOtherException = localizationService[PSLCommonKey.SaveHandlerOnOtherException][command.UserLocale];
+		string onNoSaves = localizationService[PSLCommonKey.SaveHandlerOnNoSaves][command.UserLocale];
+		string onPhiLibUriException = localizationService[PSLCommonKey.SaveHandlerOnPhiLibUriException][command.UserLocale];
+		string onPhiLibJsonException = localizationService[PSLCommonKey.SaveHandlerOnPhiLibJsonException][command.UserLocale];
+
 		try
 		{
 			List<PhigrosLibraryCSharp.Cloud.DataStructure.Raw.RawSave> rawSaves = (await save.GetRawSaveFromCloudAsync()).results;

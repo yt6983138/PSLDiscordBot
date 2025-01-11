@@ -17,6 +17,7 @@ public class Config
 	public ulong AdminUserId { get; set; }
 #endif
 	public string LogLocation { get; set; } = "./PSL/Latest.log";
+	public string LocalizationLocation { get; set; } = "./PSL/Localization.json";
 
 	public string AvatarHashMapLocation { get; set; } = "./Assets/Avatar/AvatarInfo.json";
 
