@@ -1,6 +1,5 @@
 ﻿using Discord;
 using Discord.WebSocket;
-using Microsoft.Extensions.Logging;
 using PhigrosLibraryCSharp.Cloud.Login;
 using PhigrosLibraryCSharp.Cloud.Login.DataStructure;
 using PSLDiscordBot.Core.Command.Global.Base;
@@ -47,7 +46,6 @@ public class LoginCommand : GuestCommandBase
 				string token = await LCHelper.LoginAndGetToken(new(profile.Data, result.Data));
 				UserData userData = new(token);
 				_ = await userData.SaveCache.GetUserInfoAsync();
-				this.Logger.Log<LoginCommand>(LogLevel.Information, this.EventId, $"User {command.User.GlobalName}({command.User.Id}) registered. Token: {token}"); // TODO: remove token logging
 				await requester.AddOrReplaceUserDataCachedAsync(command.User.Id, userData);
 				await command.QuickReply(this.Localization[PSLGuestCommandKey.LoginComplete]);
 				return;

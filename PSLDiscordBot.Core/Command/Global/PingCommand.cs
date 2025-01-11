@@ -43,37 +43,12 @@ public class PingCommand : GuestCommandBase
 
 		List<(string, StringBuilder)> pingResults = new(_domainsToCheck.Sum(x => x.Value.Count));
 		List<Task> tasks = new();
-		foreach (KeyValuePair<string, List<Uri>> item in _domainsToCheck) // TODO: refactor this shit
+		foreach (KeyValuePair<string, List<Uri>> item in _domainsToCheck)
 		{
 			string groupName = item.Key;
 			List<Uri> urls = item.Value;
-			Task task = Task.Run(async () =>
-			{
-				List<Task> moreTasks = new();
-				foreach (Uri url in urls)
-				{
-					StringBuilder sb = new($"{Indention}Pinging {url.Host}:\n");
-					pingResults.Add((groupName, sb));
-					moreTasks.Add(Task.Run(async () =>
-					{
-						Ping ping = new();
-						for (int i = 0; i < TestCount; i++)
-						{
-							PingReply result = await ping.SendPingAsync(url.Host, ICMPTimeout);
-							if (result.Status == IPStatus.Success)
-							{
-								sb.AppendLine($"{Indention}{Indention}Ping success, latency: {result.RoundtripTime}ms.");
-							}
-							else
-							{
-								sb.AppendLine($"{Indention}{Indention}Ping failed with reason {result.Status} after {ICMPTimeout}ms.");
-							}
-						}
-					}));
-				}
-				await Task.WhenAll(moreTasks);
-			});
-			tasks.Add(task);
+
+			tasks.Add(ProcessDomain(groupName, urls, pingResults));
 		}
 		await Task.WhenAll(tasks);
 
@@ -95,5 +70,33 @@ public class PingCommand : GuestCommandBase
 		await arg.QuickReplyWithAttachments(
 			[PSLUtils.ToAttachment(output.ToString(), "Result.txt")],
 			this.Localization[PSLGuestCommandKey.PingPingDone]);
+
+		async Task ProcessDomain(string groupName, List<Uri> urls, List<(string, StringBuilder)> pingResults)
+		{
+			List<Task> tasks = new();
+			foreach (Uri url in urls)
+			{
+				StringBuilder sb = new($"{Indention}Pinging {url.Host}:\n");
+				pingResults.Add((groupName, sb));
+				tasks.Add(ProcessUrl(url, sb));
+			}
+			await Task.WhenAll(tasks);
+		}
+		async Task ProcessUrl(Uri url, StringBuilder sb)
+		{
+			Ping ping = new();
+			for (int i = 0; i < TestCount; i++)
+			{
+				PingReply result = await ping.SendPingAsync(url.Host, ICMPTimeout);
+				if (result.Status == IPStatus.Success)
+				{
+					sb.AppendLine($"{Indention}{Indention}Ping success, latency: {result.RoundtripTime}ms.");
+				}
+				else
+				{
+					sb.AppendLine($"{Indention}{Indention}Ping failed with reason {result.Status} after {ICMPTimeout}ms.");
+				}
+			}
+		}
 	}
 }

@@ -59,14 +59,12 @@ public class PSLDiscordBotAnalyzer : DiagnosticAnalyzer
 		context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
 		context.EnableConcurrentExecution();
 
-		// TODO: Consider registering other actions that act on syntax instead of or in addition to symbols
 		// See https://github.com/dotnet/roslyn/blob/main/docs/analyzers/Analyzer%20Actions%20Semantics.md for more information
 		context.RegisterSymbolAction(AnalyzeSymbol, SymbolKind.NamedType);
 	}
 
 	private static void AnalyzeSymbol(SymbolAnalysisContext context)
 	{
-		// TODO: Replace the following code with your own analysis, generating Diagnostic objects for any issues you find
 		INamedTypeSymbol symbol = (INamedTypeSymbol)context.Symbol;
 
 		Compilation compilation = context.Compilation;

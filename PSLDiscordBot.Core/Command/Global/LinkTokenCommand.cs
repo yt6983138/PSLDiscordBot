@@ -1,6 +1,5 @@
 ﻿using Discord;
 using Discord.WebSocket;
-using Microsoft.Extensions.Logging;
 using PhigrosLibraryCSharp;
 using PSLDiscordBot.Core.Command.Global.Base;
 using PSLDiscordBot.Core.Localization;
@@ -62,7 +61,5 @@ public class LinkTokenCommand : GuestCommandBase
 			await arg.QuickReply(this.Localization[PSLGuestCommandKey.LinkTokenSuccess]);
 		}
 		await requester.AddOrReplaceUserDataCachedAsync(userId, tmp);
-		this.Logger.Log<LinkTokenCommand>(LogLevel.Information, this.EventId, $"User {arg.User.GlobalName}({userId}) registered. Token: {token}");
-		// TODO: Remove those logs (from like all registering commands)
 	}
 }

@@ -9,7 +9,6 @@ using yt6983138.Common;
 namespace PSLDiscordBot.Core.Services;
 
 public record class SongAliasPair(string SongId, string[] Alias);
-// TODO: refactor this entire shit
 public sealed class DataBaseService : InjectableBase
 {
 	private sealed class LogTracer(Action _onDispose) : IDisposable
