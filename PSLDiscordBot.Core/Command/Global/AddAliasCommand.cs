@@ -1,49 +1,51 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using PSLDiscordBot.Core.Command.Global.Base;
+using PSLDiscordBot.Core.Localization;
 using PSLDiscordBot.Core.Services;
 using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Core.Utility;
 using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.CommandBase;
+using PSLDiscordBot.Framework.Localization;
 
 namespace PSLDiscordBot.Core.Command.Global;
 
 [AddToGlobal]
 public class AddAliasCommand : CommandBase
 {
-	public override string Name => "add-alias";
-	public override string Description => "Add a song alias, for example alias Destruction 3.2.1 to 321";
+	public override LocalizedString? NameLocalization => this.Localization[PSLNormalCommandKey.AddAliasName];
+	public override LocalizedString? DescriptionLocalization => this.Localization[PSLNormalCommandKey.AddAliasDescription];
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder
 		.AddOption(
-			"for",
+			this.Localization[PSLNormalCommandKey.AddAliasOptionForSongName],
 			ApplicationCommandOptionType.String,
-			"For which song to add, inputing a song's name, id, or other alias is allowed.",
+			this.Localization[PSLNormalCommandKey.AddAliasOptionForSongDescription],
 			isRequired: true)
 		.AddOption(
-			"alias",
+			this.Localization[PSLNormalCommandKey.AddAliasOptionAllayToAddName],
 			ApplicationCommandOptionType.String,
-			"The alias to add, note: you may only add one alias at one time.",
+			this.Localization[PSLNormalCommandKey.AddAliasOptionAllayToAddDescription],
 			isRequired: true);
 
 	public override async Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
 	{
-		string forSong = arg.GetOption<string>("for");
-		string alias = arg.GetOption<string>("alias");
+		string forSong = arg.GetOption<string>(this.Localization[PSLNormalCommandKey.AddAliasOptionForSongName]);
+		string alias = arg.GetOption<string>(this.Localization[PSLNormalCommandKey.AddAliasOptionAllayToAddName]);
 
 		List<SongAliasPair> found = await requester.FindFromIdOrAlias(forSong, this.PhigrosDataService.IdNameMap);
 		if (found.Count == 0)
 		{
-			await arg.QuickReply("Sorry, nothing matched your 'for' input.");
+			await arg.QuickReply(this.Localization[PSLNormalCommandKey.AddAliasNoMatch]);
 			return;
 		}
 		if (found.Count > 1)
-		{
+		{ // UNDONE: localize those
 			await arg.QuickReply($"There's multiple match for your 'for' input: \n" +
 				$"```\n" +
-				$"{string.Join("\n", found.Select(x => x.SongId.ToString()))}\n" +
+				$"{string.Join("\n", found.Select(x => x.SongId))}\n" +
 				$"```\n" +
 				$"Please re-do this command with the correct 'for' parameter.");
 			return;

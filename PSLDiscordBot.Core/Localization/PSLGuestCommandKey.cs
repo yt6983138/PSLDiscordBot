@@ -41,6 +41,27 @@ public static partial class PSLGuestCommandKey
 	public static partial string LinkTokenInvalidToken { get; }
 	public static partial string LinkTokenSuccess { get; }
 	public static partial string LinkTokenSuccessButOverwritten { get; }
+	#endregion
 
+	#region HelpCommand
+	public static partial string HelpName { get; }
+	public static partial string HelpDescription { get; }
+	#endregion
+
+	#region LoginCommand
+	public static partial string LoginName { get; }
+	public static partial string LoginDescription { get; }
+
+	public static partial string LoginBegin { get; }
+	public static partial string LoginComplete { get; }
+	public static partial string LoginTimedOut { get; }
+	#endregion
+
+	#region DownloadAssetCommand
+	public static partial string DownloadAssetName { get; }
+	public static partial string DownloadAssetDescription { get; }
+
+	public static partial string DownloadAssetOptionDownloadPEZName { get; }
+	public static partial string DownloadAssetOptionDownloadPEZDescription { get; }
 	#endregion
 }

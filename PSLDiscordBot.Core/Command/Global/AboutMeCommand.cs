@@ -45,7 +45,7 @@ public class AboutMeCommand : CommandBase
 		return;
 
 
-		int index = arg.GetIntegerOptionAsInt32OrDefault(this.Localization[PSLCommonOptionKey.IndexOptionName]);
+		int index = arg.GetIndexOption(this.Localization);
 
 		PhigrosLibraryCSharp.SaveSummaryPair? pair = await data.SaveCache.GetAndHandleSave(
 			arg,

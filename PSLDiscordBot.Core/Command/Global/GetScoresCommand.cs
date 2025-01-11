@@ -9,6 +9,7 @@ using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Core.Utility;
 using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.CommandBase;
+using PSLDiscordBot.Framework.Localization;
 using System.Text;
 
 namespace PSLDiscordBot.Core.Command.Global;
@@ -18,20 +19,20 @@ public class GetScoresCommand : CommandBase
 {
 	public override bool IsEphemeral => false;
 
-	public override string Name => "get-scores";
-	public override string Description => "Get scores (Text format)";
+	public override LocalizedString? NameLocalization => this.Localization[PSLNormalCommandKey.GetScoresName];
+	public override LocalizedString? DescriptionLocalization => this.Localization[PSLNormalCommandKey.GetScoresDescription];
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder.AddOption(
-				this.Localization[PSLCommonOptionKey.IndexOptionName],
-				ApplicationCommandOptionType.Integer,
-				this.Localization[PSLCommonOptionKey.IndexOptionDescription],
-				isRequired: false,
-				minValue: 0)
-		.AddOption(
-			"count",
+			this.Localization[PSLCommonOptionKey.IndexOptionName],
 			ApplicationCommandOptionType.Integer,
-			"The count to show.",
+			this.Localization[PSLCommonOptionKey.IndexOptionDescription],
+			isRequired: false,
+			minValue: 0)
+		.AddOption(
+			this.Localization[PSLNormalCommandKey.GetScoresOptionCountName],
+			ApplicationCommandOptionType.Integer,
+			this.Localization[PSLNormalCommandKey.GetScoresOptionCountDescription],
 			isRequired: false,
 			minValue: 1,
 			maxValue: 114514
@@ -43,7 +44,7 @@ public class GetScoresCommand : CommandBase
 			arg,
 			this.PhigrosDataService.DifficultiesMap,
 			this.Localization,
-			arg.GetIntegerOptionAsInt32OrDefault("index"));
+			arg.GetIndexOption(this.Localization));
 		if (pair is null)
 			return;
 		(Summary summary, GameSave save) = pair.Value;
@@ -51,21 +52,14 @@ public class GetScoresCommand : CommandBase
 		string result = ScoresFormatter(
 			save.Records,
 			this.PhigrosDataService.IdNameMap,
-			arg.GetIntegerOptionAsInt32OrDefault("count", 19),
+			arg.GetIntegerOptionAsInt32OrDefault(this.Localization[PSLNormalCommandKey.GetScoresOptionCountName], 19),
 			data);
 
-		await arg.ModifyOriginalResponseAsync(
-			(msg) =>
-			{
-				msg.Content = "Got score! Now showing...";
-				msg.Attachments = new List<FileAttachment>()
-				{
-					new(new MemoryStream(Encoding.UTF8.GetBytes(result)), "Scores.txt")
-				};
-			});
+		await arg.QuickReplyWithAttachments([PSLUtils.ToAttachment(result, "Scores.txt")],
+			this.Localization[PSLNormalCommandKey.GetScoresDone]);
 	}
 	public static string ScoresFormatter(List<CompleteScore> scores, IReadOnlyDictionary<string, string> map, int shouldAddCount, in UserData userData, bool calculateRks = true, bool showLineNumber = true)
-	{
+	{ // UNDONE: localize those
 		(int index, CompleteScore score) highest = (0, new(0, 0, 0, "None", Difficulty.EZ, ScoreStatus.Bugged));
 		List<string> realNames = new();
 		double elapsedRks = 0;

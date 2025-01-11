@@ -3,12 +3,13 @@ using Discord.WebSocket;
 using PhigrosLibraryCSharp.Cloud.DataStructure;
 using PhigrosLibraryCSharp.GameRecords;
 using PSLDiscordBot.Core.Command.Global.Base;
+using PSLDiscordBot.Core.Localization;
 using PSLDiscordBot.Core.Services;
 using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Core.Utility;
 using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.CommandBase;
-using System.Text;
+using PSLDiscordBot.Framework.Localization;
 using yt6983138.Common;
 
 namespace PSLDiscordBot.Core.Command.Global;
@@ -16,17 +17,16 @@ namespace PSLDiscordBot.Core.Command.Global;
 [AddToGlobal]
 public class ExportScoresCommand : CommandBase
 {
-	public override string Name => "export-scores";
-	public override string Description => "Export all your scores. Returns: A csv file that includes all of your scores.";
+	public override LocalizedString? NameLocalization => this.Localization[PSLNormalCommandKey.ExportScoresName];
+	public override LocalizedString? DescriptionLocalization => this.Localization[PSLNormalCommandKey.ExportScoresDescription];
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder.AddOption(
-			"index",
+			this.Localization[PSLCommonOptionKey.IndexOptionName],
 			ApplicationCommandOptionType.Integer,
-			"Save time converted to index, 0 is always latest. Do /get-time-index to get other index.",
+			this.Localization[PSLCommonOptionKey.IndexOptionDescription],
 			isRequired: false,
-			minValue: 0
-		);
+			minValue: 0);
 
 	public override async Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
 	{
@@ -34,22 +34,17 @@ public class ExportScoresCommand : CommandBase
 			arg,
 			this.PhigrosDataService.DifficultiesMap,
 			this.Localization,
-			arg.GetIntegerOptionAsInt32OrDefault("index"));
+			arg.GetIndexOption(this.Localization));
 		if (pair is null)
 			return;
 		(Summary summary, GameSave save) = pair.Value;
 
-		await arg.ModifyOriginalResponseAsync(
-			(msg) =>
-			{
-				msg.Content = $"You have {save.Records.Count} Scores, now exporting...";
-				msg.Attachments = new List<FileAttachment>()
-				{
-					new(new MemoryStream(Encoding.UTF8.GetBytes(ExportCSV(save.Records, this.PhigrosDataService.IdNameMap))), "Export.csv")
-				};
-			});
+		await arg.QuickReplyWithAttachments(
+			[PSLUtils.ToAttachment(ExportCSV(save.Records, this.PhigrosDataService.IdNameMap), "Export.csv")],
+			this.Localization[PSLNormalCommandKey.ExportScoresReply],
+			save.Records.Count);
 	}
-	public static string ExportCSV(List<CompleteScore> scores, IReadOnlyDictionary<string, string> map, int countToExport = 0)
+	public static string ExportCSV(List<CompleteScore> scores, IReadOnlyDictionary<string, string> map, int countToExport = -1)
 	{
 		CsvBuilder builder = new();
 		builder.AddHeader("ID", "Name", "Difficulty", "Chart Constant", "Score", "Acc", "Rks Given", "Stat");

@@ -46,7 +46,7 @@ public class SongScoresCommand : CommandBase
 	public override async Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
 	{
 		string search = arg.GetOption<string>(this.Localization[PSLCommonOptionKey.SongSearchOptionName]);
-		int index = arg.GetIntegerOptionAsInt32OrDefault(this.Localization[PSLCommonOptionKey.IndexOptionName]);
+		int index = arg.GetIndexOption(this.Localization);
 
 		List<SongAliasPair> searchResult = await requester.FindFromIdOrAlias(search, this.PhigrosDataService.IdNameMap);
 		if (searchResult.Count == 0)
@@ -59,7 +59,7 @@ public class SongScoresCommand : CommandBase
 			arg,
 			this.PhigrosDataService.DifficultiesMap,
 			this.Localization,
-			arg.GetIntegerOptionAsInt32OrDefault("index"));
+			index);
 		if (pair is null)
 			return;
 		(Summary summary, GameSave save) = pair.Value;

@@ -33,4 +33,82 @@ public static partial class PSLNormalCommandKey
 	public static partial string AboutMeName { get; }
 	public static partial string AboutMeDescription { get; }
 	#endregion
+
+	#region GetTimeIndexCommand
+	public static partial string GetTimeIndexName { get; }
+	public static partial string GetTimeIndexDescription { get; }
+	#endregion
+
+	#region GetTokenCommand
+	public static partial string GetTokenName { get; }
+	public static partial string GetTokenDescription { get; }
+
+	public static partial string GetTokenReply { get; }
+	#endregion
+
+	#region ExportScoresCommand
+	public static partial string ExportScoresName { get; }
+	public static partial string ExportScoresDescription { get; }
+
+	public static partial string ExportScoresReply { get; }
+	#endregion
+
+	#region GetMoneyCommand
+	public static partial string GetMoneyName { get; }
+	public static partial string GetMoneyDescription { get; }
+
+	public static partial string GetMoneyReply { get; }
+	#endregion
+
+	#region AddAliasCommand
+	public static partial string AddAliasName { get; }
+	public static partial string AddAliasDescription { get; }
+
+	public static partial string AddAliasOptionForSongName { get; }
+	public static partial string AddAliasOptionForSongDescription { get; }
+	public static partial string AddAliasOptionAllayToAddName { get; }
+	public static partial string AddAliasOptionAllayToAddDescription { get; }
+
+	public static partial string AddAliasNoMatch { get; }
+	#endregion
+
+	#region GetScoresCommand
+	public static partial string GetScoresName { get; }
+	public static partial string GetScoresDescription { get; }
+
+	public static partial string GetScoresOptionCountName { get; }
+	public static partial string GetScoresOptionCountDescription { get; }
+
+	public static partial string GetScoresDone { get; }
+	#endregion
+
+	#region GetPhotoCommand
+	public static partial string GetPhotoName { get; }
+	public static partial string GetPhotoDescription { get; }
+
+	public static partial string GetPhotoOptionCountName { get; }
+	public static partial string GetPhotoOptionCountDescription { get; }
+	public static partial string GetPhotoOptionLowerBoundName { get; }
+	public static partial string GetPhotoOptionLowerBoundDescription { get; }
+	public static partial string GetPhotoOptionGradesToShowName { get; }
+	public static partial string GetPhotoOptionGradesToShowDescription { get; }
+
+	public static partial string GetPhotoFailedParsingGrades { get; }
+	public static partial string GetPhotoImageTooBig { get; }
+	public static partial string GetPhotoStillInCoolDown { get; }
+	public static partial string GetPhotoGenerating { get; }
+	public static partial string GetPhotoError { get; }
+	#endregion
+
+	#region MoreRksCommand
+	public static partial string MoreRksName { get; }
+	public static partial string MoreRksDescription { get; }
+
+	public static partial string MoreRksOptionGetAtLeastName { get; }
+	public static partial string MoreRksOptionGetAtLeastDescription { get; }
+	public static partial string MoreRksOptionCountName { get; }
+	public static partial string MoreRksOptionCountDescription { get; }
+
+	public static partial string MoreRksResult { get; }
+	#endregion
 }

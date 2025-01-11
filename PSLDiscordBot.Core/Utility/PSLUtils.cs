@@ -56,6 +56,11 @@ public static class PSLUtils
 		return builder;
 	}
 
+	public static int GetIndexOption(this SocketSlashCommand command, LocalizationService service, int @default = default)
+	{
+		return command.GetIntegerOptionAsInt32OrDefault(service[PSLCommonOptionKey.IndexOptionName], @default);
+	}
+
 	public static async Task<List<SongAliasPair>> FindFromIdOrAlias(
 		this DataBaseService.DbDataRequester requester,
 		string idOrAlias,

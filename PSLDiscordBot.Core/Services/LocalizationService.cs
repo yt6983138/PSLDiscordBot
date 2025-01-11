@@ -92,7 +92,76 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 			[LinkTokenSuccess] = LocalizedString.CreateDefault("Linked successfully!"),
 			[LinkTokenSuccessButOverwritten] = LocalizedString.CreateDefault("You have already registered, but still linked successfully!"),
 
-			[] = LocalizedString.CreateDefault(),
+			[GetTimeIndexName] = LocalizedString.CreateDefault("get-time-index"),
+			[GetTimeIndexDescription] = LocalizedString.CreateDefault("Get save indexes, used to fetch older saves in various commands."),
+
+			[GetTokenName] = LocalizedString.CreateDefault("get-token"),
+			[GetTokenDescription] = LocalizedString.CreateDefault("Show your token."),
+			[GetTokenReply] = LocalizedString.CreateDefault("Your token: {0}||{1}|| (Click to reveal, DO NOT show it to other people.)"),
+
+			[ExportScoresName] = LocalizedString.CreateDefault("export-scores"),
+			[ExportScoresDescription] = LocalizedString.CreateDefault("Export all your scores as a CSV file."),
+			[ExportScoresReply] = LocalizedString.CreateDefault("You have {0} scores, now exporting..."),
+
+			[GetMoneyName] = LocalizedString.CreateDefault("get-money"),
+			[GetMoneyDescription] = LocalizedString.CreateDefault("Get amount of data/money/currency you have in Phigros."),
+			[GetMoneyReply] = LocalizedString.CreateDefault("You have {0}."),
+
+			[HelpName] = LocalizedString.CreateDefault("help"),
+			[HelpDescription] = LocalizedString.CreateDefault("Show help manuals."),
+
+			[LoginName] = LocalizedString.CreateDefault("login"),
+			[LoginDescription] = LocalizedString.CreateDefault("Log in using TapTap."),
+			[LoginBegin] = LocalizedString.CreateDefault("Please login using this url: {0}\n" +
+				"Make sure to login with the exact credentials you used in Phigros.\n" +
+				"The page _may_ stuck at loading after you click 'grant', " +
+				"don't worry about it just close the page and the login process will continue anyway, " +
+				"after you do it this message should show that you logged in successfully."),
+			[LoginComplete] = LocalizedString.CreateDefault("Logged in successfully, all commands are now accessible!"),
+			[LoginTimedOut] = LocalizedString.CreateDefault("The login has been canceled due to timeout."),
+
+			[DownloadAssetName] = LocalizedString.CreateDefault("download-asset"),
+			[DownloadAssetDescription] = LocalizedString.CreateDefault("Download assets about song."),
+			[DownloadAssetOptionDownloadPEZName] = LocalizedString.CreateDefault("pez_chart_type"),
+			[DownloadAssetOptionDownloadPEZDescription] = LocalizedString.CreateDefault("Select which chart to pack."),
+
+			[AddAliasName] = LocalizedString.CreateDefault("add-alias"),
+			[AddAliasDescription] = LocalizedString.CreateDefault("Add a song alias, for example alias Destruction 3.2.1 to 321"),
+			[AddAliasOptionForSongName] = LocalizedString.CreateDefault("for"),
+			[AddAliasOptionForSongDescription] = LocalizedString.CreateDefault("For which song to add, inputting a song's name, id, or other alias is allowed."),
+			[AddAliasOptionAllayToAddName] = LocalizedString.CreateDefault("alias"),
+			[AddAliasOptionAllayToAddDescription] = LocalizedString.CreateDefault("The alias to add, note: you may only add one alias at one time."),
+			[AddAliasNoMatch] = LocalizedString.CreateDefault("Sorry, the song you're looking for seems does not exist."),
+
+			[GetScoresName] = LocalizedString.CreateDefault("get-scores"),
+			[GetScoresDescription] = LocalizedString.CreateDefault("Get scores in text, useful when you don't have much mobile data."),
+			[GetScoresOptionCountName] = LocalizedString.CreateDefault("count"),
+			[GetScoresOptionCountDescription] = LocalizedString.CreateDefault("Count of scores to show."),
+			[GetScoresDone] = LocalizedString.CreateDefault("Got score! Now showing..."),
+
+			[GetPhotoName] = LocalizedString.CreateDefault("get-photo"),
+			[GetPhotoDescription] = LocalizedString.CreateDefault("Get summary photo of your scores."),
+			[GetPhotoOptionCountName] = LocalizedString.CreateDefault("count"),
+			[GetPhotoOptionCountDescription] = LocalizedString.CreateDefault("Counts to show. (Default: 23, or set through /set-count-or-default)"),
+			[GetPhotoOptionLowerBoundName] = LocalizedString.CreateDefault("lower_bound"),
+			[GetPhotoOptionLowerBoundDescription] = LocalizedString.CreateDefault("The lower bound of the show range. ex. lower_bound: 69 and count: 42 show scores from 69 to 110."),
+			[GetPhotoOptionGradesToShowName] = LocalizedString.CreateDefault("show_what_grades"),
+			[GetPhotoOptionGradesToShowDescription] = LocalizedString.CreateDefault("Change what grades to show. Default: Show all. Use comma-separated list, ex. S, Phi, Vu, Fc, False."),
+			[GetPhotoFailedParsingGrades] = LocalizedString.CreateDefault("Failed to parse showing grades. Valid values: {0}"),
+			[GetPhotoImageTooBig] = LocalizedString.CreateDefault("Sorry, the channel you are requesting this from does not allow me to send images larger than 10mb :(\n" +
+				"Please either use count lower or equal to {0} or find other servers with boost."),
+			[GetPhotoStillInCoolDown] = LocalizedString.CreateDefault("Sorry, due to memory issues there is a cooldown when count is larger than {0}, {1} remain."),
+			[GetPhotoGenerating] = LocalizedString.CreateDefault("Making right now, this can take a bit of time..."),
+			[GetPhotoError] = LocalizedString.CreateDefault("Error occurred during uploading:"),
+
+			[MoreRksName] = LocalizedString.CreateDefault("more-rks"),
+			[MoreRksDescription] = LocalizedString.CreateDefault("Show you a list of possible chart to push to get more rks."),
+			[MoreRksOptionGetAtLeastName] = LocalizedString.CreateDefault("give_me_at_least"),
+			[MoreRksOptionGetAtLeastDescription] = LocalizedString.CreateDefault("The least rks you wanted to get from each chart. (Default: have Phigros shown +0.01)"),
+			[MoreRksOptionCountName] = LocalizedString.CreateDefault("count"),
+			[MoreRksOptionCountDescription] = LocalizedString.CreateDefault("Controls how many charts should be shown. (Default 10)"),
+			[MoreRksResult] = LocalizedString.CreateDefault("Showing {0} possible chart(s):"),
+
 			//[] = LocalizedString.CreateDefault(),
 		});
 	}
