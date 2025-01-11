@@ -37,6 +37,7 @@ public class PingCommand : GuestCommandBase
 	{
 		const int TestCount = 5;
 		const string Indention = "    ";
+		const int ICMPTimeout = 5000;
 
 		await arg.QuickReply(this.Localization[PSLGuestCommandKey.PingPinging]);
 
@@ -58,14 +59,14 @@ public class PingCommand : GuestCommandBase
 						Ping ping = new();
 						for (int i = 0; i < TestCount; i++)
 						{
-							PingReply result = await ping.SendPingAsync(url.Host);
+							PingReply result = await ping.SendPingAsync(url.Host, ICMPTimeout);
 							if (result.Status == IPStatus.Success)
 							{
 								sb.AppendLine($"{Indention}{Indention}Ping success, latency: {result.RoundtripTime}ms.");
 							}
 							else
 							{
-								sb.AppendLine($"{Indention}{Indention}Ping failed with reason {result.Status} after {result.RoundtripTime}ms.");
+								sb.AppendLine($"{Indention}{Indention}Ping failed with reason {result.Status} after {ICMPTimeout}ms.");
 							}
 						}
 					}));
