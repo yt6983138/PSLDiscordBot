@@ -6,6 +6,7 @@ using PhigrosLibraryCSharp.GameRecords;
 using PSLDiscordBot.Core.Localization;
 using PSLDiscordBot.Core.Services;
 using PSLDiscordBot.Framework;
+using PSLDiscordBot.Framework.Localization;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
@@ -93,11 +94,12 @@ public static class PSLUtils
 		int index = 0,
 		bool autoThrow = true)
 	{
-		string onOutOfRange = localizationService[PSLCommonKey.SaveHandlerOnOutOfRange][command.UserLocale];
-		string onOtherException = localizationService[PSLCommonKey.SaveHandlerOnOtherException][command.UserLocale];
-		string onNoSaves = localizationService[PSLCommonKey.SaveHandlerOnNoSaves][command.UserLocale];
-		string onPhiLibUriException = localizationService[PSLCommonKey.SaveHandlerOnPhiLibUriException][command.UserLocale];
-		string onPhiLibJsonException = localizationService[PSLCommonKey.SaveHandlerOnPhiLibJsonException][command.UserLocale];
+		LocalizedString onOutOfRange = localizationService[PSLCommonKey.SaveHandlerOnOutOfRange];
+		LocalizedString onOtherException = localizationService[PSLCommonKey.SaveHandlerOnOtherException];
+		LocalizedString onNoSaves = localizationService[PSLCommonKey.SaveHandlerOnNoSaves];
+		LocalizedString onPhiLibUriException = localizationService[PSLCommonKey.SaveHandlerOnPhiLibUriException];
+		LocalizedString onPhiLibJsonException = localizationService[PSLCommonKey.SaveHandlerOnPhiLibJsonException];
+		LocalizedString onHttpClientTimeout = localizationService[PSLCommonKey.SaveHandlerOnHttpClientTimeout];
 
 		try
 		{
@@ -112,19 +114,23 @@ public static class PSLUtils
 		}
 		catch (MaxValueArgumentOutOfRangeException ex) when (ex.ActualValue is int && ex.MaxValue is int)
 		{
-			await command.QuickReply(string.Format(onOutOfRange, ex.MaxValue, ex.ActualValue));
+			await command.QuickReply(onOutOfRange, ex.MaxValue, ex.ActualValue);
+		}
+		catch (TaskCanceledException ex) when (ex.Message.Contains("HttpClient.Timeout"))
+		{
+			await command.QuickReply(onHttpClientTimeout, ex.Message);
 		}
 		catch (InvalidOperationException ex) when (ex.Message.Contains("invalid request URI was provided"))
 		{
-			await command.QuickReply(string.Format(onPhiLibUriException, ex.Message));
+			await command.QuickReply(onPhiLibUriException, ex.Message);
 		}
 		catch (JsonException ex)
 		{
-			await command.QuickReply(string.Format(onPhiLibJsonException, ex.Message));
+			await command.QuickReply(onPhiLibJsonException, ex.Message);
 		}
 		catch (Exception ex)
 		{
-			await command.QuickReply(string.Format(onOtherException, ex.Message));
+			await command.QuickReply(onOtherException, ex.Message);
 			if (autoThrow)
 				throw;
 		}

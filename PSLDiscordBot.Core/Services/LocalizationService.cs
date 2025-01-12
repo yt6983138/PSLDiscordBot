@@ -38,6 +38,7 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 			[SaveHandlerOnNoSaves] = LocalizedString.CreateDefault("Error: There is no save on the cloud, did you use wrong account, or have not synced?"),
 			[SaveHandlerOnPhiLibUriException] = LocalizedString.CreateDefault("Error: {0}\n*This sometimes can indicate save corruption. Please try few more times or re-sync.*"),
 			[SaveHandlerOnPhiLibJsonException] = LocalizedString.CreateDefault("Error: {0}\n*This sometimes can indicate save corruption. Please try few more times or re-sync.*"),
+			[SaveHandlerOnHttpClientTimeout] = LocalizedString.CreateDefault("Oops, there was some issues connecting to the internet! Please use /ping to check availability.\nFull error: {0}"),
 
 			[IndexOptionName] = LocalizedString.CreateDefault("index"),
 			[IndexOptionDescription] = LocalizedString.CreateDefault("Save time converted to index, 0 is always latest. Do /get-time-index to get other index."),
