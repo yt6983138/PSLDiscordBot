@@ -185,7 +185,17 @@ public class PSLPlugin : InjectableBase, IPlugin
 			File.WriteAllText(this._configService.Data.NameMapLocation, infoStr);
 		},
 		null);
-
+	public ArgParseInfo ResetLocalization => new(
+		"resetLocalization",
+		"Reset localization.",
+		(_) =>
+		{
+			this._logger.Log(LogLevel.Information, "Resetting localization...", EventIdInitialize, this);
+			LocalizationService service = GetSingleton<LocalizationService>();
+			service.Data = service.Generate();
+			service.Save();
+		},
+		null);
 	#endregion
 
 	void IPlugin.Load(Program program, bool isDynamicLoading)
@@ -209,6 +219,7 @@ public class PSLPlugin : InjectableBase, IPlugin
 		program.AddArgReceiver(this.UpdateInfoAndDifficulty);
 		program.AddArgReceiver(this.ResetConfig);
 		program.AddArgReceiver(this.ResetConfigFull);
+		program.AddArgReceiver(this.ResetLocalization);
 
 		AddSingleton(this);
 
@@ -283,7 +294,6 @@ public class PSLPlugin : InjectableBase, IPlugin
 	private void Program_AfterArgParse(object? sender, EventArgs e)
 	{
 		AddSingleton(new DataBaseService());
-		AddSingleton(new LocalizationService());
 		AddSingleton(new ChromiumPoolService(this._configService.Data.ChromiumLocation,
 			this._configService.Data.DefaultChromiumTabCacheCount,
 			this._configService.Data.ChromiumPort,
@@ -301,6 +311,7 @@ public class PSLPlugin : InjectableBase, IPlugin
 		AddSingleton(this._logger);
 		this._statusService = new();
 		AddSingleton(this._statusService);
+		AddSingleton(new LocalizationService());
 
 		if (!this._configService.Data.Verbose)
 			this._logger.Disabled.Add(LogLevel.Debug);
