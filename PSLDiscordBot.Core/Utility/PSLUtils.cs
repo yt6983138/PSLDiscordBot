@@ -116,7 +116,11 @@ public static class PSLUtils
 		{
 			await command.QuickReply(onOutOfRange, ex.MaxValue, ex.ActualValue);
 		}
-		catch (TaskCanceledException ex) when (ex.Message.Contains("HttpClient.Timeout"))
+		catch (TaskCanceledException ex)
+		{
+			await command.QuickReply(onHttpClientTimeout, ex.Message);
+		}
+		catch (TimeoutException ex)
 		{
 			await command.QuickReply(onHttpClientTimeout, ex.Message);
 		}
