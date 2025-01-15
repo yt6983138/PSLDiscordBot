@@ -93,12 +93,12 @@ public class GetPhotoCommand : CommandBase
 		object executer)
 	{
 		int index = arg.GetIndexOption(this.Localization);
-		int count = arg.GetIntegerOptionAsInt32OrDefault(this.Localization[PSLCommonOptionKey.IndexOptionName],
+		int count = arg.GetIntegerOptionAsInt32OrDefault(this.Localization[PSLNormalCommandKey.GetPhotoOptionCountName],
 			(await requester.GetDefaultGetPhotoShowCountCached(arg.User.Id)).GetValueOrDefault(23));
 		int lowerBound = arg.GetIntegerOptionAsInt32OrDefault(this.Localization[PSLNormalCommandKey.GetPhotoOptionLowerBoundName]);
 		double ccLowerBound = arg.GetOptionOrDefault<double>(this.Localization[PSLNormalCommandKey.GetPhotoOptionCCFilterLowerBoundName]);
 		double ccHigherBound = arg.GetOptionOrDefault<double>(this.Localization[PSLNormalCommandKey.GetPhotoOptionCCFilterHigherBoundName], int.MaxValue);
-		string? showingGrades = arg.GetOptionOrDefault<string>(this.Localization[PSLNormalCommandKey.GetPhotoOptionGradesToShowDescription]);
+		string? showingGrades = arg.GetOptionOrDefault<string>(this.Localization[PSLNormalCommandKey.GetPhotoOptionGradesToShowName]);
 		ScoreStatus[]? showingGradesParsed = null;
 		if (!string.IsNullOrWhiteSpace(showingGrades))
 		{
