@@ -13,9 +13,7 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 	[Inject]
 	public ConfigService Config { get; set; }
 
-#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
 	public LocalizationService()
-#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
 	{
 		this.LaterInitialize(this.Config!.Data.LocalizationLocation);
 	}
@@ -56,7 +54,7 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 			[SongScoresDescription] = LocalizedString.CreateDefault("Get scores for a specified song(s)."),
 
 			[SongInfoName] = LocalizedString.CreateDefault("song-info"),
-			[SongInfoDescription] = LocalizedString.CreateDefault("Searching strings, you can either put id, put alias, or put the song name."),
+			[SongInfoDescription] = LocalizedString.CreateDefault("Search info song."),
 
 			[SetShowCountDefaultName] = LocalizedString.CreateDefault("set-show-count-default"),
 			[SetShowCountDefaultDescription] = LocalizedString.CreateDefault("Set the default show count for /get-photo."),
@@ -64,7 +62,7 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 			[SetShowCountDefaultOptionCountDescription] = LocalizedString.CreateDefault("The default count going to be set. Put 20 for the classic b20 view."),
 
 			[SetPrecisionName] = LocalizedString.CreateDefault("set-precision"),
-			[SetPrecisionDescription] = LocalizedString.CreateDefault("Set precision of value shown on /get-b20."),
+			[SetPrecisionDescription] = LocalizedString.CreateDefault("Set precision of value shown on commands that fetch your scores."),
 			[SetPrecisionOptionPrecisionName] = LocalizedString.CreateDefault("precision"),
 			[SetPrecisionOptionPrecisionDescription] = LocalizedString.CreateDefault("Precision. Put 1 to get acc like 99.1, 2 to get acc like 99.12, repeat."),
 
@@ -167,6 +165,13 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 			[MoreRksOptionCountDescription] = LocalizedString.CreateDefault("Controls how many charts should be shown. (Default 10)"),
 			[MoreRksResult] = LocalizedString.CreateDefault("Showing {0} possible chart(s):"),
 
+			[RemoveAliasName] = LocalizedString.CreateDefault("remove-alias"),
+			[RemoveAliasDescription] = LocalizedString.CreateDefault("Remove a song alias."),
+			[RemoveAliasOptionForSongName] = LocalizedString.CreateDefault("for"),
+			[RemoveAliasOptionForSongDescription] = LocalizedString.CreateDefault("For which song to remove alias, inputing a song's name, id, or other alias is allowed."),
+			[RemoveAliasOptionAllayToAddName] = LocalizedString.CreateDefault("alias"),
+			[RemoveAliasOptionAllayToAddDescription] = LocalizedString.CreateDefault("The alias to remove, note: you may only remove one alias at one time."),
+			[RemoveAliasNoMatch] = LocalizedString.CreateDefault("Sorry, the song you're looking for seems does not exist."),
 			//[] = LocalizedString.CreateDefault(),
 		});
 	}

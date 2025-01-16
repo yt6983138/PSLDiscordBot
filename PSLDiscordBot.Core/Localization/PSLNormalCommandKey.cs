@@ -115,4 +115,16 @@ public static partial class PSLNormalCommandKey
 
 	public static partial string MoreRksResult { get; }
 	#endregion
+
+	#region RemoveAliasCommand
+	public static partial string RemoveAliasName { get; }
+	public static partial string RemoveAliasDescription { get; }
+
+	public static partial string RemoveAliasOptionForSongName { get; }
+	public static partial string RemoveAliasOptionForSongDescription { get; }
+	public static partial string RemoveAliasOptionAllayToAddName { get; }
+	public static partial string RemoveAliasOptionAllayToAddDescription { get; }
+
+	public static partial string RemoveAliasNoMatch { get; }
+	#endregion
 }
