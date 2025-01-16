@@ -108,6 +108,12 @@ public class LocalizedString : IDictionary<string, string>, IReadOnlyDictionary<
 
 		return false;
 	}
+	public LocalizedString CloneAsNew()
+	{
+		LocalizedString newString = new(null, this.LocalizedStrings, null);
+		return newString;
+	}
+
 	public void ThrowIfCanNotBelongTo(LocalizationManager localization, string code)
 	{
 		if (!this.CanBelongTo(localization, code))

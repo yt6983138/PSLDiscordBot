@@ -197,21 +197,11 @@ public class PSLPlugin : InjectableBase, IPlugin
 		},
 		null);
 	public ArgParseInfo AddNonExistentLocalizations => new(
-		"addNonexistentLocalizations",
+		"addNonExistentLocalizations",
 		"Add non-existent localizations into the service.",
 		(_) =>
 		{
-			this._logger.Log(LogLevel.Information, "Adding non-existent localizations...", EventIdInitialize, this);
-			LocalizationService service = GetSingleton<LocalizationService>();
-			IReadOnlyDictionary<string, Framework.Localization.LocalizedString> newer = service.Generate().LocalizedStrings;
-			foreach ((string key, Framework.Localization.LocalizedString value) in newer)
-			{
-				if (!service.Data.LocalizedStrings.ContainsKey(key))
-				{
-					service.Data[key] = value;
-				}
-			}
-			service.Save();
+			// does nothing here because it needs to be done manually in Program_AfterPluginsLoaded
 		},
 		null);
 	#endregion
@@ -330,7 +320,22 @@ public class PSLPlugin : InjectableBase, IPlugin
 		AddSingleton(this._logger);
 		this._statusService = new();
 		AddSingleton(this._statusService);
-		AddSingleton(new LocalizationService());
+		LocalizationService localization = new();
+
+		if (this._program.ProgramArguments.Contains("--addNonExistentLocalizations"))
+		{
+			this._logger.Log(LogLevel.Information, "Adding non-existent localizations...", EventIdInitialize, this);
+			IReadOnlyDictionary<string, Framework.Localization.LocalizedString> newer = localization.Generate().LocalizedStrings;
+			foreach ((string key, Framework.Localization.LocalizedString value) in newer)
+			{
+				if (!localization.Data.LocalizedStrings.ContainsKey(key))
+				{
+					localization.Data[key] = value.CloneAsNew();
+				}
+			}
+			localization.Save();
+		}
+		AddSingleton(localization);
 
 		if (!this._configService.Data.Verbose)
 			this._logger.Disabled.Add(LogLevel.Debug);

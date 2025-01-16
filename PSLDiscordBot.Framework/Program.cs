@@ -33,12 +33,14 @@ public class Program
 	public CancellationTokenSource CancellationTokenSource { get; } = new();
 	public CancellationToken CancellationToken { get; private set; }
 	public List<Task> RunningTasks { get; } = new();
+	public string[] ProgramArguments { get; private set; } = [];
 
 	public static Task Main(string[] args) => new Program().MainAsync(args);
 
 	public async Task MainAsync(string[] args)
 	{
 		this.CancellationToken = this.CancellationTokenSource.Token;
+		this.ProgramArguments = args;
 
 		InjectableBase.AddSingleton(this);
 		this._pluginResolveService = new();
