@@ -196,6 +196,24 @@ public class PSLPlugin : InjectableBase, IPlugin
 			service.Save();
 		},
 		null);
+	public ArgParseInfo AddNonExistentLocalizations => new(
+		"addNonexistentLocalizations",
+		"Add non-existent localizations into the service.",
+		(_) =>
+		{
+			this._logger.Log(LogLevel.Information, "Adding non-existent localizations...", EventIdInitialize, this);
+			LocalizationService service = GetSingleton<LocalizationService>();
+			IReadOnlyDictionary<string, Framework.Localization.LocalizedString> newer = service.Generate().LocalizedStrings;
+			foreach ((string key, Framework.Localization.LocalizedString value) in newer)
+			{
+				if (!service.Data.LocalizedStrings.ContainsKey(key))
+				{
+					service.Data[key] = value;
+				}
+			}
+			service.Save();
+		},
+		null);
 	#endregion
 
 	void IPlugin.Load(Program program, bool isDynamicLoading)
