@@ -238,6 +238,7 @@ public class PSLPlugin : InjectableBase, IPlugin
 		program.AddArgReceiver(this.ResetConfig);
 		program.AddArgReceiver(this.ResetConfigFull);
 		program.AddArgReceiver(this.ResetLocalization);
+		program.AddArgReceiver(this.AddNonExistentLocalizations);
 
 		AddSingleton(this);
 
