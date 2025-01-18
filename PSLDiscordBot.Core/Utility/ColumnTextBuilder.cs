@@ -4,8 +4,46 @@ using System.Text;
 namespace PSLDiscordBot.Core.Utility;
 public class ColumnTextBuilder
 {
+	public struct RowBuilder
+	{
+		public List<string> Columns { get; set; } = new();
+
+		public RowBuilder() { }
+		public RowBuilder(params IEnumerable<string> columns)
+			=> this.Columns.AddRange(columns);
+
+		public readonly string this[int index]
+		{
+			get => this.Columns[index];
+			set => this.Columns[index] = value;
+		}
+		public readonly RowBuilder WithStringAdded(string str)
+		{
+			this.Columns.Add(str);
+			return this;
+		}
+		public readonly RowBuilder WithStringAdded(string language, LocalizedString str)
+			=> this.WithStringAdded(str[language]);
+		public readonly RowBuilder WithFormatAdded(string format, params object?[] args)
+			=> this.WithStringAdded(string.Format(format, args));
+		public readonly RowBuilder WithFormatAdded(string language, LocalizedString format, params object?[] args)
+			=> this.WithFormatAdded(format[language], args);
+		public readonly RowBuilder WithStringInsertedAt(int index, string str)
+		{
+			this.Columns.Insert(index, str);
+			return this;
+		}
+		public readonly RowBuilder WithStringInsertedAt(int index, string language, LocalizedString str)
+			=> this.WithStringInsertedAt(index, str[language]);
+		public readonly RowBuilder WithStringRemovedAt(int index)
+		{
+			this.Columns.RemoveAt(index);
+			return this;
+		}
+	}
+
 	public static readonly IReadOnlyList<(int Minium, int Maxium)> FullWidthCharRanges = [
-		(4352, 4447),
+	(4352, 4447),
 		(8986, 8987),
 		(9001, 9002),
 		(9193, 9196),
@@ -127,7 +165,7 @@ public class ColumnTextBuilder
 		(129776, 129784),
 		(131072, 196605),
 		(196608, 262141)
-	];
+];
 
 	private List<string> _columnTitles = new();
 	private List<string[]> _rows = new();
@@ -148,8 +186,8 @@ public class ColumnTextBuilder
 
 		return this;
 	}
-	public ColumnTextBuilder WithColumnTitles(string langugage, params IEnumerable<LocalizedString> columnTitles)
-		=> this.WithColumnTitles(columnTitles.Select(x => x[langugage]).ToArray());
+	public ColumnTextBuilder WithColumnTitles(string language, params IEnumerable<LocalizedString> columnTitles)
+		=> this.WithColumnTitles(columnTitles.Select(x => x[language]).ToArray());
 
 	public ColumnTextBuilder WithRow(params string[] columns)
 	{
@@ -161,6 +199,9 @@ public class ColumnTextBuilder
 	}
 	public ColumnTextBuilder WithRow(string language, params IEnumerable<LocalizedString> columns)
 		=> this.WithRow(columns.Select(x => x[language]).ToArray());
+	public ColumnTextBuilder WithRow(RowBuilder row)
+		=> this.WithRow(row.Columns.ToArray());
+
 	public ColumnTextBuilder WithRowInsertedAt(int index, params string[] columns)
 	{
 		if (columns.Length > this._columnTitles.Count)
@@ -171,6 +212,9 @@ public class ColumnTextBuilder
 	}
 	public ColumnTextBuilder WithRowInsertedAt(int index, string language, params IEnumerable<LocalizedString> columns)
 		=> this.WithRowInsertedAt(index, columns.Select(x => x[language]).ToArray());
+	public ColumnTextBuilder WithRowInsertedAt(int index, RowBuilder row)
+		=> this.WithRowInsertedAt(index, row.Columns.ToArray());
+
 	public ColumnTextBuilder WithRowRemovedAt(int index)
 	{
 		this._rows.RemoveAt(index);
@@ -225,7 +269,7 @@ public class ColumnTextBuilder
 		int combined = first | (second << 16);
 		foreach ((int Minium, int Maxium) item in FullWidthCharRanges)
 		{
-			if (item.Minium <= first && first <= item.Maxium) return true;
+			if (item.Minium <= combined && combined <= item.Maxium) return true;
 		}
 		return false;
 	}

@@ -17,6 +17,12 @@ public class LocalizedString : IDictionary<string, string>, IReadOnlyDictionary<
 		? this.Get(this.FallBackLanguages[0])
 		: this.Get(default(Language));
 
+	public string this[Language lang]
+	{
+		get => this.Get(lang);
+		set => this.LocalizedStrings[lang] = value;
+	}
+
 	#region Interface Implementation
 	public string this[string key]
 	{
