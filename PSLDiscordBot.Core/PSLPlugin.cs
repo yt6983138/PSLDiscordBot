@@ -57,8 +57,7 @@ public class PSLPlugin : InjectableBase, IPlugin
 
 	string IPlugin.Name => "PSLDiscordBot Core";
 	string IPlugin.Description => "Core implementation for PSLDiscord bot";
-	string IPlugin.Version => "1.2.0.0";
-	int IPlugin.VersionId => 0x01_02_00_00;
+	Version IPlugin.Version => new(1, 3, 0, 0);
 	string IPlugin.Author => "yt6983138 aka static_void (yt6983138@gmail.com)";
 
 	bool IPlugin.CanBeDynamicallyLoaded => false;
