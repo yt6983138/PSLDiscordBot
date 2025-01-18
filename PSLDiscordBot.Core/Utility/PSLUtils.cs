@@ -157,16 +157,20 @@ public static class PSLUtils
 	}
 	public static (CompleteScore Best, double Rks) SortRecord(GameSave save)
 	{
-		save.Records.Sort();
-		save.Records.Reverse();
+		return SortRecord(save.Records);
+	}
+	public static (CompleteScore Best, double Rks) SortRecord(List<CompleteScore> scores)
+	{
+		scores.Sort();
+		scores.Reverse();
 		CompleteScore @default = new(0, 0, 0, "NULL", Difficulty.EZ, ScoreStatus.Bugged);
 
-		CompleteScore best = save.Records.FirstOrDefault(x => x.Status == ScoreStatus.Phi) ?? @default;
+		CompleteScore best = scores.FirstOrDefault(x => x.Status == ScoreStatus.Phi) ?? @default;
 
 		double rks = best.Rks * 0.05;
 
 		int i = 0;
-		save.Records.ForEach(x => { if (i < 19) rks += x.Rks * 0.05; i++; });
+		scores.ForEach(x => { if (i < 19) rks += x.Rks * 0.05; i++; });
 
 		return (best, rks);
 	}

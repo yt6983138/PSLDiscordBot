@@ -58,88 +58,51 @@ public class GetScoresCommand : CommandBase
 		await arg.QuickReplyWithAttachments([PSLUtils.ToAttachment(result, "Scores.txt")],
 			this.Localization[PSLNormalCommandKey.GetScoresDone]);
 	}
-	public static string ScoresFormatter(List<CompleteScore> scores, IReadOnlyDictionary<string, string> map, int shouldAddCount, in UserData userData, bool calculateRks = true, bool showLineNumber = true)
+	public static string ScoresFormatter(
+		List<CompleteScore> scores,
+		IReadOnlyDictionary<string, string> map,
+		int shouldAddCount,
+		in UserData userData,
+		bool calculateRks = true,
+		bool showLineNumber = true)
 	{ // UNDONE: localize those
-		(int index, CompleteScore score) highest = (0, new(0, 0, 0, "None", Difficulty.EZ, ScoreStatus.Bugged));
-		List<string> realNames = new();
-		double elapsedRks = 0;
-		scores.Sort((x, y) => y.Rks.CompareTo(x.Rks));
-
-		for (int i = 0; i < scores.Count; i++)
-		{
-			CompleteScore score = scores[i];
-			if (score.Accuracy == 100 && score.Rks > highest.score.Rks)
-			{
-				highest.index = i;
-				highest.score = score;
-			}
-			if (i < 19 && calculateRks)
-				elapsedRks += score.Rks * 0.05; // add b19 rks
-
-			if (i < shouldAddCount)
-				realNames.Add(map.TryGetValue(score.Id, out string? _val2) ? _val2 : score.Id);
-		}
-		if (calculateRks)
-		{
-			scores.Insert(0, highest.score);
-			elapsedRks += highest.score.Rks * 0.05; // add phi 1 rks
-			realNames.Insert(0, map.TryGetValue(highest.score.Id, out string? _val1) ? _val1 : highest.score.Id);
-		}
+		(CompleteScore best, double rks) = PSLUtils.SortRecord(scores);
+		List<(CompleteScore score, string name)> nameScorePairs = scores
+			.Select(x => (x, map.TryGetValue(x.Id, out string? str) ? str : x.Id))
+			.ToList();
+		nameScorePairs.Insert(0, (best, map.TryGetValue(best.Id, out string? str) ? str : best.Id));
 
 		StringBuilder sb = new();
+		List<string> titles = ["Status", "Acc.", "Rks", "Score", "Diff.", "CC", "Name"];
+		if (showLineNumber)
+			titles.Insert(0, "Number");
+		ColumnTextBuilder builder = new(titles);
+
 		if (calculateRks)
 		{
 			sb.Append("Your rks: ");
-			sb.AppendLine(elapsedRks.ToString(userData.ShowFormat));
+			sb.AppendLine(rks.ToString(userData.ShowFormat));
 			sb.AppendLine();
 		}
-		if (showLineNumber)
-			sb.Append("Number | ");
 
-		sb.Append("Status | Acc.");
-		sb.Append(' ', userData.ShowFormat.Length + 1);
-		sb.Append("| Rks");
-		sb.Append(' ', userData.ShowFormat.Length);
-		sb.AppendLine("| Score   | Diff. | CC   | Name");
-
-		for (int j = 0; j < realNames.Count; j++)
+		for (int j = 0; j < Math.Min(shouldAddCount, nameScorePairs.Count); j++)
 		{
-			CompleteScore score = scores[j];
-			int showFormatLen = userData.ShowFormat.Length;
-			string jStr = j.ToString();
-			string statusStr = score.Status.ToString();
-			string accStr = score.Accuracy.ToString(userData.ShowFormat);
-			string rksStr = score.Rks.ToString(userData.ShowFormat);
-			string scoreStr = score.Score.ToString();
-			string difficultyStr = score.Difficulty.ToString();
-			string CCStr = score.ChartConstant.ToString(".0");
+			(CompleteScore score, string name) = nameScorePairs[j];
+
+			ColumnTextBuilder.RowBuilder row = new ColumnTextBuilder.RowBuilder()
+				.WithObjectAdded(score.Status)
+				.WithUserFormatStringAdded(userData, "{0}%", score.Accuracy)
+				.WithUserFormatStringAdded(userData, score.Rks)
+				.WithObjectAdded(score.Score)
+				.WithObjectAdded(score.Difficulty)
+				.WithFormatAdded("{0:.0}", score.ChartConstant)
+				.WithStringAdded(name);
+
 			if (showLineNumber)
-			{
-				sb.Append('#');
-				sb.Append(j == 0 ? 'φ' : jStr);
-				sb.Append(' ', 5 - jStr.Length);
-				sb.Append(" | ");
-			}
-			sb.Append(statusStr);
-			sb.Append(' ', 6 - statusStr.Length);
-			sb.Append(" | ");
-			sb.Append(accStr);
-			sb.Append(' ', showFormatLen - accStr.Length + 4);
-			sb.Append(" | ");
-			sb.Append(rksStr);
-			sb.Append(' ', showFormatLen - rksStr.Length + 2);
-			sb.Append(" | ");
-			sb.Append(scoreStr);
-			sb.Append(' ', 7 - scoreStr.Length);
-			sb.Append(" | ");
-			sb.Append(difficultyStr);
-			sb.Append(' ', 5 - difficultyStr.Length);
-			sb.Append(" | ");
-			sb.Append(CCStr);
-			sb.Append(' ', 4 - CCStr.Length);
-			sb.Append(" | ");
-			sb.AppendLine(realNames[j]);
+				row.WithStringInsertedAt(0, j == 0 ? "φ" : j.ToString());
+
+			builder.WithRow(row);
 		}
-		return sb.ToString();
+		return builder.Build(sb).ToString();
 	}
 }

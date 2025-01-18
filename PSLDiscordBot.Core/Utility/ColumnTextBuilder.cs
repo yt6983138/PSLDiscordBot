@@ -24,6 +24,8 @@ public class ColumnTextBuilder
 		}
 		public readonly RowBuilder WithStringAdded(string language, LocalizedString str)
 			=> this.WithStringAdded(str[language]);
+		public readonly RowBuilder WithObjectAdded(object obj)
+			=> this.WithStringAdded(obj.ToString()!);
 		public readonly RowBuilder WithFormatAdded(string format, params object?[] args)
 			=> this.WithStringAdded(string.Format(format, args));
 		public readonly RowBuilder WithFormatAdded(string language, LocalizedString format, params object?[] args)
@@ -173,13 +175,13 @@ public class ColumnTextBuilder
 	public string Delimiter { get; set; } = " | ";
 	public string ColumnEnd { get; set; } = "\n";
 
-	public ColumnTextBuilder(params string[] columnTitles)
+	public ColumnTextBuilder(params IEnumerable<string> columnTitles)
 	{
 		this.WithColumnTitles(columnTitles);
 	}
 	public ColumnTextBuilder() { }
 
-	public ColumnTextBuilder WithColumnTitles(params string[] columnTitles)
+	public ColumnTextBuilder WithColumnTitles(params IEnumerable<string> columnTitles)
 	{
 		if (this._columnTitles.Count != 0) throw new InvalidOperationException("The column titles has already been set.");
 		this._columnTitles.AddRange(columnTitles);
@@ -187,7 +189,7 @@ public class ColumnTextBuilder
 		return this;
 	}
 	public ColumnTextBuilder WithColumnTitles(string language, params IEnumerable<LocalizedString> columnTitles)
-		=> this.WithColumnTitles(columnTitles.Select(x => x[language]).ToArray());
+		=> this.WithColumnTitles(columnTitles.Select(x => x[language]));
 
 	public ColumnTextBuilder WithRow(params string[] columns)
 	{

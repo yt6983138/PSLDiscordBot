@@ -58,18 +58,9 @@ public class MoreRksCommand : CommandBase
 			return;
 		(Summary summary, GameSave save) = pair.Value;
 
-		save.Records.Sort((x, y) => y.Rks.CompareTo(x.Rks));
-		CompleteScore @default = new(0, 0, 0, "", Difficulty.EZ, ScoreStatus.Bugged);
-
-		CompleteScore best = save.Records.FirstOrDefault(x => x.Status == ScoreStatus.Phi) ?? @default;
-
-		double rks = best.Rks * 0.05;
+		(CompleteScore best, double rks) = PSLUtils.SortRecord(save);
 
 		double twentyThRks = save.Records[Math.Min(19, save.Records.Count) - 1].Rks;
-
-		int i = 0;
-		save.Records.ForEach(x => { if (i < 19) rks += x.Rks * 0.05; i++; });
-
 		leastRks = leastRks < 0 ? Math.Round(rks, 2, MidpointRounding.ToEven) + 0.005d - rks : leastRks;
 		leastRks *= 20;
 
@@ -89,43 +80,21 @@ public class MoreRksCommand : CommandBase
 		stringBuilder.Append("Getting you to: ");
 		stringBuilder.AppendLine((rks + (leastRks / 20d)).ToString(data.ShowFormat));
 
-		int maxUserShowLength = data.ShowFormat.Length + 2;
+		ColumnTextBuilder columnTextBuilder = new(["Number", "Acc. change", "Rks change", "For song"]);
+
 		for (int j = 0; j < calculatedShowCounts; j++)
 		{ // UNDONE: localize those
 			TargetRksScorePair item = calculatedGrowableScores[j];
+			string name = this.PhigrosDataService.IdNameMap[item.Score.Id];
 
-			string indexString = (j + 1).ToString();
-			string oldAccString = item.Score.Accuracy.ToString(data.ShowFormat);
-			string newAccString = item.TargetAcc.ToString(data.ShowFormat);
-			string oldRksString = item.Score.Rks.ToString(data.ShowFormat);
-			string newRksString = item.TargetRks.ToString(data.ShowFormat);
-
-			stringBuilder.Append(indexString);
-			stringBuilder.Append(' ', Math.Max(0, 3 - indexString.Length));
-			stringBuilder.Append("| ");
-			stringBuilder.Append(oldAccString);
-			stringBuilder.Append('%');
-			stringBuilder.Append(' ', Math.Max(0, maxUserShowLength - oldAccString.Length));
-			stringBuilder.Append(" -> ");
-			stringBuilder.Append(newAccString);
-			stringBuilder.Append('%');
-			stringBuilder.Append(' ', Math.Max(0, maxUserShowLength - newAccString.Length));
-			stringBuilder.Append(" | Rks: ");
-			stringBuilder.Append(oldRksString);
-			stringBuilder.Append(' ', Math.Max(0, maxUserShowLength - oldRksString.Length));
-			stringBuilder.Append(" -> ");
-			stringBuilder.Append(newRksString);
-			stringBuilder.Append(' ', Math.Max(0, maxUserShowLength - newRksString.Length));
-			stringBuilder.Append(" | For song: ");
-			stringBuilder.Append(this.PhigrosDataService.IdNameMap.TryGetValue(item.Score.Id, out string? name) ? name : item.Score.Id);
-			stringBuilder.Append(" (");
-			stringBuilder.Append(item.Score.Difficulty);
-			stringBuilder.Append(' ');
-			stringBuilder.Append(item.Score.ChartConstant);
-			stringBuilder.AppendLine(")");
+			columnTextBuilder.WithRow(new ColumnTextBuilder.RowBuilder()
+				.WithObjectAdded(j + 1)
+				.WithUserFormatStringAdded(data, "{0}% -> {1}%", item.Score.Accuracy, item.TargetAcc)
+				.WithUserFormatStringAdded(data, "{0} -> {1}", item.Score.Rks, item.TargetRks)
+				.WithFormatAdded("{0} ({1:.0})", name, item.Score.ChartConstant));
 		}
 
-		await arg.QuickReplyWithAttachments([PSLUtils.ToAttachment(stringBuilder.ToString(), "Report.txt")],
+		await arg.QuickReplyWithAttachments([PSLUtils.ToAttachment(columnTextBuilder.Build(stringBuilder).ToString(), "Report.txt")],
 			this.Localization[PSLNormalCommandKey.MoreRksResult],
 			calculatedShowCounts);
 	}

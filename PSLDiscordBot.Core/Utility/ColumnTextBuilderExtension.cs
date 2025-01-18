@@ -40,7 +40,10 @@ public static class ColumnTextBuilderExtension
 		string template,
 		params IEnumerable<IFormattable> obj)
 	{
-		return builder.WithStringAdded(string.Format(template, obj.Select(x => x.ToString(data.ShowFormat, null))));
+		return builder.WithStringAdded(
+			string.Format(
+				template,
+				obj.Select(x => x.ToString(data.ShowFormat, null)).ToArray()));
 	}
 	public static RowBuilder WithUserFormatStringAdded(
 		this RowBuilder builder,
