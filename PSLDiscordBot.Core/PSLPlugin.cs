@@ -43,6 +43,7 @@ public class PSLPlugin : InjectableBase, IPlugin
 
 	public IUser? AdminUser { get; set; }
 	public bool Initialized { get; private set; }
+	public DiscordRestClient RestClient => this.DiscordClientService.RestClient;
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 	public PSLPlugin()
@@ -454,9 +455,16 @@ public class PSLPlugin : InjectableBase, IPlugin
 		{
 			try
 			{
+				ulong? guildId = interaction?.GuildId;
+				RestGuild? guild = guildId is null ? null : await this.RestClient.GetGuildAsync(guildId.Value);
+				ulong? channelId = interaction?.Channel.Id;
+				RestGuildChannel? channel = guild is not null && channelId is not null ? await guild.GetChannelAsync(channelId.Value)
+					: null;
 				string interactionMessage = interaction is null
 					? ""
-					: $"<@{interaction.User.Id}> sent command `{interaction.CommandName}`";
+					: $"<@{interaction.User.Id}> sent command `{interaction.CommandName}`" +
+					$"in server {(guildId is null ? "null" : guild)} ({guildId}) " +
+					$"in channel {(channel is null ? "null" : channel.Name)} ({channelId})";
 				int i = 0;
 				interactionMessage += interaction is SocketSlashCommand sc
 					? $" with option(s) `{string.Join(", ", sc.Data.Options.Select(x => $"{i++}_{x.Name}({x.Type}): {x.Value}"))}`"
