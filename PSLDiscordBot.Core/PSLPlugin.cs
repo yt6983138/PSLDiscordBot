@@ -380,8 +380,9 @@ public class PSLPlugin : InjectableBase, IPlugin
 			$"Use `/report-problem` to report. Exception:";
 
 		RestInteractionMessage? awaited = await oringal;
-		if (awaited is not null &&
-			(!e.Arg.HasResponded || awaited.Flags.GetValueOrDefault().HasFlag(MessageFlags.Loading)))
+		if (awaited is not null
+			// && (!e.Arg.HasResponded || awaited.Flags.GetValueOrDefault().HasFlag(MessageFlags.Loading))
+			)
 		{
 			await e.Arg.QuickReplyWithAttachments(formmated,
 				PSLUtils.ToAttachment(e.Exception.ToString(), "StackTrace.txt"));
