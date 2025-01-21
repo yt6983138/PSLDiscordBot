@@ -183,6 +183,12 @@ public static class Utils
 		string message,
 		params FileAttachment[] attachments)
 	{
+		GuildPermissions permission = socketSlashCommand.Permissions;
+		if (!permission.AttachFiles)
+		{
+			await socketSlashCommand.QuickReply(message);
+			return;
+		}
 		await socketSlashCommand.ModifyOriginalResponseAsync(msg =>
 		{
 			msg.Content = message;
@@ -195,11 +201,7 @@ public static class Utils
 		LocalizedString message,
 		params object?[] format)
 	{
-		await socketSlashCommand.ModifyOriginalResponseAsync(msg =>
-		{
-			msg.Content = message.GetFormatted(socketSlashCommand.UserLocale, format);
-			msg.Attachments = attachments;
-		});
+		await socketSlashCommand.QuickReplyWithAttachments(message.GetFormatted(socketSlashCommand.UserLocale, format), attachments);
 	}
 	public static ApplicationCommandOptionChoiceProperties CreateChoice(string name, object val)
 		=> new() { Name = name, Value = val };
