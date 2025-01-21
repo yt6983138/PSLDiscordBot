@@ -186,7 +186,7 @@ public static class Utils
 		GuildPermissions permission = socketSlashCommand.Permissions;
 		if (!permission.AttachFiles)
 		{
-			await socketSlashCommand.QuickReply(message);
+			await socketSlashCommand.QuickReply(string.IsNullOrWhiteSpace(message) ? "​" : message); // Zero-width space
 			return;
 		}
 		await socketSlashCommand.ModifyOriginalResponseAsync(msg =>
