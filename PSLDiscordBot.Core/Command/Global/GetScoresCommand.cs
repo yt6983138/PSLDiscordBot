@@ -64,7 +64,8 @@ public class GetScoresCommand : CommandBase
 		int shouldAddCount,
 		in UserData userData,
 		bool calculateRks = true,
-		bool showLineNumber = true)
+		bool showLineNumber = true,
+		bool showBest = true)
 	{ // UNDONE: localize those
 		(CompleteScore best, double rks) = PSLUtils.SortRecord(scores);
 		List<(CompleteScore score, string name)> nameScorePairs = scores
@@ -87,6 +88,8 @@ public class GetScoresCommand : CommandBase
 
 		for (int j = 0; j < Math.Min(shouldAddCount, nameScorePairs.Count); j++)
 		{
+			if (!showBest && j == 0)
+				continue;
 			(CompleteScore score, string name) = nameScorePairs[j];
 
 			ColumnTextBuilder.RowBuilder row = new ColumnTextBuilder.RowBuilder()

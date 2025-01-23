@@ -124,6 +124,7 @@ public class SongScoresCommand : CommandBase
 						int.MaxValue,
 						data,
 						false,
+						false,
 						false),
 					"Query.txt")],
 			this.Localization[PSLNormalCommandKey.SongScoresQueryResult],
