@@ -474,8 +474,9 @@ public class PSLPlugin : InjectableBase, IPlugin
 					this.AdminUser.SendMessageAsync(interactionMessage),
 					this.AdminUser.SendFileAsync(PSLUtils.ToStream(exception.ToString()), "StackTrace.txt"));
 			}
-			catch
+			catch (Exception ex)
 			{
+				this._logger.Log(LogLevel.Warning, "Unable to send message to admin!", EventId, this, ex);
 			}
 		}
 	}
