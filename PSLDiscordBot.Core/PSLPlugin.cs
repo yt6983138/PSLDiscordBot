@@ -4,6 +4,7 @@ using Discord.Rest;
 using Discord.WebSocket;
 using ICSharpCode.SharpZipLib.Zip;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using PSLDiscordBot.Core.ImageGenerating;
 using PSLDiscordBot.Core.Services;
 using PSLDiscordBot.Core.Services.Phigros;
@@ -432,9 +433,19 @@ public class PSLPlugin : InjectableBase, IPlugin
 	private async Task Log(LogMessage msg)
 	{
 		this._logger.Log(LogLevel.Debug, msg.Message, EventId, this);
+
+		if (msg.Exception is NullReferenceException nullEx
+			&& nullEx.StackTrace!.Contains("Discord.Net.Converters.OptionalConverter`1.ReadJson"))
+		{
+			return;
+		}
 		if (msg.Exception is not null
 			and not GatewayReconnectException
 			and not WebSocketClosedException
+			and not JsonSerializationException
+			{
+				Path: "member.joined_at" // i have been informed that this will not be fixed
+			}
 			and
 			{
 				InnerException:
