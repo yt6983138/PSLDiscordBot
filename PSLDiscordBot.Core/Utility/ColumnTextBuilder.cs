@@ -29,7 +29,7 @@ public class ColumnTextBuilder
 		public readonly RowBuilder WithFormatAdded(string format, params object?[] args)
 			=> this.WithStringAdded(string.Format(format, args));
 		public readonly RowBuilder WithFormatAdded(string language, LocalizedString format, params object?[] args)
-			=> this.WithFormatAdded(format[language], args);
+			=> this.WithStringAdded(format.GetFormatted(language, args));
 		public readonly RowBuilder WithStringInsertedAt(int index, string str)
 		{
 			this.Columns.Insert(index, str);

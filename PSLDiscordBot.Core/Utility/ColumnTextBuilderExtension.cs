@@ -24,11 +24,11 @@ public static class ColumnTextBuilderExtension
 	}
 	public static RowBuilder WithFormatAdded(this RowBuilder builder, Language lang, LocalizedString format, params object?[] args)
 	{
-		return builder.WithStringAdded(string.Format(format[lang], args));
+		return builder.WithStringAdded(format.GetFormatted(lang, args));
 	}
 	public static RowBuilder WithFormatAdded(this RowBuilder builder, SocketSlashCommand arg, LocalizedString format, params object?[] args)
 	{
-		return builder.WithStringAdded(string.Format(format[arg.UserLocale], args));
+		return builder.WithStringAdded(format.GetFormatted(arg.UserLocale, args));
 	}
 	public static RowBuilder WithUserFormatStringAdded(this RowBuilder builder, UserData data, IFormattable obj)
 	{
@@ -52,6 +52,6 @@ public static class ColumnTextBuilderExtension
 		LocalizedString template,
 		params IEnumerable<IFormattable> obj)
 	{
-		return builder.WithStringAdded(string.Format(template[arg.UserLocale], obj.Select(x => x.ToString(data.ShowFormat, null))));
+		return builder.WithStringAdded(template.GetFormatted(arg.UserLocale, obj.Select(x => x.ToString(data.ShowFormat, null)).ToArray()));
 	}
 }
