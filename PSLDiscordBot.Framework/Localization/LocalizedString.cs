@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using SmartFormat;
 using System.Collections;
 using System.Diagnostics.CodeAnalysis;
 
@@ -86,11 +87,11 @@ public class LocalizedString : IDictionary<string, string>, IReadOnlyDictionary<
 	}
 	public string GetFormatted(string key, params object?[] format)
 	{
-		return string.Format(this.Get(key), format);
+		return Smart.Format(this.Get(key), format);
 	}
 	public string GetFormatted(Language lang, params object?[] format)
 	{
-		return string.Format(this.Get(lang), format);
+		return Smart.Format(this.Get(lang), format);
 	}
 	public bool TryGetValue(Language lang, [MaybeNullWhen(false)][NotNullWhen(true)] out string? str)
 	{

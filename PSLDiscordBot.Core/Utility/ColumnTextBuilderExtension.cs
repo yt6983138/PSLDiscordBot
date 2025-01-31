@@ -1,6 +1,7 @@
 ﻿using Discord.WebSocket;
 using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Framework.Localization;
+using SmartFormat;
 using static PSLDiscordBot.Core.Utility.ColumnTextBuilder;
 
 namespace PSLDiscordBot.Core.Utility;
@@ -41,7 +42,7 @@ public static class ColumnTextBuilderExtension
 		params IEnumerable<IFormattable> obj)
 	{
 		return builder.WithStringAdded(
-			string.Format(
+			Smart.Format(
 				template,
 				obj.Select(x => x.ToString(data.ShowFormat, null)).ToArray()));
 	}

@@ -1,4 +1,5 @@
 ﻿using PSLDiscordBot.Framework.Localization;
+using SmartFormat;
 using System.Text;
 
 namespace PSLDiscordBot.Core.Utility;
@@ -27,7 +28,7 @@ public class ColumnTextBuilder
 		public readonly RowBuilder WithObjectAdded(object obj)
 			=> this.WithStringAdded(obj.ToString()!);
 		public readonly RowBuilder WithFormatAdded(string format, params object?[] args)
-			=> this.WithStringAdded(string.Format(format, args));
+			=> this.WithStringAdded(Smart.Format(format, args));
 		public readonly RowBuilder WithFormatAdded(string language, LocalizedString format, params object?[] args)
 			=> this.WithStringAdded(format.GetFormatted(language, args));
 		public readonly RowBuilder WithStringInsertedAt(int index, string str)

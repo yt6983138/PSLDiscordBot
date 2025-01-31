@@ -27,7 +27,7 @@ public class LoginCommand : GuestCommandBase
 	{
 		CompleteQRCodeData qrCode = await TapTapHelper.RequestLoginQrCode();
 		DateTime stopAt = DateTime.Now + new TimeSpan(0, 0, qrCode.ExpiresInSeconds - 15);
-		await arg.QuickReply(this.Localization[PSLGuestCommandKey.LoginBegin], qrCode.Url, qrCode.ExpiresInSeconds);
+		await arg.QuickReply(this.Localization[PSLGuestCommandKey.LoginBegin], qrCode);
 		await this.ListenQrCodeChange(arg, qrCode, stopAt, requester);
 	}
 	public async Task ListenQrCodeChange(

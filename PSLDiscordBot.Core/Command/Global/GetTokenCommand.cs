@@ -21,6 +21,6 @@ public class GetTokenCommand : CommandBase
 
 	public override async Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
 	{
-		await arg.QuickReply(this.Localization[PSLNormalCommandKey.GetTokenReply], data.Token[0..5], data.Token[5..]);
+		await arg.QuickReply(this.Localization[PSLNormalCommandKey.GetTokenReply], data.Token);
 	}
 }

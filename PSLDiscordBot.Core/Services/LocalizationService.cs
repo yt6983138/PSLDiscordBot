@@ -96,7 +96,7 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 
 			[GetTokenName] = LocalizedString.CreateDefault("get-token"),
 			[GetTokenDescription] = LocalizedString.CreateDefault("Show your token."),
-			[GetTokenReply] = LocalizedString.CreateDefault("Your token: {0}||{1}|| (Click to reveal, DO NOT show it to other people.)"),
+			[GetTokenReply] = LocalizedString.CreateDefault("Your token: {0:substr(0,5)}||{0:substr(5)}|| (Click to reveal, DO NOT show it to other people.)"),
 
 			[ExportScoresName] = LocalizedString.CreateDefault("export-scores"),
 			[ExportScoresDescription] = LocalizedString.CreateDefault("Export all your scores as a CSV file."),
@@ -111,7 +111,7 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 
 			[LoginName] = LocalizedString.CreateDefault("login"),
 			[LoginDescription] = LocalizedString.CreateDefault("Log in using TapTap."),
-			[LoginBegin] = LocalizedString.CreateDefault("Please login using this url: {0}\n" +
+			[LoginBegin] = LocalizedString.CreateDefault("Please login using this url: {Url}\n" +
 				"Make sure to login with the exact credentials you used in Phigros.\n" +
 				"The page _may_ stuck at loading after you click 'grant', " +
 				"don't worry about it just close the page and the login process will continue anyway, " +
@@ -168,7 +168,7 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 			[RemoveAliasName] = LocalizedString.CreateDefault("remove-alias"),
 			[RemoveAliasDescription] = LocalizedString.CreateDefault("Remove a song alias."),
 			[RemoveAliasOptionForSongName] = LocalizedString.CreateDefault("for"),
-			[RemoveAliasOptionForSongDescription] = LocalizedString.CreateDefault("For which song to remove alias, inputing a song's name, id, or other alias is allowed."),
+			[RemoveAliasOptionForSongDescription] = LocalizedString.CreateDefault("For which song to remove alias, inputting a song's name, id, or other alias is allowed."),
 			[RemoveAliasOptionAllayToAddName] = LocalizedString.CreateDefault("alias"),
 			[RemoveAliasOptionAllayToAddDescription] = LocalizedString.CreateDefault("The alias to remove, note: you may only remove one alias at one time."),
 			[RemoveAliasNoMatch] = LocalizedString.CreateDefault("Sorry, the song you're looking for seems does not exist."),
