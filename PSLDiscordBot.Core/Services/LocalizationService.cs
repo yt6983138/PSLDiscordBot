@@ -72,7 +72,7 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 			[SongScoresDescription] = LocalizedString.CreateDefault("Get scores for a specified song(s)."),
 
 			[SongInfoName] = LocalizedString.CreateDefault("song-info"),
-			[SongInfoDescription] = LocalizedString.CreateDefault("Search info song."),
+			[SongInfoDescription] = LocalizedString.CreateDefault("Search info about songs."),
 
 			[SetShowCountDefaultName] = LocalizedString.CreateDefault("set-show-count-default"),
 			[SetShowCountDefaultDescription] = LocalizedString.CreateDefault("Set the default show count for /get-photo."),
