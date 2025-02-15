@@ -10,6 +10,7 @@ using PSLDiscordBot.Core.Utility;
 using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.CommandBase;
 using PSLDiscordBot.Framework.Localization;
+using SmartFormat;
 using System.Text;
 
 namespace PSLDiscordBot.Core.Command.Global;
@@ -93,9 +94,9 @@ public class GetScoresCommand : CommandBase
 
 		if (calculateRks)
 		{
-			sb.Append("Your rks: ");
-			sb.AppendLine(rks.ToString(userData.ShowFormat));
-			sb.AppendLine();
+			sb.AppendLine(
+				Smart.Format(
+					localization[PSLCommonKey.ScoreFormatterUserRksIntro][interaction.UserLocale], rks.ToString(userData.ShowFormat)));
 		}
 
 		for (int j = 0; j < Math.Min(shouldAddCount, nameScorePairs.Count); j++)

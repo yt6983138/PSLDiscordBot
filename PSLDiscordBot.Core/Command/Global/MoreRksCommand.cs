@@ -65,7 +65,7 @@ public class MoreRksCommand : CommandBase
 		leastRks = leastRks < 0 ? Math.Round(rks, 2, MidpointRounding.ToEven) + 0.005d - rks : leastRks;
 		leastRks *= 20;
 
-		List<TargetRksScorePair> calculatedGrowableScores = save.Records
+		List<TargetRksScorePair> calculatedGrowableScores = save.Records //TODO: Fix formula
 			.Select(r =>
 			new TargetRksScorePair(
 				Math.Max(r.Rks + leastRks, twentyThRks + leastRks),
