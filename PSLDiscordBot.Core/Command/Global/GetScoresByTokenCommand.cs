@@ -58,7 +58,7 @@ public class GetScoresByTokenCommand : AdminCommandBase
 
 		string result = GetScoresCommand.ScoresFormatter(
 			arg,
-			save.Records,
+			save,
 			this.PhigrosDataService.IdNameMap,
 			arg.Data.Options.Count > 2 ? arg.Data.Options.ElementAt(2).Value.Unbox<long>().CastTo<long, int>() : 19,
 			userData,

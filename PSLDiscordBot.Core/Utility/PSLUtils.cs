@@ -155,10 +155,13 @@ public static class PSLUtils
 
 		throw ex;
 	}
+
+	[Obsolete] // TODO: remove this
 	public static (CompleteScore Best, double Rks) SortRecord(GameSave save)
 	{
 		return SortRecord(save.Records);
 	}
+	[Obsolete]
 	public static (CompleteScore Best, double Rks) SortRecord(List<CompleteScore> scores)
 	{
 		scores.Sort();
@@ -175,7 +178,7 @@ public static class PSLUtils
 			}
 			i++;
 		});
-		return (phis[0], rks); // TODO: fix correct return type
+		return (phis[0], rks);
 	}
 	/// <summary>
 	/// utf-8 default

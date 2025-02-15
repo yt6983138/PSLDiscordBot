@@ -150,19 +150,15 @@ public class GetPhotoCommand : CommandBase
 		GameProgress progress = await data.SaveCache.GetGameProgressAsync(index);
 		UserInfo outerUserInfo = await data.SaveCache.GetUserInfoAsync();
 
-		(CompleteScore? best, double rks) = PSLUtils.SortRecord(save);
-
 		await arg.QuickReply(this.Localization[PSLNormalCommandKey.GetPhotoGenerating]);
 		MemoryStream image = await this.ImageGenerator.MakePhoto(
-			save.Records,
-			best,
+			save,
 			data,
 			summary,
 			userInfo,
 			progress,
 			outerUserInfo,
 			this.ConfigService.Data.GetPhotoRenderInfo,
-			rks,
 			usePng ? PhotoType.Png : this.ConfigService.Data.DefaultRenderImageType,
 			this.ConfigService.Data.RenderQuality,
 			new

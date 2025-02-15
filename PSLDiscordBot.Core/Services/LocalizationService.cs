@@ -190,6 +190,7 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 			[MoreRksOptionCountName] = LocalizedString.CreateDefault("count"),
 			[MoreRksOptionCountDescription] = LocalizedString.CreateDefault("Controls how many charts should be shown. (Default 10)"),
 			[MoreRksResult] = LocalizedString.CreateDefault("Showing {0} possible chart(s):"),
+			[MoreRksIntro] = LocalizedString.CreateDefault("Getting you to: {0}"),
 			[MoreRksNumberTitle] = LocalizedString.CreateDefault("Number"),
 			[MoreRksAccuracyChangeTitle] = LocalizedString.CreateDefault("Acc. change"),
 			[MoreRksRksChangeTitle] = LocalizedString.CreateDefault("Rks change"),

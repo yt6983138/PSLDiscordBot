@@ -67,8 +67,6 @@ public class SongScoresCommand : CommandBase
 		GameProgress progress = await data.SaveCache.GetGameProgressAsync(index);
 		UserInfo outerUserInfo = await data.SaveCache.GetUserInfoAsync();
 
-		(CompleteScore? best, double rks) = PSLUtils.SortRecord(save);
-
 		List<CompleteScore> scoresToShow = save.Records
 			.Where(x =>
 				searchResult.Any(y => y.SongId == x.Id))
@@ -100,15 +98,13 @@ public class SongScoresCommand : CommandBase
 		#endregion
 
 		MemoryStream image = await this.ImageGenerator.MakePhoto(
-			save.Records,
-			best,
+			save,
 			data,
 			summary,
 			userInfo,
 			progress,
 			outerUserInfo,
 			this.ConfigService.Data.SongScoresRenderInfo,
-			rks,
 			this.ConfigService.Data.DefaultRenderImageType,
 			this.ConfigService.Data.RenderQuality,
 			cancellationToken: this.ConfigService.Data.RenderTimeoutCTS.Token,
@@ -120,7 +116,7 @@ public class SongScoresCommand : CommandBase
 				PSLUtils.ToAttachment(
 					GetScoresCommand.ScoresFormatter(
 						arg,
-						scoresToShow,
+						new() { CreationDate = default, ModificationTime = default, Records = scoresToShow },
 						this.PhigrosDataService.IdNameMap,
 						int.MaxValue,
 						data,

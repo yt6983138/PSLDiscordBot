@@ -52,7 +52,7 @@ public class GetScoresCommand : CommandBase
 
 		string result = ScoresFormatter(
 			arg,
-			save.Records,
+			save,
 			this.PhigrosDataService.IdNameMap,
 			arg.GetIntegerOptionAsInt32OrDefault(this.Localization[PSLNormalCommandKey.GetScoresOptionCountName], 19),
 			data,
@@ -63,7 +63,7 @@ public class GetScoresCommand : CommandBase
 	}
 	public static string ScoresFormatter(
 		IDiscordInteraction interaction,
-		List<CompleteScore> scores,
+		GameSave save,
 		IReadOnlyDictionary<string, string> map,
 		int shouldAddCount,
 		UserData userData,
@@ -72,11 +72,10 @@ public class GetScoresCommand : CommandBase
 		bool showScoreNumber = true,
 		bool showBest = true)
 	{
-		(CompleteScore best, double rks) = PSLUtils.SortRecord(scores);
+		(List<CompleteScore>? scores, double rks) = save.GetSortedListForRksMerged();
 		List<(CompleteScore score, string name)> nameScorePairs = scores
 			.Select(x => (x, map.TryGetValue(x.Id, out string? str) ? str : x.Id))
 			.ToList();
-		nameScorePairs.Insert(0, (best, map.TryGetValue(best.Id, out string? str) ? str : best.Id));
 
 		StringBuilder sb = new();
 		List<LocalizedString> titles = [

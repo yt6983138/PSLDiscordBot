@@ -1,7 +1,6 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using PhigrosLibraryCSharp.Cloud.DataStructure;
-using PhigrosLibraryCSharp.GameRecords;
 using PSLDiscordBot.Core.Command.Global.Base;
 using PSLDiscordBot.Core.ImageGenerating;
 using PSLDiscordBot.Core.Localization;
@@ -59,18 +58,14 @@ public class AboutMeCommand : CommandBase
 		GameProgress progress = await data.SaveCache.GetGameProgressAsync(index);
 		UserInfo outerUserInfo = await data.SaveCache.GetUserInfoAsync();
 
-		(CompleteScore? best, double rks) = PSLUtils.SortRecord(save);
-
 		MemoryStream image = await this.ImageGenerator.MakePhoto(
-			save.Records,
-			best,
+			save,
 			data,
 			summary,
 			userInfo,
 			progress,
 			outerUserInfo,
 			this.ConfigService.Data.AboutMeRenderInfo,
-			rks,
 			this.ConfigService.Data.DefaultRenderImageType,
 			this.ConfigService.Data.RenderQuality,
 			cancellationToken: this.ConfigService.Data.RenderTimeoutCTS.Token
