@@ -50,23 +50,27 @@ public class GetScoresCommand : CommandBase
 		(Summary summary, GameSave save) = pair.Value;
 
 		string result = ScoresFormatter(
+			arg,
 			save.Records,
 			this.PhigrosDataService.IdNameMap,
 			arg.GetIntegerOptionAsInt32OrDefault(this.Localization[PSLNormalCommandKey.GetScoresOptionCountName], 19),
-			data);
+			data,
+			this.Localization);
 
 		await arg.QuickReplyWithAttachments([PSLUtils.ToAttachment(result, "Scores.txt")],
 			this.Localization[PSLNormalCommandKey.GetScoresDone]);
 	}
 	public static string ScoresFormatter(
+		IDiscordInteraction interaction,
 		List<CompleteScore> scores,
 		IReadOnlyDictionary<string, string> map,
 		int shouldAddCount,
-		in UserData userData,
+		UserData userData,
+		LocalizationService localization,
 		bool calculateRks = true,
-		bool showLineNumber = true,
+		bool showScoreNumber = true,
 		bool showBest = true)
-	{ // UNDONE: localize those
+	{
 		(CompleteScore best, double rks) = PSLUtils.SortRecord(scores);
 		List<(CompleteScore score, string name)> nameScorePairs = scores
 			.Select(x => (x, map.TryGetValue(x.Id, out string? str) ? str : x.Id))
@@ -74,10 +78,18 @@ public class GetScoresCommand : CommandBase
 		nameScorePairs.Insert(0, (best, map.TryGetValue(best.Id, out string? str) ? str : best.Id));
 
 		StringBuilder sb = new();
-		List<string> titles = ["Status", "Acc.", "Rks", "Score", "Diff.", "CC", "Name"];
-		if (showLineNumber)
-			titles.Insert(0, "Number");
-		ColumnTextBuilder builder = new(titles);
+		List<LocalizedString> titles = [
+			localization[PSLCommonKey.ScoreFormatterStatusTitle],
+			localization[PSLCommonKey.ScoreFormatterAccuracyTitle],
+			localization[PSLCommonKey.ScoreFormatterRksTitle],
+			localization[PSLCommonKey.ScoreFormatterScoreTitle],
+			localization[PSLCommonKey.ScoreFormatterDifficultyTitle],
+			localization[PSLCommonKey.ScoreFormatterChartConstantTitle],
+			localization[PSLCommonKey.ScoreFormatterNameTitle]
+		];
+		if (showScoreNumber)
+			titles.Insert(0, localization[PSLCommonKey.ScoreFormatterScoreNumberTitle]);
+		ColumnTextBuilder builder = new(interaction, titles);
 
 		if (calculateRks)
 		{
@@ -93,16 +105,16 @@ public class GetScoresCommand : CommandBase
 			(CompleteScore score, string name) = nameScorePairs[j];
 
 			ColumnTextBuilder.RowBuilder row = new ColumnTextBuilder.RowBuilder()
-				.WithObjectAdded(score.Status)
-				.WithUserFormatStringAdded(userData, "{0}%", score.Accuracy)
-				.WithUserFormatStringAdded(userData, score.Rks)
-				.WithObjectAdded(score.Score)
-				.WithObjectAdded(score.Difficulty)
+				.WithFormatAdded(interaction, localization[PSLCommonKey.ScoreFormatterStatusFormat], score.Status)
+				.WithUserFormatStringAdded(interaction, userData, localization[PSLCommonKey.ScoreFormatterAccuracyFormat], score.Accuracy)
+				.WithUserFormatStringAdded(interaction, userData, localization[PSLCommonKey.ScoreFormatterRksFormat], score.Rks)
+				.WithFormatAdded(interaction, localization[PSLCommonKey.ScoreFormatterScoreFormat], score.Score)
+				.WithFormatAdded(interaction, localization[PSLCommonKey.ScoreFormatterDifficultyFormat], score.Difficulty)
 				.WithFormatAdded("{0:.0}", score.ChartConstant)
-				.WithStringAdded(name);
+				.WithFormatAdded(interaction, localization[PSLCommonKey.ScoreFormatterNameFormat], name);
 
-			if (showLineNumber)
-				row.WithStringInsertedAt(0, j == 0 ? "φ" : j.ToString());
+			if (showScoreNumber)
+				row.WithFormatAdded(interaction, localization[PSLCommonKey.ScoreFormatterScoreNumberFormat], j);
 
 			builder.WithRow(row);
 		}

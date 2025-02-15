@@ -38,6 +38,24 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 			[SaveHandlerOnPhiLibJsonException] = LocalizedString.CreateDefault("Error: {0}\n*This sometimes can indicate save corruption. Please try few more times or re-sync.*"),
 			[SaveHandlerOnHttpClientTimeout] = LocalizedString.CreateDefault("Oops, there was some issues connecting to the internet! Please use /ping to check availability.\nFull error: {0}"),
 
+			[ScoreFormatterScoreNumberTitle] = LocalizedString.CreateDefault("Number"),
+			[ScoreFormatterStatusTitle] = LocalizedString.CreateDefault("Status"),
+			[ScoreFormatterAccuracyTitle] = LocalizedString.CreateDefault("Acc."),
+			[ScoreFormatterRksTitle] = LocalizedString.CreateDefault("Rks"),
+			[ScoreFormatterScoreTitle] = LocalizedString.CreateDefault("Score"),
+			[ScoreFormatterDifficultyTitle] = LocalizedString.CreateDefault("Diff."),
+			[ScoreFormatterChartConstantTitle] = LocalizedString.CreateDefault("CC"),
+			[ScoreFormatterNameTitle] = LocalizedString.CreateDefault("Name"),
+			[ScoreFormatterScoreNumberFormat] = LocalizedString.CreateDefault("{0:cond:φ1|φ2|φ3|{0}}"),
+			[ScoreFormatterStatusFormat] = LocalizedString.CreateDefault("{0}"),
+			[ScoreFormatterAccuracyFormat] = LocalizedString.CreateDefault("{0}%"),
+			[ScoreFormatterRksFormat] = LocalizedString.CreateDefault("{0}"),
+			[ScoreFormatterScoreFormat] = LocalizedString.CreateDefault("{0}"),
+			[ScoreFormatterDifficultyFormat] = LocalizedString.CreateDefault("{0}"),
+			[ScoreFormatterChartConstantFormat] = LocalizedString.CreateDefault("{0:.0}"),
+			[ScoreFormatterNameFormat] = LocalizedString.CreateDefault("{0}"),
+			[ScoreFormatterUserRksIntro] = LocalizedString.CreateDefault("{0}"),
+
 			[IndexOptionName] = LocalizedString.CreateDefault("index"),
 			[IndexOptionDescription] = LocalizedString.CreateDefault("Save time converted to index, 0 is always latest. Do /get-time-index to get other index."),
 			[SongSearchOptionDescription] = LocalizedString.CreateDefault("Searching strings, you can either put id, put alias, or put the song name."),
@@ -93,6 +111,8 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 
 			[GetTimeIndexName] = LocalizedString.CreateDefault("get-time-index"),
 			[GetTimeIndexDescription] = LocalizedString.CreateDefault("Get save indexes, used to fetch older saves in various commands."),
+			[GetTimeIndexIndexTitle] = LocalizedString.CreateDefault("Index"),
+			[GetTimeIndexDateTitle] = LocalizedString.CreateDefault("Date"),
 
 			[GetTokenName] = LocalizedString.CreateDefault("get-token"),
 			[GetTokenDescription] = LocalizedString.CreateDefault("Show your token."),
@@ -131,6 +151,12 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 			[AddAliasOptionAllayToAddName] = LocalizedString.CreateDefault("alias"),
 			[AddAliasOptionAllayToAddDescription] = LocalizedString.CreateDefault("The alias to add, note: you may only add one alias at one time."),
 			[AddAliasNoMatch] = LocalizedString.CreateDefault("Sorry, the song you're looking for seems does not exist."),
+			[AddAliasMultipleMatch] = LocalizedString.CreateDefault("There's multiple match for your 'for' input: \n```\n{0:list:{}|\n}\n```\n" +
+				"Please re-do this command with the correct 'for' parameter."),
+			[AddAliasAlreadyAdded] = LocalizedString.CreateDefault("Sorry, this alias has already been added! Alias that already exists: \n" +
+				"```\n{0:list:{}|\n}\n```"),
+			[AddAliasSuccess] = LocalizedString.CreateDefault("Your alias has added successfully! The song `{0}` now has the following alias: \n" +
+				"```\n{0:list:{}|\n}\n```"),
 
 			[GetScoresName] = LocalizedString.CreateDefault("get-scores"),
 			[GetScoresDescription] = LocalizedString.CreateDefault("Get scores in text, useful when you don't have much mobile data."),
@@ -164,6 +190,13 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 			[MoreRksOptionCountName] = LocalizedString.CreateDefault("count"),
 			[MoreRksOptionCountDescription] = LocalizedString.CreateDefault("Controls how many charts should be shown. (Default 10)"),
 			[MoreRksResult] = LocalizedString.CreateDefault("Showing {0} possible chart(s):"),
+			[MoreRksNumberTitle] = LocalizedString.CreateDefault("Number"),
+			[MoreRksAccuracyChangeTitle] = LocalizedString.CreateDefault("Acc. change"),
+			[MoreRksRksChangeTitle] = LocalizedString.CreateDefault("Rks change"),
+			[MoreRksSongTitle] = LocalizedString.CreateDefault("For song"),
+			[MoreRksSongFormat] = LocalizedString.CreateDefault("{0} ({1.ChartConstant:.0})"),
+			[MoreRksRksChangeFormat] = LocalizedString.CreateDefault("{0} -> {1}"),
+			[MoreRksAccuracyChangeFormat] = LocalizedString.CreateDefault("{0}% -> {1}%"),
 
 			[RemoveAliasName] = LocalizedString.CreateDefault("remove-alias"),
 			[RemoveAliasDescription] = LocalizedString.CreateDefault("Remove a song alias."),
@@ -172,6 +205,12 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 			[RemoveAliasOptionAllayToAddName] = LocalizedString.CreateDefault("alias"),
 			[RemoveAliasOptionAllayToAddDescription] = LocalizedString.CreateDefault("The alias to remove, note: you may only remove one alias at one time."),
 			[RemoveAliasNoMatch] = LocalizedString.CreateDefault("Sorry, the song you're looking for seems does not exist."),
+			[RemoveAliasMultipleMatch] = LocalizedString.CreateDefault("There's multiple match for your 'for' input: \n```\n{0:list:{}|\n}\n```\n" +
+				"Please re-do this command with the correct 'for' parameter."),
+			[RemoveAliasAlreadyAdded] = LocalizedString.CreateDefault("Sorry, this alias does not exist! Alias that already exists: \n" +
+				"```\n{0:list:{}|\n}\n```"),
+			[RemoveAliasSuccess] = LocalizedString.CreateDefault("The alias has removed successfully! The song `{0}` now has the following alias: \n" +
+				"```\n{0:list:{}|\n}\n```"),
 			//[] = LocalizedString.CreateDefault(),
 		});
 	}

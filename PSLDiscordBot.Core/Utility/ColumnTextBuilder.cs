@@ -1,4 +1,5 @@
-﻿using PSLDiscordBot.Framework.Localization;
+﻿using Discord;
+using PSLDiscordBot.Framework.Localization;
 using SmartFormat;
 using System.Text;
 
@@ -180,6 +181,8 @@ public class ColumnTextBuilder
 	{
 		this.WithColumnTitles(columnTitles);
 	}
+	public ColumnTextBuilder(IDiscordInteraction interaction, params IEnumerable<LocalizedString> columnTitles)
+		: this(columnTitles.Select(x => x[interaction.UserLocale])) { }
 	public ColumnTextBuilder() { }
 
 	public ColumnTextBuilder WithColumnTitles(params IEnumerable<string> columnTitles)

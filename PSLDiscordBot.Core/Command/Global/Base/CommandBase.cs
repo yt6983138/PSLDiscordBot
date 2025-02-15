@@ -12,9 +12,9 @@ using PSLDiscordBot.Framework.Localization;
 using yt6983138.Common;
 
 namespace PSLDiscordBot.Core.Command.Global.Base;
-public abstract class CommandBase : BasicCommandBase
+public abstract class CommandBase : BasicCommandBase // TODO: use oneof for localizations
 {
-	protected private static int EventIdCount;
+	private protected static int EventIdCount;
 
 	#region Injection
 	[Inject]

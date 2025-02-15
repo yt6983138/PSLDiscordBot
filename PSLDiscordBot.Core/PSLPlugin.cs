@@ -14,6 +14,7 @@ using PSLDiscordBot.Framework.BuiltInServices;
 using PSLDiscordBot.Framework.DependencyInjection;
 using PSLDiscordBot.Framework.MiscEventArgs;
 using SixLabors.Fonts;
+using SmartFormat;
 using System.Net.WebSockets;
 using System.Text;
 using yt6983138.Common;
@@ -45,6 +46,11 @@ public class PSLPlugin : InjectableBase, IPlugin
 	public IUser? AdminUser { get; set; }
 	public bool Initialized { get; private set; }
 	public DiscordRestClient RestClient => this.DiscordClientService.RestClient;
+
+	static PSLPlugin()
+	{
+		Smart.Default.AddExtensions(new UserFormatFormatter());
+	}
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 	public PSLPlugin()

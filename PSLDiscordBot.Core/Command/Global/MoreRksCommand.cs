@@ -10,6 +10,7 @@ using PSLDiscordBot.Core.Utility;
 using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.CommandBase;
 using PSLDiscordBot.Framework.Localization;
+using SmartFormat;
 using System.Text;
 
 namespace PSLDiscordBot.Core.Command.Global;
@@ -77,21 +78,28 @@ public class MoreRksCommand : CommandBase
 		int calculatedShowCounts = Math.Min(calculatedGrowableScores.Count, count);
 
 		StringBuilder stringBuilder = new();
-		stringBuilder.Append("Getting you to: ");
-		stringBuilder.AppendLine((rks + (leastRks / 20d)).ToString(data.ShowFormat));
+		stringBuilder.AppendLine(
+			Smart.Format(
+				this.Localization[PSLNormalCommandKey.MoreRksIntro][arg.UserLocale],
+				(rks + (leastRks / 20d)).ToString(data.ShowFormat)));
 
-		ColumnTextBuilder columnTextBuilder = new(["Number", "Acc. change", "Rks change", "For song"]);
+		ColumnTextBuilder columnTextBuilder = new(arg, [
+			this.Localization[PSLNormalCommandKey.MoreRksNumberTitle],
+			this.Localization[PSLNormalCommandKey.MoreRksAccuracyChangeTitle],
+			this.Localization[PSLNormalCommandKey.MoreRksRksChangeTitle],
+			this.Localization[PSLNormalCommandKey.MoreRksSongTitle]
+			]);
 
 		for (int j = 0; j < calculatedShowCounts; j++)
-		{ // UNDONE: localize those
+		{
 			TargetRksScorePair item = calculatedGrowableScores[j];
 			string name = this.PhigrosDataService.IdNameMap[item.Score.Id];
 
 			columnTextBuilder.WithRow(new ColumnTextBuilder.RowBuilder()
 				.WithObjectAdded(j + 1)
-				.WithUserFormatStringAdded(data, "{0}% -> {1}%", item.Score.Accuracy, item.TargetAcc)
-				.WithUserFormatStringAdded(data, "{0} -> {1}", item.Score.Rks, item.TargetRks)
-				.WithFormatAdded("{0} ({1:.0})", name, item.Score.ChartConstant));
+				.WithUserFormatStringAdded(arg, data, this.Localization[PSLNormalCommandKey.MoreRksAccuracyChangeFormat], item.Score.Accuracy, item.TargetAcc)
+				.WithUserFormatStringAdded(arg, data, this.Localization[PSLNormalCommandKey.MoreRksRksChangeFormat], item.Score.Rks, item.TargetRks)
+				.WithFormatAdded(arg, this.Localization[PSLNormalCommandKey.MoreRksSongFormat], name, item.Score));
 		}
 
 		await arg.QuickReplyWithAttachments([PSLUtils.ToAttachment(columnTextBuilder.Build(stringBuilder).ToString(), "Report.txt")],

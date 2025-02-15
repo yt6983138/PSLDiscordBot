@@ -57,10 +57,12 @@ public class GetScoresByTokenCommand : AdminCommandBase
 		(Summary summary, GameSave save) = pair.Value;
 
 		string result = GetScoresCommand.ScoresFormatter(
+			arg,
 			save.Records,
 			this.PhigrosDataService.IdNameMap,
 			arg.Data.Options.Count > 2 ? arg.Data.Options.ElementAt(2).Value.Unbox<long>().CastTo<long, int>() : 19,
-			userData);
+			userData,
+			this.Localization);
 
 		await arg.ModifyOriginalResponseAsync(
 			(msg) =>

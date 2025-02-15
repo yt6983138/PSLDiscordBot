@@ -163,16 +163,19 @@ public static class PSLUtils
 	{
 		scores.Sort();
 		scores.Reverse();
-		CompleteScore @default = new(0, 0, 0, "NULL", Difficulty.EZ, ScoreStatus.Bugged);
+		List<CompleteScore> phis = scores.Where(x => x.Status == ScoreStatus.Phi).Take(3).ToList();
 
-		CompleteScore best = scores.FirstOrDefault(x => x.Status == ScoreStatus.Phi) ?? @default;
-
-		double rks = best.Rks * 0.05;
-
+		double rks = phis.Sum(x => x.Rks);
 		int i = 0;
-		scores.ForEach(x => { if (i < 19) rks += x.Rks * 0.05; i++; });
-
-		return (best, rks);
+		scores.ForEach(x =>
+		{
+			if (i < 29)
+			{
+				rks += x.Rks * 0.05;
+			}
+			i++;
+		});
+		return (phis[0], rks); // TODO: fix correct return type
 	}
 	/// <summary>
 	/// utf-8 default

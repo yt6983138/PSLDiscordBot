@@ -27,11 +27,12 @@ public class GetTimeIndexCommand : CommandBase
 		List<RawSave> saves = (await data.SaveCache.GetRawSaveFromCloudAsync()).results;
 
 		StringBuilder sb = new("```\n");
-		ColumnTextBuilder builder = new(["Index", "Date"]);
+		ColumnTextBuilder builder = new(arg, [
+			this.Localization[PSLNormalCommandKey.GetTimeIndexIndexTitle],
+			this.Localization[PSLNormalCommandKey.GetTimeIndexDateTitle]]);
 
 		for (int i = 0; i < saves.Count; i++)
 		{
-			// TODO: localize those builders
 			builder.WithRow([
 				i.ToString(),
 				saves[i].modifiedAt.iso.ToString()]);

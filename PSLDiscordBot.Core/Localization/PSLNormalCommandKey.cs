@@ -37,6 +37,9 @@ public static partial class PSLNormalCommandKey
 	#region GetTimeIndexCommand
 	public static partial string GetTimeIndexName { get; }
 	public static partial string GetTimeIndexDescription { get; }
+
+	public static partial string GetTimeIndexIndexTitle { get; }
+	public static partial string GetTimeIndexDateTitle { get; }
 	#endregion
 
 	#region GetTokenCommand
@@ -70,6 +73,9 @@ public static partial class PSLNormalCommandKey
 	public static partial string AddAliasOptionAllayToAddDescription { get; }
 
 	public static partial string AddAliasNoMatch { get; }
+	public static partial string AddAliasMultipleMatch { get; }
+	public static partial string AddAliasAlreadyAdded { get; }
+	public static partial string AddAliasSuccess { get; }
 	#endregion
 
 	#region GetScoresCommand
@@ -114,6 +120,14 @@ public static partial class PSLNormalCommandKey
 	public static partial string MoreRksOptionCountDescription { get; }
 
 	public static partial string MoreRksResult { get; }
+	public static partial string MoreRksIntro { get; }
+	public static partial string MoreRksNumberTitle { get; }
+	public static partial string MoreRksAccuracyChangeTitle { get; }
+	public static partial string MoreRksRksChangeTitle { get; }
+	public static partial string MoreRksSongTitle { get; }
+	public static partial string MoreRksSongFormat { get; }
+	public static partial string MoreRksRksChangeFormat { get; }
+	public static partial string MoreRksAccuracyChangeFormat { get; }
 	#endregion
 
 	#region RemoveAliasCommand
@@ -126,5 +140,8 @@ public static partial class PSLNormalCommandKey
 	public static partial string RemoveAliasOptionAllayToAddDescription { get; }
 
 	public static partial string RemoveAliasNoMatch { get; }
+	public static partial string RemoveAliasMultipleMatch { get; }
+	public static partial string RemoveAliasAlreadyAdded { get; }
+	public static partial string RemoveAliasSuccess { get; }
 	#endregion
 }

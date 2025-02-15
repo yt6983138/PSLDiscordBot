@@ -119,10 +119,12 @@ public class SongScoresCommand : CommandBase
 			[new(image, "ScoreAnalysis.png"),
 				PSLUtils.ToAttachment(
 					GetScoresCommand.ScoresFormatter(
+						arg,
 						scoresToShow,
 						this.PhigrosDataService.IdNameMap,
 						int.MaxValue,
 						data,
+						this.Localization,
 						false,
 						false,
 						false),

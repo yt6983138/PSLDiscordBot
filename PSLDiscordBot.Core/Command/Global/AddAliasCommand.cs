@@ -42,21 +42,14 @@ public class AddAliasCommand : CommandBase
 			return;
 		}
 		if (found.Count > 1)
-		{ // UNDONE: localize those
-			await arg.QuickReply($"There's multiple match for your 'for' input: \n" +
-				$"```\n" +
-				$"{string.Join("\n", found.Select(x => x.SongId))}\n" +
-				$"```\n" +
-				$"Please re-do this command with the correct 'for' parameter.");
+		{
+			await arg.QuickReply(this.Localization[PSLNormalCommandKey.AddAliasMultipleMatch], found);
 			return;
 		}
 		SongAliasPair theRealOne = found[0];
 		if (theRealOne.Alias.Contains(alias))
 		{
-			await arg.QuickReply("Sorry, this alias has already been added! Alias that already exists:\n" +
-				"```\n" +
-				$"{string.Join("\n", theRealOne.Alias)}\n" +
-				"```");
+			await arg.QuickReply(this.Localization[PSLNormalCommandKey.AddAliasAlreadyAdded], found);
 			return;
 		}
 
@@ -65,10 +58,8 @@ public class AddAliasCommand : CommandBase
 		newAlias[^1] = alias;
 		await requester.AddOrReplaceSongAliasCachedAsync(theRealOne.SongId, newAlias);
 
-		await arg.QuickReply($"Your alias has added successfully! The song " +
-			$"`{this.PhigrosDataService.IdNameMap[theRealOne.SongId]}` now has the following alias: \n" +
-			$"```\n" +
-			$"{string.Join("\n", newAlias)}\n" +
-			$"```");
+		await arg.QuickReply(this.Localization[PSLNormalCommandKey.AddAliasSuccess],
+			this.PhigrosDataService.IdNameMap[theRealOne.SongId],
+			newAlias);
 	}
 }

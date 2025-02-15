@@ -13,7 +13,7 @@ namespace PSLDiscordBot.Core.Command.Global;
 [AddToGlobal]
 public class SetShowCountDefaultCommand : CommandBase
 {
-	public override LocalizedString? NameLocalization => this.Localization[PSLNormalCommandKey.SetShowCountDefaultOptionCountName];
+	public override LocalizedString? NameLocalization => this.Localization[PSLNormalCommandKey.SetShowCountDefaultName];
 	public override LocalizedString? DescriptionLocalization => this.Localization[PSLNormalCommandKey.SetShowCountDefaultDescription];
 
 	public override SlashCommandBuilder CompleteBuilder =>
