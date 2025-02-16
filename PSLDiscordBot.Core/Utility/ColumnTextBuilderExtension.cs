@@ -23,6 +23,10 @@ public static class ColumnTextBuilderExtension
 	{
 		return builder.WithStringInsertedAt(index, str[arg.UserLocale]);
 	}
+	public static RowBuilder WithFormatInsertedAt(this RowBuilder builder, IDiscordInteraction arg, int index, LocalizedString format, params object?[] args)
+	{
+		return builder.WithStringInsertedAt(index, format.GetFormatted(arg.UserLocale, args));
+	}
 	public static RowBuilder WithFormatAdded(this RowBuilder builder, Language lang, LocalizedString format, params object?[] args)
 	{
 		return builder.WithStringAdded(format.GetFormatted(lang, args));

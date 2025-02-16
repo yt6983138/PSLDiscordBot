@@ -54,7 +54,7 @@ public class GetScoresCommand : CommandBase
 			arg,
 			save,
 			this.PhigrosDataService.IdNameMap,
-			arg.GetIntegerOptionAsInt32OrDefault(this.Localization[PSLNormalCommandKey.GetScoresOptionCountName], 19),
+			arg.GetIntegerOptionAsInt32OrDefault(this.Localization[PSLNormalCommandKey.GetScoresOptionCountName], 29),
 			data,
 			this.Localization);
 
@@ -114,7 +114,7 @@ public class GetScoresCommand : CommandBase
 				.WithFormatAdded(interaction, localization[PSLCommonKey.ScoreFormatterNameFormat], name);
 
 			if (showScoreNumber)
-				row.WithFormatAdded(interaction, localization[PSLCommonKey.ScoreFormatterScoreNumberFormat], j);
+				row.WithFormatInsertedAt(interaction, 0, localization[PSLCommonKey.ScoreFormatterScoreNumberFormat], j);
 
 			builder.WithRow(row);
 		}

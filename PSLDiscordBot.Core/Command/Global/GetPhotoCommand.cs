@@ -78,14 +78,14 @@ public class GetPhotoCommand : CommandBase
 				this.Localization[PSLNormalCommandKey.GetPhotoOptionCCFilterLowerBoundDescription],
 				isRequired: false,
 				minValue: 0,
-				maxValue: 17)
+				maxValue: 20)
 			.AddOption(
 				this.Localization[PSLNormalCommandKey.GetPhotoOptionCCFilterHigherBoundName],
 				ApplicationCommandOptionType.Number,
 				this.Localization[PSLNormalCommandKey.GetPhotoOptionCCFilterHigherBoundDescription],
 				isRequired: false,
 				minValue: 0,
-				maxValue: 17);
+				maxValue: 20);
 
 	public override async Task Callback(SocketSlashCommand arg,
 		UserData data,
@@ -94,7 +94,7 @@ public class GetPhotoCommand : CommandBase
 	{
 		int index = arg.GetIndexOption(this.Localization);
 		int count = arg.GetIntegerOptionAsInt32OrDefault(this.Localization[PSLNormalCommandKey.GetPhotoOptionCountName],
-			(await requester.GetDefaultGetPhotoShowCountCached(arg.User.Id)).GetValueOrDefault(23));
+			(await requester.GetDefaultGetPhotoShowCountCached(arg.User.Id)).GetValueOrDefault(30));
 		int lowerBound = arg.GetIntegerOptionAsInt32OrDefault(this.Localization[PSLNormalCommandKey.GetPhotoOptionLowerBoundName]);
 		double ccLowerBound = arg.GetOptionOrDefault<double>(this.Localization[PSLNormalCommandKey.GetPhotoOptionCCFilterLowerBoundName]);
 		double ccHigherBound = arg.GetOptionOrDefault<double>(this.Localization[PSLNormalCommandKey.GetPhotoOptionCCFilterHigherBoundName], int.MaxValue);
