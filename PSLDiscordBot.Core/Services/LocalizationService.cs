@@ -54,7 +54,7 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 			[ScoreFormatterDifficultyFormat] = LocalizedString.CreateDefault("{0}"),
 			[ScoreFormatterChartConstantFormat] = LocalizedString.CreateDefault("{0:.0}"),
 			[ScoreFormatterNameFormat] = LocalizedString.CreateDefault("{0}"),
-			[ScoreFormatterUserRksIntro] = LocalizedString.CreateDefault("{0}"),
+			[ScoreFormatterUserRksIntro] = LocalizedString.CreateDefault("Your rks: {0}"),
 
 			[IndexOptionName] = LocalizedString.CreateDefault("index"),
 			[IndexOptionDescription] = LocalizedString.CreateDefault("Save time converted to index, 0 is always latest. Do /get-time-index to get other index."),
