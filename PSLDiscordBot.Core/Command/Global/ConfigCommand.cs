@@ -7,6 +7,7 @@ using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Core.Utility;
 using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.CommandBase;
+using PSLDiscordBot.Framework.Localization;
 using System.Reflection;
 
 namespace PSLDiscordBot.Core.Command.Global;
@@ -23,8 +24,8 @@ public class ConfigCommand : AdminCommandBase
 			&& x.GetCustomAttribute<System.Text.Json.Serialization.JsonIgnoreAttribute>() is null)
 		.ToDictionary(x => x.Name, x => x);
 
-	public override string Name => "config";
-	public override string Description => "Config the application. [Admin command]";
+	public override OneOf<string, LocalizedString> PSLName => "config";
+	public override OneOf<string, LocalizedString> PSLDescription => "Config the application. [Admin command]";
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder

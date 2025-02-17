@@ -17,8 +17,8 @@ namespace PSLDiscordBot.Core.Command.Global;
 [AddToGlobal]
 public class SongInfoCommand : GuestCommandBase
 {
-	public override LocalizedString? NameLocalization => this.Localization[PSLGuestCommandKey.SongInfoName];
-	public override LocalizedString? DescriptionLocalization => this.Localization[PSLGuestCommandKey.SongInfoDescription];
+	public override OneOf<string, LocalizedString> PSLName => this.Localization[PSLGuestCommandKey.SongInfoName];
+	public override OneOf<string, LocalizedString> PSLDescription => this.Localization[PSLGuestCommandKey.SongInfoDescription];
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder.AddOption(

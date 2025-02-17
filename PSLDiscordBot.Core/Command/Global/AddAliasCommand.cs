@@ -14,8 +14,8 @@ namespace PSLDiscordBot.Core.Command.Global;
 [AddToGlobal]
 public class AddAliasCommand : CommandBase
 {
-	public override LocalizedString? NameLocalization => this.Localization[PSLNormalCommandKey.AddAliasName];
-	public override LocalizedString? DescriptionLocalization => this.Localization[PSLNormalCommandKey.AddAliasDescription];
+	public override OneOf<string, LocalizedString> PSLName => this.Localization[PSLNormalCommandKey.AddAliasName];
+	public override OneOf<string, LocalizedString> PSLDescription => this.Localization[PSLNormalCommandKey.AddAliasDescription];
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder

@@ -3,8 +3,10 @@ using Discord.WebSocket;
 using PSLDiscordBot.Core.Command.Global.Base;
 using PSLDiscordBot.Core.Services;
 using PSLDiscordBot.Core.UserDatas;
+using PSLDiscordBot.Core.Utility;
 using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.CommandBase;
+using PSLDiscordBot.Framework.Localization;
 using System.Text;
 using yt6983138.Common;
 
@@ -13,8 +15,8 @@ namespace PSLDiscordBot.Core.Command.Global;
 [AddToGlobal]
 public class GetLogsCommand : AdminCommandBase
 {
-	public override string Name => "get-logs";
-	public override string Description => "Get latest logs. [Admin command]";
+	public override OneOf<string, LocalizedString> PSLName => "get-logs";
+	public override OneOf<string, LocalizedString> PSLDescription => "Get latest logs. [Admin command]";
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder.AddOption(

@@ -27,8 +27,8 @@ public class SongScoresCommand : CommandBase
 
 	public override bool IsEphemeral => false;
 
-	public override LocalizedString? NameLocalization => this.Localization[PSLNormalCommandKey.SongScoresName];
-	public override LocalizedString? DescriptionLocalization => this.Localization[PSLNormalCommandKey.SongScoresDescription];
+	public override OneOf<string, LocalizedString> PSLName => this.Localization[PSLNormalCommandKey.SongScoresName];
+	public override OneOf<string, LocalizedString> PSLDescription => this.Localization[PSLNormalCommandKey.SongScoresDescription];
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder.AddOption(

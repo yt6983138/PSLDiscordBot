@@ -4,16 +4,18 @@ using PhigrosLibraryCSharp;
 using PSLDiscordBot.Core.Command.Global.Base;
 using PSLDiscordBot.Core.Services;
 using PSLDiscordBot.Core.UserDatas;
+using PSLDiscordBot.Core.Utility;
 using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.CommandBase;
+using PSLDiscordBot.Framework.Localization;
 
 namespace PSLDiscordBot.Core.Command.Global;
 
 [AddToGlobal]
 public class GrabRawZipCommand : AdminCommandBase
 {
-	public override string Name => "grab-raw-zip";
-	public override string Description => "Grab RAW zip by token. [Admin command]";
+	public override OneOf<string, LocalizedString> PSLName => "grab-raw-zip";
+	public override OneOf<string, LocalizedString> PSLDescription => "Grab RAW zip by token. [Admin command]";
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder

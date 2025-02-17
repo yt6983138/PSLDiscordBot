@@ -6,7 +6,7 @@ using System.Diagnostics.CodeAnalysis;
 namespace PSLDiscordBot.Framework.Localization;
 
 [JsonConverter(typeof(LocalizedStringNewtonsoftSerializer))]
-public class LocalizedString : IDictionary<string, string>, IReadOnlyDictionary<string, string>
+public class LocalizedString : IDictionary<string, string>, IReadOnlyDictionary<string, string> // TODO: change to simpler structure
 {
 	internal LocalizationManager? _parent;
 	internal string? _code;

@@ -27,8 +27,8 @@ public class AboutMeCommand : CommandBase
 	public override bool IsEphemeral => false;
 	public override bool RunOnDifferentThread => true;
 
-	public override LocalizedString? NameLocalization => this.Localization[PSLNormalCommandKey.AboutMeName];
-	public override LocalizedString? DescriptionLocalization => this.Localization[PSLNormalCommandKey.AboutMeDescription];
+	public override OneOf<string, LocalizedString> PSLName => this.Localization[PSLNormalCommandKey.AboutMeName];
+	public override OneOf<string, LocalizedString> PSLDescription => this.Localization[PSLNormalCommandKey.AboutMeDescription];
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder.AddOption(

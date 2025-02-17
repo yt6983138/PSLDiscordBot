@@ -3,14 +3,16 @@ using Discord.WebSocket;
 using PSLDiscordBot.Core.Command.Global.Base;
 using PSLDiscordBot.Core.Services;
 using PSLDiscordBot.Core.UserDatas;
+using PSLDiscordBot.Core.Utility;
+using PSLDiscordBot.Framework.Localization;
 
 namespace PSLDiscordBot.Core.Command.Global.Template;
 
 //[AddToGlobal]
 public class ExampleAdminCommand : AdminCommandBase
 {
-	public override string Name => "example";
-	public override string Description => "Example. [Admin command]";
+	public override OneOf<string, LocalizedString> PSLName => "example";
+	public override OneOf<string, LocalizedString> PSLDescription => "Example. [Admin command]";
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder;

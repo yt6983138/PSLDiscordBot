@@ -51,9 +51,9 @@ public static class PSLUtils
 	}
 	internal static Size ToIntSize(this SizeF val)
 		=> new((int)val.Width, (int)val.Height);
-	internal static SlashCommandBuilder DoIfNotNull<T>(this SlashCommandBuilder builder, T? obj, Action<SlashCommandBuilder, T> action)
+	internal static SlashCommandBuilder DoIf(this SlashCommandBuilder builder, bool predicate, Action<SlashCommandBuilder> action)
 	{
-		if (obj is not null) action.Invoke(builder, obj);
+		if (predicate) action.Invoke(builder);
 		return builder;
 	}
 

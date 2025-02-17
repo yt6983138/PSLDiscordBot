@@ -3,16 +3,18 @@ using Discord.WebSocket;
 using PSLDiscordBot.Core.Command.Global.Base;
 using PSLDiscordBot.Core.Services;
 using PSLDiscordBot.Core.UserDatas;
+using PSLDiscordBot.Core.Utility;
 using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.CommandBase;
+using PSLDiscordBot.Framework.Localization;
 
 namespace PSLDiscordBot.Core.Command.Global;
 
 [AddToGlobal]
 public class ClearDataBaseCacheCommand : AdminCommandBase
 {
-	public override string Name => "clear-database-cache";
-	public override string Description => "Clear database cache. [Admin command]";
+	public override OneOf<string, LocalizedString> PSLName => "clear-database-cache";
+	public override OneOf<string, LocalizedString> PSLDescription => "Clear database cache. [Admin command]";
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder;

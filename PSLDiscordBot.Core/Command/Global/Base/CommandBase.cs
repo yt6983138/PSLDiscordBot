@@ -12,7 +12,7 @@ using PSLDiscordBot.Framework.Localization;
 using yt6983138.Common;
 
 namespace PSLDiscordBot.Core.Command.Global.Base;
-public abstract class CommandBase : BasicCommandBase // TODO: use oneof for localizations
+public abstract class CommandBase : BasicCommandBase
 {
 	private protected static int EventIdCount;
 
@@ -36,20 +36,19 @@ public abstract class CommandBase : BasicCommandBase // TODO: use oneof for loca
 	}
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
-	public virtual LocalizedString? NameLocalization => null;
-	public virtual LocalizedString? DescriptionLocalization => null;
 
 #pragma warning disable PSL3 // The expression used is not supported.
-	public override string Name => this.NameLocalization?.Default
-		?? throw new InvalidOperationException($"{nameof(this.Name)}{nameof(this.NameLocalization)} not overridden!");
-	public override string Description => this.DescriptionLocalization?.Default
-		?? throw new InvalidOperationException($"{nameof(this.Description)}{nameof(this.DescriptionLocalization)} not overridden!");
+	public sealed override string Name => this.PSLName.Match(x => x, y => y.Default);
+	public sealed override string Description => this.PSLName.Match(x => x, y => y.Default);
 #pragma warning restore PSL3 // The expression used is not supported.
+
+	public abstract OneOf<string, LocalizedString> PSLName { get; }
+	public abstract OneOf<string, LocalizedString> PSLDescription { get; }
 
 	protected override SlashCommandBuilder BasicBuilder =>
 		base.BasicBuilder
-			.DoIfNotNull(this.NameLocalization, (x, o) => x.WithNameLocalizations(o))
-			.DoIfNotNull(this.DescriptionLocalization, (x, o) => x.WithDescriptionLocalizations(o));
+			.DoIf(this.PSLName.IsValue2, (x) => x.WithNameLocalizations(this.PSLName.Value2))
+			.DoIf(this.PSLDescription.IsValue2, (x) => x.WithDescriptionLocalizations(this.PSLDescription.Value2));
 
 	public abstract Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer);
 	public override async Task Execute(SocketSlashCommand arg, object executer)

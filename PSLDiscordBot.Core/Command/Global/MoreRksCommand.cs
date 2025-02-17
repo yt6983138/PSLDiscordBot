@@ -20,8 +20,8 @@ public class MoreRksCommand : CommandBase
 {
 	private record struct TargetRksScorePair(double TargetRks, double TargetAcc, CompleteScore Score);
 
-	public override LocalizedString? NameLocalization => this.Localization[PSLNormalCommandKey.MoreRksName];
-	public override LocalizedString? DescriptionLocalization => this.Localization[PSLNormalCommandKey.MoreRksDescription];
+	public override OneOf<string, LocalizedString> PSLName => this.Localization[PSLNormalCommandKey.MoreRksName];
+	public override OneOf<string, LocalizedString> PSLDescription => this.Localization[PSLNormalCommandKey.MoreRksDescription];
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder
@@ -48,7 +48,7 @@ public class MoreRksCommand : CommandBase
 	public override async Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
 	{
 		int count = arg.GetIntegerOptionAsInt32OrDefault(this.Localization[PSLNormalCommandKey.MoreRksOptionCountName], 10);
-		double leastRks = arg.GetOptionOrDefault(this.Localization[PSLNormalCommandKey.MoreRksOptionGetAtLeastName], -1d);
+		double giveLeastRks = arg.GetOptionOrDefault(this.Localization[PSLNormalCommandKey.MoreRksOptionGetAtLeastName], -1d);
 
 		PhigrosLibraryCSharp.SaveSummaryPair? pair = await data.SaveCache.GetAndHandleSave(
 			arg,
@@ -58,18 +58,17 @@ public class MoreRksCommand : CommandBase
 		if (pair is null)
 			return;
 		(Summary summary, GameSave save) = pair.Value;
+		(List<CompleteScore>? scores, double rks) = save.GetSortedListForRksMerged();
 
-		(CompleteScore best, double rks) = PSLUtils.SortRecord(save);
-
-		double twentyThRks = save.Records[Math.Min(19, save.Records.Count) - 1].Rks;
-		leastRks = leastRks < 0 ? Math.Round(rks, 2, MidpointRounding.ToEven) + 0.005d - rks : leastRks;
-		leastRks *= 20;
+		double leastRksInBests = scores[Math.Min(29, scores.Count) - 1].Rks;
+		giveLeastRks = giveLeastRks < 0 ? Math.Round(rks, 2, MidpointRounding.ToEven) + 0.005d - rks : giveLeastRks;
+		giveLeastRks *= 30;
 
 		List<TargetRksScorePair> calculatedGrowableScores = save.Records //TODO: Fix formula
 			.Select(r =>
 			new TargetRksScorePair(
-				Math.Max(r.Rks + leastRks, twentyThRks + leastRks),
-				(45d * Math.Sqrt(Math.Max(r.Rks + leastRks, twentyThRks + leastRks) / r.ChartConstant)) + 55d,
+				Math.Max(r.Rks + giveLeastRks, leastRksInBests + giveLeastRks),
+				(45d * Math.Sqrt(Math.Max(r.Rks + giveLeastRks, leastRksInBests + giveLeastRks) / r.ChartConstant)) + 55d,
 				r))
 			.Where(r => 70 < r.TargetAcc && r.TargetAcc < 100)
 			.ToList();
@@ -81,7 +80,7 @@ public class MoreRksCommand : CommandBase
 		stringBuilder.AppendLine(
 			Smart.Format(
 				this.Localization[PSLNormalCommandKey.MoreRksIntro][arg.UserLocale],
-				(rks + (leastRks / 20d)).ToString(data.ShowFormat)));
+				(rks + (giveLeastRks / 30d)).ToString(data.ShowFormat)));
 
 		ColumnTextBuilder columnTextBuilder = new(arg, [
 			this.Localization[PSLNormalCommandKey.MoreRksNumberTitle],

@@ -25,8 +25,8 @@ public class PingCommand : GuestCommandBase
 		{ "Dns and Github", [new("http://8.8.8.8/"), new("https://github.com")] }
 	};
 
-	public override LocalizedString? NameLocalization => this.Localization[PSLGuestCommandKey.PingName];
-	public override LocalizedString? DescriptionLocalization => this.Localization[PSLGuestCommandKey.PingDescription];
+	public override OneOf<string, LocalizedString> PSLName => this.Localization[PSLGuestCommandKey.PingName];
+	public override OneOf<string, LocalizedString> PSLDescription => this.Localization[PSLGuestCommandKey.PingDescription];
 
 	public override bool IsEphemeral => false;
 

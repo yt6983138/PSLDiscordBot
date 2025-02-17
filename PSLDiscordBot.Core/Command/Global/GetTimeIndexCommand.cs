@@ -16,8 +16,8 @@ namespace PSLDiscordBot.Core.Command.Global;
 [AddToGlobal]
 public class GetTimeIndexCommand : CommandBase
 {
-	public override LocalizedString? NameLocalization => this.Localization[PSLNormalCommandKey.GetTimeIndexName];
-	public override LocalizedString? DescriptionLocalization => this.Localization[PSLNormalCommandKey.GetTimeIndexDescription];
+	public override OneOf<string, LocalizedString> PSLName => this.Localization[PSLNormalCommandKey.GetTimeIndexName];
+	public override OneOf<string, LocalizedString> PSLDescription => this.Localization[PSLNormalCommandKey.GetTimeIndexDescription];
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder;

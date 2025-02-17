@@ -5,16 +5,18 @@ using ICSharpCode.SharpZipLib.Zip;
 using PSLDiscordBot.Core.Command.Global.Base;
 using PSLDiscordBot.Core.Services;
 using PSLDiscordBot.Core.UserDatas;
+using PSLDiscordBot.Core.Utility;
 using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.CommandBase;
+using PSLDiscordBot.Framework.Localization;
 
 namespace PSLDiscordBot.Core.Command.Global;
 
 [AddToGlobal]
 public class ExportAppDataCommand : AdminCommandBase
 {
-	public override string Name => "export-app-data";
-	public override string Description => "Export encrypted app data. [Admin command]";
+	public override OneOf<string, LocalizedString> PSLName => "export-app-data";
+	public override OneOf<string, LocalizedString> PSLDescription => "Export encrypted app data. [Admin command]";
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder

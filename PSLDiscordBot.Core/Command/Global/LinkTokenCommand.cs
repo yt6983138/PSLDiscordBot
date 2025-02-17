@@ -15,8 +15,8 @@ namespace PSLDiscordBot.Core.Command.Global;
 [AddToGlobal]
 public class LinkTokenCommand : GuestCommandBase
 {
-	public override LocalizedString? NameLocalization => this.Localization[PSLGuestCommandKey.LinkTokenName];
-	public override LocalizedString? DescriptionLocalization => this.Localization[PSLGuestCommandKey.LinkTokenDescription];
+	public override OneOf<string, LocalizedString> PSLName => this.Localization[PSLGuestCommandKey.LinkTokenName];
+	public override OneOf<string, LocalizedString> PSLDescription => this.Localization[PSLGuestCommandKey.LinkTokenDescription];
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder.AddOption(

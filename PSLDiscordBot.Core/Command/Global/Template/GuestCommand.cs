@@ -3,14 +3,16 @@ using Discord.WebSocket;
 using PSLDiscordBot.Core.Command.Global.Base;
 using PSLDiscordBot.Core.Services;
 using PSLDiscordBot.Core.UserDatas;
+using PSLDiscordBot.Core.Utility;
+using PSLDiscordBot.Framework.Localization;
 
 namespace PSLDiscordBot.Core.Command.Global.Template;
 
 //[AddToGlobal]
 public class ExampleGuestCommand : GuestCommandBase
 {
-	public override string Name => "example";
-	public override string Description => "Example.";
+	public override OneOf<string, LocalizedString> PSLName => "example";
+	public override OneOf<string, LocalizedString> PSLDescription => "Example.";
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder;

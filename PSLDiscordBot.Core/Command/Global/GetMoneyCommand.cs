@@ -16,8 +16,8 @@ namespace PSLDiscordBot.Core.Command.Global;
 [AddToGlobal]
 public class GetMoneyCommand : CommandBase
 {
-	public override LocalizedString? NameLocalization => this.Localization[PSLNormalCommandKey.GetMoneyName];
-	public override LocalizedString? DescriptionLocalization => this.Localization[PSLNormalCommandKey.GetMoneyDescription];
+	public override OneOf<string, LocalizedString> PSLName => this.Localization[PSLNormalCommandKey.GetMoneyName];
+	public override OneOf<string, LocalizedString> PSLDescription => this.Localization[PSLNormalCommandKey.GetMoneyDescription];
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder.AddOption(

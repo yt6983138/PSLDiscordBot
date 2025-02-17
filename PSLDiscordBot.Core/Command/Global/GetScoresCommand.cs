@@ -20,8 +20,8 @@ public class GetScoresCommand : CommandBase
 {
 	public override bool IsEphemeral => false;
 
-	public override LocalizedString? NameLocalization => this.Localization[PSLNormalCommandKey.GetScoresName];
-	public override LocalizedString? DescriptionLocalization => this.Localization[PSLNormalCommandKey.GetScoresDescription];
+	public override OneOf<string, LocalizedString> PSLName => this.Localization[PSLNormalCommandKey.GetScoresName];
+	public override OneOf<string, LocalizedString> PSLDescription => this.Localization[PSLNormalCommandKey.GetScoresDescription];
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder.AddOption(

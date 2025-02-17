@@ -6,6 +6,7 @@ using PSLDiscordBot.Core.Command.Global.Base;
 using PSLDiscordBot.Core.Localization;
 using PSLDiscordBot.Core.Services;
 using PSLDiscordBot.Core.UserDatas;
+using PSLDiscordBot.Core.Utility;
 using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.CommandBase;
 using PSLDiscordBot.Framework.Localization;
@@ -17,8 +18,8 @@ public class LoginCommand : GuestCommandBase
 {
 	public override bool RunOnDifferentThread => true;
 
-	public override LocalizedString? NameLocalization => this.Localization[PSLGuestCommandKey.LoginName];
-	public override LocalizedString? DescriptionLocalization => this.Localization[PSLGuestCommandKey.LoginDescription];
+	public override OneOf<string, LocalizedString> PSLName => this.Localization[PSLGuestCommandKey.LoginName];
+	public override OneOf<string, LocalizedString> PSLDescription => this.Localization[PSLGuestCommandKey.LoginDescription];
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder;

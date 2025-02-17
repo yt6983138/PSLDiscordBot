@@ -3,9 +3,11 @@ using Discord.WebSocket;
 using PSLDiscordBot.Core.Command.Global.Base;
 using PSLDiscordBot.Core.Services;
 using PSLDiscordBot.Core.UserDatas;
+using PSLDiscordBot.Core.Utility;
 using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.CommandBase;
 using PSLDiscordBot.Framework.DependencyInjection;
+using PSLDiscordBot.Framework.Localization;
 
 namespace PSLDiscordBot.Core.Command.Global;
 
@@ -29,8 +31,8 @@ public class ToggleMaintenanceCommand : AdminCommandBase
 		InteractionContextType.PrivateChannel
 	];
 
-	public override string Name => "toggle-maintenance";
-	public override string Description => "Toggle maintenance. [Admin command]";
+	public override OneOf<string, LocalizedString> PSLName => "toggle-maintenance";
+	public override OneOf<string, LocalizedString> PSLDescription => "Toggle maintenance. [Admin command]";
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder;

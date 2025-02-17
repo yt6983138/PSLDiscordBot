@@ -43,8 +43,8 @@ public class GetPhotoCommand : CommandBase
 	public override bool IsEphemeral => false;
 	public override bool RunOnDifferentThread => true;
 
-	public override LocalizedString? NameLocalization => this.Localization[PSLNormalCommandKey.GetPhotoName];
-	public override LocalizedString? DescriptionLocalization => this.Localization[PSLNormalCommandKey.GetPhotoDescription];
+	public override OneOf<string, LocalizedString> PSLName => this.Localization[PSLNormalCommandKey.GetPhotoName];
+	public override OneOf<string, LocalizedString> PSLDescription => this.Localization[PSLNormalCommandKey.GetPhotoDescription];
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder.AddOption(

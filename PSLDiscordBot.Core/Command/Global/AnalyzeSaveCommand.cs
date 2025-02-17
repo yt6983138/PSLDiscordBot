@@ -8,6 +8,7 @@ using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Core.Utility;
 using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.CommandBase;
+using PSLDiscordBot.Framework.Localization;
 using System.Text;
 
 namespace PSLDiscordBot.Core.Command.Global;
@@ -15,8 +16,8 @@ namespace PSLDiscordBot.Core.Command.Global;
 [AddToGlobal]
 public class AnalyzeSaveCommand : AdminCommandBase
 {
-	public override string Name => "analyze-save";
-	public override string Description => "Analyze someone's save. [Admin command]";
+	public override OneOf<string, LocalizedString> PSLName => "analyze-save";
+	public override OneOf<string, LocalizedString> PSLDescription => "Analyze someone's save. [Admin command]";
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder

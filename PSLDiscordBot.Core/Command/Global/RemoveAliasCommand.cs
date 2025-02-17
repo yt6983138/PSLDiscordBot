@@ -14,8 +14,8 @@ namespace PSLDiscordBot.Core.Command.Global;
 [AddToGlobal]
 public class RemoveAliasCommand : CommandBase
 {
-	public override LocalizedString? NameLocalization => this.Localization[PSLNormalCommandKey.RemoveAliasName];
-	public override LocalizedString? DescriptionLocalization => this.Localization[PSLNormalCommandKey.RemoveAliasDescription];
+	public override OneOf<string, LocalizedString> PSLName => this.Localization[PSLNormalCommandKey.RemoveAliasName];
+	public override OneOf<string, LocalizedString> PSLDescription => this.Localization[PSLNormalCommandKey.RemoveAliasDescription];
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder

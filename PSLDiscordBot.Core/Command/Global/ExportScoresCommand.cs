@@ -17,8 +17,8 @@ namespace PSLDiscordBot.Core.Command.Global;
 [AddToGlobal]
 public class ExportScoresCommand : CommandBase
 {
-	public override LocalizedString? NameLocalization => this.Localization[PSLNormalCommandKey.ExportScoresName];
-	public override LocalizedString? DescriptionLocalization => this.Localization[PSLNormalCommandKey.ExportScoresDescription];
+	public override OneOf<string, LocalizedString> PSLName => this.Localization[PSLNormalCommandKey.ExportScoresName];
+	public override OneOf<string, LocalizedString> PSLDescription => this.Localization[PSLNormalCommandKey.ExportScoresDescription];
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder.AddOption(

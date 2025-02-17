@@ -3,15 +3,17 @@ using Discord.WebSocket;
 using PSLDiscordBot.Core.Command.Global.Base;
 using PSLDiscordBot.Core.Services;
 using PSLDiscordBot.Core.UserDatas;
+using PSLDiscordBot.Core.Utility;
 using PSLDiscordBot.Framework.CommandBase;
+using PSLDiscordBot.Framework.Localization;
 
 namespace PSLDiscordBot.Core.Command.Global;
 
 [AddToGlobal]
 public class GetTokenForCommand : AdminCommandBase
 {
-	public override string Name => "get-token-for";
-	public override string Description => "Get token for user. [Admin command]";
+	public override OneOf<string, LocalizedString> PSLName => "get-token-for";
+	public override OneOf<string, LocalizedString> PSLDescription => "Get token for user. [Admin command]";
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder

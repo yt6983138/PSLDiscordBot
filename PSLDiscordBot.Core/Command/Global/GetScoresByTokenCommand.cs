@@ -7,6 +7,7 @@ using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Core.Utility;
 using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.CommandBase;
+using PSLDiscordBot.Framework.Localization;
 using System.Text;
 
 namespace PSLDiscordBot.Core.Command.Global;
@@ -14,8 +15,8 @@ namespace PSLDiscordBot.Core.Command.Global;
 [AddToGlobal]
 public class GetScoresByTokenCommand : AdminCommandBase
 {
-	public override string Name => "get-scores-by-token";
-	public override string Description => "Get scores. [Admin command]";
+	public override OneOf<string, LocalizedString> PSLName => "get-scores-by-token";
+	public override OneOf<string, LocalizedString> PSLDescription => "Get scores. [Admin command]";
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder.AddOption(

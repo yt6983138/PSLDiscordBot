@@ -5,6 +5,7 @@ using PSLDiscordBot.Core.Command.Global.Base;
 using PSLDiscordBot.Core.Localization;
 using PSLDiscordBot.Core.Services;
 using PSLDiscordBot.Core.UserDatas;
+using PSLDiscordBot.Core.Utility;
 using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.CommandBase;
 using PSLDiscordBot.Framework.DependencyInjection;
@@ -22,8 +23,8 @@ public class ReportProblemCommand : GuestCommandBase
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
 	#endregion
 
-	public override LocalizedString? NameLocalization => this.Localization[PSLGuestCommandKey.ReportProblemName];
-	public override LocalizedString? DescriptionLocalization => this.Localization[PSLGuestCommandKey.ReportProblemDescription];
+	public override OneOf<string, LocalizedString> PSLName => this.Localization[PSLGuestCommandKey.ReportProblemName];
+	public override OneOf<string, LocalizedString> PSLDescription => this.Localization[PSLGuestCommandKey.ReportProblemDescription];
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder
