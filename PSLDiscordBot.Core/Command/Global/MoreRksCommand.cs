@@ -94,7 +94,7 @@ public class MoreRksCommand : CommandBase
 			TargetRksScorePair item = calculatedGrowableScores[j];
 			string name = this.PhigrosDataService.IdNameMap[item.Score.Id];
 
-			columnTextBuilder.WithRow(new ColumnTextBuilder.RowBuilder()
+			columnTextBuilder.WithRow(new ColumnTextBuilder.RowBuilder() // TODO: add number localization
 				.WithObjectAdded(j + 1)
 				.WithUserFormatStringAdded(arg, data, this.Localization[PSLNormalCommandKey.MoreRksAccuracyChangeFormat], item.Score.Accuracy, item.TargetAcc)
 				.WithUserFormatStringAdded(arg, data, this.Localization[PSLNormalCommandKey.MoreRksRksChangeFormat], item.Score.Rks, item.TargetRks)

@@ -46,7 +46,7 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 			[ScoreFormatterDifficultyTitle] = LocalizedString.CreateDefault("Diff."),
 			[ScoreFormatterChartConstantTitle] = LocalizedString.CreateDefault("CC"),
 			[ScoreFormatterNameTitle] = LocalizedString.CreateDefault("Name"),
-			[ScoreFormatterScoreNumberFormat] = LocalizedString.CreateDefault("{0:cond:φ1|φ2|φ3|{0}}"),
+			[ScoreFormatterScoreNumberFormat] = LocalizedString.CreateDefault("{0:cond:φ1|φ2|φ3|#{0}}"),
 			[ScoreFormatterStatusFormat] = LocalizedString.CreateDefault("{0}"),
 			[ScoreFormatterAccuracyFormat] = LocalizedString.CreateDefault("{0}%"),
 			[ScoreFormatterRksFormat] = LocalizedString.CreateDefault("{0}"),
@@ -77,7 +77,7 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 			[SetShowCountDefaultName] = LocalizedString.CreateDefault("set-show-count-default"),
 			[SetShowCountDefaultDescription] = LocalizedString.CreateDefault("Set the default show count for /get-photo."),
 			[SetShowCountDefaultOptionCountName] = LocalizedString.CreateDefault("count"),
-			[SetShowCountDefaultOptionCountDescription] = LocalizedString.CreateDefault("The default count going to be set. Put 20 for the classic b20 view."),
+			[SetShowCountDefaultOptionCountDescription] = LocalizedString.CreateDefault("The default count going to be set."),
 
 			[SetPrecisionName] = LocalizedString.CreateDefault("set-precision"),
 			[SetPrecisionDescription] = LocalizedString.CreateDefault("Set precision of value shown on commands that fetch your scores."),
