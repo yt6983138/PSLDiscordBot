@@ -18,6 +18,7 @@ General conditions regarding the bot are under this topic.
 8. We may disable/delete the bot if Pigeon Games, TapTap, or Discord asked our team to.
 9. You can not (try to) bug the bot.
 10. Everyone is allowed to host their own copy and then modify the bot, they will be responsible for the operations on their own copy of the bot, and the terms of service and privacy policy still applies. They must follow the license (https://github.com/yt6983138/PSLDiscordBot/blob/master/LICENSE.txt ).
+11. administrator948 is sus
 # Terms of Use (Commands)
 1. Clients must have an appropriate Phigros nick name.
 2. We are not responsible for issues caused by any commands.
