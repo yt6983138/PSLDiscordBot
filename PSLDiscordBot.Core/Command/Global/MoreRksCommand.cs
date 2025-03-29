@@ -62,7 +62,7 @@ public class MoreRksCommand : CommandBase
 
 		double leastRksInBests = scores[Math.Min(29, scores.Count) - 1].Rks;
 		giveLeastRks = giveLeastRks < 0 ? Math.Round(rks, 2, MidpointRounding.ToEven) + 0.005d - rks : giveLeastRks;
-		giveLeastRks *= 30;
+		giveLeastRks *= 30; // todo: add phi
 
 		List<TargetRksScorePair> calculatedGrowableScores = save.Records //TODO: Fix formula
 			.Select(r =>
