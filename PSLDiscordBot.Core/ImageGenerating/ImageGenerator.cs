@@ -211,7 +211,8 @@ public class ImageGenerator : InjectableBase
 		string cutBgId = string.IsNullOrWhiteSpace(gameUserInfo.BackgroundId) ? "" : gameUserInfo.BackgroundId[..^1];
 		KeyValuePair<string, string> firstIdOccurrence = this.PhigrosDataService.IdNameMap.FirstOrDefault(p =>
 			p.Value == gameUserInfo.BackgroundId
-			|| p.Value == cutBgId);
+			|| p.Value == cutBgId
+			|| p.Key == gameUserInfo.BackgroundId[..^2]); // goddamn why they have to change this every time
 		if (string.IsNullOrEmpty(firstIdOccurrence.Key))
 		{
 			formattedBgPath += "Introduction";
