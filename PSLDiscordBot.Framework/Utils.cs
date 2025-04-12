@@ -6,7 +6,10 @@ namespace PSLDiscordBot.Framework;
 public static class Utils
 {
 	public static bool IsNullOrEmpty(this string? value)
-		=> string.IsNullOrEmpty(value);
+	{
+		return string.IsNullOrEmpty(value);
+	}
+
 	internal static void CopyFilesRecursively(this DirectoryInfo source, DirectoryInfo target)
 	{
 		foreach (DirectoryInfo dir in source.GetDirectories())
@@ -39,6 +42,20 @@ public static class Utils
 			source.Add(pair);
 		}
 	}
+	/// <summary>
+	/// mutating self
+	/// </summary>
+	/// <typeparam name="T"></typeparam>
+	/// <param name="self"></param>
+	/// <param name="source"></param>
+	public static void MergeWith<T>(this IList<T> self, IEnumerable<T> source)
+	{
+		foreach (T t in source)
+		{
+			if (self.Contains(t)) break;
+			self.Add(t);
+		}
+	}
 	public static bool Compare(this ApplicationCommandOptionProperties source, ApplicationCommandOptionProperties target)
 	{
 		ApplicationCommandOptionProperties a = source;
@@ -56,20 +73,24 @@ public static class Utils
 	{
 		if (!source.HasValue)
 		{
-			if (!target.HasValue) return true;
-			return target.Value.Equals(default(T));
+			return !target.HasValue || target.Value.Equals(default(T));
 		}
 		if (!target.HasValue)
 		{
-			if (!source.HasValue) return true;
-			return source.Value.Equals(default(T));
+			return !source.HasValue || source.Value.Equals(default(T));
 		}
 		return source.Value.Equals(target.Value);
 	}
 	public static int ToInt(this long num)
-		=> Convert.ToInt32(num);
+	{
+		return Convert.ToInt32(num);
+	}
+
 	public static T Unbox<T>(this object obj)
-		=> (T)obj;
+	{
+		return (T)obj;
+	}
+
 	public static TTo CastTo<TFrom, TTo>(this TFrom from)
 	{
 		return (TTo)Convert.ChangeType(from, typeof(TTo))!;
@@ -118,44 +139,56 @@ public static class Utils
 			Console.ForegroundColor = oldFore;
 	}
 	public static void WriteLineWithColor(string dat = "", ConsoleColor? foreground = null, ConsoleColor? background = null)
-		=> WriteWithColor($"{dat}\n", foreground, background);
+	{
+		WriteWithColor($"{dat}\n", foreground, background);
+	}
 
 	public static T GetOption<T>(this SocketSlashCommand socketSlashCommand, string name)
 	{
 		return socketSlashCommand.Data.Options.First(x => x.Name == name).Value.Unbox<T>();
 	}
 	public static T GetOption<T>(this SocketSlashCommand socketSlashCommand, LocalizedString name)
-		=> socketSlashCommand.GetOption<T>(name.Default);
+	{
+		return socketSlashCommand.GetOption<T>(name.Default);
+	}
+
 	public static T GetOptionOrDefault<T>(this SocketSlashCommand socketSlashCommand, string name, T defaultValue = default) where T : struct
 	{
 		SocketSlashCommandDataOption? option = socketSlashCommand.Data.Options.FirstOrDefault(x => x.Name == name);
-		if (option is null)
-			return defaultValue;
-		return option.Value.Unbox<T>();
+		return option is null ? defaultValue : option.Value.Unbox<T>();
 	}
 	public static T GetOptionOrDefault<T>(this SocketSlashCommand socketSlashCommand, LocalizedString name, T defaultValue = default) where T : struct
-		=> socketSlashCommand.GetOptionOrDefault(name.Default, defaultValue);
+	{
+		return socketSlashCommand.GetOptionOrDefault(name.Default, defaultValue);
+	}
+
 	public static T? GetOptionOrDefault<T>(this SocketSlashCommand socketSlashCommand, string name) where T : class
 	{
 		return socketSlashCommand.Data.Options.FirstOrDefault(x => x.Name == name)?.Value.Unbox<T>();
 	}
 	public static T? GetOptionOrDefault<T>(this SocketSlashCommand socketSlashCommand, LocalizedString name) where T : class
-		=> socketSlashCommand.GetOptionOrDefault<T>(name.Default);
+	{
+		return socketSlashCommand.GetOptionOrDefault<T>(name.Default);
+	}
+
 	public static int GetIntegerOptionAsInt32(this SocketSlashCommand socketSlashCommand, string name)
 	{
 		return socketSlashCommand.Data.Options.First(x => x.Name == name).Value.Unbox<long>().CastTo<long, int>();
 	}
 	public static int GetIntegerOptionAsInt32(this SocketSlashCommand socketSlashCommand, LocalizedString name)
-		=> socketSlashCommand.GetIntegerOptionAsInt32(name.Default);
+	{
+		return socketSlashCommand.GetIntegerOptionAsInt32(name.Default);
+	}
+
 	public static int GetIntegerOptionAsInt32OrDefault(this SocketSlashCommand socketSlashCommand, string name, int defaultValue = default)
 	{
 		SocketSlashCommandDataOption? option = socketSlashCommand.Data.Options.FirstOrDefault(x => x.Name == name);
-		if (option is null)
-			return defaultValue;
-		return option.Value.Unbox<long>().CastTo<long, int>();
+		return option is null ? defaultValue : option.Value.Unbox<long>().CastTo<long, int>();
 	}
 	public static int GetIntegerOptionAsInt32OrDefault(this SocketSlashCommand socketSlashCommand, LocalizedString name, int defaultValue = default)
-		=> socketSlashCommand.GetIntegerOptionAsInt32OrDefault(name.Default, defaultValue);
+	{
+		return socketSlashCommand.GetIntegerOptionAsInt32OrDefault(name.Default, defaultValue);
+	}
 
 	public static async Task QuickReply(
 		this IDiscordInteraction socketSlashCommand,
@@ -204,7 +237,10 @@ public static class Utils
 		await socketSlashCommand.QuickReplyWithAttachments(message.GetFormatted(socketSlashCommand.UserLocale, format), attachments);
 	}
 	public static ApplicationCommandOptionChoiceProperties CreateChoice(string name, object val)
-		=> new() { Name = name, Value = val };
+	{
+		return new() { Name = name, Value = val };
+	}
+
 	public static ApplicationCommandOptionChoiceProperties[] CreateChoicesFromEnum<T>(T[]? allowedValues = null) where T : struct, Enum
 	{
 		allowedValues ??= Enum.GetValues<T>();

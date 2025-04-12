@@ -6,12 +6,11 @@ using System.Diagnostics.CodeAnalysis;
 namespace PSLDiscordBot.Framework.Localization;
 
 [JsonConverter(typeof(LocalizedStringNewtonsoftSerializer))]
-public class LocalizedString : IDictionary<string, string>, IReadOnlyDictionary<string, string> // TODO: change to simpler structure
+public class LocalizedString : IDictionary<string, string>, IReadOnlyDictionary<string, string>
 {
-	internal LocalizationManager? _parent;
 	internal string? _code;
 
-	public Dictionary<Language, string> LocalizedStrings { get; } = new();
+	public Dictionary<Language, string> LocalizedStrings { get; } = [];
 	public List<Language> FallBackLanguages { get; internal set; } = [Language.EnglishUS];
 
 	public string Default => this.FallBackLanguages.Count > 0
@@ -41,36 +40,59 @@ public class LocalizedString : IDictionary<string, string>, IReadOnlyDictionary<
 	public bool IsReadOnly => ((ICollection<KeyValuePair<Language, string>>)this.LocalizedStrings).IsReadOnly;
 
 	public void Add(KeyValuePair<string, string> item)
-		=> this.Add(item.Key, item.Value);
-	public void Add(string key, string value)
-		=> this.LocalizedStrings.Add(LocalizationHelper.FromCode(key), value);
+	{
+		this.Add(item.Key, item.Value);
+	}
 
-	public void Clear() => this.LocalizedStrings.Clear();
+	public void Add(string key, string value)
+	{
+		this.LocalizedStrings.Add(LocalizationHelper.FromCode(key), value);
+	}
+
+	public void Clear()
+	{
+		this.LocalizedStrings.Clear();
+	}
 
 	public bool Contains(KeyValuePair<string, string> item)
-		=> this.LocalizedStrings.Contains(ParseLanguage(item));
+	{
+		return this.LocalizedStrings.Contains(ParseLanguage(item));
+	}
+
 	public bool ContainsKey(string key)
-		=> this.LocalizedStrings.ContainsKey(LocalizationHelper.FromCode(key));
+	{
+		return this.LocalizedStrings.ContainsKey(LocalizationHelper.FromCode(key));
+	}
 
 	public void CopyTo(KeyValuePair<string, string>[] array, int arrayIndex)
 	{
 		throw new NotImplementedException();
 	}
 
-	IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+	IEnumerator IEnumerable.GetEnumerator()
+	{
+		return this.GetEnumerator();
+	}
+
 	public IEnumerator<KeyValuePair<string, string>> GetEnumerator()
-		=> this.LocalizedStrings.Select(x => new KeyValuePair<string, string>(x.Key.GetCode(), x.Value)).GetEnumerator();
+	{
+		return this.LocalizedStrings.Select(x => new KeyValuePair<string, string>(x.Key.GetCode(), x.Value)).GetEnumerator();
+	}
 
 	public bool Remove(string key)
-		=> this.LocalizedStrings.Remove(LocalizationHelper.FromCode(key));
+	{
+		return this.LocalizedStrings.Remove(LocalizationHelper.FromCode(key));
+	}
+
 	public bool Remove(KeyValuePair<string, string> item)
-		=> ((ICollection<KeyValuePair<Language, string>>)this.LocalizedStrings).Remove(ParseLanguage(item));
+	{
+		return ((ICollection<KeyValuePair<Language, string>>)this.LocalizedStrings).Remove(ParseLanguage(item));
+	}
 
 	public bool TryGetValue(string key, [MaybeNullWhen(false)] out string value)
 	{
 		value = default;
-		if (!LocalizationHelper.TryFromCode(key, out Language lang)) return false;
-		return this.TryGetValue(lang, out value);
+		return LocalizationHelper.TryFromCode(key, out Language lang) && this.TryGetValue(lang, out value);
 	}
 	#endregion
 
@@ -81,9 +103,9 @@ public class LocalizedString : IDictionary<string, string>, IReadOnlyDictionary<
 	}
 	public string Get(Language lang)
 	{
-		if (this.TryGetValue(lang, out string? value)) return value;
-
-		return this._code ?? throw new KeyNotFoundException($"Key '{lang}' was not found.");
+		return this.TryGetValue(lang, out string? value)
+			? value
+			: this._code ?? throw new KeyNotFoundException($"Key '{lang}' was not found.");
 	}
 	public string GetFormatted(string key, params object?[] format)
 	{
@@ -102,54 +124,45 @@ public class LocalizedString : IDictionary<string, string>, IReadOnlyDictionary<
 			if (this.LocalizedStrings.TryGetValue(item, out str)) return true;
 		}
 
-		if ((str = this._code) is not null) return true;
-
-		return false;
-	}
-	public bool CanBelongTo(LocalizationManager localization, string code)
-	{
-		if (this._parent is null && this._code is null)
-			return true;
-		else if (this._parent == localization)
-			return code == this._code;
-
-		return false;
+		return (str = this._code) is not null;
 	}
 	public LocalizedString CloneAsNew()
 	{
-		LocalizedString newString = new(null, this.LocalizedStrings, null);
+		LocalizedString newString = new(this.LocalizedStrings, null);
 		return newString;
 	}
 
-	public void ThrowIfCanNotBelongTo(LocalizationManager localization, string code)
+	internal LocalizedString(string? code)
 	{
-		if (!this.CanBelongTo(localization, code))
-			throw new ArgumentException("Other Localization manager already own this string.", nameof(localization));
-	}
-
-	internal LocalizedString(LocalizationManager? localization, string? code)
-	{
-		this._parent = localization;
 		this._code = code;
 	}
-	internal LocalizedString(string value, LocalizationManager? localization, string? code)
-		: this(default, value, localization, code) { }
-	internal LocalizedString(Language lang, string value, LocalizationManager? localization, string? code)
-		: this(localization, code)
+	internal LocalizedString(string value, string? code)
+		: this(default, value, code) { }
+	internal LocalizedString(Language lang, string value, string? code)
+		: this(code)
 	{
 		this.LocalizedStrings.Add(lang, value);
 	}
-	internal LocalizedString(LocalizationManager? localization, Dictionary<Language, string> localizedStrings, string? code)
-		: this(localization, code)
+	internal LocalizedString(Dictionary<Language, string> localizedStrings, string? code)
+		: this(code)
 	{
 		this.LocalizedStrings = localizedStrings;
 	}
 
 	//public static implicit operator LocalizedString(string value) => Create(value);
 
-	public static LocalizedString CreateDefault(string value) => new(value, null, null);
-	public static LocalizedString Create(Dictionary<Language, string> localizedStrings) => new(null, localizedStrings, null);
+	public static LocalizedString CreateDefault(string value)
+	{
+		return new(value, null);
+	}
+
+	public static LocalizedString Create(Dictionary<Language, string> localizedStrings)
+	{
+		return new(localizedStrings, null);
+	}
 
 	internal static KeyValuePair<Language, string> ParseLanguage(KeyValuePair<string, string> pair)
-		=> new(LocalizationHelper.FromCode(pair.Key), pair.Value);
+	{
+		return new(LocalizationHelper.FromCode(pair.Key), pair.Value);
+	}
 }

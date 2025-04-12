@@ -9,13 +9,13 @@ public class LocalizationNewtonsoftSerializer : JsonConverter<LocalizationManage
 		if (reader.TokenType == JsonToken.Null) return null;
 
 		LocalizationManager ret = new();
-		ret.FallbackLanguages.Clear();
+		ret.DefaultFallbackLanguages.Clear();
 		JToken obj = JObject.ReadFrom(reader);
 
-		string[] fallbackLangs = obj[nameof(LocalizationManager.FallbackLanguages)]!.ToObject<string[]>()!;
+		string[] fallbackLangs = obj[nameof(LocalizationManager.DefaultFallbackLanguages)]!.ToObject<string[]>()!;
 		foreach (string item in fallbackLangs)
 		{
-			ret.FallbackLanguages.Add(LocalizationHelper.FromCode(item));
+			ret.DefaultFallbackLanguages.Add(LocalizationHelper.FromCode(item));
 		}
 
 		Dictionary<string, JObject> localizedStrings = obj[nameof(LocalizationManager.LocalizedStrings)]!.ToObject<Dictionary<string, JObject>>()!;
@@ -23,8 +23,8 @@ public class LocalizationNewtonsoftSerializer : JsonConverter<LocalizationManage
 		{
 			string key = item.Key;
 			LocalizedString str = item.Value.ToObject<LocalizedString>()!;
-			if (str.FallBackLanguages.SequenceEqual(ret.FallbackLanguages))
-				str.FallBackLanguages = ret.FallbackLanguages;
+			if (str.FallBackLanguages.SequenceEqual(ret.DefaultFallbackLanguages))
+				str.FallBackLanguages = ret.DefaultFallbackLanguages;
 			ret.Add(key, str);
 		}
 
@@ -41,9 +41,9 @@ public class LocalizationNewtonsoftSerializer : JsonConverter<LocalizationManage
 
 		writer.WriteStartObject();
 		{
-			writer.WritePropertyName(nameof(LocalizationManager.FallbackLanguages));
+			writer.WritePropertyName(nameof(LocalizationManager.DefaultFallbackLanguages));
 			writer.WriteStartArray();
-			foreach (Language item in value.FallbackLanguages)
+			foreach (Language item in value.DefaultFallbackLanguages)
 				writer.WriteValue(item.GetCode());
 			writer.WriteEndArray();
 

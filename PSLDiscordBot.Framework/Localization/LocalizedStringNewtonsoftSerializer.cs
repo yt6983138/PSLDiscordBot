@@ -7,7 +7,7 @@ public class LocalizedStringNewtonsoftSerializer : JsonConverter<LocalizedString
 	// handled in localization serializer if not serialized separately
 	public override LocalizedString? ReadJson(JsonReader reader, Type objectType, LocalizedString? existingValue, bool hasExistingValue, JsonSerializer serializer)
 	{
-		LocalizedString instance = new(null, null);
+		LocalizedString instance = new(null);
 		instance.FallBackLanguages.Clear();
 
 		if (reader.TokenType == JsonToken.Null) return null;
