@@ -156,30 +156,6 @@ public static class PSLUtils
 		throw ex;
 	}
 
-	[Obsolete] // TODO: remove this
-	public static (CompleteScore Best, double Rks) SortRecord(GameSave save)
-	{
-		return SortRecord(save.Records);
-	}
-	[Obsolete]
-	public static (CompleteScore Best, double Rks) SortRecord(List<CompleteScore> scores)
-	{
-		scores.Sort();
-		scores.Reverse();
-		List<CompleteScore> phis = scores.Where(x => x.Status == ScoreStatus.Phi).Take(3).ToList();
-
-		double rks = phis.Sum(x => x.Rks);
-		int i = 0;
-		scores.ForEach(x =>
-		{
-			if (i < 29)
-			{
-				rks += x.Rks * 0.05;
-			}
-			i++;
-		});
-		return (phis[0], rks);
-	}
 	/// <summary>
 	/// utf-8 default
 	/// </summary>
