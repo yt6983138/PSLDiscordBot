@@ -18,7 +18,10 @@ namespace PSLDiscordBot.Core.Command.Global;
 [AddToGlobal]
 public class MoreRksCommand : CommandBase
 {
-	private record struct TargetRksScorePair(double TargetRks, double TargetAcc, CompleteScore Score);
+	private record struct TargetRksScorePair(double TargetRks, double TargetAcc, CompleteScore Score)
+	{
+		public readonly bool AccIsInValidRange => 70 < this.TargetAcc && this.TargetAcc <= 100;
+	}
 
 	public override OneOf<string, LocalizedString> PSLName => this.Localization[PSLNormalCommandKey.MoreRksName];
 	public override OneOf<string, LocalizedString> PSLDescription => this.Localization[PSLNormalCommandKey.MoreRksDescription];
@@ -62,19 +65,24 @@ public class MoreRksCommand : CommandBase
 
 		double leastRksInBests = scores[Math.Min(29, scores.Count) - 1].Rks;
 		giveLeastRks = giveLeastRks < 0 ? Math.Round(rks, 2, MidpointRounding.ToEven) + 0.005d - rks : giveLeastRks;
-		giveLeastRks *= 30; // todo: add phi
+		giveLeastRks *= 30;
 
-		List<TargetRksScorePair> calculatedGrowableScores = save.Records //TODO: Fix formula
-			.Select(r =>
-			new TargetRksScorePair(
-				Math.Max(r.Rks + giveLeastRks, leastRksInBests + giveLeastRks),
-				(45d * Math.Sqrt(Math.Max(r.Rks + giveLeastRks, leastRksInBests + giveLeastRks) / r.ChartConstant)) + 55d,
-				r))
-			.Where(r => 70 < r.TargetAcc && r.TargetAcc < 100)
+		List<TargetRksScorePair> growableScores = save.Records
+			.Select(r => BuildPair(r, giveLeastRks, leastRksInBests))
+			.Where(r => r.AccIsInValidRange)
 			.ToList();
 
-		calculatedGrowableScores.Sort((x, y) => y.Score.Rks.CompareTo(x.Score.Rks));
-		int calculatedShowCounts = Math.Min(calculatedGrowableScores.Count, count);
+		// growableScores.AddRange(save.Records
+		// 	.Select(r => BuildPair(r, giveLeastRks, leastRksInBests))
+		// 	.Where(x => x.AccIsInValidRange));
+
+		// phi scenario:
+		// 1. phi get into phi3
+		// 2. phi get into phi3, also in b30
+		// 3. phi not get into phi 3, but in b30 (no need to process this since the first growable score would already take care of this)
+		// TODO: add phi calculation
+		growableScores.Sort((x, y) => y.Score.Rks.CompareTo(x.Score.Rks));
+		int calculatedShowCounts = Math.Min(growableScores.Count, count);
 
 		StringBuilder stringBuilder = new();
 		stringBuilder.AppendLine(
@@ -91,11 +99,11 @@ public class MoreRksCommand : CommandBase
 
 		for (int j = 0; j < calculatedShowCounts; j++)
 		{
-			TargetRksScorePair item = calculatedGrowableScores[j];
+			TargetRksScorePair item = growableScores[j];
 			string name = this.PhigrosDataService.IdNameMap[item.Score.Id];
 
-			columnTextBuilder.WithRow(new ColumnTextBuilder.RowBuilder() // TODO: add number localization
-				.WithObjectAdded(j + 1)
+			columnTextBuilder.WithRow(new ColumnTextBuilder.RowBuilder()
+				.WithFormatAdded(arg, this.Localization[PSLNormalCommandKey.MoreRksNumberFormat], j + 1, item)
 				.WithUserFormatStringAdded(arg, data, this.Localization[PSLNormalCommandKey.MoreRksAccuracyChangeFormat], item.Score.Accuracy, item.TargetAcc)
 				.WithUserFormatStringAdded(arg, data, this.Localization[PSLNormalCommandKey.MoreRksRksChangeFormat], item.Score.Rks, item.TargetRks)
 				.WithFormatAdded(arg, this.Localization[PSLNormalCommandKey.MoreRksSongFormat], name, item.Score));
@@ -104,5 +112,17 @@ public class MoreRksCommand : CommandBase
 		await arg.QuickReplyWithAttachments([PSLUtils.ToAttachment(columnTextBuilder.Build(stringBuilder).ToString(), "Report.txt")],
 			this.Localization[PSLNormalCommandKey.MoreRksResult],
 			calculatedShowCounts);
+	}
+
+	private static TargetRksScorePair BuildPair(CompleteScore score, double giveLeastRks, double leastRksInBests)
+	{
+		return new TargetRksScorePair(  // TODO: Fix formula (i left this ages ago but i forgot how was the formula broken)
+				Math.Max(score.Rks + giveLeastRks, leastRksInBests + giveLeastRks),
+				CalculateTargetAcc(score, Math.Max(score.Rks + giveLeastRks, leastRksInBests + giveLeastRks)),
+				score);
+	}
+	private static double CalculateTargetAcc(CompleteScore score, double targetRks)
+	{
+		return (45d * Math.Sqrt(targetRks / score.ChartConstant)) + 55d;
 	}
 }

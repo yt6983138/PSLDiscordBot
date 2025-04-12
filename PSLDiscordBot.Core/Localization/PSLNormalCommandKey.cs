@@ -122,12 +122,13 @@ public static partial class PSLNormalCommandKey
 	public static partial string MoreRksResult { get; }
 	public static partial string MoreRksIntro { get; }
 	public static partial string MoreRksNumberTitle { get; }
+	public static partial string MoreRksNumberFormat { get; }
 	public static partial string MoreRksAccuracyChangeTitle { get; }
+	public static partial string MoreRksAccuracyChangeFormat { get; }
 	public static partial string MoreRksRksChangeTitle { get; }
+	public static partial string MoreRksRksChangeFormat { get; }
 	public static partial string MoreRksSongTitle { get; }
 	public static partial string MoreRksSongFormat { get; }
-	public static partial string MoreRksRksChangeFormat { get; }
-	public static partial string MoreRksAccuracyChangeFormat { get; }
 	#endregion
 
 	#region RemoveAliasCommand
