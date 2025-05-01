@@ -1,9 +1,12 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using PhigrosLibraryCSharp.Cloud.DataStructure;
 using PSLDiscordBot.Core.Command.Global.Base;
 using PSLDiscordBot.Core.Services;
+using PSLDiscordBot.Core.Services.Phigros;
 using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Core.Utility;
 using PSLDiscordBot.Framework;
@@ -16,6 +19,11 @@ namespace PSLDiscordBot.Core.Command.Global;
 [AddToGlobal]
 public class AnalyzeSaveCommand : AdminCommandBase
 {
+	public AnalyzeSaveCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosDataService phigrosData, ILoggerFactory loggerFactory)
+		: base(config, database, localization, phigrosData, loggerFactory)
+	{
+	}
+
 	public override OneOf<string, LocalizedString> PSLName => "analyze-save";
 	public override OneOf<string, LocalizedString> PSLDescription => "Analyze someone's save. [Admin command]";
 
@@ -41,8 +49,8 @@ public class AnalyzeSaveCommand : AdminCommandBase
 
 		PhigrosLibraryCSharp.SaveSummaryPair? pair = await userData.SaveCache.GetAndHandleSave(
 			arg,
-			this.PhigrosDataService.DifficultiesMap,
-			this.Localization,
+			this._phigrosDataService.DifficultiesMap,
+			this._localization,
 			index);
 		if (pair is null)
 			return;

@@ -8,7 +8,6 @@ public class Config
 {
 	public bool DMAdminAboutErrors { get; set; } = true;
 #if DEBUG
-	public bool Verbose { get; set; } = true;
 	public string Token { get; set; } = Secret.Token;
 	public ulong AdminUserId { get; set; } = Secret.AdminId;
 #else
@@ -16,7 +15,6 @@ public class Config
 	public string Token { get; set; } = "";
 	public ulong AdminUserId { get; set; }
 #endif
-	public string LogLocation { get; set; } = "./PSL/Latest.log";
 	public string LocalizationLocation { get; set; } = "./PSL/Localization.json";
 
 	public string AvatarHashMapLocation { get; set; } = "./Assets/Avatar/AvatarInfo.json";
@@ -50,6 +48,7 @@ public class Config
 	public TimeSpan RenderTimeout { get; set; } = TimeSpan.FromSeconds(32);
 #endif
 	[JsonIgnore]
+	[System.Text.Json.Serialization.JsonIgnore]
 	public CancellationTokenSource RenderTimeoutCTS => new(this.RenderTimeout);
 
 	public TimeSpan GetPhotoCoolDown { get; set; } = TimeSpan.FromMinutes(69);

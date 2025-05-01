@@ -1,17 +1,17 @@
-﻿using PSLDiscordBot.Framework.DependencyInjection;
+﻿using Microsoft.Extensions.Options;
 using PSLDiscordBot.Framework.ServiceBase;
 
 namespace PSLDiscordBot.Core.Services;
 public class AvatarHashMapService : FileManagementServiceBase<Dictionary<string, string>>
 {
+	private readonly IOptions<Config> _config;
 
-	[Inject]
-	private ConfigService Config { get; set; }
-
-	public AvatarHashMapService()
+	public AvatarHashMapService(IOptions<Config> config)
 		: base()
 	{
-		this.LaterInitialize(this.Config!.Data.AvatarHashMapLocation);
+		this._config = config;
+
+		this.LaterInitialize(this._config.Value.AvatarHashMapLocation);
 		this.AutoSaveIntervalMs = 0;
 	}
 	public override Dictionary<string, string> Generate()

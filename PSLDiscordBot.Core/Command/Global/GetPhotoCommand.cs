@@ -1,17 +1,19 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using PhigrosLibraryCSharp.Cloud.DataStructure;
 using PhigrosLibraryCSharp.GameRecords;
 using PSLDiscordBot.Core.Command.Global.Base;
 using PSLDiscordBot.Core.ImageGenerating;
 using PSLDiscordBot.Core.Localization;
 using PSLDiscordBot.Core.Services;
+using PSLDiscordBot.Core.Services.Phigros;
 using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Core.Utility;
 using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.BuiltInServices;
 using PSLDiscordBot.Framework.CommandBase;
-using PSLDiscordBot.Framework.DependencyInjection;
 using PSLDiscordBot.Framework.Localization;
 using static HtmlToImage.NET.HtmlConverter.Tab;
 
@@ -20,16 +22,15 @@ namespace PSLDiscordBot.Core.Command.Global;
 [AddToGlobal]
 public class GetPhotoCommand : CommandBase
 {
-	#region Injection
+	private readonly ImageGenerator _imageGenerator;
+	private readonly IDiscordClientService _discordClientService;
 
-#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
-	[Inject]
-	public ImageGenerator ImageGenerator { get; set; }
-	[Inject]
-	public DiscordClientService DiscordClientService { get; set; }
-#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
-
-	#endregion
+	public GetPhotoCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosDataService phigrosData, ILoggerFactory loggerFactory, ImageGenerator imageGenerator, IDiscordClientService discordClientService)
+		: base(config, database, localization, phigrosData, loggerFactory)
+	{
+		this._imageGenerator = imageGenerator;
+		this._discordClientService = discordClientService;
+	}
 
 	public static Dictionary<string, ScoreStatus> ScoreStatusAlias { get; set; } = new()
 	{
@@ -43,46 +44,46 @@ public class GetPhotoCommand : CommandBase
 	public override bool IsEphemeral => false;
 	public override bool RunOnDifferentThread => true;
 
-	public override OneOf<string, LocalizedString> PSLName => this.Localization[PSLNormalCommandKey.GetPhotoName];
-	public override OneOf<string, LocalizedString> PSLDescription => this.Localization[PSLNormalCommandKey.GetPhotoDescription];
+	public override OneOf<string, LocalizedString> PSLName => this._localization[PSLNormalCommandKey.GetPhotoName];
+	public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLNormalCommandKey.GetPhotoDescription];
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder.AddOption(
-				this.Localization[PSLCommonOptionKey.IndexOptionName],
+				this._localization[PSLCommonOptionKey.IndexOptionName],
 				ApplicationCommandOptionType.Integer,
-				this.Localization[PSLCommonOptionKey.IndexOptionDescription],
+				this._localization[PSLCommonOptionKey.IndexOptionDescription],
 				isRequired: false,
 				minValue: 0)
 			.AddOption(
-				this.Localization[PSLNormalCommandKey.GetPhotoOptionCountName],
+				this._localization[PSLNormalCommandKey.GetPhotoOptionCountName],
 				ApplicationCommandOptionType.Integer,
-				this.Localization[PSLNormalCommandKey.GetPhotoOptionCountDescription],
+				this._localization[PSLNormalCommandKey.GetPhotoOptionCountDescription],
 				false,
 				minValue: 0,
 				maxValue: int.MaxValue)
 			.AddOption(
-				this.Localization[PSLNormalCommandKey.GetPhotoOptionLowerBoundName],
+				this._localization[PSLNormalCommandKey.GetPhotoOptionLowerBoundName],
 				ApplicationCommandOptionType.Integer,
-				this.Localization[PSLNormalCommandKey.GetPhotoOptionLowerBoundDescription],
+				this._localization[PSLNormalCommandKey.GetPhotoOptionLowerBoundDescription],
 				isRequired: false,
 				minValue: 0,
 				maxValue: int.MaxValue)
 			.AddOption(
-				this.Localization[PSLNormalCommandKey.GetPhotoOptionGradesToShowName],
+				this._localization[PSLNormalCommandKey.GetPhotoOptionGradesToShowName],
 				ApplicationCommandOptionType.String,
-				this.Localization[PSLNormalCommandKey.GetPhotoOptionGradesToShowDescription],
+				this._localization[PSLNormalCommandKey.GetPhotoOptionGradesToShowDescription],
 				isRequired: false)
 			.AddOption(
-				this.Localization[PSLNormalCommandKey.GetPhotoOptionCCFilterLowerBoundName],
+				this._localization[PSLNormalCommandKey.GetPhotoOptionCCFilterLowerBoundName],
 				ApplicationCommandOptionType.Number,
-				this.Localization[PSLNormalCommandKey.GetPhotoOptionCCFilterLowerBoundDescription],
+				this._localization[PSLNormalCommandKey.GetPhotoOptionCCFilterLowerBoundDescription],
 				isRequired: false,
 				minValue: 0,
 				maxValue: 20)
 			.AddOption(
-				this.Localization[PSLNormalCommandKey.GetPhotoOptionCCFilterHigherBoundName],
+				this._localization[PSLNormalCommandKey.GetPhotoOptionCCFilterHigherBoundName],
 				ApplicationCommandOptionType.Number,
-				this.Localization[PSLNormalCommandKey.GetPhotoOptionCCFilterHigherBoundDescription],
+				this._localization[PSLNormalCommandKey.GetPhotoOptionCCFilterHigherBoundDescription],
 				isRequired: false,
 				minValue: 0,
 				maxValue: 20);
@@ -92,13 +93,13 @@ public class GetPhotoCommand : CommandBase
 		DataBaseService.DbDataRequester requester,
 		object executer)
 	{
-		int index = arg.GetIndexOption(this.Localization);
-		int count = arg.GetIntegerOptionAsInt32OrDefault(this.Localization[PSLNormalCommandKey.GetPhotoOptionCountName],
+		int index = arg.GetIndexOption(this._localization);
+		int count = arg.GetIntegerOptionAsInt32OrDefault(this._localization[PSLNormalCommandKey.GetPhotoOptionCountName],
 			(await requester.GetDefaultGetPhotoShowCountCached(arg.User.Id)).GetValueOrDefault(30));
-		int lowerBound = arg.GetIntegerOptionAsInt32OrDefault(this.Localization[PSLNormalCommandKey.GetPhotoOptionLowerBoundName]);
-		double ccLowerBound = arg.GetOptionOrDefault<double>(this.Localization[PSLNormalCommandKey.GetPhotoOptionCCFilterLowerBoundName]);
-		double ccHigherBound = arg.GetOptionOrDefault<double>(this.Localization[PSLNormalCommandKey.GetPhotoOptionCCFilterHigherBoundName], int.MaxValue);
-		string? showingGrades = arg.GetOptionOrDefault<string>(this.Localization[PSLNormalCommandKey.GetPhotoOptionGradesToShowName]);
+		int lowerBound = arg.GetIntegerOptionAsInt32OrDefault(this._localization[PSLNormalCommandKey.GetPhotoOptionLowerBoundName]);
+		double ccLowerBound = arg.GetOptionOrDefault<double>(this._localization[PSLNormalCommandKey.GetPhotoOptionCCFilterLowerBoundName]);
+		double ccHigherBound = arg.GetOptionOrDefault<double>(this._localization[PSLNormalCommandKey.GetPhotoOptionCCFilterHigherBoundName], int.MaxValue);
+		string? showingGrades = arg.GetOptionOrDefault<string>(this._localization[PSLNormalCommandKey.GetPhotoOptionGradesToShowName]);
 		ScoreStatus[]? showingGradesParsed = null;
 		if (!string.IsNullOrWhiteSpace(showingGrades))
 		{
@@ -107,7 +108,7 @@ public class GetPhotoCommand : CommandBase
 				.Select(ParseScoreStatus);
 			if (!parsed.Any() || parsed.Any(x => !x.HasValue))
 			{
-				await arg.QuickReply(this.Localization[PSLNormalCommandKey.GetPhotoFailedParsingGrades],
+				await arg.QuickReply(this._localization[PSLNormalCommandKey.GetPhotoFailedParsingGrades],
 					string.Join(", ", Enum.GetValues<ScoreStatus>().Skip(1).SkipLast(1))); // do not show Bugged and NotFc
 				return;
 			}
@@ -115,33 +116,33 @@ public class GetPhotoCommand : CommandBase
 		}
 		showingGradesParsed ??= Enum.GetValues<ScoreStatus>();
 
-		bool usePng = count > this.ConfigService.Data.GetPhotoUsePngWhenLargerThan;
-		bool shouldUseCoolDown = count > this.ConfigService.Data.GetPhotoCoolDownWhenLargerThan;
+		bool usePng = count > this._config.Value.GetPhotoUsePngWhenLargerThan;
+		bool shouldUseCoolDown = count > this._config.Value.GetPhotoCoolDownWhenLargerThan;
 
 		if (usePng && !arg.GuildId
-			.HasValueAnd(i => this.DiscordClientService.SocketClient.GetGuild(i)
+			.HasValueAnd(i => this._discordClientService.SocketClient.GetGuild(i)
 				.IsNotNullAnd(a => a.PremiumSubscriptionCount >= 7)))
 		{
-			await arg.QuickReply(this.Localization[PSLNormalCommandKey.GetPhotoImageTooBig],
-				this.ConfigService.Data.GetPhotoUsePngWhenLargerThan);
+			await arg.QuickReply(this._localization[PSLNormalCommandKey.GetPhotoImageTooBig],
+				this._config.Value.GetPhotoUsePngWhenLargerThan);
 			return;
 		}
 		if (shouldUseCoolDown)
 		{
 			if (DateTime.Now < data.GetPhotoCoolDownUntil)
 			{
-				await arg.QuickReply(this.Localization[PSLNormalCommandKey.GetPhotoStillInCoolDown],
-					this.ConfigService.Data.GetPhotoCoolDownWhenLargerThan,
+				await arg.QuickReply(this._localization[PSLNormalCommandKey.GetPhotoStillInCoolDown],
+					this._config.Value.GetPhotoCoolDownWhenLargerThan,
 					data.GetPhotoCoolDownUntil - DateTime.Now);
 				return;
 			}
-			data.GetPhotoCoolDownUntil = DateTime.Now + this.ConfigService.Data.GetPhotoCoolDown;
+			data.GetPhotoCoolDownUntil = DateTime.Now + this._config.Value.GetPhotoCoolDown;
 		}
 
 		PhigrosLibraryCSharp.SaveSummaryPair? pair = await data.SaveCache.GetAndHandleSave(
 			arg,
-			this.PhigrosDataService.DifficultiesMap,
-			this.Localization,
+			this._phigrosDataService.DifficultiesMap,
+			this._localization,
 			index);
 		if (pair is null)
 			return;
@@ -150,17 +151,17 @@ public class GetPhotoCommand : CommandBase
 		GameProgress progress = await data.SaveCache.GetGameProgressAsync(index);
 		UserInfo outerUserInfo = await data.SaveCache.GetUserInfoAsync();
 
-		await arg.QuickReply(this.Localization[PSLNormalCommandKey.GetPhotoGenerating]);
-		MemoryStream image = await this.ImageGenerator.MakePhoto(
+		await arg.QuickReply(this._localization[PSLNormalCommandKey.GetPhotoGenerating]);
+		MemoryStream image = await this._imageGenerator.MakePhoto(
 			save,
 			data,
 			summary,
 			userInfo,
 			progress,
 			outerUserInfo,
-			this.ConfigService.Data.GetPhotoRenderInfo,
-			usePng ? PhotoType.Png : this.ConfigService.Data.DefaultRenderImageType,
-			this.ConfigService.Data.RenderQuality,
+			this._config.Value.GetPhotoRenderInfo,
+			usePng ? PhotoType.Png : this._config.Value.DefaultRenderImageType,
+			this._config.Value.RenderQuality,
 			new
 			{
 				ShowCount = count,
@@ -169,25 +170,25 @@ public class GetPhotoCommand : CommandBase
 				CCLowerBound = ccLowerBound,
 				CCHigherBound = ccHigherBound
 			},
-			cancellationToken: this.ConfigService.Data.RenderTimeoutCTS.Token
+			cancellationToken: this._config.Value.RenderTimeoutCTS.Token
 		);
 
 		if (usePng)
 		{
 			try
 			{
-				await arg.QuickReplyWithAttachments([new(image, "Score.png")], this.Localization[PSLCommonMessageKey.ImageGenerated]);
+				await arg.QuickReplyWithAttachments([new(image, "Score.png")], this._localization[PSLCommonMessageKey.ImageGenerated]);
 			}
 			catch (Exception ex)
 			{
 				await arg.QuickReplyWithAttachments([PSLUtils.ToAttachment(ex.ToString(), "StackTrace.txt")],
-					this.Localization[PSLNormalCommandKey.GetPhotoError]);
+					this._localization[PSLNormalCommandKey.GetPhotoError]);
 			}
 
 			return;
 		}
 
-		await arg.QuickReplyWithAttachments([new(image, "Score.jpg")], this.Localization[PSLCommonMessageKey.ImageGenerated]);
+		await arg.QuickReplyWithAttachments([new(image, "Score.jpg")], this._localization[PSLCommonMessageKey.ImageGenerated]);
 	}
 
 	public static ScoreStatus? ParseScoreStatus(string str)

@@ -1,27 +1,28 @@
-﻿using Discord;
+﻿using Antelcat.AutoGen.ComponentModel.Diagnostic;
+using Discord;
 using Discord.WebSocket;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using PSLDiscordBot.Framework.CommandBase;
-using PSLDiscordBot.Framework.DependencyInjection;
 using PSLDiscordBot.Framework.MiscEventArgs;
-using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
 namespace PSLDiscordBot.Framework.BuiltInServices;
 
-public class CommandResolveService : InjectableBase
+[AutoExtractInterface]
+public class CommandResolveService : ICommandResolveService
 {
-	private DiscordClientService? _discordClientService;
-	private Program _program = null!;
+	private readonly IDiscordClientService _discordClientService;
+	private readonly Program _program;
 
-	private Dictionary<string, BasicCommandBase> _globalCommands = new();
-	private Dictionary<string, BasicCommandBase> _guildCommands = new();
-	private Dictionary<string, BasicUserCommandBase> _userCommands = new();
-	private Dictionary<string, BasicMessageCommandBase> _messageCommands = new();
+	private readonly IServiceCollection _globalCommands = new ServiceCollection();
+	private readonly IServiceCollection _guildCommands = new ServiceCollection();
+	private readonly IServiceCollection _userCommands = new ServiceCollection();
+	private readonly IServiceCollection _messageCommands = new ServiceCollection();
 
-	public IReadOnlyDictionary<string, BasicCommandBase> GlobalCommands => this._globalCommands;
-	public IReadOnlyDictionary<string, BasicCommandBase> GuildCommands => this._guildCommands;
-	public IReadOnlyDictionary<string, BasicUserCommandBase> UserCommands => this._userCommands;
-	public IReadOnlyDictionary<string, BasicMessageCommandBase> MessageCommands => this._messageCommands;
+	public IServiceProvider GlobalCommands { get => ThrowIfNotLoaded(field); private set; } = null!;
+	public IServiceProvider GuildCommands { get => ThrowIfNotLoaded(field); private set; } = null!;
+	public IServiceProvider UserCommands { get => ThrowIfNotLoaded(field); private set; } = null!;
+	public IServiceProvider MessageCommands { get => ThrowIfNotLoaded(field); private set; } = null!;
 
 	public event EventHandler<SlashCommandEventArgs>? BeforeSlashCommandExecutes;
 	public event EventHandler<BasicCommandExceptionEventArgs<BasicCommandBase>>? OnSlashCommandError;
@@ -32,91 +33,96 @@ public class CommandResolveService : InjectableBase
 	public event EventHandler<UserCommandEventArgs>? BeforeUserCommandExecutes;
 	public event EventHandler<BasicCommandExceptionEventArgs<BasicUserCommandBase>>? OnUserCommandError;
 
-	[DoesNotReturn]
-	protected private static void ThrowNotInitialized()
-		=> throw new ArgumentNullException(null, "Please initialize first.");
-
-	public virtual void Initialize(DiscordClientService service, Program program)
+	public CommandResolveService(IDiscordClientService discordClientService, Program program)
 	{
-		this._discordClientService = service;
+		this._discordClientService = discordClientService;
 		this._program = program;
 	}
-	public virtual void RegisterHandler()
-	{
-		if (this._discordClientService is null)
-			ThrowNotInitialized();
 
+	private static T ThrowIfNotLoaded<T>(T? instance) where T : notnull
+	{
+		return instance is null ? throw new InvalidOperationException("Commands not loaded.") : instance;
+	}
+
+	public void RegisterHandler()
+	{
 		this._discordClientService.SocketClient.SlashCommandExecuted += this.SocketClient_SlashCommandExecuted;
 		this._discordClientService.SocketClient.UserCommandExecuted += this.SocketClient_UserCommandExecuted;
 		this._discordClientService.SocketClient.MessageCommandExecuted += this.SocketClient_MessageCommandExecuted;
 	}
-
-	public virtual void LoadAllCommand()
+	public void LoadAllCommand()
 	{
-		if (this._discordClientService is null)
-			ThrowNotInitialized();
+		IEnumerable<Type> commandsGlobal = this.GetAllGlobalCommands();
+		IEnumerable<Type> commandsGuild = this.GetAllGuildCommands();
+		IEnumerable<Type> commandsUser = this.GetAllUserCommands();
+		IEnumerable<Type> commandsMessage = this.GetAllMessageCommands();
 
-		IEnumerable<BasicCommandBase> commandsGlobal = this.GetAllGlobalCommands();
-		IEnumerable<BasicCommandBase> commandsGuild = this.GetAllGuildCommands();
-		IEnumerable<BasicUserCommandBase> commandsUser = this.GetAllUserCommands();
-		IEnumerable<BasicMessageCommandBase> commandsMessage = this.GetAllMessageCommands();
+		foreach (Type command in commandsGlobal)
+			this._globalCommands.AddSingleton(typeof(BasicCommandBase), command);
+		//foreach (Type command in commandsGuild)
+		//	this._guildCommands.AddSingleton(command);
+		foreach (Type command in commandsUser)
+			this._userCommands.AddSingleton(typeof(BasicUserCommandBase), command);
+		foreach (Type command in commandsMessage)
+			this._messageCommands.AddSingleton(typeof(BasicUserCommandBase), command);
 
-		this._globalCommands = commandsGlobal.ToDictionary(c => c.Name);
-		this._guildCommands = commandsGuild.ToDictionary(c => c.Name);
-		this._userCommands = commandsUser.ToDictionary(c => c.Name);
-		this._messageCommands = commandsMessage.ToDictionary(c => c.Name);
+		this.GlobalCommands = new CombinedServiceCollection(this._globalCommands, this._program.AllServices).BuildServiceProvider();
+		this.GuildCommands = new CombinedServiceCollection(this._guildCommands, this._program.AllServices).BuildServiceProvider();
+		this.UserCommands = new CombinedServiceCollection(this._userCommands, this._program.AllServices).BuildServiceProvider();
+		this.MessageCommands = new CombinedServiceCollection(this._messageCommands, this._program.AllServices).BuildServiceProvider();
 
 		this._discordClientService.SocketClient.Ready += async () =>
 		{
+			IEnumerable<SlashCommandProperties> globalCommands = this.GlobalCommands.GetServices<BasicCommandBase>().Select(x => x.CompleteBuilder.Build());
+			//var guildCommands = this.GlobalCommands.GetServices<BasicCommandBase>().Select(x => x.CompleteBuilder.Build());
+			IEnumerable<MessageCommandProperties> messageCommands = this.MessageCommands.GetServices<BasicMessageCommandBase>().Select(x => x.CompleteBuilder.Build());
+			IEnumerable<UserCommandProperties> userCommands = this.UserCommands.GetServices<BasicUserCommandBase>().Select(x => x.CompleteBuilder.Build());
+
 			await this._discordClientService.SocketClient.BulkOverwriteGlobalApplicationCommandsAsync(
 				new List<IEnumerable<ApplicationCommandProperties>>() {
-					commandsGlobal.Select(x => x.CompleteBuilder.Build()),
-					commandsGuild.Select(x => x.CompleteBuilder.Build()),
-					commandsMessage.Select(x => x.CompleteBuilder.Build()),
-					commandsUser.Select(x => x.CompleteBuilder.Build())
+					globalCommands,
+					//GuildCommands.GetServices<BasicCommandBase>().Select(x => x.CompleteBuilder.Build()),
+					messageCommands,
+					userCommands
 				}.MergeIEnumerables().ToArray());
 		};
 	}
 
 	#region Override
-	public virtual Task OverrideGlobalCommand(BasicCommandBase command)
+	public Task OverrideGlobalCommand(BasicCommandBase command)
 	{
-		if (this._discordClientService is null)
-			ThrowNotInitialized();
-		this._globalCommands.Add(command.Name, command);
+		this._globalCommands.Replace(ServiceDescriptor.Singleton(command.GetType(), command));
 		return this._discordClientService.SocketClient.CreateGlobalApplicationCommandAsync(command.CompleteBuilder.Build());
 	}
-	public virtual Task OverrideUserCommand(BasicUserCommandBase command)
+	public Task OverrideGuildCommand(object command)
 	{
-		if (this._discordClientService is null)
-			ThrowNotInitialized();
-		this._userCommands.Add(command.Name, command);
+		throw new NotImplementedException();
+	}
+	public Task OverrideUserCommand(BasicUserCommandBase command)
+	{
+		this._userCommands.Replace(ServiceDescriptor.Singleton(command.GetType(), command));
 		return this._discordClientService.SocketClient.CreateGlobalApplicationCommandAsync(command.CompleteBuilder.Build());
 	}
-	public virtual Task OverrideMessageCommand(BasicMessageCommandBase command)
+	public Task OverrideMessageCommand(BasicMessageCommandBase command)
 	{
-		if (this._discordClientService is null)
-			ThrowNotInitialized();
-		this._messageCommands.Add(command.Name, command);
+		this._messageCommands.Replace(ServiceDescriptor.Singleton(command.GetType(), command));
 		return this._discordClientService.SocketClient.CreateGlobalApplicationCommandAsync(command.CompleteBuilder.Build());
 	}
 	#endregion
 
 	#region Check Can Add
-	public virtual bool CheckGlobalCommandShouldOverride(BasicCommandBase localCommand)
+	public bool CheckGlobalCommandShouldOverride(BasicCommandBase localCommand)
 	{
-		if (this._discordClientService is null)
-			ThrowNotInitialized();
-
-		if (!this.GlobalCommands.TryGetValue(localCommand.Name, out BasicCommandBase? remoteCommand))
+		BasicCommandBase? remoteCommand = (BasicCommandBase?)this.GlobalCommands.GetService(localCommand.GetType());
+		if (remoteCommand is null)
 			return true;
 
 		SlashCommandBuilder builder = localCommand.CompleteBuilder;
 		SlashCommandProperties built = builder.Build();
 
 		if (builder.Description != remoteCommand.Description) return true;
-		List<ApplicationCommandOptionProperties> commandOption = remoteCommand.CompleteBuilder.Build().Options.GetValueOrDefault() ?? new();
-		List<ApplicationCommandOptionProperties> localCommandOptions = built.Options.GetValueOrDefault() ?? new();
+		List<ApplicationCommandOptionProperties> commandOption = remoteCommand.CompleteBuilder.Build().Options.GetValueOrDefault() ?? [];
+		List<ApplicationCommandOptionProperties> localCommandOptions = built.Options.GetValueOrDefault() ?? [];
 		if (localCommandOptions.Count != commandOption.Count) return true;
 		bool allContains = true;
 		foreach (ApplicationCommandOptionProperties localOption in localCommandOptions)
@@ -133,53 +139,34 @@ public class CommandResolveService : InjectableBase
 			if (!contains)
 				allContains = false;
 		}
-		if (!allContains)
-			return true;
-
-		return false;
+		return !allContains;
 	}
-	public virtual bool CheckUserCommandShouldOverride(BasicUserCommandBase localCommand)
+	public bool CheckUserCommandShouldOverride(BasicUserCommandBase localCommand)
 	{
-		if (this._discordClientService is null)
-			ThrowNotInitialized();
-
-		if (!this.UserCommands.TryGetValue(localCommand.Name, out BasicUserCommandBase? remote))
+		BasicUserCommandBase? remoteCommand = (BasicUserCommandBase?)this.UserCommands.GetService(localCommand.GetType());
+		if (remoteCommand is null)
 			return true;
 
-		UserCommandBuilder remoteBuilder = remote.CompleteBuilder;
+		UserCommandBuilder remoteBuilder = remoteCommand.CompleteBuilder;
 		UserCommandBuilder localBuilder = localCommand.CompleteBuilder;
 
-		if (remoteBuilder.ContextTypes != localBuilder.ContextTypes) return true;
-		if (remoteBuilder.DefaultMemberPermissions != localBuilder.DefaultMemberPermissions) return true;
-		if (remoteBuilder.IntegrationTypes != localBuilder.IntegrationTypes) return true;
-		if (remoteBuilder.IsNsfw != localBuilder.IsNsfw) return true;
-		if (remoteBuilder.NameLocalizations != localBuilder.NameLocalizations) return true;
-
-		return false;
+		return remoteBuilder.ContextTypes != localBuilder.ContextTypes || remoteBuilder.DefaultMemberPermissions != localBuilder.DefaultMemberPermissions || remoteBuilder.IntegrationTypes != localBuilder.IntegrationTypes || remoteBuilder.IsNsfw != localBuilder.IsNsfw || remoteBuilder.NameLocalizations != localBuilder.NameLocalizations;
 	}
-	public virtual bool CheckMessageCommandShouldOverride(BasicMessageCommandBase localCommand)
+	public bool CheckMessageCommandShouldOverride(BasicMessageCommandBase localCommand)
 	{
-		if (this._discordClientService is null)
-			ThrowNotInitialized();
-
-		if (!this.MessageCommands.TryGetValue(localCommand.Name, out BasicMessageCommandBase? remote))
+		BasicMessageCommandBase? remoteCommand = (BasicMessageCommandBase?)this.MessageCommands.GetService(localCommand.GetType());
+		if (remoteCommand is null)
 			return true;
 
-		MessageCommandBuilder remoteBuilder = remote.CompleteBuilder;
+		MessageCommandBuilder remoteBuilder = remoteCommand.CompleteBuilder;
 		MessageCommandBuilder localBuilder = localCommand.CompleteBuilder;
 
-		if (remoteBuilder.ContextTypes != localBuilder.ContextTypes) return true;
-		if (remoteBuilder.DefaultMemberPermissions != localBuilder.DefaultMemberPermissions) return true;
-		if (remoteBuilder.IntegrationTypes != localBuilder.IntegrationTypes) return true;
-		if (remoteBuilder.IsNsfw != localBuilder.IsNsfw) return true;
-		if (remoteBuilder.NameLocalizations != localBuilder.NameLocalizations) return true;
-
-		return false;
+		return remoteBuilder.ContextTypes != localBuilder.ContextTypes || remoteBuilder.DefaultMemberPermissions != localBuilder.DefaultMemberPermissions || remoteBuilder.IntegrationTypes != localBuilder.IntegrationTypes || remoteBuilder.IsNsfw != localBuilder.IsNsfw || remoteBuilder.NameLocalizations != localBuilder.NameLocalizations;
 	}
 	#endregion
 
 	#region Find types
-	public virtual IEnumerable<Type> FindBasicCommandBaseTypes()
+	public IEnumerable<Type> FindBasicCommandBaseTypes()
 	{
 		return AppDomain.CurrentDomain
 			.GetAssemblies()
@@ -187,7 +174,7 @@ public class CommandResolveService : InjectableBase
 			.MergeArrays()
 			.Where(t => t.IsSubclassOf(typeof(BasicCommandBase)));
 	}
-	public virtual IEnumerable<Type> FindBasicUserCommandBaseTypes()
+	public IEnumerable<Type> FindBasicUserCommandBaseTypes()
 	{
 		return AppDomain.CurrentDomain
 			.GetAssemblies()
@@ -195,7 +182,7 @@ public class CommandResolveService : InjectableBase
 			.MergeArrays()
 			.Where(t => t.IsSubclassOf(typeof(BasicUserCommandBase)));
 	}
-	public virtual IEnumerable<Type> FindBasicMessageCommandBaseTypes()
+	public IEnumerable<Type> FindBasicMessageCommandBaseTypes()
 	{
 		return AppDomain.CurrentDomain
 			.GetAssemblies()
@@ -206,36 +193,33 @@ public class CommandResolveService : InjectableBase
 	#endregion
 
 	#region Get Instances
-	public virtual IEnumerable<BasicCommandBase> GetAllGlobalCommands()
+	public IEnumerable<Type> GetAllGlobalCommands()
 	{
 		return this.FindBasicCommandBaseTypes()
-			.Where(t => t.GetCustomAttribute<AddToGlobalAttribute>() is not null)
-			.Select(t => (BasicCommandBase)Activator.CreateInstance(t)!);
+			.Where(t => t.GetCustomAttribute<AddToGlobalAttribute>() is not null);
 	}
 	/// <summary>
 	/// Not implemented for now.
 	/// </summary>
 	/// <returns></returns>
-	public virtual IEnumerable<BasicCommandBase> GetAllGuildCommands()
+	public IEnumerable<Type> GetAllGuildCommands()
 	{
-		return Enumerable.Empty<BasicCommandBase>();
+		return Enumerable.Empty<Type>();
 	}
-	public virtual IEnumerable<BasicUserCommandBase> GetAllUserCommands()
+	public IEnumerable<Type> GetAllUserCommands()
 	{
 		return this.FindBasicUserCommandBaseTypes()
-			.Where(t => t.GetCustomAttribute<AddToGlobalAttribute>() is not null)
-			.Select(t => (BasicUserCommandBase)Activator.CreateInstance(t)!);
+			.Where(t => t.GetCustomAttribute<AddToGlobalAttribute>() is not null);
 	}
-	public virtual IEnumerable<BasicMessageCommandBase> GetAllMessageCommands()
+	public IEnumerable<Type> GetAllMessageCommands()
 	{
 		return this.FindBasicMessageCommandBaseTypes()
-			.Where(t => t.GetCustomAttribute<AddToGlobalAttribute>() is not null)
-			.Select(t => (BasicMessageCommandBase)Activator.CreateInstance(t)!);
+			.Where(t => t.GetCustomAttribute<AddToGlobalAttribute>() is not null);
 	}
 	#endregion
 
 	#region Discord Event Handler 
-	protected virtual Task SocketClient_SlashCommandExecuted(SocketSlashCommand arg)
+	protected Task SocketClient_SlashCommandExecuted(SocketSlashCommand arg)
 	{
 		SlashCommandEventArgs eventArg = new(arg);
 
@@ -243,14 +227,10 @@ public class CommandResolveService : InjectableBase
 		if (eventArg.Canceled)
 			return Task.CompletedTask;
 
-		BasicCommandBase command = this.GlobalCommands[arg.CommandName];
+		BasicCommandBase command = this.GlobalCommands.GetServices<BasicCommandBase>()
+			.First(x => x.Name == arg.CommandName);
 
-		Task task;
-
-		if (command.RunOnDifferentThread)
-			task = Task.Run(() => command.Execute(arg, this));
-		else task = command.Execute(arg, this);
-
+		Task task = command.RunOnDifferentThread ? Task.Run(() => command.Execute(arg, this)) : command.Execute(arg, this);
 		this._program.RunningTasks.Add(task);
 
 		_ = Utils.RunWithTaskOnEnd(
@@ -262,7 +242,7 @@ public class CommandResolveService : InjectableBase
 			});
 		return Task.CompletedTask;
 	}
-	protected virtual Task SocketClient_UserCommandExecuted(SocketUserCommand arg)
+	protected Task SocketClient_UserCommandExecuted(SocketUserCommand arg)
 	{
 		UserCommandEventArgs eventArg = new(arg);
 
@@ -270,14 +250,10 @@ public class CommandResolveService : InjectableBase
 		if (eventArg.Canceled)
 			return Task.CompletedTask;
 
-		BasicUserCommandBase command = this.UserCommands[arg.CommandName];
+		BasicUserCommandBase command = this.GlobalCommands.GetServices<BasicUserCommandBase>()
+			.First(x => x.Name == arg.CommandName);
 
-		Task task;
-
-		if (command.RunOnDifferentThread)
-			task = Task.Run(() => command.Execute(arg, this));
-		else task = command.Execute(arg, this);
-
+		Task task = command.RunOnDifferentThread ? Task.Run(() => command.Execute(arg, this)) : command.Execute(arg, this);
 		this._program.RunningTasks.Add(task);
 
 		_ = Utils.RunWithTaskOnEnd(
@@ -289,7 +265,7 @@ public class CommandResolveService : InjectableBase
 			});
 		return Task.CompletedTask;
 	}
-	protected virtual Task SocketClient_MessageCommandExecuted(SocketMessageCommand arg)
+	protected Task SocketClient_MessageCommandExecuted(SocketMessageCommand arg)
 	{
 		MessageCommandEventArgs eventArg = new(arg);
 
@@ -297,14 +273,10 @@ public class CommandResolveService : InjectableBase
 		if (eventArg.Canceled)
 			return Task.CompletedTask;
 
-		BasicMessageCommandBase command = this.MessageCommands[arg.CommandName];
+		BasicMessageCommandBase command = this.GlobalCommands.GetServices<BasicMessageCommandBase>()
+			.First(x => x.Name == arg.CommandName);
 
-		Task task;
-
-		if (command.RunOnDifferentThread)
-			task = Task.Run(() => command.Execute(arg, this));
-		else task = command.Execute(arg, this);
-
+		Task task = command.RunOnDifferentThread ? Task.Run(() => command.Execute(arg, this)) : command.Execute(arg, this);
 		this._program.RunningTasks.Add(task);
 
 		_ = Utils.RunWithTaskOnEnd(

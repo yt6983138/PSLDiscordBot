@@ -1,10 +1,8 @@
 ﻿using Discord.WebSocket;
 using Microsoft.Extensions.Logging;
-using PSLDiscordBot.Framework;
+using Microsoft.Extensions.Options;
 using PSLDiscordBot.Framework.BuiltInServices;
-using PSLDiscordBot.Framework.DependencyInjection;
 using PSLDiscordBot.Framework.MiscEventArgs;
-using yt6983138.Common;
 
 namespace PSLDiscordBot.Core.Services;
 
@@ -15,65 +13,50 @@ public enum Status
 	UnderMaintenance,
 	ShuttingDown
 }
-public class StatusService : InjectableBase
+public class StatusService
 {
 	private static EventId EventId = new(114514_114, nameof(StatusService));
-
-	private Status _status = Status.Normal;
 	private bool _detached = false;
 
 	#region Injection
-	[Inject]
-	public ConfigService ConfigService { get; set; }
-	[Inject]
-	public Program Program { get; set; }
-	[Inject]
-	public CommandResolveService CommandResolveService { get; set; }
-	[Inject]
-	public Logger Logger { get; set; }
+	private readonly Config _configService;
+	private readonly ICommandResolveService _commandResolveService;
+	private readonly ILogger<StatusService> _logger;
 	#endregion
 
 	public Status CurrentStatus
 	{
-		get => this._status;
+		get;
 		set
 		{
-			this._status = value;
-			if (this._status == Status.UnderMaintenance)
-			{
-				this.MaintenanceStartedAt = DateTime.Now;
-			}
-			else
-			{
-				this.MaintenanceStartedAt = default;
-			}
+			field = value;
+			this.MaintenanceStartedAt = field == Status.UnderMaintenance ? DateTime.Now : default;
 		}
-	}
+	} = Status.Normal;
 	public DateTime MaintenanceStartedAt { get; private set; }
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
-	public StatusService()
-		: base()
+	public StatusService(IOptions<Config> config, ICommandResolveService commandResolver, ILogger<StatusService> logger)
 	{
-		this.CommandResolveService!.BeforeSlashCommandExecutes += this.BeforeSlashCommandExecutes;
-	}
-#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
-	~StatusService()
-	{
+		this._configService = config.Value;
+		this._commandResolveService = commandResolver;
+		this._logger = logger;
+
+		this._commandResolveService.BeforeSlashCommandExecutes += this.BeforeSlashCommandExecutes;
 	}
 
 	public void ForceDetach()
 	{
 		if (this._detached)
 			return;
-		this.CommandResolveService!.BeforeSlashCommandExecutes -= this.BeforeSlashCommandExecutes;
+		this._commandResolveService!.BeforeSlashCommandExecutes -= this.BeforeSlashCommandExecutes;
 		this._detached = true;
 	}
 
 	private async void BeforeSlashCommandExecutes(object? sender, SlashCommandEventArgs e)
 	{
 		if (this.CurrentStatus != Status.Normal
-			&& e.SocketSlashCommand.User.Id != this.ConfigService.Data.AdminUserId)
+			&& e.SocketSlashCommand.User.Id != this._configService.AdminUserId)
 		{
 			SocketSlashCommand arg = e.SocketSlashCommand;
 
@@ -86,8 +69,7 @@ public class StatusService : InjectableBase
 				_ => "Unprocessed error."
 			};
 			await e.SocketSlashCommand.RespondAsync(message, ephemeral: true);
-			this.Logger.Log(LogLevel.Information, $"Blocked command {arg.CommandName} " +
-				$"from {arg.User.GlobalName}({arg.User.Id})", EventId, this);
+			this._logger.LogInformation(EventId, "Blocked command {cmd} from {name}({id})", arg.CommandName, arg.User.GlobalName, arg.User.Id);
 			return;
 		}
 	}

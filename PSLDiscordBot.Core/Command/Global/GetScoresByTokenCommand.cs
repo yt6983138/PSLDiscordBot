@@ -1,8 +1,11 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using PhigrosLibraryCSharp.Cloud.DataStructure;
 using PSLDiscordBot.Core.Command.Global.Base;
 using PSLDiscordBot.Core.Services;
+using PSLDiscordBot.Core.Services.Phigros;
 using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Core.Utility;
 using PSLDiscordBot.Framework;
@@ -15,6 +18,11 @@ namespace PSLDiscordBot.Core.Command.Global;
 [AddToGlobal]
 public class GetScoresByTokenCommand : AdminCommandBase
 {
+	public GetScoresByTokenCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosDataService phigrosData, ILoggerFactory loggerFactory)
+		: base(config, database, localization, phigrosData, loggerFactory)
+	{
+	}
+
 	public override OneOf<string, LocalizedString> PSLName => "get-scores-by-token";
 	public override OneOf<string, LocalizedString> PSLDescription => "Get scores. [Admin command]";
 
@@ -50,8 +58,8 @@ public class GetScoresByTokenCommand : AdminCommandBase
 
 		PhigrosLibraryCSharp.SaveSummaryPair? pair = await userData.SaveCache.GetAndHandleSave(
 			arg,
-			this.PhigrosDataService.DifficultiesMap,
-			this.Localization,
+			this._phigrosDataService.DifficultiesMap,
+			this._localization,
 			arg.GetIntegerOptionAsInt32OrDefault("index"));
 		if (pair is null)
 			return;
@@ -60,10 +68,10 @@ public class GetScoresByTokenCommand : AdminCommandBase
 		string result = GetScoresCommand.ScoresFormatter(
 			arg,
 			save,
-			this.PhigrosDataService.IdNameMap,
+			this._phigrosDataService.IdNameMap,
 			arg.Data.Options.Count > 2 ? arg.Data.Options.ElementAt(2).Value.Unbox<long>().CastTo<long, int>() : 19,
 			userData,
-			this.Localization);
+			this._localization);
 
 		await arg.ModifyOriginalResponseAsync(
 			(msg) =>

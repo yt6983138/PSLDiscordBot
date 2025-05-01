@@ -1,5 +1,7 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using PhigrosLibraryCSharp.GameRecords;
 using PSLDiscordBot.Core.Command.Global.Base;
 using PSLDiscordBot.Core.Localization;
@@ -18,40 +20,45 @@ namespace PSLDiscordBot.Core.Command.Global;
 [AddToGlobal]
 public class DownloadAssetCommand : GuestCommandBase
 {
-	public override OneOf<string, LocalizedString> PSLName => this.Localization[PSLGuestCommandKey.DownloadAssetName];
-	public override OneOf<string, LocalizedString> PSLDescription => this.Localization[PSLGuestCommandKey.DownloadAssetDescription];
+	public DownloadAssetCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosDataService phigrosData, ILoggerFactory loggerFactory)
+		: base(config, database, localization, phigrosData, loggerFactory)
+	{
+	}
+
+	public override OneOf<string, LocalizedString> PSLName => this._localization[PSLGuestCommandKey.DownloadAssetName];
+	public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLGuestCommandKey.DownloadAssetDescription];
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder.AddOption(
-			this.Localization[PSLCommonOptionKey.SongSearchOptionName],
+			this._localization[PSLCommonOptionKey.SongSearchOptionName],
 			ApplicationCommandOptionType.String,
-			this.Localization[PSLCommonOptionKey.SongSearchOptionDescription],
+			this._localization[PSLCommonOptionKey.SongSearchOptionDescription],
 			isRequired: true)
 		.AddOption(
-			this.Localization[PSLGuestCommandKey.DownloadAssetOptionDownloadPEZName],
+			this._localization[PSLGuestCommandKey.DownloadAssetOptionDownloadPEZName],
 			ApplicationCommandOptionType.Integer,
-			this.Localization[PSLGuestCommandKey.DownloadAssetOptionDownloadPEZDescription],
+			this._localization[PSLGuestCommandKey.DownloadAssetOptionDownloadPEZDescription],
 			choices: Utils.CreateChoicesFromEnum<Difficulty>(),
 			isRequired: false);
 
 	public override async Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
 	{
 		List<SongAliasPair> foundAlias = await requester.FindFromIdOrAlias(
-			arg.GetOption<string>(this.Localization[PSLCommonOptionKey.SongSearchOptionName]),
-			this.PhigrosDataService.IdNameMap);
+			arg.GetOption<string>(this._localization[PSLCommonOptionKey.SongSearchOptionName]),
+			this._phigrosDataService.IdNameMap);
 
 		if (foundAlias.Count == 0)
 		{
-			await arg.QuickReply(this.Localization[PSLCommonMessageKey.SongSearchNoMatch]);
+			await arg.QuickReply(this._localization[PSLCommonMessageKey.SongSearchNoMatch]);
 			return;
 		}
 
-		StringBuilder query = SongInfoCommand.BuildReturnQueryString(foundAlias, this.PhigrosDataService);
+		StringBuilder query = SongInfoCommand.BuildReturnQueryString(foundAlias, this._phigrosDataService);
 
 		SongAliasPair first = foundAlias[0];
 		string id = first.SongId;
-		SongInfo firstInfo = this.PhigrosDataService.SongInfoMap[id];
-		DifficultyCCCollection diff = this.PhigrosDataService.CheckedDifficulties[id];
+		SongInfo firstInfo = this._phigrosDataService.SongInfoMap[id];
+		DifficultyCCCollection diff = this._phigrosDataService.CheckedDifficulties[id];
 		bool hasAT = diff.AT != 0;
 
 		Dictionary<Difficulty, string> chartUrls = Enum.GetValues<Difficulty>()
@@ -63,7 +70,7 @@ public class DownloadAssetCommand : GuestCommandBase
 			$"[Illustration]({illustrationUrl}), " +
 			$"[Music]({musicUrl}), ");
 
-		for (int i = 0; i < 4 && this.PhigrosDataService.CheckedDifficulties[id][i] != 0; i++)
+		for (int i = 0; i < 4 && this._phigrosDataService.CheckedDifficulties[id][i] != 0; i++)
 		{ // UNDONE: localize those
 			Difficulty difficulty = (Difficulty)i;
 			@return.Append($"[Chart {difficulty}](<{chartUrls[difficulty]}>), ");

@@ -1,18 +1,16 @@
-﻿using System.Reflection;
+﻿using Antelcat.AutoGen.ComponentModel.Diagnostic;
+using System.Reflection;
 
 namespace PSLDiscordBot.Framework.BuiltInServices;
-public class PluginResolveService
+
+[AutoExtractInterface]
+public class PluginResolveService : IPluginResolveService
 {
-	public readonly string PluginFolderLocation = "./Plugins/"; // so things can mock this
+	public string PluginFolderLocation { get; } = "./Plugins/"; // so things can mock this
 
-	public List<IPlugin> Plugins { get; } = new();
-	public PluginResolveService()
-	{
-	}
+	public List<IPlugin> Plugins { get; } = [];
 
-	// ok so i might implement a type of plugin named "co-framework" where invoked before everything loads,
-	// which might mock this shit
-	public virtual void LoadAllPlugins()
+	public void LoadAllPlugins()
 	{
 		DirectoryInfo pluginDir = new(this.PluginFolderLocation);
 		if (!pluginDir.Exists)
@@ -61,5 +59,33 @@ public class PluginResolveService
 		this.Plugins.AddRange(pluginsFromRoot);
 		this.Plugins.AddRange(pluginsFromSubFolders);
 		this.Plugins.Sort((x, y) => x.Priority.CompareTo(y.Priority));
+	}
+	public void InvokeAll(WebApplicationBuilder builder)
+	{
+		if (this.Plugins.Count == 0)
+		{
+			Utils.WriteLineWithColor(
+				"Framework: No plugins loaded (no plugins installed?), Ctrl-C to exit.",
+				ConsoleColor.Yellow);
+		}
+		foreach (IPlugin item in this.Plugins)
+		{
+			item.Load(builder, false);
+			Console.WriteLine($"Framework: Loaded {item.Name}, Ver. {item.Version} by {item.Author}");
+		}
+		Console.WriteLine();
+	}
+	public void SetupAll(IHost host)
+	{
+		foreach (IPlugin item in this.Plugins) item.Setup(host);
+	}
+	public void UnloadAll(IHost host)
+	{
+		Console.WriteLine();
+		foreach (IPlugin item in this.Plugins)
+		{
+			Console.WriteLine($"Framework: Unloading {item.Name}, Ver. {item.Version} by {item.Author}");
+			item.Unload(host, false);
+		}
 	}
 }

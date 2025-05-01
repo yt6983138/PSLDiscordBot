@@ -1,9 +1,12 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using ICSharpCode.SharpZipLib.Zip;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using PhigrosLibraryCSharp;
 using PSLDiscordBot.Core.Command.Global.Base;
 using PSLDiscordBot.Core.Services;
+using PSLDiscordBot.Core.Services.Phigros;
 using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Core.Utility;
 using PSLDiscordBot.Framework;
@@ -15,6 +18,11 @@ namespace PSLDiscordBot.Core.Command.Global;
 [AddToGlobal]
 public class GrabZipCommand : AdminCommandBase
 {
+	public GrabZipCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosDataService phigrosData, ILoggerFactory loggerFactory)
+		: base(config, database, localization, phigrosData, loggerFactory)
+	{
+	}
+
 	public override OneOf<string, LocalizedString> PSLName => "grab-zip";
 	public override OneOf<string, LocalizedString> PSLDescription => "Grab zip by token. [Admin command]";
 

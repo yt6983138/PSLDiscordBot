@@ -3,25 +3,28 @@ using Discord.Net;
 using Discord.Rest;
 using Discord.WebSocket;
 using ICSharpCode.SharpZipLib.Zip;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using NLog.Web;
 using PSLDiscordBot.Core.ImageGenerating;
 using PSLDiscordBot.Core.Services;
 using PSLDiscordBot.Core.Services.Phigros;
 using PSLDiscordBot.Core.Utility;
 using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.BuiltInServices;
-using PSLDiscordBot.Framework.DependencyInjection;
 using PSLDiscordBot.Framework.MiscEventArgs;
+using PSLDiscordBot.Framework.ServiceBase;
 using SixLabors.Fonts;
 using SmartFormat;
 using System.Net.WebSockets;
 using System.Text;
-using yt6983138.Common;
 
 namespace PSLDiscordBot.Core;
 
-public class PSLPlugin : InjectableBase, IPlugin
+public class PSLPlugin : IPlugin
 {
 	public const string SafeLockLocation = "./SAFE_LOCK";
 
@@ -29,23 +32,16 @@ public class PSLPlugin : InjectableBase, IPlugin
 	private static EventId EventIdInitialize { get; } = new(114511, "PSL.Initializing");
 	private static EventId EventIdApp { get; } = new(114509, "PSL.Application");
 
-	private Logger _logger = null!;
-	private ConfigService _configService = null!;
+	private ILogger<PSLPlugin> _logger = null!;
+	private IWritableOptions<Config> _configService = null!;
 	private StatusService _statusService = null!;
 	private Program _program = null!;
-
-	#region Injection
-
-	[Inject]
-	public DiscordClientService DiscordClientService { get; set; }
-	[Inject]
-	public CommandResolveService CommandResolveService { get; set; }
-
-	#endregion
+	private IDiscordClientService _discordClientService = null!;
+	private ICommandResolveService _commandResolveService = null!;
 
 	public IUser? AdminUser { get; set; }
 	public bool Initialized { get; private set; }
-	public DiscordRestClient RestClient => this.DiscordClientService.RestClient;
+	public DiscordRestClient RestClient => this._discordClientService.RestClient;
 
 	static PSLPlugin()
 	{
@@ -81,20 +77,20 @@ public class PSLPlugin : InjectableBase, IPlugin
 		"Update assets and help.md.",
 		(_) => // using async here break shit
 		{
-			this._logger.Log(LogLevel.Information, EventIdInitialize, "Updating assets and help.md...");
+			this._logger.LogInformation(EventIdInitialize, "Updating assets and help.md...");
 			using HttpClient client = new();
 
 			Task<byte[]> help =
-				client.GetByteArrayAsync(this._configService.Data.HelpMDGrabLocation);
+				client.GetByteArrayAsync(this._configService.Value.HelpMDGrabLocation);
 			Task<byte[]> zip =
-				client.GetByteArrayAsync(this._configService.Data.AssetGrabLocation);
+				client.GetByteArrayAsync(this._configService.Value.AssetGrabLocation);
 			help.Wait();
 			zip.Wait();
 
-			File.WriteAllBytes(this._configService.Data.HelpMDLocation, help.Result);
+			File.WriteAllBytes(this._configService.Value.HelpMDLocation, help.Result);
 			File.WriteAllBytes("./Assets.zip", zip.Result);
 			FastZip fastZip = new();
-			if (this._configService.Data.AssetGrabRemoveParent)
+			if (this._configService.Value.AssetGrabRemoveParent)
 			{
 				DirectoryInfo tmp = Directory.CreateDirectory("./tmp"); // TODO: fix broken
 				fastZip.ExtractZip("./Assets.zip", "./tmp/", "");
@@ -113,40 +109,40 @@ public class PSLPlugin : InjectableBase, IPlugin
 		"Reset configuration (only partially)",
 		(_) =>
 		{
-			this._logger.Log(LogLevel.Information, "Resetting config... (partial)", EventIdInitialize, this);
+			this._logger.LogInformation(EventIdInitialize, "Resetting config... (partial)");
 			Config @default = new();
-			this._configService.Data.LogLocation = @default.LogLocation;
-			this._configService.Data.DifficultyMapLocation = @default.DifficultyMapLocation;
-			this._configService.Data.HelpMDLocation = @default.HelpMDLocation;
-			this._configService.Data.NameMapLocation = @default.NameMapLocation;
-			this._configService.Data.Verbose = @default.Verbose;
+			this._configService.Update(c =>
+			{
+				c.DifficultyMapLocation = @default.DifficultyMapLocation;
+				c.HelpMDLocation = @default.HelpMDLocation;
+				c.NameMapLocation = @default.NameMapLocation;
 
-			this._configService.Data.AvatarHashMapLocation = @default.AvatarHashMapLocation;
-			this._configService.Data.MainUserDataDbLocation = @default.MainUserDataDbLocation;
-			this._configService.Data.MainUserDataTableName = @default.MainUserDataTableName;
-			this._configService.Data.UserMiscInfoDbLocation = @default.UserMiscInfoDbLocation;
-			this._configService.Data.UserMiscInfoTableName = @default.UserMiscInfoTableName;
-			this._configService.Data.SongAliasDbLocation = @default.SongAliasDbLocation;
-			this._configService.Data.SongAliasTableName = @default.SongAliasTableName;
-			this._configService.Data.DifficultyMapGrabLocation = @default.DifficultyMapGrabLocation;
-			this._configService.Data.NameMapGrabLocation = @default.NameMapGrabLocation;
-			this._configService.Data.HelpMDGrabLocation = @default.HelpMDGrabLocation;
-			this._configService.Data.AssetGrabLocation = @default.AssetGrabLocation;
-			this._configService.Data.AssetGrabRemoveParent = @default.AssetGrabRemoveParent;
-			this._configService.Data.DefaultChromiumTabCacheCount = @default.DefaultChromiumTabCacheCount;
-			this._configService.Data.ChromiumPort = @default.ChromiumPort;
-			this._configService.Data.ChromiumLocation = @default.ChromiumLocation;
-			this._configService.Data.RenderTimeout = @default.RenderTimeout;
-			this._configService.Data.GetPhotoCoolDown = @default.GetPhotoCoolDown;
-			this._configService.Data.GetPhotoCoolDownWhenLargerThan = @default.GetPhotoCoolDownWhenLargerThan;
-			this._configService.Data.RenderQuality = @default.RenderQuality;
-			this._configService.Data.DefaultRenderImageType = @default.DefaultRenderImageType;
-			this._configService.Data.GetPhotoRenderInfo = @default.GetPhotoRenderInfo;
-			this._configService.Data.SongScoresRenderInfo = @default.SongScoresRenderInfo;
-			this._configService.Data.AboutMeRenderInfo = @default.AboutMeRenderInfo;
+				c.AvatarHashMapLocation = @default.AvatarHashMapLocation;
+				c.MainUserDataDbLocation = @default.MainUserDataDbLocation;
+				c.MainUserDataTableName = @default.MainUserDataTableName;
+				c.UserMiscInfoDbLocation = @default.UserMiscInfoDbLocation;
+				c.UserMiscInfoTableName = @default.UserMiscInfoTableName;
+				c.SongAliasDbLocation = @default.SongAliasDbLocation;
+				c.SongAliasTableName = @default.SongAliasTableName;
+				c.DifficultyMapGrabLocation = @default.DifficultyMapGrabLocation;
+				c.NameMapGrabLocation = @default.NameMapGrabLocation;
+				c.HelpMDGrabLocation = @default.HelpMDGrabLocation;
+				c.AssetGrabLocation = @default.AssetGrabLocation;
+				c.AssetGrabRemoveParent = @default.AssetGrabRemoveParent;
+				c.DefaultChromiumTabCacheCount = @default.DefaultChromiumTabCacheCount;
+				c.ChromiumPort = @default.ChromiumPort;
+				c.ChromiumLocation = @default.ChromiumLocation;
+				c.RenderTimeout = @default.RenderTimeout;
+				c.GetPhotoCoolDown = @default.GetPhotoCoolDown;
+				c.GetPhotoCoolDownWhenLargerThan = @default.GetPhotoCoolDownWhenLargerThan;
+				c.RenderQuality = @default.RenderQuality;
+				c.DefaultRenderImageType = @default.DefaultRenderImageType;
+				c.GetPhotoRenderInfo = @default.GetPhotoRenderInfo;
+				c.SongScoresRenderInfo = @default.SongScoresRenderInfo;
+				c.AboutMeRenderInfo = @default.AboutMeRenderInfo;
 
-
-			this._configService.Save();
+				return c;
+			});
 		},
 		null);
 	public ArgParseInfo ResetConfigFull => new(
@@ -154,10 +150,9 @@ public class PSLPlugin : InjectableBase, IPlugin
 		"Reset configuration completely.",
 		(_) =>
 		{
-			this._logger.Log(LogLevel.Information, "Resetting config... (full)", EventIdInitialize, this);
-			this._configService.Data = new();
+			this._logger.LogInformation(EventIdInitialize, "Resetting config... (full)");
 
-			this._configService.Save();
+			this._configService.Update(_ => new Config());
 		},
 		null);
 	public ArgParseInfo UpdateInfoAndDifficulty => new(
@@ -167,29 +162,29 @@ public class PSLPlugin : InjectableBase, IPlugin
 		{
 			using HttpClient client = new();
 			byte[] diff =
-				client.GetByteArrayAsync(this._configService.Data.DifficultyMapGrabLocation)
+				client.GetByteArrayAsync(this._configService.Value.DifficultyMapGrabLocation)
 					.GetAwaiter()
 					.GetResult();
 			byte[] info =
-				client.GetByteArrayAsync(this._configService.Data.NameMapGrabLocation)
+				client.GetByteArrayAsync(this._configService.Value.NameMapGrabLocation)
 					.GetAwaiter()
 					.GetResult();
 
 			string diffStr = Encoding.UTF8.GetString(diff);
 			string infoStr = Encoding.UTF8.GetString(info);
-			if (this._configService.Data.DifficultyMapLocation.EndsWith(".tsv",
+			if (this._configService.Value.DifficultyMapLocation.EndsWith(".tsv",
 				StringComparison.InvariantCultureIgnoreCase))
 			{
 				diffStr = diffStr.Replace(",", "\t");
 			}
 
-			if (this._configService.Data.NameMapLocation.EndsWith(".tsv", StringComparison.InvariantCultureIgnoreCase))
+			if (this._configService.Value.NameMapLocation.EndsWith(".tsv", StringComparison.InvariantCultureIgnoreCase))
 			{
 				infoStr = infoStr.Replace("\\", "\t");
 			}
 
-			File.WriteAllText(this._configService.Data.DifficultyMapLocation, diffStr);
-			File.WriteAllText(this._configService.Data.NameMapLocation, infoStr);
+			File.WriteAllText(this._configService.Value.DifficultyMapLocation, diffStr);
+			File.WriteAllText(this._configService.Value.NameMapLocation, infoStr);
 		},
 		null);
 	public ArgParseInfo ResetLocalization => new(
@@ -197,8 +192,8 @@ public class PSLPlugin : InjectableBase, IPlugin
 		"Reset localization.",
 		(_) =>
 		{
-			this._logger.Log(LogLevel.Information, "Resetting localization...", EventIdInitialize, this);
-			LocalizationService service = GetSingleton<LocalizationService>();
+			this._logger.LogInformation(EventIdInitialize, "Resetting localization...");
+			LocalizationService service = this._program.App.Services.GetRequiredService<LocalizationService>();
 			service.Data = service.Generate();
 			service.Save();
 		},
@@ -208,45 +203,86 @@ public class PSLPlugin : InjectableBase, IPlugin
 		"Add non-existent localizations into the service.",
 		(_) =>
 		{
-			// does nothing here because it needs to be done manually in Program_AfterPluginsLoaded
+			// does nothing here because it needs to be done manually
 		},
 		null);
 	#endregion
 
-	void IPlugin.Load(Program program, bool isDynamicLoading)
+	void IPlugin.Load(WebApplicationBuilder hostBuilder, bool isDynamicLoading)
 	{
 		File.Create(SafeLockLocation);
 
-		this._program = program;
-
 		AppDomain.CurrentDomain.UnhandledException += this.CurrentDomain_UnhandledException;
-
 		Console.CancelKeyPress += this.Console_CancelKeyPress;
 
-		program.AfterPluginsLoaded += this.Program_AfterPluginsLoaded;
-		program.AfterArgParse += this.Program_AfterArgParse;
-		program.AfterMainInitialize += this.Program_AfterMainInitialize;
+		hostBuilder.Logging.ClearProviders();
+		hostBuilder.Host.UseNLog();
 
-		this.CommandResolveService.BeforeSlashCommandExecutes += this.Program_BeforeSlashCommandExecutes;
-		this.CommandResolveService.OnSlashCommandError += this.CommandResolveService_OnSlashCommandError;
+		hostBuilder.Services.ConfigureWritable<Config>(hostBuilder.Configuration.GetSection("Config"));
 
-		program.AddArgReceiver(this.UpdateFiles);
-		program.AddArgReceiver(this.UpdateInfoAndDifficulty);
-		program.AddArgReceiver(this.ResetConfig);
-		program.AddArgReceiver(this.ResetConfigFull);
-		program.AddArgReceiver(this.ResetLocalization);
-		program.AddArgReceiver(this.AddNonExistentLocalizations);
-
-		AddSingleton(this);
-
-		this.DiscordClientService.SocketClient.Ready += this.Client_Ready;
-		this.DiscordClientService.SocketClient.Log += this.Log;
+		hostBuilder.Services.AddSingleton(this)
+			.AddSingleton<DataBaseService>()
+			.AddSingleton<ChromiumPoolService>()
+			.AddSingleton<PhigrosDataService>()
+			.AddSingleton<AvatarHashMapService>()
+			.AddSingleton<ImageGenerator>()
+			.AddSingleton<StatusService>()
+			.AddSingleton<LocalizationService>();
 	}
-
-	void IPlugin.Unload(Program program, bool isDynamicUnloading)
+	void IPlugin.Setup(IHost host)
 	{
-		this._logger.Log(LogLevel.Information, "Service shutting down...", EventIdApp, this);
-		this.WriteAll();
+		this._program = host.Services.GetRequiredService<Program>();
+		this._discordClientService = host.Services.GetRequiredService<IDiscordClientService>();
+		this._commandResolveService = host.Services.GetRequiredService<ICommandResolveService>();
+		this._statusService = host.Services.GetRequiredService<StatusService>();
+		this._logger = host.Services.GetRequiredService<ILogger<PSLPlugin>>();
+		this._configService = host.Services.GetRequiredService<IWritableOptions<Config>>();
+		LocalizationService localization = host.Services.GetRequiredService<LocalizationService>();
+
+		this._program.AfterMainInitialize += this.Program_AfterMainInitialize;
+
+		this._commandResolveService.BeforeSlashCommandExecutes += this.Program_BeforeSlashCommandExecutes;
+		this._commandResolveService.OnSlashCommandError += this.CommandResolveService_OnSlashCommandError;
+
+		this._program.AddArgReceiver(this.UpdateFiles);
+		this._program.AddArgReceiver(this.UpdateInfoAndDifficulty);
+		this._program.AddArgReceiver(this.ResetConfig);
+		this._program.AddArgReceiver(this.ResetConfigFull);
+		this._program.AddArgReceiver(this.ResetLocalization);
+		this._program.AddArgReceiver(this.AddNonExistentLocalizations);
+
+		this._discordClientService.SocketClient = new(new()
+		{
+			GatewayIntents = GatewayIntents.AllUnprivileged
+			^ GatewayIntents.GuildScheduledEvents
+			^ GatewayIntents.GuildInvites
+		});
+		this._discordClientService.SocketClient.Ready += this.Client_Ready;
+		this._discordClientService.SocketClient.Log += this.Log;
+
+		if (this._program.ProgramArguments.Contains("--addNonExistentLocalizations"))
+		{
+			this._logger.LogInformation(EventIdInitialize, "Adding non-existent localizations...");
+			IReadOnlyDictionary<string, Framework.Localization.LocalizedString> newer = localization.Generate().LocalizedStrings;
+			foreach ((string key, Framework.Localization.LocalizedString value) in newer)
+			{
+				if (!localization.Data.LocalizedStrings.ContainsKey(key))
+				{
+					localization.Data[key] = value.CloneAsNew();
+				}
+			}
+			localization.Save();
+		}
+
+		if (!SystemFonts.Collection.Families.Any())
+		{
+			this._logger.LogCritical(EventIdInitialize, "No system fonts have been found, please install at least one (and Saira)!");
+			throw new InvalidOperationException("No fonts installed");
+		}
+	}
+	void IPlugin.Unload(IHost program, bool isDynamicUnloading)
+	{
+		this._logger.LogInformation(EventIdApp, "Service shutting down...");
 
 		File.Delete(SafeLockLocation);
 	}
@@ -258,8 +294,7 @@ public class PSLPlugin : InjectableBase, IPlugin
 	private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
 	{
 		Exception ex = e.ExceptionObject.Unbox<Exception>();
-		this._logger.Log(LogLevel.Critical, "Unhandled exception. Application exiting.", EventIdApp, this);
-		this._logger.Log(LogLevel.Critical, EventIdApp, this, ex);
+		this._logger.LogCritical(EventIdApp, ex, "Unhandled exception. Application exiting.");
 		Environment.Exit(ex.HResult);
 	}
 	private void Console_CancelKeyPress(object? sender, ConsoleCancelEventArgs e)
@@ -267,31 +302,23 @@ public class PSLPlugin : InjectableBase, IPlugin
 		bool @break = e.SpecialKey == ConsoleSpecialKey.ControlBreak;
 		if (@break)
 		{
-			this._logger.Log(LogLevel.Critical,
-				"Hard terminating application. (Ctrl-C to soft terminate)",
-				EventIdApp,
-				this);
+			this._logger.LogCritical(EventIdApp, "Hard terminating application. (Ctrl-C to soft terminate)");
 			Environment.FailFast("Ctrl-break triggered, hard terminating.");
 			return;
 		}
 
 		e.Cancel = true;
 		this._statusService.CurrentStatus = Status.ShuttingDown;
-		this._logger.Log(LogLevel.Information,
-			"Soft terminate initialized. (Ctrl-break to hard terminate)",
-			EventIdApp,
-			this);
+		this._logger.LogInformation(EventIdApp, "Soft terminate initialized. (Ctrl-break to hard terminate)");
 		while (this._program.RunningTasks.Count > 0)
 		{
 			Thread.Sleep(500);
-			this._logger.Log(LogLevel.Information,
-				$"{this._program.RunningTasks.Count} tasks running...",
-				EventIdApp,
-				this);
+			this._logger.LogInformation(EventIdApp, "{count} tasks running...", this._program.RunningTasks.Count);
 
 			if (this._statusService.CurrentStatus == Status.Normal)
 			{
-				this._logger.Log(LogLevel.Information, "Operation canceled.", EventIdApp, this);
+				this._logger.LogInformation(EventIdApp, "Operation canceled.");
+				this._logger.LogInformation(EventIdApp, "Operation canceled.");
 				return;
 			}
 		}
@@ -301,82 +328,20 @@ public class PSLPlugin : InjectableBase, IPlugin
 
 	private void Program_AfterMainInitialize(object? sender, EventArgs e)
 	{
-		this.WriteAll();
-
-		this.DiscordClientService.SocketClient.LoginAsync(TokenType.Bot, this._configService.Data.Token).Wait();
-		this.DiscordClientService.RestClient.LoginAsync(TokenType.Bot, this._configService.Data.Token).Wait();
-		this.DiscordClientService.SocketClient.StartAsync().Wait();
-	}
-	private void Program_AfterArgParse(object? sender, EventArgs e)
-	{
-		AddSingleton(new DataBaseService());
-		AddSingleton(new ChromiumPoolService(this._configService.Data.ChromiumLocation,
-			this._configService.Data.DefaultChromiumTabCacheCount,
-			this._configService.Data.ChromiumPort,
-			this._configService.Data.Verbose,
-			this._configService.Data.Verbose));
-		AddSingleton(new PhigrosDataService());
-		AddSingleton(new AvatarHashMapService());
-		AddSingleton(new ImageGenerator());
-	}
-	private void Program_AfterPluginsLoaded(object? sender, EventArgs e)
-	{
-		this._configService = new();
-		AddSingleton(this._configService);
-		this._logger = new(this._configService.Data.LogLocation);
-		AddSingleton(this._logger);
-		this._statusService = new();
-		AddSingleton(this._statusService);
-		LocalizationService localization = new();
-
-		if (this._program.ProgramArguments.Contains("--addNonExistentLocalizations"))
-		{
-			this._logger.Log(LogLevel.Information, "Adding non-existent localizations...", EventIdInitialize, this);
-			IReadOnlyDictionary<string, Framework.Localization.LocalizedString> newer = localization.Generate().LocalizedStrings;
-			foreach ((string key, Framework.Localization.LocalizedString value) in newer)
-			{
-				if (!localization.Data.LocalizedStrings.ContainsKey(key))
-				{
-					localization.Data[key] = value.CloneAsNew();
-				}
-			}
-			localization.Save();
-		}
-		AddSingleton(localization);
-
-		if (!this._configService.Data.Verbose)
-			this._logger.Disabled.Add(LogLevel.Debug);
-
-		if (this._configService.FirstStart)
-		{
-			this._logger.Log(
-				LogLevel.Critical,
-				$"Seems this is first start. Please enter token in {ConfigService.ConfigLocation} first.",
-				EventIdInitialize,
-				this);
-			throw new InvalidOperationException("No token entered");
-		}
-
-		if (!SystemFonts.Collection.Families.Any())
-		{
-			this._logger.Log(
-				LogLevel.Critical,
-				"No system fonts have been found, please install at least one (and Saira)!",
-				EventIdInitialize,
-				this);
-			throw new InvalidOperationException("No fonts installed");
-		}
+		this._discordClientService.SocketClient.LoginAsync(TokenType.Bot, this._configService.Value.Token).Wait();
+		this._discordClientService.RestClient.LoginAsync(TokenType.Bot, this._configService.Value.Token).Wait();
+		this._discordClientService.SocketClient.StartAsync().Wait();
 	}
 	private void Program_BeforeSlashCommandExecutes(object? sender, SlashCommandEventArgs e)
 	{
 		SocketSlashCommand arg = e.SocketSlashCommand;
 		int i = 0;
-		this._logger.Log(
-			LogLevel.Information,
-			$"Command received: {arg.CommandName} from: {arg.User.GlobalName} ({arg.User.Id}), " +
-			$"options: {string.Join(",", e.SocketSlashCommand.Data.Options.Select(x => $"{i++}_{x.Name}({x.Type}): {x.Value}"))}",
-			EventId,
-			this);
+		this._logger.LogInformation(EventId,
+			"Command received: {cmdName} from: {globalName} ({id}), options: {options}",
+			arg.CommandName,
+			arg.User.GlobalName,
+			arg.User.Id,
+			string.Join(",", e.SocketSlashCommand.Data.Options.Select(x => $"{i++}_{x.Name}({x.Type}): {x.Value}")));
 	}
 	private async void CommandResolveService_OnSlashCommandError(object? sender,
 		BasicCommandExceptionEventArgs<Framework.CommandBase.BasicCommandBase> e)
@@ -398,23 +363,23 @@ public class PSLPlugin : InjectableBase, IPlugin
 
 	private async Task Client_Ready()
 	{
-		Program program = GetSingleton<Program>();
+		Program program = this._program;
 
 		if (this.Initialized) goto Final;
 
-		this._logger.Log(LogLevel.Information, "Initializing bot...", EventIdInitialize, this);
-		IUser admin = await this.DiscordClientService.SocketClient.GetUserAsync(this._configService.Data.AdminUserId);
+		this._logger.LogInformation(EventIdInitialize, "Initializing bot...");
+		IUser admin = await this._discordClientService.SocketClient.GetUserAsync(this._configService.Value.AdminUserId);
 
-		if (!this._configService.Data.DMAdminAboutErrors)
+		if (!this._configService.Value.DMAdminAboutErrors)
 			goto BypassAdminCheck;
 		this.AdminUser = admin;
 
 		if (admin is null)
 		{
-			this._logger.Log<PSLPlugin>(LogLevel.Warning,
+			this._logger.LogWarning(
 				EventIdInitialize,
-				"Admin {0} user not found!",
-				this._configService.Data.AdminUserId);
+				"Admin {user} user not found!",
+				this._configService.Value.AdminUserId);
 			goto BypassAdminCheck;
 		}
 
@@ -424,21 +389,21 @@ public class PSLPlugin : InjectableBase, IPlugin
 		}
 		catch (HttpException ex) when (ex.DiscordCode == DiscordErrorCode.CannotSendMessageToUser)
 		{
-			this._logger.Log<PSLPlugin>(LogLevel.Warning, EventIdInitialize, "Unable to send message to admin!");
+			this._logger.LogWarning(EventIdInitialize, "Unable to send message to admin!");
 		}
 		catch (Exception ex)
 		{
-			this._logger.Log(LogLevel.Warning, EventIdInitialize, this, ex);
+			this._logger.LogWarning(EventIdInitialize, ex, "Error during sending message to admin!");
 		}
 
 	BypassAdminCheck:
 	Final:
-		this._logger.Log(LogLevel.Information, "Bot started!", EventIdInitialize, this);
+		this._logger.LogInformation(EventIdInitialize, "Bot started!");
 		this.Initialized = true;
 	}
 	private async Task Log(LogMessage msg)
 	{
-		this._logger.Log(LogLevel.Debug, msg.Message, EventId, this);
+		this._logger.LogDebug(EventId, msg.Message);
 
 		if (msg.Exception is NullReferenceException nullEx
 			&& nullEx.StackTrace!.Contains("Discord.Net.Converters.OptionalConverter`1.ReadJson"))
@@ -459,7 +424,7 @@ public class PSLPlugin : InjectableBase, IPlugin
 				and not WebSocketException
 			})
 		{
-			this._logger.Log(LogLevel.Debug, msg.Exception!.GetType().FullName!, EventId, this);
+			this._logger.LogDebug(EventId, msg.Exception!.GetType().FullName!);
 			await this.OnException(msg.Exception);
 		}
 	}
@@ -468,7 +433,7 @@ public class PSLPlugin : InjectableBase, IPlugin
 
 	private async Task OnException(Exception exception, SocketCommandBase? interaction = null)
 	{
-		this._logger.Log(LogLevel.Error, EventId, this, exception);
+		this._logger.LogError(EventId, exception, "Exception received");
 		if (this.AdminUser is not null)
 		{
 			try
@@ -493,13 +458,8 @@ public class PSLPlugin : InjectableBase, IPlugin
 			}
 			catch (Exception ex)
 			{
-				this._logger.Log(LogLevel.Warning, "Unable to send message to admin!", EventId, this, ex);
+				this._logger.LogWarning(EventId, ex, "Unable to send message to admin!");
 			}
 		}
-	}
-	private void WriteAll()
-	{
-		this._configService.Save();
-		//InjectableBase.GetSingleton<DataBaseService>().Save();
 	}
 }

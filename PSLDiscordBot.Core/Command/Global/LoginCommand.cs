@@ -1,10 +1,13 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using PhigrosLibraryCSharp.Cloud.Login;
 using PhigrosLibraryCSharp.Cloud.Login.DataStructure;
 using PSLDiscordBot.Core.Command.Global.Base;
 using PSLDiscordBot.Core.Localization;
 using PSLDiscordBot.Core.Services;
+using PSLDiscordBot.Core.Services.Phigros;
 using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Core.Utility;
 using PSLDiscordBot.Framework;
@@ -16,10 +19,15 @@ namespace PSLDiscordBot.Core.Command.Global;
 [AddToGlobal]
 public class LoginCommand : GuestCommandBase
 {
+	public LoginCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosDataService phigrosData, ILoggerFactory loggerFactory)
+		: base(config, database, localization, phigrosData, loggerFactory)
+	{
+	}
+
 	public override bool RunOnDifferentThread => true;
 
-	public override OneOf<string, LocalizedString> PSLName => this.Localization[PSLGuestCommandKey.LoginName];
-	public override OneOf<string, LocalizedString> PSLDescription => this.Localization[PSLGuestCommandKey.LoginDescription];
+	public override OneOf<string, LocalizedString> PSLName => this._localization[PSLGuestCommandKey.LoginName];
+	public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLGuestCommandKey.LoginDescription];
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder;
@@ -28,7 +36,7 @@ public class LoginCommand : GuestCommandBase
 	{
 		CompleteQRCodeData qrCode = await TapTapHelper.RequestLoginQrCode();
 		DateTime stopAt = DateTime.Now + new TimeSpan(0, 0, qrCode.ExpiresInSeconds - 15);
-		await arg.QuickReply(this.Localization[PSLGuestCommandKey.LoginBegin], qrCode);
+		await arg.QuickReply(this._localization[PSLGuestCommandKey.LoginBegin], qrCode);
 		await this.ListenQrCodeChange(arg, qrCode, stopAt, requester);
 	}
 	public async Task ListenQrCodeChange(
@@ -48,11 +56,11 @@ public class LoginCommand : GuestCommandBase
 				UserData userData = new(token);
 				_ = await userData.SaveCache.GetUserInfoAsync();
 				await requester.AddOrReplaceUserDataCachedAsync(command.User.Id, userData);
-				await command.QuickReply(this.Localization[PSLGuestCommandKey.LoginComplete]);
+				await command.QuickReply(this._localization[PSLGuestCommandKey.LoginComplete]);
 				return;
 			}
 			await Task.Delay(Delay);
 		}
-		await command.QuickReply(this.Localization[PSLGuestCommandKey.LoginTimedOut]);
+		await command.QuickReply(this._localization[PSLGuestCommandKey.LoginTimedOut]);
 	}
 }

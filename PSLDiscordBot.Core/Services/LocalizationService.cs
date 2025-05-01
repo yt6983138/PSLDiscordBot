@@ -1,4 +1,4 @@
-﻿using PSLDiscordBot.Framework.DependencyInjection;
+﻿using Microsoft.Extensions.Options;
 using PSLDiscordBot.Framework.Localization;
 using PSLDiscordBot.Framework.ServiceBase;
 using static PSLDiscordBot.Core.Localization.PSLCommonKey;
@@ -10,12 +10,12 @@ using static PSLDiscordBot.Core.Localization.PSLNormalCommandKey;
 namespace PSLDiscordBot.Core.Services;
 public class LocalizationService : FileManagementServiceBase<LocalizationManager>
 {
-	[Inject]
-	public ConfigService Config { get; set; }
+	public IOptions<Config> _config;
 
-	public LocalizationService()
+	public LocalizationService(IOptions<Config> config)
 	{
-		this.LaterInitialize(this.Config!.Data.LocalizationLocation);
+		this._config = config;
+		this.LaterInitialize(this._config.Value.LocalizationLocation);
 	}
 
 	public LocalizedString this[string key]

@@ -1,17 +1,15 @@
 ﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using PSLDiscordBot.Core.Utility;
-using PSLDiscordBot.Framework.DependencyInjection;
 using yt6983138.Common;
 
 namespace PSLDiscordBot.Core.Services.Phigros;
-public class PhigrosDataService : InjectableBase
+public class PhigrosDataService
 {
 	private static EventId EventId { get; } = new(114510, nameof(PhigrosDataService));
 
-	[Inject]
-	public Logger Logger { get; set; }
-	[Inject]
-	public ConfigService Config { get; set; }
+	private readonly ILogger<PhigrosDataService> _logger;
+	private readonly Config _config;
 
 	/// <summary>
 	/// For compatibility, newer api should use <see cref="CheckedDifficulties"/>.
@@ -26,11 +24,13 @@ public class PhigrosDataService : InjectableBase
 	public Dictionary<string, SongInfo> SongInfoMap { get; }
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
-	public PhigrosDataService()
-		: base()
+	public PhigrosDataService(IOptions<Config> config, ILogger<PhigrosDataService> logger)
 	{
+		this._logger = logger;
+		this._config = config.Value;
+
 		(this.CheckedDifficulties, this.SongInfoMap) =
-			this.ReadDatas(this.Config!.Data.DifficultyMapLocation, this.Config!.Data.NameMapLocation);
+			this.ReadDatas(this._config.DifficultyMapLocation, this._config.NameMapLocation);
 
 		this.DifficultiesMap = new ReadOnlyDictionaryWrapper<string, DifficultyCCCollection, string, float[]>(this.CheckedDifficulties)
 		{
@@ -59,8 +59,8 @@ public class PhigrosDataService : InjectableBase
 		CsvReader difficultyReader = new(File.ReadAllText(diffLocation), IsTsv(diffLocation) ? "\t" : ",");
 		CsvReader infoReader = new(File.ReadAllText(nameLocation), IsTsv(nameLocation) ? "\t" : ",");
 
-		Dictionary<string, SongInfo> names = new();
-		Dictionary<string, DifficultyCCCollection> diffculties = new();
+		Dictionary<string, SongInfo> names = [];
+		Dictionary<string, DifficultyCCCollection> diffculties = [];
 
 		while (difficultyReader.TryReadRow(out _))
 		{

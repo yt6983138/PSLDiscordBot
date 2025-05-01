@@ -1,9 +1,12 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using PhigrosLibraryCSharp;
 using PSLDiscordBot.Core.Command.Global.Base;
 using PSLDiscordBot.Core.Localization;
 using PSLDiscordBot.Core.Services;
+using PSLDiscordBot.Core.Services.Phigros;
 using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Core.Utility;
 using PSLDiscordBot.Framework;
@@ -15,14 +18,19 @@ namespace PSLDiscordBot.Core.Command.Global;
 [AddToGlobal]
 public class LinkTokenCommand : GuestCommandBase
 {
-	public override OneOf<string, LocalizedString> PSLName => this.Localization[PSLGuestCommandKey.LinkTokenName];
-	public override OneOf<string, LocalizedString> PSLDescription => this.Localization[PSLGuestCommandKey.LinkTokenDescription];
+	public LinkTokenCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosDataService phigrosData, ILoggerFactory loggerFactory)
+		: base(config, database, localization, phigrosData, loggerFactory)
+	{
+	}
+
+	public override OneOf<string, LocalizedString> PSLName => this._localization[PSLGuestCommandKey.LinkTokenName];
+	public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLGuestCommandKey.LinkTokenDescription];
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder.AddOption(
-			this.Localization[PSLGuestCommandKey.LinkTokenOptionTokenName],
+			this._localization[PSLGuestCommandKey.LinkTokenOptionTokenName],
 			ApplicationCommandOptionType.String,
-			this.Localization[PSLGuestCommandKey.LinkTokenOptionTokenDescription],
+			this._localization[PSLGuestCommandKey.LinkTokenOptionTokenDescription],
 			isRequired: true,
 			maxLength: 25,
 			minLength: 25
@@ -31,34 +39,34 @@ public class LinkTokenCommand : GuestCommandBase
 	public override async Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
 	{
 		ulong userId = arg.User.Id;
-		string token = arg.GetOption<string>(this.Localization[PSLGuestCommandKey.LinkTokenOptionTokenName]);
+		string token = arg.GetOption<string>(this._localization[PSLGuestCommandKey.LinkTokenOptionTokenName]);
 
 		if (!Save.IsSemanticallyValidToken(token))
 		{
-			await arg.QuickReply(this.Localization[PSLGuestCommandKey.LinkTokenInvalidToken]);
+			await arg.QuickReply(this._localization[PSLGuestCommandKey.LinkTokenInvalidToken]);
 			return;
 		}
 
 		UserData tmp = new(token);
 		SaveSummaryPair? fetched = await tmp.SaveCache.GetAndHandleSave(
 			arg,
-			this.PhigrosDataService.DifficultiesMap,
-			this.Localization,
+			this._phigrosDataService.DifficultiesMap,
+			this._localization,
 			autoThrow: false);
 
 		if (fetched is null)
 		{
-			await arg.QuickReply(this.Localization[PSLGuestCommandKey.LinkTokenInvalidToken]);
+			await arg.QuickReply(this._localization[PSLGuestCommandKey.LinkTokenInvalidToken]);
 			return;
 		}
 
 		if (data is not null)
 		{
-			await arg.QuickReply(this.Localization[PSLGuestCommandKey.LinkTokenSuccessButOverwritten]);
+			await arg.QuickReply(this._localization[PSLGuestCommandKey.LinkTokenSuccessButOverwritten]);
 		}
 		else
 		{
-			await arg.QuickReply(this.Localization[PSLGuestCommandKey.LinkTokenSuccess]);
+			await arg.QuickReply(this._localization[PSLGuestCommandKey.LinkTokenSuccess]);
 		}
 		await requester.AddOrReplaceUserDataCachedAsync(userId, tmp);
 	}

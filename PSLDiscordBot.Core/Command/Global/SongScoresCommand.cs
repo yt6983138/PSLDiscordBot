@@ -1,16 +1,18 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using PhigrosLibraryCSharp.Cloud.DataStructure;
 using PhigrosLibraryCSharp.GameRecords;
 using PSLDiscordBot.Core.Command.Global.Base;
 using PSLDiscordBot.Core.ImageGenerating;
 using PSLDiscordBot.Core.Localization;
 using PSLDiscordBot.Core.Services;
+using PSLDiscordBot.Core.Services.Phigros;
 using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Core.Utility;
 using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.CommandBase;
-using PSLDiscordBot.Framework.DependencyInjection;
 using PSLDiscordBot.Framework.Localization;
 
 namespace PSLDiscordBot.Core.Command.Global;
@@ -18,47 +20,48 @@ namespace PSLDiscordBot.Core.Command.Global;
 [AddToGlobal]
 public class SongScoresCommand : CommandBase
 {
-	#region Injection
-#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
-	[Inject]
-	public ImageGenerator ImageGenerator { get; set; }
-#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
-	#endregion
+	private readonly ImageGenerator _imageGenerator;
+
+	public SongScoresCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosDataService phigrosData, ILoggerFactory loggerFactory, ImageGenerator imageGenerator)
+		: base(config, database, localization, phigrosData, loggerFactory)
+	{
+		this._imageGenerator = imageGenerator;
+	}
 
 	public override bool IsEphemeral => false;
 
-	public override OneOf<string, LocalizedString> PSLName => this.Localization[PSLNormalCommandKey.SongScoresName];
-	public override OneOf<string, LocalizedString> PSLDescription => this.Localization[PSLNormalCommandKey.SongScoresDescription];
+	public override OneOf<string, LocalizedString> PSLName => this._localization[PSLNormalCommandKey.SongScoresName];
+	public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLNormalCommandKey.SongScoresDescription];
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder.AddOption(
-			this.Localization[PSLCommonOptionKey.SongSearchOptionName],
+			this._localization[PSLCommonOptionKey.SongSearchOptionName],
 			ApplicationCommandOptionType.String,
-			this.Localization[PSLCommonOptionKey.SongSearchOptionDescription],
+			this._localization[PSLCommonOptionKey.SongSearchOptionDescription],
 			isRequired: true)
 		.AddOption(
-			this.Localization[PSLCommonOptionKey.IndexOptionName],
+			this._localization[PSLCommonOptionKey.IndexOptionName],
 			ApplicationCommandOptionType.Integer,
-			this.Localization[PSLCommonOptionKey.IndexOptionDescription],
+			this._localization[PSLCommonOptionKey.IndexOptionDescription],
 			isRequired: false,
 			minValue: 0);
 
 	public override async Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
 	{
-		string search = arg.GetOption<string>(this.Localization[PSLCommonOptionKey.SongSearchOptionName]);
-		int index = arg.GetIndexOption(this.Localization);
+		string search = arg.GetOption<string>(this._localization[PSLCommonOptionKey.SongSearchOptionName]);
+		int index = arg.GetIndexOption(this._localization);
 
-		List<SongAliasPair> searchResult = await requester.FindFromIdOrAlias(search, this.PhigrosDataService.IdNameMap);
+		List<SongAliasPair> searchResult = await requester.FindFromIdOrAlias(search, this._phigrosDataService.IdNameMap);
 		if (searchResult.Count == 0)
 		{
-			await arg.QuickReply(this.Localization[PSLCommonMessageKey.SongSearchNoMatch]);
+			await arg.QuickReply(this._localization[PSLCommonMessageKey.SongSearchNoMatch]);
 			return;
 		}
 
 		PhigrosLibraryCSharp.SaveSummaryPair? pair = await data.SaveCache.GetAndHandleSave(
 			arg,
-			this.PhigrosDataService.DifficultiesMap,
-			this.Localization,
+			this._phigrosDataService.DifficultiesMap,
+			this._localization,
 			index);
 		if (pair is null)
 			return;
@@ -74,7 +77,7 @@ public class SongScoresCommand : CommandBase
 
 		if (scoresToShow.Count == 0)
 		{
-			await arg.QuickReply(this.Localization[PSLNormalCommandKey.SongScoresSongNotPlayed]);
+			await arg.QuickReply(this._localization[PSLNormalCommandKey.SongScoresSongNotPlayed]);
 			return;
 		}
 
@@ -97,17 +100,17 @@ public class SongScoresCommand : CommandBase
 		}
 		#endregion
 
-		MemoryStream image = await this.ImageGenerator.MakePhoto(
+		MemoryStream image = await this._imageGenerator.MakePhoto(
 			save,
 			data,
 			summary,
 			userInfo,
 			progress,
 			outerUserInfo,
-			this.ConfigService.Data.SongScoresRenderInfo,
-			this.ConfigService.Data.DefaultRenderImageType,
-			this.ConfigService.Data.RenderQuality,
-			cancellationToken: this.ConfigService.Data.RenderTimeoutCTS.Token,
+			this._config.Value.SongScoresRenderInfo,
+			this._config.Value.DefaultRenderImageType,
+			this._config.Value.RenderQuality,
+			cancellationToken: this._config.Value.RenderTimeoutCTS.Token,
 			extraArguments: extraArg
 		);
 
@@ -117,15 +120,15 @@ public class SongScoresCommand : CommandBase
 					GetScoresCommand.ScoresFormatter(
 						arg,
 						new() { CreationDate = default, ModificationTime = default, Records = scoresToShow },
-						this.PhigrosDataService.IdNameMap,
+						this._phigrosDataService.IdNameMap,
 						int.MaxValue,
 						data,
-						this.Localization,
+						this._localization,
 						false,
 						false,
 						false),
 					"Query.txt")],
-			this.Localization[PSLNormalCommandKey.SongScoresQueryResult],
+			this._localization[PSLNormalCommandKey.SongScoresQueryResult],
 			search);
 	}
 }

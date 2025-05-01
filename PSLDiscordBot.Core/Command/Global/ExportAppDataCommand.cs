@@ -2,19 +2,25 @@
 using Discord.WebSocket;
 using ICSharpCode.SharpZipLib.Core;
 using ICSharpCode.SharpZipLib.Zip;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using PSLDiscordBot.Core.Command.Global.Base;
 using PSLDiscordBot.Core.Services;
+using PSLDiscordBot.Core.Services.Phigros;
 using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Core.Utility;
-using PSLDiscordBot.Framework;
-using PSLDiscordBot.Framework.CommandBase;
 using PSLDiscordBot.Framework.Localization;
 
 namespace PSLDiscordBot.Core.Command.Global;
 
-[AddToGlobal]
+//[AddToGlobal]
 public class ExportAppDataCommand : AdminCommandBase
 {
+	public ExportAppDataCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosDataService phigrosData, ILoggerFactory loggerFactory)
+		: base(config, database, localization, phigrosData, loggerFactory)
+	{
+	}
+
 	public override OneOf<string, LocalizedString> PSLName => "export-app-data";
 	public override OneOf<string, LocalizedString> PSLDescription => "Export encrypted app data. [Admin command]";
 
@@ -28,31 +34,32 @@ public class ExportAppDataCommand : AdminCommandBase
 
 	public override async Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
 	{
-		MemoryStream memoryStream = new();
+		await Task.CompletedTask;
+		//MemoryStream memoryStream = new();
 
-		using ZipOutputStream zipStream = new(memoryStream);
-		zipStream.Password = arg.Data.Options.First(x => x.Name == "password").Value.Unbox<string>();
-		zipStream.IsStreamOwner = false;
+		//using ZipOutputStream zipStream = new(memoryStream);
+		//zipStream.Password = arg.Data.Options.First(x => x.Name == "password").Value.Unbox<string>();
+		//zipStream.IsStreamOwner = false;
 
-		zipStream.PutFile(ConfigService.ConfigLocation);
-		zipStream.PutFile(this.ConfigService.Data.DifficultyMapLocation);
-		zipStream.PutFile(this.ConfigService.Data.NameMapLocation);
-		zipStream.PutFile(this.ConfigService.Data.LogLocation);
-		zipStream.PutFile(this.ConfigService.Data.HelpMDLocation);
+		//zipStream.PutFile(_config.ConfigLocation);
+		//zipStream.PutFile(this._config.Value.DifficultyMapLocation);
+		//zipStream.PutFile(this._config.Value.NameMapLocation);
+		//zipStream.PutFile(this._config.Value.LogLocation);
+		//zipStream.PutFile(this._config.Value.HelpMDLocation);
 
-		zipStream.PutFile(this.ConfigService.Data.MainUserDataDbLocation);
-		zipStream.PutFile(this.ConfigService.Data.SongAliasDbLocation);
-		zipStream.PutFile(this.ConfigService.Data.UserMiscInfoDbLocation);
+		//zipStream.PutFile(this._config.Value.MainUserDataDbLocation);
+		//zipStream.PutFile(this._config.Value.SongAliasDbLocation);
+		//zipStream.PutFile(this._config.Value.UserMiscInfoDbLocation);
 
-		zipStream.Close();
-		memoryStream.Seek(0, SeekOrigin.Begin);
+		//zipStream.Close();
+		//memoryStream.Seek(0, SeekOrigin.Begin);
 
-		await arg.ModifyOriginalResponseAsync(
-			msg =>
-			{
-				msg.Content = "Exported!";
-				msg.Attachments = new List<FileAttachment>() { new(memoryStream, $"{DateTime.Now:yyyy-MM-dd__HH_mm}.zip") };
-			});
+		//await arg.ModifyOriginalResponseAsync(
+		//	msg =>
+		//	{
+		//		msg.Content = "Exported!";
+		//		msg.Attachments = new List<FileAttachment>() { new(memoryStream, $"{DateTime.Now:yyyy-MM-dd__HH_mm}.zip") };
+		//	});
 	}
 }
 file static class Extension

@@ -1,15 +1,14 @@
 ﻿using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Core.Utility;
-using PSLDiscordBot.Framework.DependencyInjection;
 using System.Runtime.CompilerServices;
-using yt6983138.Common;
 
 namespace PSLDiscordBot.Core.Services;
 
 public record class SongAliasPair(string SongId, string[] Alias);
-public sealed class DataBaseService : InjectableBase
+public sealed class DataBaseService // TODO: Make this transient
 {
 	private sealed class LogTracer(Action _onDispose) : IDisposable
 	{
@@ -23,22 +22,20 @@ public sealed class DataBaseService : InjectableBase
 		}
 	}
 
-	[Inject]
-	private ConfigService Config { get; set; }
+	private readonly IOptions<Config> _config;
+	private readonly ILogger<DataBaseService> _logger;
 
-#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
-	public DataBaseService()
-		: base()
-#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+	public DataBaseService(IOptions<Config> config, ILogger<DataBaseService> logger)
 	{
-
+		this._config = config;
+		this._logger = logger;
 	}
 	/// <summary>
 	/// Should only use ONE INSTANCE per request
 	/// </summary>
 	/// <returns></returns>
 	public DbDataRequester NewRequester()
-		=> new(this.Config.Data);
+		=> new(this._config, this._logger);
 
 	public sealed class DbDataRequester : IDisposable
 	{
@@ -47,9 +44,9 @@ public sealed class DataBaseService : InjectableBase
 		public const string StringArrayDelimiter = "\x1F";
 		private static readonly EventId _eventId = new(114, nameof(DbDataRequester));
 
-		private Logger _logger;
+		private ILogger<DataBaseService> _logger;
 
-		private Config _config;
+		private IOptions<Config> _config;
 
 		#region Databases
 		private readonly Lazy<SqliteConnection> _userTokenDataBase;
@@ -75,10 +72,10 @@ public sealed class DataBaseService : InjectableBase
 		#endregion
 
 		#region Initialization
-		internal DbDataRequester(Config config)
+		internal DbDataRequester(IOptions<Config> config, ILogger<DataBaseService> logger)
 		{
 			this._config = config;
-			this._logger = InjectableBase.GetSingleton<Logger>();
+			this._logger = logger;
 			this._userTokenDataBase = new(this.CreateConnection_UserTokenDataBase);
 			this._userMiscInfoDataBase = new(this.CreateConnection_UserMiscInfoDataBase);
 			this._songAliasDataBase = new(this.CreateConnection_SongAliasDataBase);
@@ -86,22 +83,22 @@ public sealed class DataBaseService : InjectableBase
 		private SqliteConnection CreateConnection_UserTokenDataBase()
 		{
 			return this.QuickCreate(
-				this._config.MainUserDataDbLocation,
-				this._config.MainUserDataTableName,
+				this._config.Value.MainUserDataDbLocation,
+				this._config.Value.MainUserDataTableName,
 				"Id INTEGER PRIMARY KEY NOT NULL, Token varchar(25) NOT NULL, ShowFormat TEXT NOT NULL");
 		}
 		private SqliteConnection CreateConnection_UserMiscInfoDataBase()
 		{
 			return this.QuickCreate(
-				 this._config.UserMiscInfoDbLocation,
-				 this._config.UserMiscInfoTableName,
+				 this._config.Value.UserMiscInfoDbLocation,
+				 this._config.Value.UserMiscInfoTableName,
 				 "Id INTEGER PRIMARY KEY NOT NULL, DefaultGetPhotoShowCount INTEGER NOT NULL");
 		}
 		private SqliteConnection CreateConnection_SongAliasDataBase()
 		{
 			return this.QuickCreate(
-				 this._config.SongAliasDbLocation,
-				 this._config.SongAliasTableName,
+				 this._config.Value.SongAliasDbLocation,
+				 this._config.Value.SongAliasTableName,
 				 "SongId TEXT PRIMARY KEY NOT NULL, Alias TEXT NOT NULL");
 		}
 		#endregion
@@ -110,22 +107,21 @@ public sealed class DataBaseService : InjectableBase
 		public async Task<int> AddOrReplaceUserDataAsync(ulong id, UserData userData)
 		{
 			return await this.QuickExecute(this._userTokenDataBase.Value, $@"
-				INSERT OR REPLACE INTO {this._config.MainUserDataTableName}(Id, Token, ShowFormat) VALUES(
+				INSERT OR REPLACE INTO {this._config.Value.MainUserDataTableName}(Id, Token, ShowFormat) VALUES(
 					{UncheckedConvertToLong(id)}, '{userData.Token}', '{userData.ShowFormat}');");
 		}
 		public async Task<UserData?> GetUserDataDirectlyAsync(ulong id)
 		{
 			using SqliteDataReader reader = await this.QuickRead(this._userTokenDataBase.Value, $@"
-				SELECT * FROM {this._config.MainUserDataTableName} WHERE
+				SELECT * FROM {this._config.Value.MainUserDataTableName} WHERE
 					Id = {UncheckedConvertToLong(id)};");
 
-			if (!await reader.ReadAsync())
-				return null;
-
-			return new(reader.GetString(1))
-			{
-				ShowFormat = reader.GetString(2)
-			};
+			return !await reader.ReadAsync()
+				? null
+				: new(reader.GetString(1))
+				{
+					ShowFormat = reader.GetString(2)
+				};
 		}
 		public async Task<UserData?> GetUserDataCachedAsync(ulong id)
 		{
@@ -155,18 +151,15 @@ public sealed class DataBaseService : InjectableBase
 		public async Task<int?> GetDefaultGetPhotoShowCountDirectly(ulong id)
 		{
 			using SqliteDataReader reader = await this.QuickRead(this._userMiscInfoDataBase.Value, $@"
-				SELECT * FROM {this._config.UserMiscInfoTableName} WHERE
+				SELECT * FROM {this._config.Value.UserMiscInfoTableName} WHERE
 					Id = {UncheckedConvertToLong(id)};");
 
-			if (!await reader.ReadAsync())
-				return null;
-
-			return reader.GetInt32(1);
+			return !await reader.ReadAsync() ? null : reader.GetInt32(1);
 		}
 		public async Task<int> SetDefaultGetPhotoShowCountDirectly(ulong id, int count)
 		{
 			return await this.QuickExecute(this._userMiscInfoDataBase.Value, $@"
-				INSERT OR REPLACE INTO {this._config.UserMiscInfoTableName}(Id, DefaultGetPhotoShowCount) VALUES(
+				INSERT OR REPLACE INTO {this._config.Value.UserMiscInfoTableName}(Id, DefaultGetPhotoShowCount) VALUES(
 					{UncheckedConvertToLong(id)}, {count});");
 		}
 
@@ -195,19 +188,16 @@ public sealed class DataBaseService : InjectableBase
 		public async Task<string[]?> GetSongAliasAsync(string songId)
 		{
 			using SqliteDataReader reader = await this.QuickRead(this._songAliasDataBase.Value, $@"
-				SELECT * FROM {this._config.SongAliasTableName} WHERE
+				SELECT * FROM {this._config.Value.SongAliasTableName} WHERE
 					SongId = $songId;",
 				new() { { "$songId", songId } });
 
-			if (!await reader.ReadAsync())
-				return null;
-
-			return FromNormalizedSqlString(reader.GetString(1));
+			return !await reader.ReadAsync() ? null : FromNormalizedSqlString(reader.GetString(1));
 		}
 		public async Task<int> AddOrReplaceSongAliasAsync(string songId, string[] alias)
 		{
 			return await this.QuickExecute(this._songAliasDataBase.Value, $@"
-				INSERT OR REPLACE INTO {this._config.SongAliasTableName} VALUES(
+				INSERT OR REPLACE INTO {this._config.Value.SongAliasTableName} VALUES(
 					$songId, $alias);",
 				new() { { "$songId", songId }, { "$alias", NormalizeToSqlString(alias) } });
 		}
@@ -237,10 +227,10 @@ public sealed class DataBaseService : InjectableBase
 		public async Task<List<SongAliasPair>> FindSongAliasAsync(string alias)
 		{
 			using SqliteDataReader reader = await this.QuickRead(this._songAliasDataBase.Value, $@"
-SELECT * FROM {this._config.SongAliasTableName} WHERE
+SELECT * FROM {this._config.Value.SongAliasTableName} WHERE
 	instr(lower(Alias), lower($alias)) > 0;", new() { { "$alias", alias } });
 
-			List<SongAliasPair> pairs = new();
+			List<SongAliasPair> pairs = [];
 			while (await reader.ReadAsync())
 			{
 				pairs.Add(new(reader.GetString(0), FromNormalizedSqlString(reader.GetString(1))));
@@ -277,7 +267,7 @@ SELECT * FROM {this._config.SongAliasTableName} WHERE
 		{
 			GC.SuppressFinalize(this);
 
-			this._logger.Log(LogLevel.Debug, $"{nameof(DbDataRequester)} finalizing", _eventId, this);
+			this._logger.LogDebug(_eventId, "{name} finalizing", nameof(DbDataRequester));
 
 			if (this._userTokenDataBase.IsValueCreated)
 				this._userTokenDataBase.Value.Dispose();
@@ -342,9 +332,9 @@ SELECT * FROM {this._config.SongAliasTableName} WHERE
 		private LogTracer LogTracing([CallerMemberName] string methodName = "<undefined>")
 		{
 			int traceId = Random.Shared.Next();
-			this._logger.Log(LogLevel.Debug, $"{methodName}: Start ({traceId})", _eventId, this);
+			this._logger.LogDebug(_eventId, "{methodName}: Start ({traceId})", methodName, traceId);
 			return new LogTracer(() =>
-				this._logger.Log(LogLevel.Debug, $"{methodName}: End ({traceId})", _eventId, this));
+				this._logger.LogDebug(_eventId, "{methodName}: End ({traceId})", methodName, traceId));
 		}
 		#endregion
 
