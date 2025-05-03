@@ -111,7 +111,7 @@ public class MoreRksCommand : CommandBase
 			string name = this._phigrosDataService.IdNameMap[item.Score.Id];
 
 			columnTextBuilder.WithRow(new ColumnTextBuilder.RowBuilder()
-				.WithFormatAdded(arg, this._localization[PSLNormalCommandKey.MoreRksNumberFormat], j + 1, item)
+				.WithFormatAdded(arg, this._localization[PSLNormalCommandKey.MoreRksNumberFormat], j, item)
 				.WithUserFormatStringAdded(arg, data, this._localization[PSLNormalCommandKey.MoreRksAccuracyChangeFormat], item.Score.Accuracy, item.TargetAcc)
 				.WithUserFormatStringAdded(arg, data, this._localization[PSLNormalCommandKey.MoreRksRksChangeFormat], item.Score.Rks, item.TargetRks)
 				.WithFormatAdded(arg, this._localization[PSLNormalCommandKey.MoreRksSongFormat], name, item.Score));

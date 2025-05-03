@@ -46,14 +46,13 @@ public class PSLPlugin : IPlugin
 	static PSLPlugin()
 	{
 		Smart.Default.AddExtensions(new UserFormatFormatter());
+		Smart.Default.AddExtensions(new CalculationFormatter());
 	}
 
-#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 	public PSLPlugin()
 		: base()
 	{
 	}
-#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
 	#region Interface
 
@@ -353,7 +352,7 @@ public class PSLPlugin : IPlugin
 
 		RestInteractionMessage? awaited = await oringal;
 		if (awaited is not null
-			// && (!e.Arg.HasResponded || awaited.Flags.GetValueOrDefault().HasFlag(MessageFlags.Loading))
+			&& (!e.Arg.HasResponded || awaited.Flags.GetValueOrDefault().HasFlag(MessageFlags.Loading))
 			)
 		{
 			await e.Arg.QuickReplyWithAttachments(formmated,

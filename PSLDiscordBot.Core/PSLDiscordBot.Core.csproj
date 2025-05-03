@@ -45,6 +45,8 @@
 	<PropertyGroup>
 	</PropertyGroup>
 
+	<ProjectExtensions><VisualStudio><UserProperties /></VisualStudio></ProjectExtensions>
+
 	<!--<ItemGroup>
 		<CoreFiles Include="$(OutDir)$(ProjectName)*" />
 		<PhigrosLibraryFiles Include="$(OutDir)PhigrosLibraryCSharp*" />

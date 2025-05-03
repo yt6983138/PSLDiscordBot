@@ -17,11 +17,11 @@ public abstract class CommandBase : BasicCommandBase
 	private protected static int EventIdCount;
 
 	#region Injection
-	private protected readonly IOptions<Config> _config;
-	private protected readonly DataBaseService _dataBaseService;
-	private protected readonly LocalizationService _localization;
-	private protected readonly ILogger _logger;
-	private protected readonly PhigrosDataService _phigrosDataService;
+	protected readonly IOptions<Config> _config;
+	protected readonly DataBaseService _dataBaseService;
+	protected readonly LocalizationService _localization;
+	protected readonly ILogger _logger;
+	protected readonly PhigrosDataService _phigrosDataService;
 	#endregion
 
 	public CommandBase(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosDataService phigrosData, ILoggerFactory loggerFactory)

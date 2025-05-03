@@ -152,26 +152,36 @@ public class GetPhotoCommand : CommandBase
 		UserInfo outerUserInfo = await data.SaveCache.GetUserInfoAsync();
 
 		await arg.QuickReply(this._localization[PSLNormalCommandKey.GetPhotoGenerating]);
-		MemoryStream image = await this._imageGenerator.MakePhoto(
-			save,
-			data,
-			summary,
-			userInfo,
-			progress,
-			outerUserInfo,
-			this._config.Value.GetPhotoRenderInfo,
-			usePng ? PhotoType.Png : this._config.Value.DefaultRenderImageType,
-			this._config.Value.RenderQuality,
-			new
-			{
-				ShowCount = count,
-				LowerBound = lowerBound,
-				AllowedGrades = showingGradesParsed,
-				CCLowerBound = ccLowerBound,
-				CCHigherBound = ccHigherBound
-			},
-			cancellationToken: this._config.Value.RenderTimeoutCTS.Token
-		);
+
+		MemoryStream image;
+		try
+		{
+			image = await this._imageGenerator.MakePhoto(
+				save,
+				data,
+				summary,
+				userInfo,
+				progress,
+				outerUserInfo,
+				this._config.Value.GetPhotoRenderInfo,
+				usePng ? PhotoType.Png : this._config.Value.DefaultRenderImageType,
+				this._config.Value.RenderQuality,
+				new
+				{
+					ShowCount = count,
+					LowerBound = lowerBound,
+					AllowedGrades = showingGradesParsed,
+					CCLowerBound = ccLowerBound,
+					CCHigherBound = ccHigherBound
+				},
+				cancellationToken: this._config.Value.RenderTimeoutCTS.Token
+		   );
+		}
+		catch (Exception ex)
+		{
+			await arg.QuickReply(this._localization[PSLCommonKey.SaveHandlerOnOtherException], ex.Message);
+			throw;
+		}
 
 		if (usePng)
 		{
