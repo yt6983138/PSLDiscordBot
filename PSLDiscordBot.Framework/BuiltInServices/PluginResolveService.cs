@@ -1,10 +1,11 @@
-﻿using Antelcat.AutoGen.ComponentModel.Diagnostic;
+﻿using Antelcat.AutoGen.ComponentModel;
+using Antelcat.AutoGen.ComponentModel.Diagnostic;
 using System.Reflection;
 
 namespace PSLDiscordBot.Framework.BuiltInServices;
 
-[AutoExtractInterface]
-public class PluginResolveService : IPluginResolveService
+[AutoExtractInterface(accessibility: Accessibility.Public)]
+internal class PluginResolveService : IPluginResolveService
 {
 	public string PluginFolderLocation { get; } = "./Plugins/"; // so things can mock this
 

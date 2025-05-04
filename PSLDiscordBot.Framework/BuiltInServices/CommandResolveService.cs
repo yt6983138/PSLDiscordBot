@@ -1,4 +1,5 @@
-﻿using Antelcat.AutoGen.ComponentModel.Diagnostic;
+﻿using Antelcat.AutoGen.ComponentModel;
+using Antelcat.AutoGen.ComponentModel.Diagnostic;
 using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -8,8 +9,8 @@ using System.Reflection;
 
 namespace PSLDiscordBot.Framework.BuiltInServices;
 
-[AutoExtractInterface]
-public class CommandResolveService : ICommandResolveService
+[AutoExtractInterface(accessibility: Accessibility.Public)]
+internal class CommandResolveService : ICommandResolveService
 {
 	private readonly IDiscordClientService _discordClientService;
 	private readonly Program _program;
