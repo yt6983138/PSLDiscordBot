@@ -95,7 +95,7 @@ public class GetPhotoCommand : CommandBase
 	{
 		int index = arg.GetIndexOption(this._localization);
 		int count = arg.GetIntegerOptionAsInt32OrDefault(this._localization[PSLNormalCommandKey.GetPhotoOptionCountName],
-			(await requester.GetDefaultGetPhotoShowCountCached(arg.User.Id)).GetValueOrDefault(30));
+			(await requester.GetMiscInfoAsync(arg.User.Id))?.DefaultGetPhotoShowCount ?? 30);
 		int lowerBound = arg.GetIntegerOptionAsInt32OrDefault(this._localization[PSLNormalCommandKey.GetPhotoOptionLowerBoundName]);
 		double ccLowerBound = arg.GetOptionOrDefault<double>(this._localization[PSLNormalCommandKey.GetPhotoOptionCCFilterLowerBoundName]);
 		double ccHigherBound = arg.GetOptionOrDefault<double>(this._localization[PSLNormalCommandKey.GetPhotoOptionCCFilterHigherBoundName], int.MaxValue);

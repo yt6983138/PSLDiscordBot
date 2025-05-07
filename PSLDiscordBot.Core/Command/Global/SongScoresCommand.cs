@@ -51,7 +51,7 @@ public class SongScoresCommand : CommandBase
 		string search = arg.GetOption<string>(this._localization[PSLCommonOptionKey.SongSearchOptionName]);
 		int index = arg.GetIndexOption(this._localization);
 
-		List<SongAliasPair> searchResult = await requester.FindFromIdOrAlias(search, this._phigrosDataService.IdNameMap);
+		List<SongAlias> searchResult = await requester.FindFromIdOrAlias(search, this._phigrosDataService.IdNameMap);
 		if (searchResult.Count == 0)
 		{
 			await arg.QuickReply(this._localization[PSLCommonMessageKey.SongSearchNoMatch]);

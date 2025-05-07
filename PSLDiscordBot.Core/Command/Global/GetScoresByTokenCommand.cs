@@ -54,7 +54,7 @@ public class GetScoresByTokenCommand : AdminCommandBase
 	{
 		ulong userId = arg.User.Id;
 		string token = arg.Data.Options.ElementAt(0).Value.Unbox<string>();
-		UserData userData = new(token);
+		UserData userData = new(userId, token);
 
 		PhigrosLibraryCSharp.SaveSummaryPair? pair = await userData.SaveCache.GetAndHandleSave(
 			arg,

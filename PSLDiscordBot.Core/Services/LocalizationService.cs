@@ -151,12 +151,12 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 			[AddAliasOptionAllayToAddName] = LocalizedString.CreateDefault("alias"),
 			[AddAliasOptionAllayToAddDescription] = LocalizedString.CreateDefault("The alias to add, note: you may only add one alias at one time."),
 			[AddAliasNoMatch] = LocalizedString.CreateDefault("Sorry, the song you're looking for seems does not exist."),
-			[AddAliasMultipleMatch] = LocalizedString.CreateDefault("There's multiple match for your 'for' input: \n```\n{0:list:{}|\n}\n```\n" +
+			[AddAliasMultipleMatch] = LocalizedString.CreateDefault("There's multiple match for your 'for' input: \n```\n{0:list:{}|\\n}\n```\n" +
 				"Please re-do this command with the correct 'for' parameter."),
 			[AddAliasAlreadyAdded] = LocalizedString.CreateDefault("Sorry, this alias has already been added! Alias that already exists: \n" +
-				"```\n{0:list:{}|\n}\n```"),
+				"```\n{0:list:{}|\\n}\n```"),
 			[AddAliasSuccess] = LocalizedString.CreateDefault("Your alias has added successfully! The song `{0}` now has the following alias: \n" +
-				"```\n{0:list:{}|\n}\n```"),
+				"```\n{1:list:{}|\\n}\n```"),
 
 			[GetScoresName] = LocalizedString.CreateDefault("get-scores"),
 			[GetScoresDescription] = LocalizedString.CreateDefault("Get scores in text, useful when you don't have much mobile data."),
@@ -210,9 +210,9 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 			[RemoveAliasMultipleMatch] = LocalizedString.CreateDefault("There's multiple match for your 'for' input: \n```\n{0:list:{}|\n}\n```\n" +
 				"Please re-do this command with the correct 'for' parameter."),
 			[RemoveAliasAlreadyAdded] = LocalizedString.CreateDefault("Sorry, this alias does not exist! Alias that already exists: \n" +
-				"```\n{0:list:{}|\n}\n```"),
+				"```\n{0:list:{}|\\n}\n```"),
 			[RemoveAliasSuccess] = LocalizedString.CreateDefault("The alias has removed successfully! The song `{0}` now has the following alias: \n" +
-				"```\n{0:list:{}|\n}\n```"),
+				"```\n{1:list:{}|\\n}\n```"),
 			//[] = LocalizedString.CreateDefault(),
 		});
 	}

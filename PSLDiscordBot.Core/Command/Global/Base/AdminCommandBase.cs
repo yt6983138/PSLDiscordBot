@@ -30,7 +30,7 @@ public abstract class AdminCommandBase : CommandBase
 		if (!await this.CheckIfUserIsAdminAndRespond(arg))
 			return;
 
-		UserData? userData = await requester.GetUserDataCachedAsync(arg.User.Id);
+		UserData? userData = await requester.GetUserDataDirectlyAsync(arg.User.Id);
 
 		await this.Callback(arg, userData, requester, executer);
 	}

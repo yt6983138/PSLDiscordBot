@@ -117,12 +117,7 @@ public class PSLPlugin : IPlugin
 				c.NameMapLocation = @default.NameMapLocation;
 
 				c.AvatarHashMapLocation = @default.AvatarHashMapLocation;
-				c.MainUserDataDbLocation = @default.MainUserDataDbLocation;
-				c.MainUserDataTableName = @default.MainUserDataTableName;
-				c.UserMiscInfoDbLocation = @default.UserMiscInfoDbLocation;
-				c.UserMiscInfoTableName = @default.UserMiscInfoTableName;
-				c.SongAliasDbLocation = @default.SongAliasDbLocation;
-				c.SongAliasTableName = @default.SongAliasTableName;
+				c.PSLDbConnectionString = @default.PSLDbConnectionString;
 				c.DifficultyMapGrabLocation = @default.DifficultyMapGrabLocation;
 				c.NameMapGrabLocation = @default.NameMapGrabLocation;
 				c.HelpMDGrabLocation = @default.HelpMDGrabLocation;

@@ -64,7 +64,7 @@ public abstract class CommandBase : BasicCommandBase
 		ulong userId = task.User.Id;
 		using DataBaseService.DbDataRequester requester = this._dataBaseService.NewRequester();
 
-		userData = requester.GetUserDataCachedAsync(userId).GetAwaiter().GetResult();
+		userData = requester.GetUserDataDirectlyAsync(userId).GetAwaiter().GetResult();
 		if (userData is null)
 		{
 			_ = task.QuickReply(this._localization[PSLCommonKey.CommandBaseNotRegistered][task.UserLocale]);

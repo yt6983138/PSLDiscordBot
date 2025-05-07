@@ -31,7 +31,7 @@ public class GetTokenForCommand : AdminCommandBase
 	{
 		IUser user = (IUser)arg.Data.Options.First().Value;
 
-		UserData? result = await requester.GetUserDataCachedAsync(user.Id);
+		UserData? result = await requester.GetUserDataDirectlyAsync(user.Id);
 
 		if (result is null)
 		{

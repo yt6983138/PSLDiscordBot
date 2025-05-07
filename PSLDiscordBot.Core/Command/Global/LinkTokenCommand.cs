@@ -47,7 +47,7 @@ public class LinkTokenCommand : GuestCommandBase
 			return;
 		}
 
-		UserData tmp = new(token);
+		UserData tmp = new(userId, token);
 		SaveSummaryPair? fetched = await tmp.SaveCache.GetAndHandleSave(
 			arg,
 			this._phigrosDataService.DifficultiesMap,
@@ -68,6 +68,6 @@ public class LinkTokenCommand : GuestCommandBase
 		{
 			await arg.QuickReply(this._localization[PSLGuestCommandKey.LinkTokenSuccess]);
 		}
-		await requester.AddOrReplaceUserDataCachedAsync(userId, tmp);
+		await requester.AddOrReplaceUserDataAsync(tmp);
 	}
 }

@@ -44,7 +44,7 @@ public class AnalyzeSaveCommand : AdminCommandBase
 	{
 		ulong userId = arg.User.Id;
 		string token = arg.GetOption<string>("token");
-		UserData userData = new(token);
+		UserData userData = new(userId, token);
 		int index = arg.GetIntegerOptionAsInt32OrDefault("index");
 
 		PhigrosLibraryCSharp.SaveSummaryPair? pair = await userData.SaveCache.GetAndHandleSave(

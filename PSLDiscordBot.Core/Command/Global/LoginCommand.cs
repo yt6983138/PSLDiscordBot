@@ -53,9 +53,9 @@ public class LoginCommand : GuestCommandBase
 			{
 				TapTapProfileData profile = await TapTapHelper.GetProfile(result.Data);
 				string token = await LCHelper.LoginAndGetToken(new(profile.Data, result.Data));
-				UserData userData = new(token);
+				UserData userData = new(command.User.Id, token);
 				_ = await userData.SaveCache.GetUserInfoAsync();
-				await requester.AddOrReplaceUserDataCachedAsync(command.User.Id, userData);
+				await requester.AddOrReplaceUserDataAsync(userData);
 				await command.QuickReply(this._localization[PSLGuestCommandKey.LoginComplete]);
 				return;
 			}

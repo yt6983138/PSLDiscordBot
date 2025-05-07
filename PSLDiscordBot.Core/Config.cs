@@ -19,14 +19,7 @@ public class Config
 
 	public string AvatarHashMapLocation { get; set; } = "./Assets/Avatar/AvatarInfo.json";
 
-	public string MainUserDataDbLocation { get; set; } = "./PSL/MainUserData.db";
-	public string MainUserDataTableName { get; set; } = "DiscordIdPhigrosTokenTable";
-
-	public string UserMiscInfoDbLocation { get; set; } = "./PSL/MiscInfo.db";
-	public string UserMiscInfoTableName { get; set; } = "DiscordIdMiscInfoTable";
-
-	public string SongAliasDbLocation { get; set; } = "./PSL/SongAlias.db";
-	public string SongAliasTableName { get; set; } = "SongAliasTable";
+	public string PSLDbConnectionString { get; set; } = "Data Source=./PSL/MainUserData.db";
 
 	public string DifficultyMapLocation { get; set; } = "./PSL/difficulty.tsv";
 	public string NameMapLocation { get; set; } = "./PSL/info.tsv";

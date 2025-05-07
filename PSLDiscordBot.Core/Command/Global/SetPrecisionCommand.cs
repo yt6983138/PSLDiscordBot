@@ -41,7 +41,7 @@ public class SetPrecisionCommand : CommandBase
 		StringBuilder sb = new(".");
 		sb.Append('0', arg.GetIntegerOptionAsInt32(this._localization[PSLNormalCommandKey.SetPrecisionOptionPrecisionName]));
 		data.ShowFormat = sb.ToString();
-		await requester.AddOrReplaceUserDataCachedAsync(arg.User.Id, data);
+		await requester.AddOrReplaceUserDataAsync(data);
 		await arg.QuickReply(this._localization[PSLCommonMessageKey.OperationDone]);
 	}
 }
