@@ -1,5 +1,7 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using PhigrosLibraryCSharp.GameRecords;
 using PSLDiscordBot.Core.Command.Global.Base;
 using PSLDiscordBot.Core.Localization;
@@ -17,29 +19,34 @@ namespace PSLDiscordBot.Core.Command.Global;
 [AddToGlobal]
 public class SongInfoCommand : GuestCommandBase
 {
-	public override OneOf<string, LocalizedString> PSLName => this.Localization[PSLGuestCommandKey.SongInfoName];
-	public override OneOf<string, LocalizedString> PSLDescription => this.Localization[PSLGuestCommandKey.SongInfoDescription];
+	public SongInfoCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosDataService phigrosData, ILoggerFactory loggerFactory)
+		: base(config, database, localization, phigrosData, loggerFactory)
+	{
+	}
+
+	public override OneOf<string, LocalizedString> PSLName => this._localization[PSLGuestCommandKey.SongInfoName];
+	public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLGuestCommandKey.SongInfoDescription];
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder.AddOption(
-			this.Localization[PSLCommonOptionKey.SongSearchOptionName],
+			this._localization[PSLCommonOptionKey.SongSearchOptionName],
 			ApplicationCommandOptionType.String,
-			this.Localization[PSLCommonOptionKey.SongSearchOptionDescription],
+			this._localization[PSLCommonOptionKey.SongSearchOptionDescription],
 			isRequired: true);
 
 	public override async Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
 	{
-		List<SongAliasPair> foundAlias = await requester.FindFromIdOrAlias(
-			arg.GetOption<string>(this.Localization[PSLCommonOptionKey.SongSearchOptionName]),
-			this.PhigrosDataService.IdNameMap);
+		List<SongAlias> foundAlias = await requester.FindFromIdOrAlias(
+			arg.GetOption<string>(this._localization[PSLCommonOptionKey.SongSearchOptionName]),
+			this._phigrosDataService.IdNameMap);
 
 		if (foundAlias.Count == 0)
 		{
-			await arg.QuickReply(this.Localization[PSLCommonMessageKey.SongSearchNoMatch]);
+			await arg.QuickReply(this._localization[PSLCommonMessageKey.SongSearchNoMatch]);
 			return;
 		}
 
-		StringBuilder query = BuildReturnQueryString(foundAlias, this.PhigrosDataService);
+		StringBuilder query = BuildReturnQueryString(foundAlias, this._phigrosDataService);
 		// UNDONE: localize those builder based messages
 
 		await arg.QuickReplyWithAttachments($"Found {foundAlias.Count} match(es). " +
@@ -47,9 +54,9 @@ public class SongInfoCommand : GuestCommandBase
 			[PSLUtils.ToAttachment(query.ToString(), "Query.txt")]);
 	}
 
-	public static StringBuilder BuildReturnQueryString(List<SongAliasPair> foundAlias, PhigrosDataService service)
+	public static StringBuilder BuildReturnQueryString(List<SongAlias> foundAlias, PhigrosDataService service)
 	{
-		SongAliasPair first = foundAlias[0];
+		SongAlias first = foundAlias[0];
 		SongInfo firstInfo = service.SongInfoMap[first.SongId];
 
 		StringBuilder query = new($"""
@@ -68,7 +75,7 @@ public class SongInfoCommand : GuestCommandBase
 			query.Append("\n\nOther matches: ");
 			for (int i = 1; i < foundAlias.Count; i++)
 			{
-				SongAliasPair found = foundAlias[i];
+				SongAlias found = foundAlias[i];
 				query.Append(found.SongId);
 				query.Append('(');
 				query.Append(service.SongInfoMap[found.SongId].Name);

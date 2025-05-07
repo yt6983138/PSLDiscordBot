@@ -1,9 +1,12 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using PhigrosLibraryCSharp.Cloud.DataStructure.Raw;
 using PSLDiscordBot.Core.Command.Global.Base;
 using PSLDiscordBot.Core.Localization;
 using PSLDiscordBot.Core.Services;
+using PSLDiscordBot.Core.Services.Phigros;
 using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Core.Utility;
 using PSLDiscordBot.Framework;
@@ -16,8 +19,13 @@ namespace PSLDiscordBot.Core.Command.Global;
 [AddToGlobal]
 public class GetTimeIndexCommand : CommandBase
 {
-	public override OneOf<string, LocalizedString> PSLName => this.Localization[PSLNormalCommandKey.GetTimeIndexName];
-	public override OneOf<string, LocalizedString> PSLDescription => this.Localization[PSLNormalCommandKey.GetTimeIndexDescription];
+	public GetTimeIndexCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosDataService phigrosData, ILoggerFactory loggerFactory)
+		: base(config, database, localization, phigrosData, loggerFactory)
+	{
+	}
+
+	public override OneOf<string, LocalizedString> PSLName => this._localization[PSLNormalCommandKey.GetTimeIndexName];
+	public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLNormalCommandKey.GetTimeIndexDescription];
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder;
@@ -28,8 +36,8 @@ public class GetTimeIndexCommand : CommandBase
 
 		StringBuilder sb = new("```\n");
 		ColumnTextBuilder builder = new(arg, [
-			this.Localization[PSLNormalCommandKey.GetTimeIndexIndexTitle],
-			this.Localization[PSLNormalCommandKey.GetTimeIndexDateTitle]]);
+			this._localization[PSLNormalCommandKey.GetTimeIndexIndexTitle],
+			this._localization[PSLNormalCommandKey.GetTimeIndexDateTitle]]);
 
 		for (int i = 0; i < saves.Count; i++)
 		{

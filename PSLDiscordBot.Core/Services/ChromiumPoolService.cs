@@ -1,9 +1,9 @@
 ﻿using HtmlToImage.NET;
-using PSLDiscordBot.Framework.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace PSLDiscordBot.Core.Services;
 
-public class ChromiumPoolService : InjectableBase
+public class ChromiumPoolService
 {
 	public record class TabInfoPair(HtmlConverter.Tab Tab, bool Occupied)
 	{
@@ -31,12 +31,12 @@ public class ChromiumPoolService : InjectableBase
 		}
 	}
 
-	private List<TabInfoPair> _chromiumTabPairs = new();
+	private List<TabInfoPair> _chromiumTabPairs = [];
 
 	public IReadOnlyList<TabInfoPair> ChromiumTabPairs => this._chromiumTabPairs;
 	public HtmlConverter Chromium { get; private set; }
 
-	public ChromiumPoolService(string chromiumPath,
+	private ChromiumPoolService(string chromiumPath,
 		int defaultTabCount,
 		ushort port,
 		bool debug = false,
@@ -56,9 +56,22 @@ public class ChromiumPoolService : InjectableBase
 				"--disable-extensions",
 				"--disable-backing-store-limit"
 			]);
-		List<TabInfoPair> tabs = new();
+		List<TabInfoPair> tabs = [];
 		Parallel.For(0, defaultTabCount, _ => this._chromiumTabPairs.Add(new(this.Chromium.NewTab(), false)));
 	}
+	public ChromiumPoolService(IOptions<Config> config)
+		: this(config.Value.ChromiumLocation,
+			config.Value.DefaultChromiumTabCacheCount,
+			config.Value.ChromiumPort,
+#if DEBUG
+			true,
+			true
+#else
+			false,
+			false
+#endif
+			)
+	{ }
 
 	public TabUsageBlock GetFreeTab()
 	{

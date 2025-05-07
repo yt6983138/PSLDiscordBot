@@ -1,10 +1,10 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using Microsoft.EntityFrameworkCore;
 using PhigrosLibraryCSharp;
-using PhigrosLibraryCSharp.Cloud.DataStructure;
-using PhigrosLibraryCSharp.GameRecords;
 using PSLDiscordBot.Core.Localization;
 using PSLDiscordBot.Core.Services;
+using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.Localization;
 using SixLabors.ImageSharp;
@@ -62,7 +62,7 @@ public static class PSLUtils
 		return command.GetIntegerOptionAsInt32OrDefault(service[PSLCommonOptionKey.IndexOptionName], @default);
 	}
 
-	public static async Task<List<SongAliasPair>> FindFromIdOrAlias(
+	public static async Task<List<SongAlias>> FindFromIdOrAlias(
 		this DataBaseService.DbDataRequester requester,
 		string idOrAlias,
 		IReadOnlyDictionary<string, string> idNameMap)
@@ -73,14 +73,14 @@ public static class PSLUtils
 
 		if (tryFindInMap is not null)
 			idOrAlias = tryFindInMap;
-		SongAliasPair pair;
+		SongAlias pair;
 		if (idNameMap.ContainsKey(idOrAlias))
 		{
-			pair = new(idOrAlias, await requester.GetSongAliasCachedAsync(idOrAlias) ?? []);
+			pair = await requester.GetSongAliasAsync(idOrAlias) ?? new(idOrAlias, []);
 		}
 		else
 		{
-			List<SongAliasPair> pairs = await requester.FindSongAliasAsync(idOrAlias);
+			List<SongAlias> pairs = await requester.FindSongAliasAsync(idOrAlias);
 			return pairs;
 		}
 
@@ -178,13 +178,11 @@ public static class PSLUtils
 	}
 	public static bool HasValueAnd<T>(this T? self, Func<T, bool> predicate) where T : struct
 	{
-		if (!self.HasValue) return false;
-		return predicate.Invoke(self.Value);
+		return self.HasValue && predicate.Invoke(self.Value);
 	}
 	public static bool IsNotNullAnd<T>(this T? self, Func<T, bool> predicate) where T : class
 	{
-		if (self is null) return false;
-		return predicate.Invoke(self);
+		return self is not null && predicate.Invoke(self);
 	}
 	public static string WithMaxLength(this string str, int maxLength)
 	{
@@ -221,5 +219,25 @@ public static class PSLUtils
 		char[] chars = text.ToCharArray();
 		chars[0] = char.ToUpper(chars[0]);
 		return new(chars);
+	}
+	public static async Task AddOrUpdate<TEntity>(this DbSet<TEntity> set, TEntity entity)
+		where TEntity : class
+	{
+		if (await set.AnyAsync(e => e == entity))
+		{
+			set.Update(entity);
+		}
+		else
+		{
+			await set.AddAsync(entity);
+		}
+	}
+	public static async Task AddOrUpdateRange<TEntity>(this DbSet<TEntity> set, IEnumerable<TEntity> entities)
+			where TEntity : class
+	{
+		foreach (TEntity entity in entities)
+		{
+			await set.AddOrUpdate(entity);
+		}
 	}
 }

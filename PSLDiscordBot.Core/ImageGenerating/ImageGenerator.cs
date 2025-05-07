@@ -7,12 +7,10 @@ using PSLDiscordBot.Core.Services;
 using PSLDiscordBot.Core.Services.Phigros;
 using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Framework;
-using PSLDiscordBot.Framework.DependencyInjection;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats.Png;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
-using yt6983138.Common;
 
 /*** websocket dont blow up pls
  * 
@@ -51,20 +49,12 @@ using yt6983138.Common;
 
 namespace PSLDiscordBot.Core.ImageGenerating;
 
-public class ImageGenerator : InjectableBase
+public class ImageGenerator
 {
-	#region Injection
-
-	[Inject]
-	public PhigrosDataService PhigrosDataService { get; set; }
-	[Inject]
-	public Logger Logger { get; set; }
-	[Inject]
-	public AvatarHashMapService AvatarMapService { get; set; }
-	[Inject]
-	public ChromiumPoolService ChromiumPoolService { get; set; }
-
-	#endregion
+	private readonly PhigrosDataService _phigrosDataService;
+	private readonly ILogger<ImageGenerator> _logger;
+	private readonly AvatarHashMapService _avatarMapService;
+	private readonly ChromiumPoolService _chromiumPoolService;
 
 	public delegate void MapProcessor(object map, object image);
 
@@ -72,31 +62,30 @@ public class ImageGenerator : InjectableBase
 
 	private static EventId EventId { get; } = new(114512, "ImageGenerator");
 
-#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
-	public ImageGenerator()
-		: base()
-#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+	public ImageGenerator(ILogger<ImageGenerator> logger, PhigrosDataService phigrosData, AvatarHashMapService avatarHashMap, ChromiumPoolService chromiumPool)
 	{
-#pragma warning disable CS8602 // Dereference of a possibly null reference.
+		this._logger = logger;
+		this._phigrosDataService = phigrosData;
+		this._avatarMapService = avatarHashMap;
+		this._chromiumPoolService = chromiumPool;
 		this.SongDifficultyCount = new Dictionary<string, object>()
 		{
 			{
-				"TotalSongEZCount", this.PhigrosDataService.DifficultiesMap.Count(x => x.Value.Length >= 1)
+				"TotalSongEZCount", this._phigrosDataService.DifficultiesMap.Count(x => x.Value.Length >= 1)
 			},
 			{
-				"TotalSongHDCount", this.PhigrosDataService.DifficultiesMap.Count(x => x.Value.Length >= 2)
+				"TotalSongHDCount", this._phigrosDataService.DifficultiesMap.Count(x => x.Value.Length >= 2)
 			},
 			{
-				"TotalSongINCount", this.PhigrosDataService.DifficultiesMap.Count(x => x.Value.Length >= 3)
+				"TotalSongINCount", this._phigrosDataService.DifficultiesMap.Count(x => x.Value.Length >= 3)
 			},
 			{
-				"TotalSongATCount", this.PhigrosDataService.DifficultiesMap.Count(x => x.Value.Length >= 4)
+				"TotalSongATCount", this._phigrosDataService.DifficultiesMap.Count(x => x.Value.Length >= 4)
 			},
 			{
-				"TotalSongCount", this.PhigrosDataService.DifficultiesMap.Count
+				"TotalSongCount", this._phigrosDataService.DifficultiesMap.Count
 			}
 		};
-#pragma warning restore CS8602 // Dereference of a possibly null reference.
 	}
 
 	public async Task<MemoryStream> MakePhoto(
@@ -197,19 +186,19 @@ public class ImageGenerator : InjectableBase
 
 		string avatarPath = "./Assets/Avatar/".ToFullPath();
 		if (string.IsNullOrEmpty(summary.Avatar)) summary.Avatar = "Introduction";
-		if (!this.AvatarMapService.Data.TryGetValue(summary.Avatar, out string? hash))
+		if (!this._avatarMapService.Data.TryGetValue(summary.Avatar, out string? hash))
 		{
-			this.Logger.Log(LogLevel.Warning,
-				$"Failed to find avatar {summary.Avatar}, defaulting to default.",
-				EventId,
-				this);
-			avatarPath += $"{this.AvatarMapService.Data["Introduction"]}.png";
+			this._logger.LogWarning(EventId, "Failed to find avatar {avatar}, defaulting to default.", summary.Avatar);
+			avatarPath += $"{this._avatarMapService.Data["Introduction"]}.png";
 		}
-		else avatarPath += $"{hash}.png";
+		else
+		{
+			avatarPath += $"{hash}.png";
+		}
 
 		string formattedBgPath = "./Assets/Tracks/".ToFullPath();
 		string cutBgId = string.IsNullOrWhiteSpace(gameUserInfo.BackgroundId) ? "" : gameUserInfo.BackgroundId[..^1];
-		KeyValuePair<string, string> firstIdOccurrence = this.PhigrosDataService.IdNameMap.FirstOrDefault(p =>
+		KeyValuePair<string, string> firstIdOccurrence = this._phigrosDataService.IdNameMap.FirstOrDefault(p =>
 			p.Value == gameUserInfo.BackgroundId
 			|| p.Value == cutBgId
 			|| p.Key == gameUserInfo.BackgroundId[..^2]); // goddamn why they have to change this every time
@@ -218,11 +207,7 @@ public class ImageGenerator : InjectableBase
 			formattedBgPath += "Introduction";
 			if (!gameUserInfo.BackgroundId.Contains("Introduc"))
 			{
-				this.Logger.Log(LogLevel.Warning,
-					$"Failed to find background {gameUserInfo.BackgroundId}" +
-					", defaulting to introduction.",
-					EventId,
-					this);
+				this._logger.LogWarning(EventId, "Failed to find background {backgroundId}, defaulting to introduction.", gameUserInfo.BackgroundId);
 			}
 		}
 		else
@@ -261,14 +246,14 @@ public class ImageGenerator : InjectableBase
 				"INFO", map
 			},
 			{
-				"INFO_MAP_DIFFICULTY", this.PhigrosDataService.DifficultiesMap
+				"INFO_MAP_DIFFICULTY", this._phigrosDataService.DifficultiesMap
 			},
 			{
-				"INFO_MAP_ID_NAME", this.PhigrosDataService.IdNameMap
+				"INFO_MAP_ID_NAME", this._phigrosDataService.IdNameMap
 			}
 		};
 
-		using ChromiumPoolService.TabUsageBlock t = this.ChromiumPoolService.GetFreeTab();
+		using ChromiumPoolService.TabUsageBlock t = this._chromiumPoolService.GetFreeTab();
 		HtmlConverter.Tab tab = t.Tab;
 
 		await tab.SetViewPortSize(basicHtmlImageInfo.InitialWidth,
@@ -292,13 +277,8 @@ public class ImageGenerator : InjectableBase
 			},
 			cancellationToken);
 
-
-		this.Logger.Log(LogLevel.Debug, tab.CdpInfo.ToString(), EventId, this);
-		this.Logger.Log(LogLevel.Debug,
-			$"localhost:{this.ChromiumPoolService.Chromium.CdpPort}{tab.CdpInfo.DevToolsFrontendUrl}",
-			EventId,
-			this);
-
+		this._logger.LogDebug(EventId, tab.CdpInfo.ToString());
+		this._logger.LogDebug(EventId, "localhost:{port}{url}", this._chromiumPoolService.Chromium.CdpPort, tab.CdpInfo.DevToolsFrontendUrl);
 
 		bool ready = false;
 		do
@@ -325,12 +305,12 @@ public class ImageGenerator : InjectableBase
 			if ((string)widthJson["result"]!["type"]! == "number")
 				width = (int)(double)widthJson["result"]!["value"]!;
 			else
-				this.Logger.Log(LogLevel.Warning, "Incorrect type for dynamic width!", EventId, this);
+				this._logger.LogWarning(EventId, "Incorrect type for dynamic width!");
 
 			if ((string)heightJson["result"]!["type"]! == "number")
 				height = (int)(double)heightJson["result"]!["value"]!;
 			else
-				this.Logger.Log(LogLevel.Warning, "Incorrect type for dynamic height!", EventId, this);
+				this._logger.LogWarning(EventId, "Incorrect type for dynamic height!");
 
 			if (!(basicHtmlImageInfo.UseXScrollWhenTooBig || basicHtmlImageInfo.UseYScrollWhenTooBig))
 			{

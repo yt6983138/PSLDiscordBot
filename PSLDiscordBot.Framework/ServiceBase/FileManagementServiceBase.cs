@@ -1,11 +1,9 @@
 ﻿using Newtonsoft.Json;
-using PSLDiscordBot.Framework.DependencyInjection;
 using System.Text;
 
 namespace PSLDiscordBot.Framework.ServiceBase;
-public abstract class FileManagementServiceBase<T> : InjectableBase
+public abstract class FileManagementServiceBase<T>
 {
-	private int _autoSaveInterval;
 	private protected JsonSerializerSettings _defaultSettings = new()
 	{
 		ObjectCreationHandling = ObjectCreationHandling.Replace,
@@ -17,12 +15,14 @@ public abstract class FileManagementServiceBase<T> : InjectableBase
 	/// </summary>
 	public int AutoSaveIntervalMs
 	{
-		get => this._autoSaveInterval;
+		get;
 		set
 		{
-			this._autoSaveInterval = value;
+			field = value;
 			if (this.AutoSaveIntervalMs > 0)
+			{
 				this.AutoSaveRunner = new(_ => this.Save(this.Data), this, 0, this.AutoSaveIntervalMs);
+			}
 			else
 			{
 				this.AutoSaveRunner?.Dispose();
@@ -58,7 +58,9 @@ public abstract class FileManagementServiceBase<T> : InjectableBase
 			this.InfoOfFile.Create().Dispose();
 
 		if (this.Load(out T? data))
+		{
 			this.Data = data;
+		}
 		else
 		{
 			this.Data = this.Generate();
@@ -88,10 +90,7 @@ public abstract class FileManagementServiceBase<T> : InjectableBase
 			stream.Read(buffer);
 
 			data = JsonConvert.DeserializeObject<TFile>(Encoding.UTF8.GetString(buffer), settings)!;
-			if (data is null)
-				return false;
-
-			return true;
+			return data is not null;
 		}
 		catch
 		{

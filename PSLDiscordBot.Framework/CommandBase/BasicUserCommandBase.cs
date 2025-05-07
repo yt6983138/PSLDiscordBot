@@ -1,12 +1,10 @@
 ﻿using Discord;
 using Discord.WebSocket;
-using Microsoft.Extensions.Logging;
-using PSLDiscordBot.Framework.DependencyInjection;
 
 namespace PSLDiscordBot.Framework.CommandBase;
-public abstract class BasicUserCommandBase : InjectableBase
+public abstract class BasicUserCommandBase
 {
-	protected private static int EventIdCount;
+	private protected static int EventIdCount;
 
 	protected virtual EventId EventId { get; }
 

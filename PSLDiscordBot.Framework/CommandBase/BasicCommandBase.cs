@@ -1,13 +1,11 @@
 ﻿using Discord;
 using Discord.WebSocket;
-using Microsoft.Extensions.Logging;
 using PSLDiscordBot.Analyzer;
-using PSLDiscordBot.Framework.DependencyInjection;
 
 namespace PSLDiscordBot.Framework.CommandBase;
-public abstract class BasicCommandBase : InjectableBase
+public abstract class BasicCommandBase
 {
-	protected private static int EventIdCount;
+	private protected static int EventIdCount;
 
 	protected virtual EventId EventId { get; }
 	[NoLongerThan(SlashCommandBuilder.MaxNameLength)]
@@ -36,7 +34,6 @@ public abstract class BasicCommandBase : InjectableBase
 	public abstract SlashCommandBuilder CompleteBuilder { get; }
 
 	public BasicCommandBase()
-		: base()
 	{
 		this.EventId = new(0_11451400 + EventIdCount++, this.GetType().Name);
 	}

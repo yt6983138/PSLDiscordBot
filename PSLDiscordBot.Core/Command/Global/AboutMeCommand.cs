@@ -1,15 +1,17 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using PhigrosLibraryCSharp.Cloud.DataStructure;
 using PSLDiscordBot.Core.Command.Global.Base;
 using PSLDiscordBot.Core.ImageGenerating;
 using PSLDiscordBot.Core.Localization;
 using PSLDiscordBot.Core.Services;
+using PSLDiscordBot.Core.Services.Phigros;
 using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Core.Utility;
 using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.CommandBase;
-using PSLDiscordBot.Framework.DependencyInjection;
 using PSLDiscordBot.Framework.Localization;
 
 namespace PSLDiscordBot.Core.Command.Global;
@@ -17,39 +19,40 @@ namespace PSLDiscordBot.Core.Command.Global;
 [AddToGlobal]
 public class AboutMeCommand : CommandBase
 {
-	#region Injection
-#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
-	[Inject]
-	public ImageGenerator ImageGenerator { get; set; }
-#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
-	#endregion
+	private readonly ImageGenerator _imageGenerator;
+
+	public AboutMeCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosDataService phigrosData, ILoggerFactory loggerFactory, ImageGenerator imageGenerator)
+		: base(config, database, localization, phigrosData, loggerFactory)
+	{
+		this._imageGenerator = imageGenerator;
+	}
 
 	public override bool IsEphemeral => false;
 	public override bool RunOnDifferentThread => true;
 
-	public override OneOf<string, LocalizedString> PSLName => this.Localization[PSLNormalCommandKey.AboutMeName];
-	public override OneOf<string, LocalizedString> PSLDescription => this.Localization[PSLNormalCommandKey.AboutMeDescription];
+	public override OneOf<string, LocalizedString> PSLName => this._localization[PSLNormalCommandKey.AboutMeName];
+	public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLNormalCommandKey.AboutMeDescription];
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder.AddOption(
-			this.Localization[PSLCommonOptionKey.IndexOptionName],
+			this._localization[PSLCommonOptionKey.IndexOptionName],
 			ApplicationCommandOptionType.Integer,
-			this.Localization[PSLCommonOptionKey.IndexOptionDescription],
+			this._localization[PSLCommonOptionKey.IndexOptionDescription],
 			isRequired: false,
 			minValue: 0);
 
 	public override async Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
 	{
-		await arg.QuickReply(this.Localization[PSLCommonMessageKey.CommandUnavailable]);
+		await arg.QuickReply(this._localization[PSLCommonMessageKey.CommandUnavailable]);
 		return;
 
 
-		int index = arg.GetIndexOption(this.Localization);
+		int index = arg.GetIndexOption(this._localization);
 
 		PhigrosLibraryCSharp.SaveSummaryPair? pair = await data.SaveCache.GetAndHandleSave(
 			arg,
-			this.PhigrosDataService.DifficultiesMap,
-			this.Localization,
+			this._phigrosDataService.DifficultiesMap,
+			this._localization,
 			index);
 		if (pair is null)
 			return;
@@ -58,20 +61,20 @@ public class AboutMeCommand : CommandBase
 		GameProgress progress = await data.SaveCache.GetGameProgressAsync(index);
 		UserInfo outerUserInfo = await data.SaveCache.GetUserInfoAsync();
 
-		MemoryStream image = await this.ImageGenerator.MakePhoto(
+		MemoryStream image = await this._imageGenerator.MakePhoto(
 			save,
 			data,
 			summary,
 			userInfo,
 			progress,
 			outerUserInfo,
-			this.ConfigService.Data.AboutMeRenderInfo,
-			this.ConfigService.Data.DefaultRenderImageType,
-			this.ConfigService.Data.RenderQuality,
-			cancellationToken: this.ConfigService.Data.RenderTimeoutCTS.Token
+			this._config.Value.AboutMeRenderInfo,
+			this._config.Value.DefaultRenderImageType,
+			this._config.Value.RenderQuality,
+			cancellationToken: this._config.Value.RenderTimeoutCTS.Token
 		);
 
 		await arg.QuickReplyWithAttachments([new(image, "Score.png")],
-			this.Localization[PSLCommonMessageKey.ImageGenerated]);
+			this._localization[PSLCommonMessageKey.ImageGenerated]);
 	}
 }

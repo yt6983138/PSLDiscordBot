@@ -1,18 +1,19 @@
 ﻿namespace PSLDiscordBot.Framework;
 public interface IPlugin
 {
-	public string Name { get; }
-	public string Description { get; }
-	public Version Version { get; }
-	public string Author { get; }
+	string Name { get; }
+	string Description { get; }
+	Version Version { get; }
+	string Author { get; }
 	/// <summary>
 	/// lower for higher priority
 	/// </summary>
-	public int Priority { get; }
+	int Priority { get; }
 
-	public bool CanBeDynamicallyLoaded { get; }
-	public bool CanBeDynamicallyUnloaded { get; }
+	bool CanBeDynamicallyLoaded { get; }
+	bool CanBeDynamicallyUnloaded { get; }
 
-	public void Load(Program program, bool isDynamicLoading);
-	public void Unload(Program program, bool isDynamicUnloading);
+	void Load(WebApplicationBuilder hostBuilder, bool isDynamicLoading);
+	void Setup(IHost host);
+	void Unload(IHost host, bool isDynamicUnloading);
 }

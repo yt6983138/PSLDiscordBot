@@ -1,7 +1,10 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using PSLDiscordBot.Core.Command.Global.Base;
 using PSLDiscordBot.Core.Services;
+using PSLDiscordBot.Core.Services.Phigros;
 using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Core.Utility;
 using PSLDiscordBot.Framework;
@@ -13,6 +16,11 @@ namespace PSLDiscordBot.Core.Command.Global;
 [AddToGlobal]
 public class BugMeCommand : AdminCommandBase
 {
+	public BugMeCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosDataService phigrosData, ILoggerFactory loggerFactory)
+		: base(config, database, localization, phigrosData, loggerFactory)
+	{
+	}
+
 	public override OneOf<string, LocalizedString> PSLName => "bug-me";
 	public override OneOf<string, LocalizedString> PSLDescription => "Can be used to test exception handling. [Admin command]";
 

@@ -1,15 +1,16 @@
 ﻿using PSLDiscordBot.Framework.BuiltInServices;
-using PSLDiscordBot.Framework.DependencyInjection;
+using System.Reflection;
 
 namespace PSLDiscordBot.Framework;
 
 public class Program
 {
-	private List<ArgParseInfo> _argParseInfos = new();
+	private List<ArgParseInfo> _argParseInfos = [];
 
-	private DiscordClientService _discordClientService = null!;
-	private PluginResolveService _pluginResolveService = null!;
-	private CommandResolveService _commandResolveService = null!;
+	private IPluginResolveService _pluginResolveService = null!;
+	private ICommandResolveService _commandResolveService = null!;
+	private ICoFramework? _coFramework;
+	private WebApplicationBuilder _builder = null!;
 
 	// so basically it goes like this:
 	// plugin loading -> AfterPluginsLoaded -> ArgParsing ->
@@ -32,46 +33,48 @@ public class Program
 
 	public CancellationTokenSource CancellationTokenSource { get; } = new();
 	public CancellationToken CancellationToken { get; private set; }
-	public List<Task> RunningTasks { get; } = new();
+	public List<Task> RunningTasks { get; } = [];
 	public string[] ProgramArguments { get; private set; } = [];
+	public IServiceCollection AllServices => this._builder.Services;
+	public IHost App { get; private set; } = null!;
 
 	public static Task Main(string[] args) => new Program().MainAsync(args);
 
 	public async Task MainAsync(string[] args)
 	{
+		const string CoFrameworkLocation = "./CO_FRAMEWORK_LOCATION";
+
 		this.CancellationToken = this.CancellationTokenSource.Token;
 		this.ProgramArguments = args;
 
-		InjectableBase.AddSingleton(this);
-		this._pluginResolveService = new();
-		InjectableBase.AddSingleton(this._pluginResolveService);
-		this._discordClientService = new(new(new()
+		if (File.Exists(CoFrameworkLocation))
 		{
-			GatewayIntents = Discord.GatewayIntents.AllUnprivileged
-			^ Discord.GatewayIntents.GuildScheduledEvents
-			^ Discord.GatewayIntents.GuildInvites
-		}), new());
-		InjectableBase.AddSingleton(this._discordClientService);
-		this._commandResolveService = new();
-		InjectableBase.AddSingleton(this._commandResolveService);
+			Assembly asm = Assembly.LoadFrom(File.ReadAllText(CoFrameworkLocation));
+			Type? type = asm.GetTypes().FirstOrDefault(x => x.IsAssignableTo(typeof(ICoFramework)));
+			if (type is not null)
+				this._coFramework = (ICoFramework?)Activator.CreateInstance(type);
+		}
 
-		InjectableBase.OnServiceAdd += this.InjectableBase_OnServiceAdd;
+		this._builder = WebApplication.CreateBuilder(args);
+		this._builder.Services.AddSingleton(this)
+			.AddSingleton<IDiscordClientService, DiscordClientService>()
+			.AddSingleton<ICommandResolveService, CommandResolveService>()
+			.AddSingleton<IPluginResolveService, PluginResolveService>();
+
+		this._coFramework?.Initialize(this, this._builder);
+
+		ServiceProvider tempResolver = this._builder.Services.BuildServiceProvider();
+		this._pluginResolveService = tempResolver.GetRequiredService<IPluginResolveService>();
 
 		this._pluginResolveService.LoadAllPlugins();
+		this._pluginResolveService.InvokeAll(this._builder);
 
-		if (this._pluginResolveService.Plugins.Count == 0)
-		{
-			Utils.WriteLineWithColor(
-				"Framework: No plugins loaded (no plugins installed?), Ctrl-C to exit.",
-				ConsoleColor.Yellow);
-		}
-		foreach (IPlugin item in this._pluginResolveService.Plugins)
-		{
-			item.Load(this, false);
-			Console.WriteLine($"Framework: Loaded {item.Name}, Ver. {item.Version} by {item.Author}");
-		}
-		Console.WriteLine();
+		this.App = this._builder.Build();
+		this._commandResolveService = this.App.Services.GetRequiredService<ICommandResolveService>();
+
 		this.AfterPluginsLoaded?.Invoke(this, EventArgs.Empty);
+
+		this._pluginResolveService.SetupAll(this.App);
 
 		#region Argument parsing
 		if (args.Contains("--help"))
@@ -79,7 +82,7 @@ public class Program
 			ShowHelp();
 			return;
 		}
-		List<ArgParseInfo> invokeList = new();
+		List<ArgParseInfo> invokeList = [];
 		for (int i = 0; i < args.Length; i++)
 		{
 			if (args[i].StartsWith("--") && args[i].Length > 2)
@@ -145,38 +148,20 @@ public class Program
 
 		this.AfterArgParse?.Invoke(this, EventArgs.Empty);
 
-		this._commandResolveService.Initialize(this._discordClientService, this);
 		this._commandResolveService.LoadAllCommand();
 		this._commandResolveService.RegisterHandler();
 
 		this.AfterMainInitialize?.Invoke(this, EventArgs.Empty);
 
-		await Task.Delay(-1, this.CancellationToken).ContinueWith(_ => { });
+		await this.App.RunAsync(this.CancellationToken).ContinueWith(_ => { });
 
 		BeforeMainExiting?.Invoke(this, EventArgs.Empty);
-		Console.WriteLine();
-		foreach (IPlugin item in this._pluginResolveService.Plugins)
-		{
-			Console.WriteLine($"Framework: Unloading {item.Name}, Ver. {item.Version} by {item.Author}");
-			item.Unload(this, false);
-		}
+		this._pluginResolveService.UnloadAll(this.App);
+		this._coFramework?.Unload(this, this.App);
 	}
 
 	public void AddArgReceiver(ArgParseInfo info)
 	{
 		this._argParseInfos.Add(info);
-	}
-
-	// handles injection change automatically
-	private void InjectableBase_OnServiceAdd(object? sender, ServiceModificationEventArgs e)
-	{
-		if (e.Canceled || e.IsTransient || e.IsRemoving || !e.IsSingleton) return;
-
-		if (e.Service is DiscordClientService service1)
-			this._discordClientService = service1;
-		if (e.Service is PluginResolveService service2)
-			this._pluginResolveService = service2;
-		if (e.Service is CommandResolveService service3)
-			this._commandResolveService = service3;
 	}
 }

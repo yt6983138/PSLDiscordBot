@@ -1,10 +1,13 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using PhigrosLibraryCSharp.Cloud.DataStructure;
 using PhigrosLibraryCSharp.GameRecords;
 using PSLDiscordBot.Core.Command.Global.Base;
 using PSLDiscordBot.Core.Localization;
 using PSLDiscordBot.Core.Services;
+using PSLDiscordBot.Core.Services.Phigros;
 using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Core.Utility;
 using PSLDiscordBot.Framework;
@@ -18,22 +21,27 @@ namespace PSLDiscordBot.Core.Command.Global;
 [AddToGlobal]
 public class GetScoresCommand : CommandBase
 {
+	public GetScoresCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosDataService phigrosData, ILoggerFactory loggerFactory)
+		: base(config, database, localization, phigrosData, loggerFactory)
+	{
+	}
+
 	public override bool IsEphemeral => false;
 
-	public override OneOf<string, LocalizedString> PSLName => this.Localization[PSLNormalCommandKey.GetScoresName];
-	public override OneOf<string, LocalizedString> PSLDescription => this.Localization[PSLNormalCommandKey.GetScoresDescription];
+	public override OneOf<string, LocalizedString> PSLName => this._localization[PSLNormalCommandKey.GetScoresName];
+	public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLNormalCommandKey.GetScoresDescription];
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder.AddOption(
-			this.Localization[PSLCommonOptionKey.IndexOptionName],
+			this._localization[PSLCommonOptionKey.IndexOptionName],
 			ApplicationCommandOptionType.Integer,
-			this.Localization[PSLCommonOptionKey.IndexOptionDescription],
+			this._localization[PSLCommonOptionKey.IndexOptionDescription],
 			isRequired: false,
 			minValue: 0)
 		.AddOption(
-			this.Localization[PSLNormalCommandKey.GetScoresOptionCountName],
+			this._localization[PSLNormalCommandKey.GetScoresOptionCountName],
 			ApplicationCommandOptionType.Integer,
-			this.Localization[PSLNormalCommandKey.GetScoresOptionCountDescription],
+			this._localization[PSLNormalCommandKey.GetScoresOptionCountDescription],
 			isRequired: false,
 			minValue: 1,
 			maxValue: 114514
@@ -43,9 +51,9 @@ public class GetScoresCommand : CommandBase
 	{
 		PhigrosLibraryCSharp.SaveSummaryPair? pair = await data.SaveCache.GetAndHandleSave(
 			arg,
-			this.PhigrosDataService.DifficultiesMap,
-			this.Localization,
-			arg.GetIndexOption(this.Localization));
+			this._phigrosDataService.DifficultiesMap,
+			this._localization,
+			arg.GetIndexOption(this._localization));
 		if (pair is null)
 			return;
 		(Summary summary, GameSave save) = pair.Value;
@@ -53,13 +61,13 @@ public class GetScoresCommand : CommandBase
 		string result = ScoresFormatter(
 			arg,
 			save,
-			this.PhigrosDataService.IdNameMap,
-			arg.GetIntegerOptionAsInt32OrDefault(this.Localization[PSLNormalCommandKey.GetScoresOptionCountName], 28),
+			this._phigrosDataService.IdNameMap,
+			arg.GetIntegerOptionAsInt32OrDefault(this._localization[PSLNormalCommandKey.GetScoresOptionCountName], 28),
 			data,
-			this.Localization);
+			this._localization);
 
 		await arg.QuickReplyWithAttachments([PSLUtils.ToAttachment(result, "Scores.txt")],
-			this.Localization[PSLNormalCommandKey.GetScoresDone]);
+			this._localization[PSLNormalCommandKey.GetScoresDone]);
 	}
 	public static string ScoresFormatter(
 		IDiscordInteraction interaction,

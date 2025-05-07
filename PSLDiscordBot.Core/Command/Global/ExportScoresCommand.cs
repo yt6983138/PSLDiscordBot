@@ -1,10 +1,13 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using PhigrosLibraryCSharp.Cloud.DataStructure;
 using PhigrosLibraryCSharp.GameRecords;
 using PSLDiscordBot.Core.Command.Global.Base;
 using PSLDiscordBot.Core.Localization;
 using PSLDiscordBot.Core.Services;
+using PSLDiscordBot.Core.Services.Phigros;
 using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Core.Utility;
 using PSLDiscordBot.Framework;
@@ -17,14 +20,19 @@ namespace PSLDiscordBot.Core.Command.Global;
 [AddToGlobal]
 public class ExportScoresCommand : CommandBase
 {
-	public override OneOf<string, LocalizedString> PSLName => this.Localization[PSLNormalCommandKey.ExportScoresName];
-	public override OneOf<string, LocalizedString> PSLDescription => this.Localization[PSLNormalCommandKey.ExportScoresDescription];
+	public ExportScoresCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosDataService phigrosData, ILoggerFactory loggerFactory)
+		: base(config, database, localization, phigrosData, loggerFactory)
+	{
+	}
+
+	public override OneOf<string, LocalizedString> PSLName => this._localization[PSLNormalCommandKey.ExportScoresName];
+	public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLNormalCommandKey.ExportScoresDescription];
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder.AddOption(
-			this.Localization[PSLCommonOptionKey.IndexOptionName],
+			this._localization[PSLCommonOptionKey.IndexOptionName],
 			ApplicationCommandOptionType.Integer,
-			this.Localization[PSLCommonOptionKey.IndexOptionDescription],
+			this._localization[PSLCommonOptionKey.IndexOptionDescription],
 			isRequired: false,
 			minValue: 0);
 
@@ -32,16 +40,16 @@ public class ExportScoresCommand : CommandBase
 	{
 		PhigrosLibraryCSharp.SaveSummaryPair? pair = await data.SaveCache.GetAndHandleSave(
 			arg,
-			this.PhigrosDataService.DifficultiesMap,
-			this.Localization,
-			arg.GetIndexOption(this.Localization));
+			this._phigrosDataService.DifficultiesMap,
+			this._localization,
+			arg.GetIndexOption(this._localization));
 		if (pair is null)
 			return;
 		(Summary summary, GameSave save) = pair.Value;
 
 		await arg.QuickReplyWithAttachments(
-			[PSLUtils.ToAttachment(ExportCSV(save.Records, this.PhigrosDataService.IdNameMap), "Export.csv")],
-			this.Localization[PSLNormalCommandKey.ExportScoresReply],
+			[PSLUtils.ToAttachment(ExportCSV(save.Records, this._phigrosDataService.IdNameMap), "Export.csv")],
+			this._localization[PSLNormalCommandKey.ExportScoresReply],
 			save.Records.Count);
 	}
 	public static string ExportCSV(List<CompleteScore> scores, IReadOnlyDictionary<string, string> map, int countToExport = -1)

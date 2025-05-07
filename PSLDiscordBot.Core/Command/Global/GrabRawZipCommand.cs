@@ -1,8 +1,11 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using PhigrosLibraryCSharp;
 using PSLDiscordBot.Core.Command.Global.Base;
 using PSLDiscordBot.Core.Services;
+using PSLDiscordBot.Core.Services.Phigros;
 using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Core.Utility;
 using PSLDiscordBot.Framework;
@@ -14,6 +17,11 @@ namespace PSLDiscordBot.Core.Command.Global;
 [AddToGlobal]
 public class GrabRawZipCommand : AdminCommandBase
 {
+	public GrabRawZipCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosDataService phigrosData, ILoggerFactory loggerFactory)
+		: base(config, database, localization, phigrosData, loggerFactory)
+	{
+	}
+
 	public override OneOf<string, LocalizedString> PSLName => "grab-raw-zip";
 	public override OneOf<string, LocalizedString> PSLDescription => "Grab RAW zip by token. [Admin command]";
 

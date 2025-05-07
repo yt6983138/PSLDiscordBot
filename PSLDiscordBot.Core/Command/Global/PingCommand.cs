@@ -1,10 +1,13 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using PhigrosLibraryCSharp;
 using PhigrosLibraryCSharp.Cloud.Login;
 using PSLDiscordBot.Core.Command.Global.Base;
 using PSLDiscordBot.Core.Localization;
 using PSLDiscordBot.Core.Services;
+using PSLDiscordBot.Core.Services.Phigros;
 using PSLDiscordBot.Core.UserDatas;
 using PSLDiscordBot.Core.Utility;
 using PSLDiscordBot.Framework;
@@ -18,15 +21,21 @@ namespace PSLDiscordBot.Core.Command.Global;
 [AddToGlobal]
 public class PingCommand : GuestCommandBase
 {
-	private static Dictionary<string, List<Uri>> _domainsToCheck = new() {
+	private static Dictionary<string, List<Uri>> _domainsToCheck = new()
+	{
 		{ "Discord", [new(DiscordConfig.CDNUrl), new(DiscordConfig.APIUrl), new(DiscordConfig.InviteUrl)] },
 		{ "TapTap Login Server", [new(TapTapHelper.ChinaApiHost), new(TapTapHelper.ChinaWebHost)] },
 		{ "Phigros Save Server", [new(Save.CloudServerAddress)] },
 		{ "Dns and Github", [new("http://8.8.8.8/"), new("https://github.com")] }
 	};
 
-	public override OneOf<string, LocalizedString> PSLName => this.Localization[PSLGuestCommandKey.PingName];
-	public override OneOf<string, LocalizedString> PSLDescription => this.Localization[PSLGuestCommandKey.PingDescription];
+	public PingCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosDataService phigrosData, ILoggerFactory loggerFactory)
+		: base(config, database, localization, phigrosData, loggerFactory)
+	{
+	}
+
+	public override OneOf<string, LocalizedString> PSLName => this._localization[PSLGuestCommandKey.PingName];
+	public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLGuestCommandKey.PingDescription];
 
 	public override bool IsEphemeral => false;
 
@@ -39,10 +48,10 @@ public class PingCommand : GuestCommandBase
 		const string Indention = "    ";
 		const int ICMPTimeout = 5000;
 
-		await arg.QuickReply(this.Localization[PSLGuestCommandKey.PingPinging]);
+		await arg.QuickReply(this._localization[PSLGuestCommandKey.PingPinging]);
 
 		List<(string, StringBuilder)> pingResults = new(_domainsToCheck.Sum(x => x.Value.Count));
-		List<Task> tasks = new();
+		List<Task> tasks = [];
 		foreach (KeyValuePair<string, List<Uri>> item in _domainsToCheck)
 		{
 			string groupName = item.Key;
@@ -69,11 +78,11 @@ public class PingCommand : GuestCommandBase
 
 		await arg.QuickReplyWithAttachments(
 			[PSLUtils.ToAttachment(output.ToString(), "Result.txt")],
-			this.Localization[PSLGuestCommandKey.PingPingDone]);
+			this._localization[PSLGuestCommandKey.PingPingDone]);
 
 		async Task ProcessDomain(string groupName, List<Uri> urls, List<(string, StringBuilder)> pingResults)
 		{
-			List<Task> tasks = new();
+			List<Task> tasks = [];
 			foreach (Uri url in urls)
 			{
 				StringBuilder sb = new($"{Indention}Pinging {url.Host}:\n");

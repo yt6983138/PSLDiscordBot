@@ -1,6 +1,8 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using Microsoft.Extensions.Options;
 using PSLDiscordBot.Framework.Localization;
+using PSLDiscordBot.Framework.ServiceBase;
 
 namespace PSLDiscordBot.Framework;
 public static class Utils
@@ -71,15 +73,9 @@ public static class Utils
 	}
 	internal static bool IsSameOrSameToDefault<T>(this T? source, T? target) where T : struct
 	{
-		if (!source.HasValue)
-		{
-			return !target.HasValue || target.Value.Equals(default(T));
-		}
-		if (!target.HasValue)
-		{
-			return !source.HasValue || source.Value.Equals(default(T));
-		}
-		return source.Value.Equals(target.Value);
+		return !source.HasValue
+			? !target.HasValue || target.Value.Equals(default(T))
+			: !target.HasValue ? !source.HasValue || source.Value.Equals(default(T)) : source.Value.Equals(target.Value);
 	}
 	public static int ToInt(this long num)
 	{
@@ -278,5 +274,19 @@ public static class Utils
 			minLength,
 			minLength,
 			choices);
+	}
+	public static void ConfigureWritable<T>(
+			this IServiceCollection services,
+			IConfigurationSection section,
+			string file = "appsettings.json") where T : class, new()
+	{
+		services.Configure<T>(section);
+		services.AddTransient<IWritableOptions<T>>(provider =>
+		{
+			IConfigurationRoot configuration = (IConfigurationRoot)provider.GetRequiredService<IConfiguration>();
+			IHostEnvironment environment = provider.GetRequiredService<IHostEnvironment>();
+			IOptionsMonitor<T> options = provider.GetRequiredService<IOptionsMonitor<T>>();
+			return new WritableOptions<T>(environment, options, configuration, section.Key, file);
+		});
 	}
 }
