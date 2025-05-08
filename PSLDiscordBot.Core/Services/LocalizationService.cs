@@ -167,7 +167,7 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 			[GetPhotoName] = LocalizedString.CreateDefault("get-photo"),
 			[GetPhotoDescription] = LocalizedString.CreateDefault("Get summary photo of your scores."),
 			[GetPhotoOptionCountName] = LocalizedString.CreateDefault("count"),
-			[GetPhotoOptionCountDescription] = LocalizedString.CreateDefault("Counts to show. (Default: 23, or set through /set-count-or-default)"),
+			[GetPhotoOptionCountDescription] = LocalizedString.CreateDefault("Counts to show. (Default: 30, or set through /set-count-or-default)"),
 			[GetPhotoOptionLowerBoundName] = LocalizedString.CreateDefault("lower_bound"),
 			[GetPhotoOptionLowerBoundDescription] = LocalizedString.CreateDefault("The lower bound of the show range. ex. lower_bound: 69 and count: 42 show scores from 69 to 110."),
 			[GetPhotoOptionGradesToShowName] = LocalizedString.CreateDefault("show_what_grades"),
