@@ -40,6 +40,7 @@ public class PSLPlugin : IPlugin
 	private ICommandResolveService _commandResolveService = null!;
 
 	public IUser? AdminUser { get; set; }
+	public IDMChannel? AdminDM { get; set; }
 	public bool Initialized { get; private set; }
 	public DiscordRestClient RestClient => this._discordClientService.RestClient;
 
@@ -379,7 +380,8 @@ public class PSLPlugin : IPlugin
 
 		try
 		{
-			await this.AdminUser.SendMessageAsync("Bot initializing...");
+			this.AdminDM = await this.AdminUser.CreateDMChannelAsync();
+			await this.AdminDM.SendMessageAsync("Bot initializing...");
 		}
 		catch (HttpException ex) when (ex.DiscordCode == DiscordErrorCode.CannotSendMessageToUser)
 		{
@@ -428,7 +430,7 @@ public class PSLPlugin : IPlugin
 	private async Task OnException(Exception exception, SocketCommandBase? interaction = null)
 	{
 		this._logger.LogError(EventId, exception, "Exception received");
-		if (this.AdminUser is not null)
+		if (this.AdminDM is not null)
 		{
 			try
 			{
@@ -447,8 +449,8 @@ public class PSLPlugin : IPlugin
 					? $" with option(s) `{string.Join(", ", sc.Data.Options.Select(x => $"{i++}_{x.Name}({x.Type}): {x.Value}"))}`"
 					: "";
 				await Task.WhenAll(
-					this.AdminUser.SendMessageAsync(interactionMessage),
-					this.AdminUser.SendFileAsync(PSLUtils.ToStream(exception.ToString()), "StackTrace.txt"));
+					this.AdminDM.SendMessageAsync(interactionMessage),
+					this.AdminDM.SendFileAsync(PSLUtils.ToStream(exception.ToString()), "StackTrace.txt"));
 			}
 			catch (Exception ex)
 			{

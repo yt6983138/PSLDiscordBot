@@ -48,17 +48,17 @@ public class ReportProblemCommand : GuestCommandBase
 		IAttachment? attachment = arg.GetOptionOrDefault<IAttachment>(this._localization[PSLGuestCommandKey.ReportProblemOptionAttachmentName]);
 
 		string formatted = $"Report from `{arg.User.Id}` aka <@{arg.User.Id}>:\n{message}";
-		if (this._pslPlugin.AdminUser is not null)
+		if (this._pslPlugin.AdminDM is not null)
 		{
 			if (attachment is not null)
 			{
 				using HttpClient client = new();
-				await this._pslPlugin.AdminUser.SendFileAsync(
+				await this._pslPlugin.AdminDM.SendFileAsync(
 					await client.GetStreamAsync(attachment.Url), attachment.Filename, formatted);
 			}
 			else
 			{
-				await this._pslPlugin.AdminUser.SendMessageAsync(formatted);
+				await this._pslPlugin.AdminDM.SendMessageAsync(formatted);
 			}
 
 			await arg.QuickReply(this._localization[PSLGuestCommandKey.ReportProblemSuccess]);
