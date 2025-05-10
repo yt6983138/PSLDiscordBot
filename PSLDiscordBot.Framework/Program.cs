@@ -8,7 +8,7 @@ public class Program
 	private List<ArgParseInfo> _argParseInfos = [];
 
 	private IPluginResolveService _pluginResolveService = null!;
-	private ICommandResolveService _commandResolveService = null!;
+	private IPrivilegedCommandResolveService _commandResolveService = null!;
 	private ICoFramework? _coFramework;
 	private WebApplicationBuilder _builder = null!;
 
@@ -56,21 +56,23 @@ public class Program
 		}
 
 		this._builder = WebApplication.CreateBuilder(args);
+
+		this._commandResolveService = new CommandResolveService(this, this._builder);
+		this._pluginResolveService = new PluginResolveService();
+
+		this._coFramework?.Initialize(this, this._builder, ref this._commandResolveService, ref this._pluginResolveService);
+
 		this._builder.Services.AddSingleton(this)
-			.AddSingleton<IDiscordClientService, DiscordClientService>()
-			.AddSingleton<ICommandResolveService, CommandResolveService>()
-			.AddSingleton<IPluginResolveService, PluginResolveService>();
-
-		this._coFramework?.Initialize(this, this._builder);
-
-		ServiceProvider tempResolver = this._builder.Services.BuildServiceProvider();
-		this._pluginResolveService = tempResolver.GetRequiredService<IPluginResolveService>();
+			.AddSingleton(this._pluginResolveService)
+			.AddSingleton<ICommandResolveService>(this._commandResolveService)
+			.AddSingleton<IDiscordClientService, DiscordClientService>();
 
 		this._pluginResolveService.LoadAllPlugins();
 		this._pluginResolveService.InvokeAll(this._builder);
 
+		this._commandResolveService.LoadEverything();
+
 		this.App = this._builder.Build();
-		this._commandResolveService = this.App.Services.GetRequiredService<ICommandResolveService>();
 
 		this.AfterPluginsLoaded?.Invoke(this, EventArgs.Empty);
 
@@ -148,14 +150,14 @@ public class Program
 
 		this.AfterArgParse?.Invoke(this, EventArgs.Empty);
 
-		this._commandResolveService.LoadAllCommand();
-		this._commandResolveService.RegisterHandler();
+		this._commandResolveService.SetupEverything(this.App.Services.GetRequiredService<IDiscordClientService>());
 
 		this.AfterMainInitialize?.Invoke(this, EventArgs.Empty);
 
 		await this.App.RunAsync(this.CancellationToken).ContinueWith(_ => { });
 
 		BeforeMainExiting?.Invoke(this, EventArgs.Empty);
+
 		this._pluginResolveService.UnloadAll(this.App);
 		this._coFramework?.Unload(this, this.App);
 	}

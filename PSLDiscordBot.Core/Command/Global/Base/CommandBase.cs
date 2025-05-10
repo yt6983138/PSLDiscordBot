@@ -37,7 +37,7 @@ public abstract class CommandBase : BasicCommandBase
 
 #pragma warning disable PSL3 // The expression used is not supported.
 	public sealed override string Name => this.PSLName.Match(x => x, y => y.Default);
-	public sealed override string Description => this.PSLName.Match(x => x, y => y.Default);
+	public sealed override string Description => this.PSLDescription.Match(x => x, y => y.Default);
 #pragma warning restore PSL3 // The expression used is not supported.
 
 	public abstract OneOf<string, LocalizedString> PSLName { get; }

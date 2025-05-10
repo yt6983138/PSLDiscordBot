@@ -1,29 +1,16 @@
-﻿using Antelcat.AutoGen.ComponentModel;
-using Antelcat.AutoGen.ComponentModel.Diagnostic;
-using Discord;
+﻿using Discord;
 using Discord.WebSocket;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using PSLDiscordBot.Framework.CommandBase;
 using PSLDiscordBot.Framework.MiscEventArgs;
 using System.Reflection;
 
 namespace PSLDiscordBot.Framework.BuiltInServices;
 
-[AutoExtractInterface(accessibility: Accessibility.Public)]
-internal class CommandResolveService : ICommandResolveService
+internal class CommandResolveService : ICommandResolveService, IPrivilegedCommandResolveService
 {
-	private readonly IDiscordClientService _discordClientService;
 	private readonly Program _program;
-
-	private readonly IServiceCollection _globalCommands = new ServiceCollection();
-	private readonly IServiceCollection _guildCommands = new ServiceCollection();
-	private readonly IServiceCollection _userCommands = new ServiceCollection();
-	private readonly IServiceCollection _messageCommands = new ServiceCollection();
-
-	public IServiceProvider GlobalCommands { get => ThrowIfNotLoaded(field); private set; } = null!;
-	public IServiceProvider GuildCommands { get => ThrowIfNotLoaded(field); private set; } = null!;
-	public IServiceProvider UserCommands { get => ThrowIfNotLoaded(field); private set; } = null!;
-	public IServiceProvider MessageCommands { get => ThrowIfNotLoaded(field); private set; } = null!;
+	private readonly WebApplicationBuilder _applicationBuilder;
+	private IDiscordClientService? _discordClientService;
 
 	public event EventHandler<SlashCommandEventArgs>? BeforeSlashCommandExecutes;
 	public event EventHandler<BasicCommandExceptionEventArgs<BasicCommandBase>>? OnSlashCommandError;
@@ -34,50 +21,46 @@ internal class CommandResolveService : ICommandResolveService
 	public event EventHandler<UserCommandEventArgs>? BeforeUserCommandExecutes;
 	public event EventHandler<BasicCommandExceptionEventArgs<BasicUserCommandBase>>? OnUserCommandError;
 
-	public CommandResolveService(IDiscordClientService discordClientService, Program program)
+	public List<Type> GlobalCommands { get; set; } = [];
+	public List<Type> GuildCommands { get; set; } = [];
+	public List<Type> MessageCommands { get; set; } = [];
+	public List<Type> UserCommands { get; set; } = [];
+
+	public CommandResolveService(Program program, WebApplicationBuilder applicationBuilder)
+	{
+		this._program = program;
+		this._applicationBuilder = applicationBuilder;
+	}
+
+	void IPrivilegedCommandResolveService.LoadEverything()
+	{
+		IEnumerable<Type> commandsGlobal = this.GetAllGlobalCommandsTypes();
+		IEnumerable<Type> commandsGuild = this.GetAllGuildCommandsTypes();
+		IEnumerable<Type> commandsUser = this.GetAllUserCommandsTypes();
+		IEnumerable<Type> commandsMessage = this.GetAllMessageCommandsTypes();
+
+		foreach (Type command in commandsGlobal)
+			this.AddGlobalCommand(command);
+		foreach (Type command in commandsGuild)
+			this.AddGuildCommand(command);
+		foreach (Type command in commandsUser)
+			this.AddUserCommand(command);
+		foreach (Type command in commandsMessage)
+			this.AddUserCommand(command);
+	}
+	void IPrivilegedCommandResolveService.SetupEverything(IDiscordClientService discordClientService)
 	{
 		this._discordClientService = discordClientService;
-		this._program = program;
-	}
-
-	private static T ThrowIfNotLoaded<T>(T? instance) where T : notnull
-	{
-		return instance is null ? throw new InvalidOperationException("Commands not loaded.") : instance;
-	}
-
-	public void RegisterHandler()
-	{
 		this._discordClientService.SocketClient.SlashCommandExecuted += this.SocketClient_SlashCommandExecuted;
 		this._discordClientService.SocketClient.UserCommandExecuted += this.SocketClient_UserCommandExecuted;
 		this._discordClientService.SocketClient.MessageCommandExecuted += this.SocketClient_MessageCommandExecuted;
-	}
-	public void LoadAllCommand()
-	{
-		IEnumerable<Type> commandsGlobal = this.GetAllGlobalCommands();
-		IEnumerable<Type> commandsGuild = this.GetAllGuildCommands();
-		IEnumerable<Type> commandsUser = this.GetAllUserCommands();
-		IEnumerable<Type> commandsMessage = this.GetAllMessageCommands();
-
-		foreach (Type command in commandsGlobal)
-			this._globalCommands.AddSingleton(typeof(BasicCommandBase), command);
-		//foreach (Type command in commandsGuild)
-		//	this._guildCommands.AddSingleton(command);
-		foreach (Type command in commandsUser)
-			this._userCommands.AddSingleton(typeof(BasicUserCommandBase), command);
-		foreach (Type command in commandsMessage)
-			this._messageCommands.AddSingleton(typeof(BasicUserCommandBase), command);
-
-		this.GlobalCommands = new CombinedServiceCollection(this._globalCommands, this._program.AllServices).BuildServiceProvider();
-		this.GuildCommands = new CombinedServiceCollection(this._guildCommands, this._program.AllServices).BuildServiceProvider();
-		this.UserCommands = new CombinedServiceCollection(this._userCommands, this._program.AllServices).BuildServiceProvider();
-		this.MessageCommands = new CombinedServiceCollection(this._messageCommands, this._program.AllServices).BuildServiceProvider();
 
 		this._discordClientService.SocketClient.Ready += async () =>
 		{
-			IEnumerable<SlashCommandProperties> globalCommands = this.GlobalCommands.GetServices<BasicCommandBase>().Select(x => x.CompleteBuilder.Build());
-			//var guildCommands = this.GlobalCommands.GetServices<BasicCommandBase>().Select(x => x.CompleteBuilder.Build());
-			IEnumerable<MessageCommandProperties> messageCommands = this.MessageCommands.GetServices<BasicMessageCommandBase>().Select(x => x.CompleteBuilder.Build());
-			IEnumerable<UserCommandProperties> userCommands = this.UserCommands.GetServices<BasicUserCommandBase>().Select(x => x.CompleteBuilder.Build());
+			IEnumerable<SlashCommandProperties> globalCommands = this.GetAllGlobalCommands().Select(x => x.CompleteBuilder.Build());
+			//IEnumerable<SlashCommandProperties> guildCommands = this.GetAllGuildCommands().Select(x => x.CompleteBuilder.Build());
+			IEnumerable<MessageCommandProperties> messageCommands = this.GetAllMessageCommands().Select(x => x.CompleteBuilder.Build());
+			IEnumerable<UserCommandProperties> userCommands = this.GetAllUserCommands().Select(x => x.CompleteBuilder.Build());
 
 			await this._discordClientService.SocketClient.BulkOverwriteGlobalApplicationCommandsAsync(
 				new List<IEnumerable<ApplicationCommandProperties>>() {
@@ -89,82 +72,43 @@ internal class CommandResolveService : ICommandResolveService
 		};
 	}
 
-	#region Override
-	public Task OverrideGlobalCommand(BasicCommandBase command)
+	public void AddGlobalCommand(Type command)
 	{
-		this._globalCommands.Replace(ServiceDescriptor.Singleton(command.GetType(), command));
-		return this._discordClientService.SocketClient.CreateGlobalApplicationCommandAsync(command.CompleteBuilder.Build());
+		this._applicationBuilder.Services.AddKeyedSingleton(typeof(BasicCommandBase), command, command);
+		this.GlobalCommands.Add(command);
 	}
-	public Task OverrideGuildCommand(object command)
+	public void AddGuildCommand(Type command)
 	{
-		throw new NotImplementedException();
+		this._applicationBuilder.Services.AddKeyedSingleton(typeof(BasicGuildCommandBase), command, command);
+		this.GuildCommands.Add(command);
 	}
-	public Task OverrideUserCommand(BasicUserCommandBase command)
+	public void AddMessageCommand(Type command)
 	{
-		this._userCommands.Replace(ServiceDescriptor.Singleton(command.GetType(), command));
-		return this._discordClientService.SocketClient.CreateGlobalApplicationCommandAsync(command.CompleteBuilder.Build());
+		this._applicationBuilder.Services.AddKeyedSingleton(typeof(BasicMessageCommandBase), command, command);
+		this.MessageCommands.Add(command);
 	}
-	public Task OverrideMessageCommand(BasicMessageCommandBase command)
+	public void AddUserCommand(Type command)
 	{
-		this._messageCommands.Replace(ServiceDescriptor.Singleton(command.GetType(), command));
-		return this._discordClientService.SocketClient.CreateGlobalApplicationCommandAsync(command.CompleteBuilder.Build());
+		this._applicationBuilder.Services.AddKeyedSingleton(typeof(BasicUserCommandBase), command, command);
+		this.UserCommands.Add(command);
 	}
-	#endregion
 
-	#region Check Can Add
-	public bool CheckGlobalCommandShouldOverride(BasicCommandBase localCommand)
+	public List<BasicCommandBase> GetAllGlobalCommands()
 	{
-		BasicCommandBase? remoteCommand = (BasicCommandBase?)this.GlobalCommands.GetService(localCommand.GetType());
-		if (remoteCommand is null)
-			return true;
-
-		SlashCommandBuilder builder = localCommand.CompleteBuilder;
-		SlashCommandProperties built = builder.Build();
-
-		if (builder.Description != remoteCommand.Description) return true;
-		List<ApplicationCommandOptionProperties> commandOption = remoteCommand.CompleteBuilder.Build().Options.GetValueOrDefault() ?? [];
-		List<ApplicationCommandOptionProperties> localCommandOptions = built.Options.GetValueOrDefault() ?? [];
-		if (localCommandOptions.Count != commandOption.Count) return true;
-		bool allContains = true;
-		foreach (ApplicationCommandOptionProperties localOption in localCommandOptions)
-		{
-			bool contains = false;
-			foreach (ApplicationCommandOptionProperties remoteOption in commandOption)
-			{
-				if (localOption.Compare(remoteOption))
-				{
-					contains = true;
-					break;
-				}
-			}
-			if (!contains)
-				allContains = false;
-		}
-		return !allContains;
+		return this.GlobalCommands.Select(this._program.App.Services.GetRequiredKeyedService<BasicCommandBase>).ToList();
 	}
-	public bool CheckUserCommandShouldOverride(BasicUserCommandBase localCommand)
+	public List<BasicGuildCommandBase> GetAllGuildCommands()
 	{
-		BasicUserCommandBase? remoteCommand = (BasicUserCommandBase?)this.UserCommands.GetService(localCommand.GetType());
-		if (remoteCommand is null)
-			return true;
-
-		UserCommandBuilder remoteBuilder = remoteCommand.CompleteBuilder;
-		UserCommandBuilder localBuilder = localCommand.CompleteBuilder;
-
-		return remoteBuilder.ContextTypes != localBuilder.ContextTypes || remoteBuilder.DefaultMemberPermissions != localBuilder.DefaultMemberPermissions || remoteBuilder.IntegrationTypes != localBuilder.IntegrationTypes || remoteBuilder.IsNsfw != localBuilder.IsNsfw || remoteBuilder.NameLocalizations != localBuilder.NameLocalizations;
+		return this.GuildCommands.Select(this._program.App.Services.GetRequiredKeyedService<BasicGuildCommandBase>).ToList();
 	}
-	public bool CheckMessageCommandShouldOverride(BasicMessageCommandBase localCommand)
+	public List<BasicMessageCommandBase> GetAllMessageCommands()
 	{
-		BasicMessageCommandBase? remoteCommand = (BasicMessageCommandBase?)this.MessageCommands.GetService(localCommand.GetType());
-		if (remoteCommand is null)
-			return true;
-
-		MessageCommandBuilder remoteBuilder = remoteCommand.CompleteBuilder;
-		MessageCommandBuilder localBuilder = localCommand.CompleteBuilder;
-
-		return remoteBuilder.ContextTypes != localBuilder.ContextTypes || remoteBuilder.DefaultMemberPermissions != localBuilder.DefaultMemberPermissions || remoteBuilder.IntegrationTypes != localBuilder.IntegrationTypes || remoteBuilder.IsNsfw != localBuilder.IsNsfw || remoteBuilder.NameLocalizations != localBuilder.NameLocalizations;
+		return this.MessageCommands.Select(this._program.App.Services.GetRequiredKeyedService<BasicMessageCommandBase>).ToList();
 	}
-	#endregion
+	public List<BasicUserCommandBase> GetAllUserCommands()
+	{
+		return this.UserCommands.Select(this._program.App.Services.GetRequiredKeyedService<BasicUserCommandBase>).ToList();
+	}
 
 	#region Find types
 	public IEnumerable<Type> FindBasicCommandBaseTypes()
@@ -194,7 +138,7 @@ internal class CommandResolveService : ICommandResolveService
 	#endregion
 
 	#region Get Instances
-	public IEnumerable<Type> GetAllGlobalCommands()
+	public IEnumerable<Type> GetAllGlobalCommandsTypes()
 	{
 		return this.FindBasicCommandBaseTypes()
 			.Where(t => t.GetCustomAttribute<AddToGlobalAttribute>() is not null);
@@ -203,16 +147,16 @@ internal class CommandResolveService : ICommandResolveService
 	/// Not implemented for now.
 	/// </summary>
 	/// <returns></returns>
-	public IEnumerable<Type> GetAllGuildCommands()
+	public IEnumerable<Type> GetAllGuildCommandsTypes()
 	{
 		return Enumerable.Empty<Type>();
 	}
-	public IEnumerable<Type> GetAllUserCommands()
+	public IEnumerable<Type> GetAllUserCommandsTypes()
 	{
 		return this.FindBasicUserCommandBaseTypes()
 			.Where(t => t.GetCustomAttribute<AddToGlobalAttribute>() is not null);
 	}
-	public IEnumerable<Type> GetAllMessageCommands()
+	public IEnumerable<Type> GetAllMessageCommandsTypes()
 	{
 		return this.FindBasicMessageCommandBaseTypes()
 			.Where(t => t.GetCustomAttribute<AddToGlobalAttribute>() is not null);
@@ -228,7 +172,7 @@ internal class CommandResolveService : ICommandResolveService
 		if (eventArg.Canceled)
 			return Task.CompletedTask;
 
-		BasicCommandBase command = this.GlobalCommands.GetServices<BasicCommandBase>()
+		BasicCommandBase command = this.GetAllGlobalCommands()
 			.First(x => x.Name == arg.CommandName);
 
 		Task task = command.RunOnDifferentThread ? Task.Run(() => command.Execute(arg, this)) : command.Execute(arg, this);
@@ -251,7 +195,7 @@ internal class CommandResolveService : ICommandResolveService
 		if (eventArg.Canceled)
 			return Task.CompletedTask;
 
-		BasicUserCommandBase command = this.GlobalCommands.GetServices<BasicUserCommandBase>()
+		BasicUserCommandBase command = this.GetAllUserCommands()
 			.First(x => x.Name == arg.CommandName);
 
 		Task task = command.RunOnDifferentThread ? Task.Run(() => command.Execute(arg, this)) : command.Execute(arg, this);
@@ -274,7 +218,7 @@ internal class CommandResolveService : ICommandResolveService
 		if (eventArg.Canceled)
 			return Task.CompletedTask;
 
-		BasicMessageCommandBase command = this.GlobalCommands.GetServices<BasicMessageCommandBase>()
+		BasicMessageCommandBase command = this.GetAllMessageCommands()
 			.First(x => x.Name == arg.CommandName);
 
 		Task task = command.RunOnDifferentThread ? Task.Run(() => command.Execute(arg, this)) : command.Execute(arg, this);
