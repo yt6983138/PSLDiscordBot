@@ -1,5 +1,7 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using Microsoft.AspNetCore.Mvc.ApplicationParts;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using PSLDiscordBot.Framework.Localization;
 using PSLDiscordBot.Framework.ServiceBase;
@@ -288,5 +290,17 @@ public static class Utils
 			IOptionsMonitor<T> options = provider.GetRequiredService<IOptionsMonitor<T>>();
 			return new WritableOptions<T>(environment, options, configuration, section.Key, file);
 		});
+	}
+	public static T? GetServiceImplementation<T>(this IServiceCollection services)
+	{
+		return (T?)services
+			.LastOrDefault(d => d.ServiceType == typeof(T))
+			?.ImplementationInstance;
+	}
+	public static ApplicationPartManager GetApplicationPartManager(this IServiceCollection services)
+	{
+		ApplicationPartManager instance = services.GetServiceImplementation<ApplicationPartManager>() ?? new();
+		services.TryAddSingleton(instance);
+		return instance;
 	}
 }
