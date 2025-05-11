@@ -15,6 +15,9 @@ Here are some pictures showcasing: <br/>
 # How to use this?
 Check help.md
 # For developer
+## Wiki
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/yt6983138/PSLDiscordBot)
+# Developing
 Resources are in https://github.com/yt6983138/PSLDiscordBot_Resources <br/>
 You can add your custom command by adding function in Dictionary Commands in Program.cs, please see following example:
 ```c#
