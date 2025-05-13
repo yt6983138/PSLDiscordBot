@@ -123,4 +123,13 @@ public class LocalizationManager
 		this.Add(key, ret);
 		return ret;
 	}
+
+	public LocalizationManager DeepClone()
+	{
+		LocalizationManager @new = (LocalizationManager)this.MemberwiseClone();
+		@new._localization = this._localization.ToDictionary(x => x.Key, x => x.Value.DeepClone());
+		@new._defaultFallbackLanguages = [.. this._defaultFallbackLanguages];
+
+		return @new;
+	}
 }

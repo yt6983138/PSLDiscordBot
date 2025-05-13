@@ -10,7 +10,7 @@ public class LocalizedString : IDictionary<string, string>, IReadOnlyDictionary<
 {
 	internal string? _code;
 
-	public Dictionary<Language, string> LocalizedStrings { get; } = [];
+	public Dictionary<Language, string> LocalizedStrings { get; private set; } = [];
 	public List<Language> FallBackLanguages { get; internal set; } = [Language.EnglishUS];
 
 	public string Default => this.FallBackLanguages.Count > 0
@@ -130,6 +130,14 @@ public class LocalizedString : IDictionary<string, string>, IReadOnlyDictionary<
 	{
 		LocalizedString newString = new(this.LocalizedStrings, null);
 		return newString;
+	}
+	public LocalizedString DeepClone()
+	{
+		LocalizedString obj = (LocalizedString)this.MemberwiseClone();
+		obj.LocalizedStrings = new Dictionary<Language, string>(this.LocalizedStrings);
+		obj.FallBackLanguages = [.. this.FallBackLanguages];
+
+		return obj;
 	}
 
 	internal LocalizedString(string? code)
