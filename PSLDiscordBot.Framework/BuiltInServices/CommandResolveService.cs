@@ -32,6 +32,19 @@ internal class CommandResolveService : ICommandResolveService, IPrivilegedComman
 		this._applicationBuilder = applicationBuilder;
 	}
 
+	private static T HandleBuild<T>(string cmdName, Func<T> buildFunc)
+	{
+		try
+		{
+			return buildFunc.Invoke();
+		}
+		catch
+		{
+			Console.WriteLine($"{cmdName} causing problem :skull:"); // no logger here
+			throw;
+		}
+	}
+
 	void IPrivilegedCommandResolveService.LoadEverything()
 	{
 		IEnumerable<Type> commandsGlobal = this.GetAllGlobalCommandsTypes();
@@ -57,10 +70,11 @@ internal class CommandResolveService : ICommandResolveService, IPrivilegedComman
 
 		this._discordClientService.SocketClient.Ready += async () =>
 		{
-			IEnumerable<SlashCommandProperties> globalCommands = this.GetAllGlobalCommands().Select(x => x.CompleteBuilder.Build());
-			//IEnumerable<SlashCommandProperties> guildCommands = this.GetAllGuildCommands().Select(x => x.CompleteBuilder.Build());
-			IEnumerable<MessageCommandProperties> messageCommands = this.GetAllMessageCommands().Select(x => x.CompleteBuilder.Build());
-			IEnumerable<UserCommandProperties> userCommands = this.GetAllUserCommands().Select(x => x.CompleteBuilder.Build());
+			// for some reason the stacktrace was not showing which command is causing problem (although it should)
+			IEnumerable<SlashCommandProperties> globalCommands = this.GetAllGlobalCommands().Select(x => HandleBuild(x.Name, () => x.CompleteBuilder.Build()));
+			//IEnumerable<SlashCommandProperties> guildCommands = this.GetAllGuildCommands().Select(x => HandleBuild(x.Name, () => x.CompleteBuilder.Build()));
+			IEnumerable<MessageCommandProperties> messageCommands = this.GetAllMessageCommands().Select(x => HandleBuild(x.Name, () => x.CompleteBuilder.Build()));
+			IEnumerable<UserCommandProperties> userCommands = this.GetAllUserCommands().Select(x => HandleBuild(x.Name, () => x.CompleteBuilder.Build()));
 
 			await this._discordClientService.SocketClient.BulkOverwriteGlobalApplicationCommandsAsync(
 				new List<IEnumerable<ApplicationCommandProperties>>() {
