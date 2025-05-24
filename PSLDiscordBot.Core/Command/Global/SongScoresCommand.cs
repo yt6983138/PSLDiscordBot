@@ -70,7 +70,8 @@ public class SongScoresCommand : CommandBase
 		GameProgress progress = await data.SaveCache.GetGameProgressAsync(index);
 		UserInfo outerUserInfo = await data.SaveCache.GetUserInfoAsync();
 
-		List<CompleteScore> scoresToShow = save.Records
+		(List<CompleteScore> _, List<CompleteScore> scoresToShow, double rks) = save.GetSortedListForRks();
+		scoresToShow = scoresToShow
 			.Where(x =>
 				searchResult.Any(y => y.SongId == x.Id))
 			.ToList();
@@ -119,12 +120,12 @@ public class SongScoresCommand : CommandBase
 				PSLUtils.ToAttachment(
 					GetScoresCommand.ScoresFormatter(
 						arg,
-						new() { CreationDate = default, ModificationTime = default, Records = scoresToShow },
+						scoresToShow,
+						rks,
 						this._phigrosDataService.IdNameMap,
 						int.MaxValue,
 						data,
 						this._localization,
-						false,
 						false,
 						false),
 					"Query.txt")],

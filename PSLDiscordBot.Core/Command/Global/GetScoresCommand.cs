@@ -71,16 +71,15 @@ public class GetScoresCommand : CommandBase
 	}
 	public static string ScoresFormatter(
 		IDiscordInteraction interaction,
-		GameSave save,
+		List<CompleteScore> scores,
+		double rks,
 		IReadOnlyDictionary<string, string> map,
-		int shouldAddCount,
+		int showCount,
 		UserData userData,
 		LocalizationService localization,
-		bool calculateRks = true,
-		bool showScoreNumber = true,
-		bool showBest = true)
+		bool showUserRks = true,
+		bool showScoreNumber = true)
 	{
-		(List<CompleteScore>? scores, double rks) = save.GetSortedListForRksMerged();
 		List<(CompleteScore score, string name)> nameScorePairs = scores
 			.Select(x => (x, map.TryGetValue(x.Id, out string? str) ? str : x.Id))
 			.ToList();
@@ -99,17 +98,15 @@ public class GetScoresCommand : CommandBase
 			titles.Insert(0, localization[PSLCommonKey.ScoreFormatterScoreNumberTitle]);
 		ColumnTextBuilder builder = new(interaction, titles);
 
-		if (calculateRks)
+		if (showUserRks)
 		{
 			sb.AppendLine(
 				Smart.Format(
 					localization[PSLCommonKey.ScoreFormatterUserRksIntro][interaction.UserLocale], rks.ToString(userData.ShowFormat)));
 		}
 
-		for (int j = 0; j < Math.Min(shouldAddCount, nameScorePairs.Count); j++)
+		for (int j = 0; j < Math.Min(showCount, nameScorePairs.Count); j++)
 		{
-			if (!showBest && j == 0)
-				continue;
 			(CompleteScore score, string name) = nameScorePairs[j];
 
 			ColumnTextBuilder.RowBuilder row = new ColumnTextBuilder.RowBuilder()
@@ -127,5 +124,30 @@ public class GetScoresCommand : CommandBase
 			builder.WithRow(row);
 		}
 		return builder.Build(sb).ToString();
+	}
+	public static string ScoresFormatter(
+		IDiscordInteraction interaction,
+		GameSave save,
+		IReadOnlyDictionary<string, string> map,
+		int showCount,
+		UserData userData,
+		LocalizationService localization,
+		bool showUserRks = true,
+		bool showScoreNumber = true,
+		bool showBest = true)
+	{
+		(List<CompleteScore> scores, double rks) = save.GetSortedListForRksMerged();
+		if (!showBest) scores.RemoveRange(0, 3);
+
+		return ScoresFormatter(
+			interaction,
+			scores,
+			rks,
+			map,
+			showCount,
+			userData,
+			localization,
+			showUserRks,
+			showScoreNumber);
 	}
 }
