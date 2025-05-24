@@ -60,6 +60,7 @@ public class AboutMeCommand : CommandBase
 		GameUserInfo userInfo = await data.SaveCache.GetGameUserInfoAsync(index);
 		GameProgress progress = await data.SaveCache.GetGameProgressAsync(index);
 		UserInfo outerUserInfo = await data.SaveCache.GetUserInfoAsync();
+		GameSettings settings = await data.SaveCache.GetGameSettingsAsync(index);
 
 		MemoryStream image = await this._imageGenerator.MakePhoto(
 			save,
@@ -67,6 +68,7 @@ public class AboutMeCommand : CommandBase
 			summary,
 			userInfo,
 			progress,
+			settings,
 			outerUserInfo,
 			this._config.Value.AboutMeRenderInfo,
 			this._config.Value.DefaultRenderImageType,

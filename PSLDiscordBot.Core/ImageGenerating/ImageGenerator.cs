@@ -94,6 +94,7 @@ public class ImageGenerator
 		Summary summary,
 		GameUserInfo gameUserInfo,
 		GameProgress progress,
+		GameSettings settings,
 		UserInfo userInfo,
 		BasicHtmlImageInfo basicHtmlImageInfo,
 		HtmlConverter.Tab.PhotoType photoType,
@@ -133,8 +134,12 @@ public class ImageGenerator
 			Summary = summary,
 			GameUserInfo = gameUserInfo,
 			Records = sortedBestsIncludePhis,
-			ExtraArguments = extraArguments
-			//GameSettings = 
+			ExtraArguments = extraArguments,
+			GameSettings = settings,
+
+			SaveCreationDate = save.CreationDate,
+			SaveModificationDate = save.ModificationTime,
+			SaveSummary = save.Summary
 		};
 		map.User.PlayStatistics.MergeWith(this.SongDifficultyCount);
 		foreach (ScoreStatus status in Enum.GetValues<ScoreStatus>())

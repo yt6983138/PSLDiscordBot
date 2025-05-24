@@ -150,6 +150,7 @@ public class GetPhotoCommand : CommandBase
 		GameUserInfo userInfo = await data.SaveCache.GetGameUserInfoAsync(index);
 		GameProgress progress = await data.SaveCache.GetGameProgressAsync(index);
 		UserInfo outerUserInfo = await data.SaveCache.GetUserInfoAsync();
+		GameSettings settings = await data.SaveCache.GetGameSettingsAsync(index);
 
 		await arg.QuickReply(this._localization[PSLNormalCommandKey.GetPhotoGenerating]);
 
@@ -162,6 +163,7 @@ public class GetPhotoCommand : CommandBase
 				summary,
 				userInfo,
 				progress,
+				settings,
 				outerUserInfo,
 				this._config.Value.GetPhotoRenderInfo,
 				usePng ? PhotoType.Png : this._config.Value.DefaultRenderImageType,

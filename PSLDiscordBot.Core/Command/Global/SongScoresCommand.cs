@@ -69,6 +69,7 @@ public class SongScoresCommand : CommandBase
 		GameUserInfo userInfo = await data.SaveCache.GetGameUserInfoAsync(index);
 		GameProgress progress = await data.SaveCache.GetGameProgressAsync(index);
 		UserInfo outerUserInfo = await data.SaveCache.GetUserInfoAsync();
+		GameSettings settings = await data.SaveCache.GetGameSettingsAsync(index);
 
 		(List<CompleteScore> _, List<CompleteScore> scoresToShow, double rks) = save.GetSortedListForRks();
 		scoresToShow = scoresToShow
@@ -107,6 +108,7 @@ public class SongScoresCommand : CommandBase
 			summary,
 			userInfo,
 			progress,
+			settings,
 			outerUserInfo,
 			this._config.Value.SongScoresRenderInfo,
 			this._config.Value.DefaultRenderImageType,
