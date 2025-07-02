@@ -191,8 +191,9 @@ public class ImageGenerator
 		#region Image map
 
 		string avatarPath = "./Assets/Avatar/".ToFullPath();
-		if (string.IsNullOrWhiteSpace(summary.Avatar)) summary.Avatar = "Introduction";
-		if (!this._avatarMapService.Data.TryGetValue(summary.Avatar, out string? hash))
+		string avatarId = gameUserInfo.AvatarId;
+		if (string.IsNullOrWhiteSpace(avatarId)) avatarId = "Introduction";
+		if (!this._avatarMapService.Data.TryGetValue(avatarId, out string? hash))
 		{
 			this._logger.LogWarning(EventId, "Failed to find avatar {avatar}, defaulting to default.", summary.Avatar);
 			avatarPath += $"{this._avatarMapService.Data["Introduction"]}.png";
