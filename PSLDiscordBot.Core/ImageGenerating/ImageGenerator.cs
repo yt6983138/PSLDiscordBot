@@ -104,6 +104,7 @@ public class ImageGenerator
 		CancellationToken cancellationToken = default)
 	{
 		(List<CompleteScore>? sortedBestsIncludePhis, double rks) = save.GetSortedListForRksMerged();
+		List<CompleteScore> sortedBestsWithoutPhis = sortedBestsIncludePhis.Skip(3).ToList();
 
 		#region Textmap
 
@@ -115,16 +116,16 @@ public class ImageGenerator
 				PlayStatistics = new Dictionary<string, object>()
 				{
 					{
-						"EZClearCount", sortedBestsIncludePhis.Count(x => x.Difficulty == Difficulty.EZ)
+						"EZClearCount", sortedBestsWithoutPhis.Count(x => x.Difficulty == Difficulty.EZ)
 					},
 					{
-						"HDClearCount", sortedBestsIncludePhis.Count(x => x.Difficulty == Difficulty.HD)
+						"HDClearCount", sortedBestsWithoutPhis.Count(x => x.Difficulty == Difficulty.HD)
 					},
 					{
-						"INClearCount", sortedBestsIncludePhis.Count(x => x.Difficulty == Difficulty.IN)
+						"INClearCount", sortedBestsWithoutPhis.Count(x => x.Difficulty == Difficulty.IN)
 					},
 					{
-						"ATClearCount", sortedBestsIncludePhis.Count(x => x.Difficulty == Difficulty.AT)
+						"ATClearCount", sortedBestsWithoutPhis.Count(x => x.Difficulty == Difficulty.AT)
 					}
 				},
 				Data = userData
@@ -151,38 +152,38 @@ public class ImageGenerator
 
 				map.User.PlayStatistics.Add(
 					$"TotalEZ{status}Count",
-					sortedBestsIncludePhis.Count(x => x.Difficulty == Difficulty.EZ && included.Contains(x.Status)));
+					sortedBestsWithoutPhis.Count(x => x.Difficulty == Difficulty.EZ && included.Contains(x.Status)));
 				map.User.PlayStatistics.Add(
 					$"TotalHD{status}Count",
-					sortedBestsIncludePhis.Count(x => x.Difficulty == Difficulty.HD && included.Contains(x.Status)));
+					sortedBestsWithoutPhis.Count(x => x.Difficulty == Difficulty.HD && included.Contains(x.Status)));
 				map.User.PlayStatistics.Add(
 					$"TotalIN{status}Count",
-					sortedBestsIncludePhis.Count(x => x.Difficulty == Difficulty.IN && included.Contains(x.Status)));
+						sortedBestsWithoutPhis.Count(x => x.Difficulty == Difficulty.IN && included.Contains(x.Status)));
 				map.User.PlayStatistics.Add(
 					$"TotalAT{status}Count",
-					sortedBestsIncludePhis.Count(x => x.Difficulty == Difficulty.AT && included.Contains(x.Status)));
+					sortedBestsWithoutPhis.Count(x => x.Difficulty == Difficulty.AT && included.Contains(x.Status)));
 				map.User.PlayStatistics.Add(
 					$"Total{status}Count",
-					sortedBestsIncludePhis.Count(x => included.Contains(x.Status)));
+					sortedBestsWithoutPhis.Count(x => included.Contains(x.Status)));
 
 				continue;
 			}
 
 			map.User.PlayStatistics.Add(
 				$"TotalEZ{status}Count",
-				sortedBestsIncludePhis.Count(x => x.Difficulty == Difficulty.EZ && x.Status == status));
+				sortedBestsWithoutPhis.Count(x => x.Difficulty == Difficulty.EZ && x.Status == status));
 			map.User.PlayStatistics.Add(
 				$"TotalHD{status}Count",
-				sortedBestsIncludePhis.Count(x => x.Difficulty == Difficulty.HD && x.Status == status));
+				sortedBestsWithoutPhis.Count(x => x.Difficulty == Difficulty.HD && x.Status == status));
 			map.User.PlayStatistics.Add(
 				$"TotalIN{status}Count",
-				sortedBestsIncludePhis.Count(x => x.Difficulty == Difficulty.IN && x.Status == status));
+				sortedBestsWithoutPhis.Count(x => x.Difficulty == Difficulty.IN && x.Status == status));
 			map.User.PlayStatistics.Add(
 				$"TotalAT{status}Count",
-				sortedBestsIncludePhis.Count(x => x.Difficulty == Difficulty.AT && x.Status == status));
+				sortedBestsWithoutPhis.Count(x => x.Difficulty == Difficulty.AT && x.Status == status));
 			map.User.PlayStatistics.Add(
 				$"Total{status}Count",
-				sortedBestsIncludePhis.Count(x => x.Status == status));
+				sortedBestsWithoutPhis.Count(x => x.Status == status));
 		}
 
 		#endregion
