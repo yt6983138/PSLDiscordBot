@@ -10,6 +10,13 @@ linecat._.35
 ## Translation
 ```
 linecat._.35
+fanisanidiot
+hmmthisisepic
+nenrikido
+am.yyyyyy
+ukmorikaede
+
+myself
 ```
 ## Testing
 Me and anyone who uses this bot!
