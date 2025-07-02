@@ -11,25 +11,28 @@ internal class Program
 		CopyFolder(new(Path.Combine(assetsToCopy, "Assets")), Directory.CreateDirectory("./Assets"));
 		Console.WriteLine("Copy asset done");
 
+		using HttpClient httpClient = new();
 		DirectoryInfo pslDir = Directory.CreateDirectory("./PSL");
-		List<string> filesToMoveToPslDir = ["./difficulty.tsv", "./info.tsv"];
-		foreach (string item in filesToMoveToPslDir)
-		{
-			FileInfo info = new(Path.Combine(assetsToCopy!, item));
-			info.CopyTo(Path.Combine(pslDir.FullName, info.Name), true);
-		}
+		string info = httpClient.GetStringAsync("https://raw.githubusercontent.com/7aGiven/Phigros_Resource/refs/heads/info/info.tsv")
+			.GetAwaiter().GetResult();
+		string diff = httpClient.GetStringAsync("https://raw.githubusercontent.com/7aGiven/Phigros_Resource/refs/heads/info/difficulty.tsv")
+			.GetAwaiter().GetResult();
+		File.WriteAllText("./PSL/difficulty.tsv", diff);
+		File.WriteAllText("./PSL/info.tsv", info);
 
 		DirectoryInfo plugin = Directory.CreateDirectory("./Plugins/0100.PSL");
 		plugin.Delete(true);
 		plugin.Create();
 		DirectoryInfo current = new(".");
-		List<FileInfo> files = new();
-		files.AddRange(current.GetFiles("PhigrosLibraryCSharp*"));
-		files.AddRange(current.GetFiles("SixLabors*"));
-		files.AddRange(current.GetFiles("yt6983138*"));
-		files.AddRange(current.GetFiles("*SharpZipLib*"));
-		files.AddRange(current.GetFiles("PSLDiscordBot.Core*"));
-		files.AddRange(current.GetFiles("HtmlToImage*"));
+		List<FileInfo> files =
+		[
+			.. current.GetFiles("PhigrosLibraryCSharp*"),
+			.. current.GetFiles("SixLabors*"),
+			.. current.GetFiles("yt6983138*"),
+			.. current.GetFiles("*SharpZipLib*"),
+			.. current.GetFiles("PSLDiscordBot.Core*"),
+			.. current.GetFiles("HtmlToImage*"),
+		];
 
 		foreach (FileInfo item in files)
 		{
