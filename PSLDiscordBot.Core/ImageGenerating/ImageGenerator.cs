@@ -71,16 +71,16 @@ public class ImageGenerator
 		this.SongDifficultyCount = new Dictionary<string, object>()
 		{
 			{
-				"TotalSongEZCount", this._phigrosDataService.DifficultiesMap.Count(x => x.Value.Length >= 1)
+				"TotalSongEZCount", this._phigrosDataService.DifficultiesMap.Count(x => x.Value.Length >= 1 && x.Value[0] != 0)
 			},
 			{
-				"TotalSongHDCount", this._phigrosDataService.DifficultiesMap.Count(x => x.Value.Length >= 2)
+				"TotalSongHDCount", this._phigrosDataService.DifficultiesMap.Count(x => x.Value.Length >= 2 && x.Value[1] != 0)
 			},
 			{
-				"TotalSongINCount", this._phigrosDataService.DifficultiesMap.Count(x => x.Value.Length >= 3)
+				"TotalSongINCount", this._phigrosDataService.DifficultiesMap.Count(x => x.Value.Length >= 3 && x.Value[2] != 0)
 			},
 			{
-				"TotalSongATCount", this._phigrosDataService.DifficultiesMap.Count(x => x.Value.Length >= 4)
+				"TotalSongATCount", this._phigrosDataService.DifficultiesMap.Count(x => x.Value.Length >= 4 && x.Value[3] != 0)
 			},
 			{
 				"TotalSongCount", this._phigrosDataService.DifficultiesMap.Count
