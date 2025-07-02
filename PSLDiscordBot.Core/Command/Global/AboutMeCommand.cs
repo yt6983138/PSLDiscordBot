@@ -43,10 +43,6 @@ public class AboutMeCommand : CommandBase
 
 	public override async Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
 	{
-		await arg.QuickReply(this._localization[PSLCommonMessageKey.CommandUnavailable]);
-		return;
-
-
 		int index = arg.GetIndexOption(this._localization);
 
 		PhigrosLibraryCSharp.SaveSummaryPair? pair = await data.SaveCache.GetAndHandleSave(
@@ -62,6 +58,8 @@ public class AboutMeCommand : CommandBase
 		UserInfo outerUserInfo = await data.SaveCache.GetUserInfoAsync();
 		GameSettings settings = await data.SaveCache.GetGameSettingsAsync(index);
 
+		MiscInfo? miscInfo = await requester.GetMiscInfoAsync(arg.User.Id);
+
 		MemoryStream image = await this._imageGenerator.MakePhoto(
 			save,
 			data,
@@ -73,7 +71,12 @@ public class AboutMeCommand : CommandBase
 			this._config.Value.AboutMeRenderInfo,
 			this._config.Value.DefaultRenderImageType,
 			this._config.Value.RenderQuality,
-			cancellationToken: this._config.Value.RenderTimeoutCTS.Token
+			cancellationToken: this._config.Value.RenderTimeoutCTS.Token,
+			extraArguments: new
+			{
+				MemorablePerformance = miscInfo?.MemorableScore,
+				Thoughts = miscInfo?.MemorableScoreThoughts,
+			}
 		);
 
 		await arg.QuickReplyWithAttachments([new(image, "Score.png")],

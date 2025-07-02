@@ -68,8 +68,8 @@ public class Config
 	public BasicHtmlImageInfo AboutMeRenderInfo { get; set; } = new()
 	{
 		DynamicSize = false,
-		InitialWidth = 1,
-		InitialHeight = 1,
-		HtmlPath = "./Assets/Misc/Html/.html"
+		InitialWidth = 768,
+		InitialHeight = 850,
+		HtmlPath = "./Assets/Misc/Html/AboutMe.html"
 	};
 }
