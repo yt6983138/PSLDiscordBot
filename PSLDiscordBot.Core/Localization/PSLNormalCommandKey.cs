@@ -145,4 +145,23 @@ public static partial class PSLNormalCommandKey
 	public static partial string RemoveAliasAlreadyAdded { get; }
 	public static partial string RemoveAliasSuccess { get; }
 	#endregion
+
+	#region SetMemorableScoreCommand
+	public static partial string SetMemorableScoreName { get; }
+	public static partial string SetMemorableScoreDescription { get; }
+	public static partial string SetMemorableScoreOptionScoreNumberName { get; }
+	public static partial string SetMemorableScoreOptionScoreNumberDescription { get; }
+	public static partial string SetMemorableScoreOptionScoreThoughtsName { get; }
+	public static partial string SetMemorableScoreOptionScoreThoughtsDescription { get; }
+
+	public static partial string SetMemorableSuccess { get; }
+	public static partial string SetMemorableNoValidScore { get; }
+	#endregion
+
+	#region ClearMemorableScoreCommand
+	public static partial string ClearMemorableScoreName { get; }
+	public static partial string ClearMemorableScoreDescription { get; }
+
+	public static partial string ClearMemorableScoreSuccess { get; }
+	#endregion
 }

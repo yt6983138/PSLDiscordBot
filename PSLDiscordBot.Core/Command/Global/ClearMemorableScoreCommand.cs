@@ -3,6 +3,7 @@ using Discord.WebSocket;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using PSLDiscordBot.Core.Command.Global.Base;
+using PSLDiscordBot.Core.Localization;
 using PSLDiscordBot.Core.Services;
 using PSLDiscordBot.Core.Services.Phigros;
 using PSLDiscordBot.Core.UserDatas;
@@ -21,8 +22,8 @@ public class ClearMemorableScoreCommand : CommandBase
 	{
 	}
 
-	public override OneOf<string, LocalizedString> PSLName => "clear-memorable-score";
-	public override OneOf<string, LocalizedString> PSLDescription => "Clear the memorable score.";
+	public override OneOf<string, LocalizedString> PSLName => this._localization[PSLNormalCommandKey.ClearMemorableScoreName];
+	public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLNormalCommandKey.ClearMemorableScoreDescription];
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder;
@@ -34,6 +35,6 @@ public class ClearMemorableScoreCommand : CommandBase
 		info?.MemorableScoreThoughts = null;
 		if (info is not null) await requester.SetOrReplaceMiscInfo(info);
 
-		await arg.QuickReply("Your memorable score has been cleared!");
+		await arg.QuickReply(this._localization[PSLNormalCommandKey.ClearMemorableScoreSuccess]);
 	}
 }

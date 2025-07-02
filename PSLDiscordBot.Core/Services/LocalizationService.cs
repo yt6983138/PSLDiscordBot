@@ -213,6 +213,19 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 				"```\n{0:list:{}|\\n}\n```"),
 			[RemoveAliasSuccess] = LocalizedString.CreateDefault("The alias has removed successfully! The song `{0}` now has the following alias: \n" +
 				"```\n{1:list:{}|\\n}\n```"),
+
+			[SetMemorableScoreName] = LocalizedString.CreateDefault("set-memorable-score"),
+			[SetMemorableScoreDescription] = LocalizedString.CreateDefault("Sets your memorable score, shown in /about-me."),
+			[SetMemorableScoreOptionScoreNumberName] = LocalizedString.CreateDefault("score-number"),
+			[SetMemorableScoreOptionScoreNumberDescription] = LocalizedString.CreateDefault("The score number shown in /get-scores, /get-photo, aka the Number column."),
+			[SetMemorableScoreOptionScoreThoughtsName] = LocalizedString.CreateDefault("score-thoughts"),
+			[SetMemorableScoreOptionScoreThoughtsDescription] = LocalizedString.CreateDefault("Your thought about this score, like how you did it etc."),
+			[SetMemorableSuccess] = LocalizedString.CreateDefault("Set memorable score successfully! Score set to: "),
+			[SetMemorableNoValidScore] = LocalizedString.CreateDefault("You do not have a valid score with the number you specified!"),
+
+			[ClearMemorableScoreName] = LocalizedString.CreateDefault("clear-memorable-score"),
+			[ClearMemorableScoreDescription] = LocalizedString.CreateDefault("Clear the memorable score."),
+			[ClearMemorableScoreSuccess] = LocalizedString.CreateDefault("Your memorable score has been cleared!"),
 			//[] = LocalizedString.CreateDefault(),
 		});
 	}

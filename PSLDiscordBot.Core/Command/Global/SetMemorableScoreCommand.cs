@@ -24,8 +24,8 @@ public class SetMemorableScoreCommand : CommandBase
 	{
 	}
 
-	public override OneOf<string, LocalizedString> PSLName => "set-memorable-score";
-	public override OneOf<string, LocalizedString> PSLDescription => "Sets your memorable score, shown in /about-me.";
+	public override OneOf<string, LocalizedString> PSLName => this._localization[PSLNormalCommandKey.SetMemorableScoreName];
+	public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLNormalCommandKey.SetMemorableScoreDescription];
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder.AddOption(
@@ -35,22 +35,22 @@ public class SetMemorableScoreCommand : CommandBase
 			isRequired: false,
 			minValue: 0)
 		.AddOption(
-			"score-number",
+			this._localization[PSLNormalCommandKey.SetMemorableScoreOptionScoreNumberName],
 			ApplicationCommandOptionType.Integer,
-			"The score number shown in /get-scores, /get-photo, aka the Number column.",
+			this._localization[PSLNormalCommandKey.SetMemorableScoreOptionScoreNumberDescription],
 			isRequired: true,
 			minValue: 1)
 		.AddOption(
-			"score-thoughts",
+			this._localization[PSLNormalCommandKey.SetMemorableScoreOptionScoreThoughtsName],
 			ApplicationCommandOptionType.String,
-			"Your thought about this score, like how you did it etc.",
+			this._localization[PSLNormalCommandKey.SetMemorableScoreOptionScoreThoughtsDescription],
 			isRequired: true);
 
 	public override async Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
 	{
 		int index = arg.GetIndexOption(this._localization);
-		int number = arg.GetIntegerOptionAsInt32("score-number") - 1;
-		string thoughts = arg.GetOption<string>("score-thoughts");
+		int number = arg.GetIntegerOptionAsInt32(this._localization[PSLNormalCommandKey.SetMemorableScoreOptionScoreNumberName]) - 1;
+		string thoughts = arg.GetOption<string>(this._localization[PSLNormalCommandKey.SetMemorableScoreOptionScoreThoughtsName]);
 
 		PhigrosLibraryCSharp.SaveSummaryPair? pair = await data.SaveCache.GetAndHandleSave(
 			arg,
@@ -64,14 +64,14 @@ public class SetMemorableScoreCommand : CommandBase
 		(List<CompleteScore>? scores, _) = save.GetSortedListForRksMerged();
 		if (number >= scores.Count)
 		{
-			await arg.QuickReply("You do not have a valid score with the number you specified!");
+			await arg.QuickReply(this._localization[PSLNormalCommandKey.SetMemorableNoValidScore]);
 			return;
 		}
 
 		CompleteScore score = scores[number];
 		if (score == CompleteScore.Empty)
 		{
-			await arg.QuickReply("You do not have a valid score with the number you specified!");
+			await arg.QuickReply(this._localization[PSLNormalCommandKey.SetMemorableNoValidScore]);
 			return;
 		}
 
@@ -83,9 +83,9 @@ public class SetMemorableScoreCommand : CommandBase
 
 		await requester.SetOrReplaceMiscInfo(miscInfo);
 
-		await arg.QuickReplyWithAttachments("Set memorable score successfully! Score set to: ",
-			PSLUtils.ToAttachment(
+		await arg.QuickReplyWithAttachments([PSLUtils.ToAttachment(
 				GetScoresCommand.ScoresFormatter(arg, [score], 0, this._phigrosDataService.IdNameMap, 1, data, this._localization, false, false),
-				"Score.txt"));
+				"Score.txt")],
+				this._localization[PSLNormalCommandKey.SetMemorableSuccess]);
 	}
 }
