@@ -9,7 +9,7 @@ Here are some pictures showcasing: <br/>
 `/get-scores`
 ![image](https://github.com/yt6983138/PSLDiscordBot/assets/83499886/5aa82534-e8c1-41d7-9637-626032242d4b) <br/>
 `/about-me`
-![image](https://github.com/yt6983138/PSLDiscordBot/assets/83499886/31d92024-dc5e-4819-9638-a4adffe802c8) <br/>
+![image](https://github.com/user-attachments/assets/242c450c-1306-48a0-b347-973deaad0393) <br/>
 
 [Discord server](https://discord.gg/b6a4RjEnEC)
 # How to use this?
