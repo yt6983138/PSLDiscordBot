@@ -32,9 +32,14 @@ public class ChromiumPoolService
 	}
 
 	private List<TabInfoPair> _chromiumTabPairs = [];
+	private string _chromiumPath;
+	private int _defaultTabCount;
+	private ushort _port;
+	private bool _debug;
+	private bool _showChromiumOutput;
 
 	public IReadOnlyList<TabInfoPair> ChromiumTabPairs => this._chromiumTabPairs;
-	public HtmlConverter Chromium { get; private set; }
+	public HtmlConverter Chromium { get; private set; } = null!;
 
 	private ChromiumPoolService(string chromiumPath,
 		int defaultTabCount,
@@ -42,22 +47,13 @@ public class ChromiumPoolService
 		bool debug = false,
 		bool showChromiumOutput = false)
 	{
-		this.Chromium = new(chromiumPath,
-			port,
-			debug: debug,
-			showChromiumOutput: showChromiumOutput,
-			extraArgs:
-			[
-				"--allow-file-access-from-files",
-				"--no-sandbox",
-				"--no-first-run",
-				"--no-default-browser-check",
-				"--no-default-browser-check",
-				"--disable-extensions",
-				"--disable-backing-store-limit"
-			]);
-		List<TabInfoPair> tabs = [];
-		Parallel.For(0, defaultTabCount, _ => this._chromiumTabPairs.Add(new(this.Chromium.NewTab(), false)));
+		this._chromiumPath = chromiumPath;
+		this._defaultTabCount = defaultTabCount;
+		this._port = port;
+		this._debug = debug;
+		this._showChromiumOutput = showChromiumOutput;
+
+		this.SetupChromium();
 	}
 	public ChromiumPoolService(IOptions<Config> config)
 		: this(config.Value.ChromiumLocation,
@@ -72,6 +68,26 @@ public class ChromiumPoolService
 #endif
 			)
 	{ }
+
+	private void SetupChromium()
+	{
+		this.Chromium = new(this._chromiumPath,
+			this._port,
+			debug: this._debug,
+			showChromiumOutput: this._showChromiumOutput,
+			extraArgs:
+			[
+				"--allow-file-access-from-files",
+				"--no-sandbox",
+				"--no-first-run",
+				"--no-default-browser-check",
+				"--no-default-browser-check",
+				"--disable-extensions",
+				"--disable-backing-store-limit"
+			]);
+		List<TabInfoPair> tabs = [];
+		Parallel.For(0, this._defaultTabCount, _ => this._chromiumTabPairs.Add(new(this.Chromium.NewTab(), false)));
+	}
 
 	public TabUsageBlock GetFreeTab()
 	{
@@ -88,6 +104,15 @@ public class ChromiumPoolService
 			return new(first, TabFinalizer);
 		}
 	}
+	public void RestartChromium()
+	{
+		lock (this)
+		{
+			this.Chromium.Dispose();
+			this.SetupChromium();
+		}
+	}
+
 	private static async void TabFinalizer(TabInfoPair pair)
 	{
 		await pair.Tab.NavigateTo("about:blank");
