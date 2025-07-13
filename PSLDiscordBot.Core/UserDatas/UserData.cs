@@ -11,6 +11,7 @@ public class UserData
 	public ulong UserId { get; set; }
 	public string Token { get; set; }
 	public string ShowFormat { get; set; }
+	public bool IsInternational { get; set; }
 
 	[NotMapped]
 	[JsonIgnore]
@@ -19,10 +20,11 @@ public class UserData
 	[JsonIgnore]
 	public DateTime GetPhotoCoolDownUntil { get; set; } = default;
 
-	public UserData(ulong userId, string token, string showFormat = ".00")
+	public UserData(ulong userId, string token, bool isInternational, string showFormat = ".00")
 	{
 		this.Token = token;
-		this.SaveCache = new(this.Token);
+		this.IsInternational = isInternational;
+		this.SaveCache = new(this.Token, this.IsInternational);
 		this.UserId = userId;
 		this.ShowFormat = showFormat;
 	}

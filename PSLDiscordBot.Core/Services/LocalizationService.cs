@@ -131,11 +131,14 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 
 			[LoginName] = LocalizedString.CreateDefault("login"),
 			[LoginDescription] = LocalizedString.CreateDefault("Log in using TapTap."),
+			[LoginOptionIsInternationalName] = LocalizedString.CreateDefault("is_international"),
+			[LoginOptionIsInternationalDescription] = LocalizedString.CreateDefault("Whether to use international server or not."),
 			[LoginBegin] = LocalizedString.CreateDefault("Please login using this url: {Url}\n" +
 				"Make sure to login with the exact credentials you used in Phigros.\n" +
 				"The page _may_ stuck at loading after you click 'grant', " +
 				"don't worry about it just close the page and the login process will continue anyway, " +
-				"after you do it this message should show that you logged in successfully."),
+				"after you do it this message should show that you logged in successfully. " +
+				"[Qr code for convenience](https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={EncodedUrl})"),
 			[LoginComplete] = LocalizedString.CreateDefault("Logged in successfully, all commands are now accessible!"),
 			[LoginTimedOut] = LocalizedString.CreateDefault("The login has been canceled due to timeout."),
 

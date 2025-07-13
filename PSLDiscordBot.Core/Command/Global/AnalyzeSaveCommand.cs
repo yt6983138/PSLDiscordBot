@@ -38,13 +38,19 @@ public class AnalyzeSaveCommand : AdminCommandBase
 			"index",
 			ApplicationCommandOptionType.Integer,
 			"Index of the save.",
+			isRequired: true)
+		.AddOption(
+			"is_international",
+			ApplicationCommandOptionType.Boolean,
+			"International mode",
 			isRequired: true);
 
 	public override async Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
 	{
 		ulong userId = arg.User.Id;
 		string token = arg.GetOption<string>("token");
-		UserData userData = new(userId, token);
+		bool isInternational = arg.GetOption<bool>("is_international");
+		UserData userData = new(userId, token, isInternational);
 		int index = arg.GetIntegerOptionAsInt32OrDefault("index");
 
 		PhigrosLibraryCSharp.SaveSummaryPair? pair = await userData.SaveCache.GetAndHandleSave(

@@ -33,8 +33,12 @@ public class LinkTokenCommand : GuestCommandBase
 			this._localization[PSLGuestCommandKey.LinkTokenOptionTokenDescription],
 			isRequired: true,
 			maxLength: 25,
-			minLength: 25
-		);
+			minLength: 25)
+		.AddOption(
+			this._localization[PSLGuestCommandKey.LoginOptionIsInternationalName],
+			ApplicationCommandOptionType.Boolean,
+			this._localization[PSLGuestCommandKey.LoginOptionIsInternationalDescription],
+			isRequired: true);
 
 	public override async Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
 	{
@@ -47,7 +51,7 @@ public class LinkTokenCommand : GuestCommandBase
 			return;
 		}
 
-		UserData tmp = new(userId, token);
+		UserData tmp = new(userId, token, arg.GetOption<bool>(this._localization[PSLGuestCommandKey.LoginOptionIsInternationalName]));
 		SaveSummaryPair? fetched = await tmp.SaveCache.GetAndHandleSave(
 			arg,
 			this._phigrosDataService.DifficultiesMap,

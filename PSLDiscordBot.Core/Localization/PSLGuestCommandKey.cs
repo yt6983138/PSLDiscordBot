@@ -52,6 +52,9 @@ public static partial class PSLGuestCommandKey
 	public static partial string LoginName { get; }
 	public static partial string LoginDescription { get; }
 
+	public static partial string LoginOptionIsInternationalName { get; }
+	public static partial string LoginOptionIsInternationalDescription { get; }
+
 	public static partial string LoginBegin { get; }
 	public static partial string LoginComplete { get; }
 	public static partial string LoginTimedOut { get; }

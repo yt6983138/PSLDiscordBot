@@ -37,6 +37,11 @@ public class GrabZipCommand : AdminCommandBase
 			"index",
 			ApplicationCommandOptionType.Integer,
 			"Index.",
+			isRequired: true)
+		.AddOption(
+			"is_international",
+			ApplicationCommandOptionType.Boolean,
+			"International mode",
 			isRequired: true);
 
 	public override async Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
@@ -50,7 +55,7 @@ public class GrabZipCommand : AdminCommandBase
 		newZip.IsStreamOwner = false;
 		try
 		{
-			save = new(token);
+			save = new(token, arg.GetOption<bool>("is_international"));
 			byte[] d = await save.GetSaveRawZipAsync((await save.GetRawSaveFromCloudAsync()).GetParsedSaves()[index]);
 			using ZipFile rawZip = new(new MemoryStream(d));
 

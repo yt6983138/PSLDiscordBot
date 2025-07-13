@@ -48,13 +48,20 @@ public class GetScoresByTokenCommand : AdminCommandBase
 			isRequired: false,
 			minValue: 1,
 			maxValue: 114514
+		)
+		.AddOption(
+			"is_international",
+			ApplicationCommandOptionType.Boolean,
+			"International mode",
+			isRequired: true
 		);
 
 	public override async Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
 	{
 		ulong userId = arg.User.Id;
 		string token = arg.Data.Options.ElementAt(0).Value.Unbox<string>();
-		UserData userData = new(userId, token);
+		bool isInternational = arg.GetOption<bool>("is_international");
+		UserData userData = new(userId, token, isInternational);
 
 		PhigrosLibraryCSharp.SaveSummaryPair? pair = await userData.SaveCache.GetAndHandleSave(
 			arg,
