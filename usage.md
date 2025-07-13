@@ -1,12 +1,9 @@
-﻿## What is this?
-This is a **P**higros **S**core **L**ookup Discord bot (aka PSLDiscordBot), <br/>
-you can get your scores by using `/get-scores` or `/get-photo` etc.
-## How to use this?
+﻿## Quick Starting Guide
 If you are first time using this, please follow the guide.
 1. Use `/link-token <token>` or `/login` to link your account first. Having problem? See `/link-token` or `/login` usage.
 2. (Optional) Set your score precision using `/set-precision`.
 3. (Optional, this is almost optional in every case) Use `/get-time-index` to find the save you want to see (See `/get-time-index` usage)
-4. Now, you can get your scores by using `/get-scores [index]` or `/get-photo [index]`.
+4. Now, you can get your scores by using `/get-scores [index]` or `/get-photo [index]`. Also `/about-me` for summary view.
 ## Command usage
 
 Options in `<example>` are _required_ options, in `[example]` are _optional_ options.
@@ -14,13 +11,15 @@ Options in `<example>` are _required_ options, in `[example]` are _optional_ opt
 Usage: `/help` <br/>
 Prints this guide.
 ### /login
-Usage: `/login` <br/>
-Example: `/login` <br/>
+Usage: `/login <is_international>` <br/>
+Example: `/login true` <br/>
 Login with TapTap. Once you do this you no longer need to do `/link-token`. <br/>
+The `is_international` depends on your Phigros version, if you are using international version of Phigros<sup>[1]</sup>, set it to `true`. <br/>
+<sup>[1]</sup>: At this time of this part being written, only `Phigros (Global)` downloaded from taptap.io and version >3.14.1 is international version, otherwise it is China version. <br/>
 ### /link-token
 **Notice: You should use `/login` instead! This is obsolete.**<br/>
-Usage: `/link-token <token>` <br/>
-Example: `/link-token abcde12345fghij67890klmpq` <br/>
+Usage: `/link-token <token> <is_international>` <br/>
+Example: `/link-token abcde12345fghij67890klmpq false` <br/>
 Link your token. You must link your token before doing anything (except `/help`). <br/>
 Token is a string which has length of 25, only contains numbers and lowercase alphabets. <br/>
 Warning: people CAN use token to find your personal information, so do NOT leak your token! 
@@ -102,4 +101,4 @@ It searches songs in database, you can input song name, a song alias, or song id
 You must do `/link-token` or `/login` first. <br/>
 ### /poke
 Usage: `/poke` <br/>
-Poke me
+Poke me awa

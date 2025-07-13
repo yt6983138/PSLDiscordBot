@@ -1,4 +1,4 @@
-﻿# Requires cloud save (aka TapTap)
+﻿# Requires cloud save (aka TapTap, both international and China accounts are supported)
 
 ## What is this?
 This is a **P**higros **S**core **L**ookup Discord bot (aka PSLDiscordBot),<br/>
@@ -13,7 +13,7 @@ There's also cool commands like `/song-info`, `/song-scores`, `/poke`, also `/ad
 
 If you see any problem, use `/report-problem` to report it (I may contact you for more information)
 ## Command usage
-Please check the [github address](https://github.com/yt6983138/PSLDiscordBot/blob/master/usage.md), Recommend read them all before using. (I can't fit everything in a message with maximum length of 2000 :sob:) <br/>
+Please check the [github address](https://github.com/yt6983138/PSLDiscordBot/blob/master/Documentation/usage.md), Recommend read them all before using. (I can't fit everything in a message with maximum length of 2000 :sob:) <br/>
 
 ToS: https://github.com/yt6983138/PSLDiscordBot/blob/master/TermsOfService.md <br/>
 Privacy Policy: https://github.com/yt6983138/PSLDiscordBot/blob/master/PrivacyPolicy.md
