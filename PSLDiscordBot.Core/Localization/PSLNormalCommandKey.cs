@@ -164,4 +164,11 @@ public static partial class PSLNormalCommandKey
 
 	public static partial string ClearMemorableScoreSuccess { get; }
 	#endregion
+
+	#region LogoutCommand
+	public static partial string LogoutName { get; }
+	public static partial string LogoutDescription { get; }
+
+	public static partial string LogoutSuccessful { get; }
+	#endregion
 }

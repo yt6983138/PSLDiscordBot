@@ -229,6 +229,10 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 			[ClearMemorableScoreName] = LocalizedString.CreateDefault("clear-memorable-score"),
 			[ClearMemorableScoreDescription] = LocalizedString.CreateDefault("Clear the memorable score."),
 			[ClearMemorableScoreSuccess] = LocalizedString.CreateDefault("Your memorable score has been cleared!"),
+
+			[LogoutName] = LocalizedString.CreateDefault("logout"),
+			[LogoutDescription] = LocalizedString.CreateDefault("Logs you out of the bot. (Your settings will be wiped too!)"),
+			[LogoutSuccessful] = LocalizedString.CreateDefault("Logged you out successfully."),
 			//[] = LocalizedString.CreateDefault(),
 		});
 	}
