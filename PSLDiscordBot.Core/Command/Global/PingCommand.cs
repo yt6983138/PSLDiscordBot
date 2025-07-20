@@ -21,11 +21,11 @@ namespace PSLDiscordBot.Core.Command.Global;
 [AddToGlobal]
 public class PingCommand : GuestCommandBase
 {
-	private static Dictionary<string, List<Uri>> _domainsToCheck = new()
+	private static readonly Dictionary<string, List<Uri>> _domainsToCheck = new()
 	{
 		{ "Discord", [new(DiscordConfig.CDNUrl), new(DiscordConfig.APIUrl), new(DiscordConfig.InviteUrl)] },
-		{ "TapTap Login Server", [new(TapTapHelper.ChinaApiHost), new(TapTapHelper.ChinaWebHost)] },
-		{ "Phigros Save Server", [new(Save.CloudServerAddress)] },
+		{ "TapTap Login Server", [new(TapTapHelper.ChinaApiHost), new(TapTapHelper.ChinaWebHost), new(TapTapHelper.ApiHost), new(TapTapHelper.WebHost)] },
+		{ "Phigros Save Server", [new(Save.CloudServerAddress), new(Save.InternationalCloudServerAddress)] },
 		{ "Dns and Github", [new("http://8.8.8.8/"), new("https://github.com")] }
 	};
 
