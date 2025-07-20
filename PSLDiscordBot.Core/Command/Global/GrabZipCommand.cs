@@ -1,24 +1,11 @@
-﻿using Discord;
-using Discord.WebSocket;
-using ICSharpCode.SharpZipLib.Zip;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using PhigrosLibraryCSharp;
-using PSLDiscordBot.Core.Command.Global.Base;
-using PSLDiscordBot.Core.Services;
-using PSLDiscordBot.Core.Services.Phigros;
-using PSLDiscordBot.Core.UserDatas;
-using PSLDiscordBot.Core.Utility;
-using PSLDiscordBot.Framework;
-using PSLDiscordBot.Framework.CommandBase;
-using PSLDiscordBot.Framework.Localization;
+﻿using ICSharpCode.SharpZipLib.Zip;
 
 namespace PSLDiscordBot.Core.Command.Global;
 
 [AddToGlobal]
 public class GrabZipCommand : AdminCommandBase
 {
-	public GrabZipCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosDataService phigrosData, ILoggerFactory loggerFactory)
+	public GrabZipCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosService phigrosData, ILoggerFactory loggerFactory)
 		: base(config, database, localization, phigrosData, loggerFactory)
 	{
 	}

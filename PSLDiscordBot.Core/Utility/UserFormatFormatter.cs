@@ -1,6 +1,5 @@
-﻿using PSLDiscordBot.Core.UserDatas;
-using SmartFormat.Core.Extensions;
-using SmartFormat.Core.Parsing;
+﻿using SmartFormat.Core.Extensions;
+using Format = SmartFormat.Core.Parsing.Format;
 
 namespace PSLDiscordBot.Core.Utility;
 public class UserFormatFormatter : IFormatter // TODO: replace this in some score formatters

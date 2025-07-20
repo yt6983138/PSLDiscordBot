@@ -1,17 +1,4 @@
-﻿using Discord;
-using Discord.WebSocket;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using PSLDiscordBot.Core.Localization;
-using PSLDiscordBot.Core.Services;
-using PSLDiscordBot.Core.Services.Phigros;
-using PSLDiscordBot.Core.UserDatas;
-using PSLDiscordBot.Core.Utility;
-using PSLDiscordBot.Framework;
-using PSLDiscordBot.Framework.CommandBase;
-using PSLDiscordBot.Framework.Localization;
-
-namespace PSLDiscordBot.Core.Command.Global.Base;
+﻿namespace PSLDiscordBot.Core.Command.Global.Base;
 public abstract class CommandBase : BasicCommandBase
 {
 	private protected static int EventIdCount;
@@ -21,17 +8,17 @@ public abstract class CommandBase : BasicCommandBase
 	protected readonly DataBaseService _dataBaseService;
 	protected readonly LocalizationService _localization;
 	protected readonly ILogger _logger;
-	protected readonly PhigrosDataService _phigrosDataService;
+	protected readonly PhigrosService _phigrosService;
 	#endregion
 
-	public CommandBase(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosDataService phigrosData, ILoggerFactory loggerFactory)
+	public CommandBase(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosService phigrosData, ILoggerFactory loggerFactory)
 		: base()
 	{
 		this._logger = loggerFactory.CreateLogger(this.GetType());
 		this._config = config;
 		this._dataBaseService = database;
 		this._localization = localization;
-		this._phigrosDataService = phigrosData;
+		this._phigrosService = phigrosData;
 	}
 
 

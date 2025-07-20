@@ -1,24 +1,9 @@
-﻿using Discord;
-using Discord.WebSocket;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using PhigrosLibraryCSharp.Cloud.DataStructure;
-using PSLDiscordBot.Core.Command.Global.Base;
-using PSLDiscordBot.Core.Services;
-using PSLDiscordBot.Core.Services.Phigros;
-using PSLDiscordBot.Core.UserDatas;
-using PSLDiscordBot.Core.Utility;
-using PSLDiscordBot.Framework;
-using PSLDiscordBot.Framework.CommandBase;
-using PSLDiscordBot.Framework.Localization;
-using System.Text;
-
-namespace PSLDiscordBot.Core.Command.Global;
+﻿namespace PSLDiscordBot.Core.Command.Global;
 
 [AddToGlobal]
 public class GetScoresByTokenCommand : AdminCommandBase
 {
-	public GetScoresByTokenCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosDataService phigrosData, ILoggerFactory loggerFactory)
+	public GetScoresByTokenCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosService phigrosData, ILoggerFactory loggerFactory)
 		: base(config, database, localization, phigrosData, loggerFactory)
 	{
 	}
@@ -63,31 +48,18 @@ public class GetScoresByTokenCommand : AdminCommandBase
 		bool isInternational = arg.GetOption<bool>("is_international");
 		UserData userData = new(userId, token, isInternational);
 
-		PhigrosLibraryCSharp.SaveSummaryPair? pair = await userData.SaveCache.GetAndHandleSave(
-			arg,
-			this._phigrosDataService.DifficultiesMap,
-			this._localization,
-			arg.GetIntegerOptionAsInt32OrDefault("index"));
-		if (pair is null)
-			return;
-		(Summary summary, GameSave save) = pair.Value;
+		SaveContext? context = await this._phigrosService.TryHandleAndFetchContext(userData.SaveCache, arg, arg.GetIntegerOptionAsInt32("index"));
+		if (context is null) return;
+		GameRecord save = this._phigrosService.HandleAndGetGameRecord(context);
 
 		string result = GetScoresCommand.ScoresFormatter(
 			arg,
 			save,
-			this._phigrosDataService.IdNameMap,
-			arg.Data.Options.Count > 2 ? arg.Data.Options.ElementAt(2).Value.Unbox<long>().CastTo<long, int>() : 19,
+			this._phigrosService.IdNameMap,
+			arg.GetIntegerOptionAsInt32OrDefault("count", 19),
 			userData,
 			this._localization);
 
-		await arg.ModifyOriginalResponseAsync(
-			(msg) =>
-			{
-				msg.Content = $"Got score! Now showing for token ||{token}||...";
-				msg.Attachments = new List<FileAttachment>()
-				{
-					new(new MemoryStream(Encoding.UTF8.GetBytes(result)), "Scores.txt")
-				};
-			});
+		await arg.QuickReplyWithAttachments("Got score! Now showing for token ||{token}||...", PSLUtils.ToAttachment(result, "Scores.txt"));
 	}
 }

@@ -1,6 +1,4 @@
-﻿using Microsoft.Extensions.Options;
-using PSLDiscordBot.Framework.Localization;
-using PSLDiscordBot.Framework.ServiceBase;
+﻿using PSLDiscordBot.Framework.ServiceBase;
 using static PSLDiscordBot.Core.Localization.PSLCommonKey;
 using static PSLDiscordBot.Core.Localization.PSLCommonMessageKey;
 using static PSLDiscordBot.Core.Localization.PSLCommonOptionKey;

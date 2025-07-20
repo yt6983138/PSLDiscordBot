@@ -1,24 +1,11 @@
-﻿using Discord;
-using Discord.WebSocket;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using PSLDiscordBot.Core.Command.Global.Base;
-using PSLDiscordBot.Core.Localization;
-using PSLDiscordBot.Core.Services;
-using PSLDiscordBot.Core.Services.Phigros;
-using PSLDiscordBot.Core.UserDatas;
-using PSLDiscordBot.Core.Utility;
-using PSLDiscordBot.Framework;
-using PSLDiscordBot.Framework.CommandBase;
-using PSLDiscordBot.Framework.Localization;
-using System.Text;
+﻿using System.Text;
 
 namespace PSLDiscordBot.Core.Command.Global;
 
 [AddToGlobal]
 public class SetPrecisionCommand : CommandBase
 {
-	public SetPrecisionCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosDataService phigrosData, ILoggerFactory loggerFactory)
+	public SetPrecisionCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosService phigrosData, ILoggerFactory loggerFactory)
 		: base(config, database, localization, phigrosData, loggerFactory)
 	{
 	}

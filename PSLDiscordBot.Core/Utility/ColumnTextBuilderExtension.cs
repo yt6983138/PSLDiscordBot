@@ -1,7 +1,4 @@
-﻿using Discord;
-using PSLDiscordBot.Core.UserDatas;
-using PSLDiscordBot.Framework.Localization;
-using SmartFormat;
+﻿using SmartFormat;
 using static PSLDiscordBot.Core.Utility.ColumnTextBuilder;
 
 namespace PSLDiscordBot.Core.Utility;

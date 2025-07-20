@@ -1,17 +1,8 @@
-﻿using Discord;
-using Discord.WebSocket;
-using Microsoft.EntityFrameworkCore;
-using PhigrosLibraryCSharp;
-using PSLDiscordBot.Core.Localization;
-using PSLDiscordBot.Core.Services;
-using PSLDiscordBot.Core.UserDatas;
-using PSLDiscordBot.Framework;
-using PSLDiscordBot.Framework.Localization;
+﻿using Microsoft.EntityFrameworkCore;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using System.Text;
-using System.Text.Json;
 using Image = SixLabors.ImageSharp.Image;
 
 namespace PSLDiscordBot.Core.Utility;
@@ -85,75 +76,6 @@ public static class PSLUtils
 		}
 
 		return [pair];
-	}
-	public static async Task<SaveSummaryPair?> GetAndHandleSave(
-		this Save save,
-		SocketSlashCommand command,
-		IReadOnlyDictionary<string, float[]> difficultyMap,
-		LocalizationService localizationService,
-		int index = 0,
-		bool autoThrow = true)
-	{
-		LocalizedString onOutOfRange = localizationService[PSLCommonKey.SaveHandlerOnOutOfRange];
-		LocalizedString onOtherException = localizationService[PSLCommonKey.SaveHandlerOnOtherException];
-		LocalizedString onNoSaves = localizationService[PSLCommonKey.SaveHandlerOnNoSaves];
-		LocalizedString onPhiLibUriException = localizationService[PSLCommonKey.SaveHandlerOnPhiLibUriException];
-		LocalizedString onPhiLibJsonException = localizationService[PSLCommonKey.SaveHandlerOnPhiLibJsonException];
-		LocalizedString onHttpClientTimeout = localizationService[PSLCommonKey.SaveHandlerOnHttpClientTimeout];
-
-		try
-		{
-			List<PhigrosLibraryCSharp.Cloud.DataStructure.Raw.RawSave> rawSaves = (await save.GetRawSaveFromCloudAsync()).results;
-
-			if (rawSaves.Count == 0)
-			{
-				await command.QuickReply(onNoSaves);
-				return null;
-			}
-			return await save.GetGameSaveAsync(difficultyMap, index, GetGameSave_ExceptionHandler);
-		}
-		catch (MaxValueArgumentOutOfRangeException ex) when (ex.ActualValue is int && ex.MaxValue is int)
-		{
-			await command.QuickReply(onOutOfRange, ex.MaxValue, ex.ActualValue);
-		}
-		catch (TaskCanceledException ex)
-		{
-			await command.QuickReply(onHttpClientTimeout, ex.Message);
-		}
-		catch (TimeoutException ex)
-		{
-			await command.QuickReply(onHttpClientTimeout, ex.Message);
-		}
-		catch (InvalidOperationException ex) when (ex.Message.Contains("invalid request URI was provided"))
-		{
-			await command.QuickReply(onPhiLibUriException, ex.Message);
-		}
-		catch (JsonException ex)
-		{
-			await command.QuickReply(onPhiLibJsonException, ex.Message);
-		}
-		catch (Exception ex)
-		{
-			await command.QuickReply(onOtherException, ex.Message);
-			if (autoThrow)
-				throw;
-		}
-		return null;
-	}
-	private static void GetGameSave_ExceptionHandler(string message, Exception? ex, object? extraArgs)
-	{
-		if (ex is not KeyNotFoundException knfex || extraArgs is not string str)
-		{
-			goto Throw;
-		}
-		if (str == "テリトリーバトル.ツユ")
-			return;
-
-		Throw:
-		if (ex is null)
-			throw new Exception(message, ex);
-
-		throw ex;
 	}
 
 	/// <summary>

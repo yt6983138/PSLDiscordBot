@@ -1,20 +1,5 @@
-﻿using Discord;
-using Discord.WebSocket;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using PhigrosLibraryCSharp.Cloud.DataStructure;
-using PhigrosLibraryCSharp.GameRecords;
-using PSLDiscordBot.Core.Command.Global.Base;
-using PSLDiscordBot.Core.ImageGenerating;
-using PSLDiscordBot.Core.Localization;
-using PSLDiscordBot.Core.Services;
-using PSLDiscordBot.Core.Services.Phigros;
-using PSLDiscordBot.Core.UserDatas;
-using PSLDiscordBot.Core.Utility;
-using PSLDiscordBot.Framework;
+﻿using PSLDiscordBot.Core.ImageGenerating;
 using PSLDiscordBot.Framework.BuiltInServices;
-using PSLDiscordBot.Framework.CommandBase;
-using PSLDiscordBot.Framework.Localization;
 using static HtmlToImage.NET.HtmlConverter.Tab;
 
 namespace PSLDiscordBot.Core.Command.Global;
@@ -25,7 +10,7 @@ public class GetPhotoCommand : CommandBase
 	private readonly ImageGenerator _imageGenerator;
 	private readonly IDiscordClientService _discordClientService;
 
-	public GetPhotoCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosDataService phigrosData, ILoggerFactory loggerFactory, ImageGenerator imageGenerator, IDiscordClientService discordClientService)
+	public GetPhotoCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosService phigrosData, ILoggerFactory loggerFactory, ImageGenerator imageGenerator, IDiscordClientService discordClientService)
 		: base(config, database, localization, phigrosData, loggerFactory)
 	{
 		this._imageGenerator = imageGenerator;
@@ -139,18 +124,9 @@ public class GetPhotoCommand : CommandBase
 			data.GetPhotoCoolDownUntil = DateTime.Now + this._config.Value.GetPhotoCoolDown;
 		}
 
-		PhigrosLibraryCSharp.SaveSummaryPair? pair = await data.SaveCache.GetAndHandleSave(
-			arg,
-			this._phigrosDataService.DifficultiesMap,
-			this._localization,
-			index);
-		if (pair is null)
-			return;
-		(Summary summary, GameSave save) = pair.Value;
-		GameUserInfo userInfo = await data.SaveCache.GetGameUserInfoAsync(index);
-		GameProgress progress = await data.SaveCache.GetGameProgressAsync(index);
+		SaveContext? context = await this._phigrosService.TryHandleAndFetchContext(data.SaveCache, arg, index);
+		if (context is null) return;
 		UserInfo outerUserInfo = await data.SaveCache.GetUserInfoAsync();
-		GameSettings settings = await data.SaveCache.GetGameSettingsAsync(index);
 
 		await arg.QuickReply(this._localization[PSLNormalCommandKey.GetPhotoGenerating]);
 
@@ -158,12 +134,8 @@ public class GetPhotoCommand : CommandBase
 		try
 		{
 			image = await this._imageGenerator.MakePhoto(
-				save,
 				data,
-				summary,
-				userInfo,
-				progress,
-				settings,
+				context,
 				outerUserInfo,
 				this._config.Value.GetPhotoRenderInfo,
 				usePng ? PhotoType.Png : this._config.Value.DefaultRenderImageType,

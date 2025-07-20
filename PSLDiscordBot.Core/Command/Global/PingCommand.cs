@@ -1,19 +1,4 @@
-﻿using Discord;
-using Discord.WebSocket;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using PhigrosLibraryCSharp;
-using PhigrosLibraryCSharp.Cloud.Login;
-using PSLDiscordBot.Core.Command.Global.Base;
-using PSLDiscordBot.Core.Localization;
-using PSLDiscordBot.Core.Services;
-using PSLDiscordBot.Core.Services.Phigros;
-using PSLDiscordBot.Core.UserDatas;
-using PSLDiscordBot.Core.Utility;
-using PSLDiscordBot.Framework;
-using PSLDiscordBot.Framework.CommandBase;
-using PSLDiscordBot.Framework.Localization;
-using System.Net.NetworkInformation;
+﻿using System.Net.NetworkInformation;
 using System.Text;
 
 namespace PSLDiscordBot.Core.Command.Global;
@@ -29,7 +14,7 @@ public class PingCommand : GuestCommandBase
 		{ "Dns and Github", [new("http://8.8.8.8/"), new("https://github.com")] }
 	};
 
-	public PingCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosDataService phigrosData, ILoggerFactory loggerFactory)
+	public PingCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosService phigrosData, ILoggerFactory loggerFactory)
 		: base(config, database, localization, phigrosData, loggerFactory)
 	{
 	}

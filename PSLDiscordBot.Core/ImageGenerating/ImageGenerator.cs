@@ -1,16 +1,10 @@
 ﻿using HtmlToImage.NET;
-using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using PhigrosLibraryCSharp.Cloud.DataStructure;
-using PhigrosLibraryCSharp.GameRecords;
-using PSLDiscordBot.Core.Services;
-using PSLDiscordBot.Core.Services.Phigros;
-using PSLDiscordBot.Core.UserDatas;
-using PSLDiscordBot.Framework;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats.Png;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
+using Image = SixLabors.ImageSharp.Image;
 
 /*** websocket dont blow up pls
  * 
@@ -51,7 +45,7 @@ namespace PSLDiscordBot.Core.ImageGenerating;
 
 public class ImageGenerator
 {
-	private readonly PhigrosDataService _phigrosDataService;
+	private readonly PhigrosService _phigrosDataService;
 	private readonly ILogger<ImageGenerator> _logger;
 	private readonly AvatarHashMapService _avatarMapService;
 	private readonly ChromiumPoolService _chromiumPoolService;
@@ -62,7 +56,7 @@ public class ImageGenerator
 
 	private static EventId EventId { get; } = new(114512, "ImageGenerator");
 
-	public ImageGenerator(ILogger<ImageGenerator> logger, PhigrosDataService phigrosData, AvatarHashMapService avatarHashMap, ChromiumPoolService chromiumPool)
+	public ImageGenerator(ILogger<ImageGenerator> logger, PhigrosService phigrosData, AvatarHashMapService avatarHashMap, ChromiumPoolService chromiumPool)
 	{
 		this._logger = logger;
 		this._phigrosDataService = phigrosData;
@@ -89,12 +83,8 @@ public class ImageGenerator
 	}
 
 	public async Task<MemoryStream> MakePhoto(
-		GameSave save,
 		UserData userData,
-		Summary summary,
-		GameUserInfo gameUserInfo,
-		GameProgress progress,
-		GameSettings settings,
+		SaveContext context,
 		UserInfo userInfo,
 		BasicHtmlImageInfo basicHtmlImageInfo,
 		HtmlConverter.Tab.PhotoType photoType,
@@ -103,6 +93,12 @@ public class ImageGenerator
 		MapProcessor? mapPostProcessing = null,
 		CancellationToken cancellationToken = default)
 	{
+		Summary summary = context.ReadSummary();
+		GameRecord save = this._phigrosDataService.HandleAndGetGameRecord(context);
+		GameUserInfo gameUserInfo = context.ReadGameUserInfo();
+		GameProgress progress = context.ReadGameProgress();
+		GameSettings settings = context.ReadGameSettings();
+
 		(List<CompleteScore>? sortedBestsIncludePhis, double rks) = save.GetSortedListForRksMerged();
 		List<CompleteScore> sortedBestsWithoutPhis = sortedBestsIncludePhis.Skip(3).ToList();
 
@@ -138,8 +134,8 @@ public class ImageGenerator
 			ExtraArguments = extraArguments,
 			GameSettings = settings,
 
-			SaveCreationDate = save.CreationDate,
-			SaveModificationDate = save.ModificationTime,
+			SaveCreationDate = context.OriginalData.createdAt,
+			SaveModificationDate = context.OriginalData.modifiedAt,
 			SaveSummary = save.Summary
 		};
 		map.User.PlayStatistics.MergeWith(this.SongDifficultyCount);

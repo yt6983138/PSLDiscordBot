@@ -1,7 +1,4 @@
-﻿using Discord.WebSocket;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using PSLDiscordBot.Framework.BuiltInServices;
+﻿using PSLDiscordBot.Framework.BuiltInServices;
 using PSLDiscordBot.Framework.MiscEventArgs;
 
 namespace PSLDiscordBot.Core.Services;

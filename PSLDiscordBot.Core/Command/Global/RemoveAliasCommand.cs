@@ -1,23 +1,9 @@
-﻿using Discord;
-using Discord.WebSocket;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using PSLDiscordBot.Core.Command.Global.Base;
-using PSLDiscordBot.Core.Localization;
-using PSLDiscordBot.Core.Services;
-using PSLDiscordBot.Core.Services.Phigros;
-using PSLDiscordBot.Core.UserDatas;
-using PSLDiscordBot.Core.Utility;
-using PSLDiscordBot.Framework;
-using PSLDiscordBot.Framework.CommandBase;
-using PSLDiscordBot.Framework.Localization;
-
-namespace PSLDiscordBot.Core.Command.Global;
+﻿namespace PSLDiscordBot.Core.Command.Global;
 
 [AddToGlobal]
 public class RemoveAliasCommand : CommandBase
 {
-	public RemoveAliasCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosDataService phigrosData, ILoggerFactory loggerFactory)
+	public RemoveAliasCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosService phigrosData, ILoggerFactory loggerFactory)
 		: base(config, database, localization, phigrosData, loggerFactory)
 	{
 	}
@@ -43,7 +29,7 @@ public class RemoveAliasCommand : CommandBase
 		string forSong = arg.GetOption<string>(this._localization[PSLNormalCommandKey.RemoveAliasOptionForSongName]);
 		string alias = arg.GetOption<string>(this._localization[PSLNormalCommandKey.RemoveAliasOptionAllayToAddName]);
 
-		List<SongAlias> found = await requester.FindFromIdOrAlias(forSong, this._phigrosDataService.IdNameMap);
+		List<SongAlias> found = await requester.FindFromIdOrAlias(forSong, this._phigrosService.IdNameMap);
 		if (found.Count == 0)
 		{
 			await arg.QuickReply(this._localization[PSLNormalCommandKey.RemoveAliasNoMatch]);
@@ -66,7 +52,7 @@ public class RemoveAliasCommand : CommandBase
 		await requester.AddOrReplaceSongAliasAsync(new(theRealOne.SongId, newAlias.ToArray()));
 
 		await arg.QuickReply(this._localization[PSLNormalCommandKey.RemoveAliasSuccess],
-			this._phigrosDataService.IdNameMap[theRealOne.SongId],
+			this._phigrosService.IdNameMap[theRealOne.SongId],
 			newAlias);
 	}
 }

@@ -1,14 +1,7 @@
-﻿using Discord.WebSocket;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using PSLDiscordBot.Core.Services;
-using PSLDiscordBot.Core.Services.Phigros;
-using PSLDiscordBot.Core.UserDatas;
-
-namespace PSLDiscordBot.Core.Command.Global.Base;
+﻿namespace PSLDiscordBot.Core.Command.Global.Base;
 public abstract class GuestCommandBase : CommandBase
 {
-	protected GuestCommandBase(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosDataService phigrosData, ILoggerFactory loggerFactory) : base(config, database, localization, phigrosData, loggerFactory)
+	protected GuestCommandBase(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosService phigrosData, ILoggerFactory loggerFactory) : base(config, database, localization, phigrosData, loggerFactory)
 	{
 	}
 
