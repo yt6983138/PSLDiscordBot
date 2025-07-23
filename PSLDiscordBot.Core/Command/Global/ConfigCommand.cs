@@ -1,15 +1,4 @@
-﻿using Discord;
-using Discord.WebSocket;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
-using PSLDiscordBot.Core.Command.Global.Base;
-using PSLDiscordBot.Core.Services;
-using PSLDiscordBot.Core.Services.Phigros;
-using PSLDiscordBot.Core.UserDatas;
-using PSLDiscordBot.Core.Utility;
-using PSLDiscordBot.Framework.CommandBase;
-using PSLDiscordBot.Framework.Localization;
+﻿using Newtonsoft.Json;
 using PSLDiscordBot.Framework.ServiceBase;
 using System.Reflection;
 
@@ -29,7 +18,7 @@ public class ConfigCommand : AdminCommandBase
 
 	private readonly IWritableOptions<Config> _writableConfig;
 
-	public ConfigCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosDataService phigrosData, ILoggerFactory loggerFactory, IWritableOptions<Config> writableConfig)
+	public ConfigCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosService phigrosData, ILoggerFactory loggerFactory, IWritableOptions<Config> writableConfig)
 		: base(config, database, localization, phigrosData, loggerFactory)
 	{
 		this._writableConfig = writableConfig;

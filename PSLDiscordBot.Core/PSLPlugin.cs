@@ -1,19 +1,12 @@
-﻿using Discord;
-using Discord.Net;
+﻿using Discord.Net;
 using Discord.Rest;
-using Discord.WebSocket;
 using ICSharpCode.SharpZipLib.Zip;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using NLog.Web;
 using PSLDiscordBot.Core.ImageGenerating;
-using PSLDiscordBot.Core.Services;
-using PSLDiscordBot.Core.Services.Phigros;
-using PSLDiscordBot.Core.Utility;
-using PSLDiscordBot.Framework;
 using PSLDiscordBot.Framework.BuiltInServices;
 using PSLDiscordBot.Framework.MiscEventArgs;
 using PSLDiscordBot.Framework.ServiceBase;
@@ -219,7 +212,7 @@ public class PSLPlugin : IPlugin
 		hostBuilder.Services.AddSingleton(this)
 			.AddSingleton<DataBaseService>()
 			.AddSingleton<ChromiumPoolService>()
-			.AddSingleton<PhigrosDataService>()
+			.AddSingleton<PhigrosService>()
 			.AddSingleton<AvatarHashMapService>()
 			.AddSingleton<ImageGenerator>()
 			.AddSingleton<StatusService>()

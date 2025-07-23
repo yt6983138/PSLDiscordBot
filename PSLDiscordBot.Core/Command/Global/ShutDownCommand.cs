@@ -1,16 +1,4 @@
-﻿using Discord;
-using Discord.Rest;
-using Discord.WebSocket;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using PSLDiscordBot.Core.Command.Global.Base;
-using PSLDiscordBot.Core.Services;
-using PSLDiscordBot.Core.Services.Phigros;
-using PSLDiscordBot.Core.UserDatas;
-using PSLDiscordBot.Core.Utility;
-using PSLDiscordBot.Framework;
-using PSLDiscordBot.Framework.CommandBase;
-using PSLDiscordBot.Framework.Localization;
+﻿using Discord.Rest;
 
 namespace PSLDiscordBot.Core.Command.Global;
 
@@ -20,7 +8,7 @@ public class ShutDownCommand : AdminCommandBase
 	private readonly StatusService _statusService;
 	private readonly Program _program;
 
-	public ShutDownCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosDataService phigrosData, ILoggerFactory loggerFactory, StatusService statusService, Program program)
+	public ShutDownCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosService phigrosData, ILoggerFactory loggerFactory, StatusService statusService, Program program)
 		: base(config, database, localization, phigrosData, loggerFactory)
 	{
 		this._statusService = statusService;

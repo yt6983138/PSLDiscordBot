@@ -1,18 +1,4 @@
-﻿using Discord;
-using Discord.WebSocket;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using PhigrosLibraryCSharp.GameRecords;
-using PSLDiscordBot.Core.Command.Global.Base;
-using PSLDiscordBot.Core.Localization;
-using PSLDiscordBot.Core.Services;
-using PSLDiscordBot.Core.Services.Phigros;
-using PSLDiscordBot.Core.UserDatas;
-using PSLDiscordBot.Core.Utility;
-using PSLDiscordBot.Framework;
-using PSLDiscordBot.Framework.CommandBase;
-using PSLDiscordBot.Framework.Localization;
-using System.IO.Compression;
+﻿using System.IO.Compression;
 using System.Text;
 
 namespace PSLDiscordBot.Core.Command.Global;
@@ -20,7 +6,7 @@ namespace PSLDiscordBot.Core.Command.Global;
 [AddToGlobal]
 public class DownloadAssetCommand : GuestCommandBase
 {
-	public DownloadAssetCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosDataService phigrosData, ILoggerFactory loggerFactory)
+	public DownloadAssetCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosService phigrosData, ILoggerFactory loggerFactory)
 		: base(config, database, localization, phigrosData, loggerFactory)
 	{
 	}
@@ -45,7 +31,7 @@ public class DownloadAssetCommand : GuestCommandBase
 	{
 		List<SongAlias> foundAlias = await requester.FindFromIdOrAlias(
 			arg.GetOption<string>(this._localization[PSLCommonOptionKey.SongSearchOptionName]),
-			this._phigrosDataService.IdNameMap);
+			this._phigrosService.IdNameMap);
 
 		if (foundAlias.Count == 0)
 		{
@@ -53,12 +39,12 @@ public class DownloadAssetCommand : GuestCommandBase
 			return;
 		}
 
-		StringBuilder query = SongInfoCommand.BuildReturnQueryString(foundAlias, this._phigrosDataService);
+		StringBuilder query = SongInfoCommand.BuildReturnQueryString(foundAlias, this._phigrosService);
 
 		SongAlias first = foundAlias[0];
 		string id = first.SongId;
-		SongInfo firstInfo = this._phigrosDataService.SongInfoMap[id];
-		DifficultyCCCollection diff = this._phigrosDataService.CheckedDifficulties[id];
+		SongInfo firstInfo = this._phigrosService.SongInfoMap[id];
+		DifficultyCCCollection diff = this._phigrosService.CheckedDifficulties[id];
 		bool hasAT = diff.AT != 0;
 
 		Dictionary<Difficulty, string> chartUrls = Enum.GetValues<Difficulty>()
@@ -70,7 +56,7 @@ public class DownloadAssetCommand : GuestCommandBase
 			$"[Illustration]({illustrationUrl}), " +
 			$"[Music]({musicUrl}), ");
 
-		for (int i = 0; i < 4 && this._phigrosDataService.CheckedDifficulties[id][i] != 0; i++)
+		for (int i = 0; i < 4 && this._phigrosService.CheckedDifficulties[id][i] != 0; i++)
 		{ // UNDONE: localize those
 			Difficulty difficulty = (Difficulty)i;
 			@return.Append($"[Chart {difficulty}](<{chartUrls[difficulty]}>), ");

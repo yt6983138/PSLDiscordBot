@@ -1,25 +1,11 @@
-﻿using Discord;
-using Discord.WebSocket;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using PhigrosLibraryCSharp.GameRecords;
-using PSLDiscordBot.Core.Command.Global.Base;
-using PSLDiscordBot.Core.Localization;
-using PSLDiscordBot.Core.Services;
-using PSLDiscordBot.Core.Services.Phigros;
-using PSLDiscordBot.Core.UserDatas;
-using PSLDiscordBot.Core.Utility;
-using PSLDiscordBot.Framework;
-using PSLDiscordBot.Framework.CommandBase;
-using PSLDiscordBot.Framework.Localization;
-using System.Text;
+﻿using System.Text;
 
 namespace PSLDiscordBot.Core.Command.Global;
 
 [AddToGlobal]
 public class SongInfoCommand : GuestCommandBase
 {
-	public SongInfoCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosDataService phigrosData, ILoggerFactory loggerFactory)
+	public SongInfoCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosService phigrosData, ILoggerFactory loggerFactory)
 		: base(config, database, localization, phigrosData, loggerFactory)
 	{
 	}
@@ -38,7 +24,7 @@ public class SongInfoCommand : GuestCommandBase
 	{
 		List<SongAlias> foundAlias = await requester.FindFromIdOrAlias(
 			arg.GetOption<string>(this._localization[PSLCommonOptionKey.SongSearchOptionName]),
-			this._phigrosDataService.IdNameMap);
+			this._phigrosService.IdNameMap);
 
 		if (foundAlias.Count == 0)
 		{
@@ -46,7 +32,7 @@ public class SongInfoCommand : GuestCommandBase
 			return;
 		}
 
-		StringBuilder query = BuildReturnQueryString(foundAlias, this._phigrosDataService);
+		StringBuilder query = BuildReturnQueryString(foundAlias, this._phigrosService);
 		// UNDONE: localize those builder based messages
 
 		await arg.QuickReplyWithAttachments($"Found {foundAlias.Count} match(es). " +
@@ -54,7 +40,7 @@ public class SongInfoCommand : GuestCommandBase
 			[PSLUtils.ToAttachment(query.ToString(), "Query.txt")]);
 	}
 
-	public static StringBuilder BuildReturnQueryString(List<SongAlias> foundAlias, PhigrosDataService service)
+	public static StringBuilder BuildReturnQueryString(List<SongAlias> foundAlias, PhigrosService service)
 	{
 		SongAlias first = foundAlias[0];
 		SongInfo firstInfo = service.SongInfoMap[first.SongId];

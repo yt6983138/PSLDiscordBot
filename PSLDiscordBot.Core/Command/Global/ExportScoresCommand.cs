@@ -1,26 +1,11 @@
-﻿using Discord;
-using Discord.WebSocket;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using PhigrosLibraryCSharp.Cloud.DataStructure;
-using PhigrosLibraryCSharp.GameRecords;
-using PSLDiscordBot.Core.Command.Global.Base;
-using PSLDiscordBot.Core.Localization;
-using PSLDiscordBot.Core.Services;
-using PSLDiscordBot.Core.Services.Phigros;
-using PSLDiscordBot.Core.UserDatas;
-using PSLDiscordBot.Core.Utility;
-using PSLDiscordBot.Framework;
-using PSLDiscordBot.Framework.CommandBase;
-using PSLDiscordBot.Framework.Localization;
-using yt6983138.Common;
+﻿using yt6983138.Common;
 
 namespace PSLDiscordBot.Core.Command.Global;
 
 [AddToGlobal]
 public class ExportScoresCommand : CommandBase
 {
-	public ExportScoresCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosDataService phigrosData, ILoggerFactory loggerFactory)
+	public ExportScoresCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosService phigrosData, ILoggerFactory loggerFactory)
 		: base(config, database, localization, phigrosData, loggerFactory)
 	{
 	}
@@ -38,17 +23,13 @@ public class ExportScoresCommand : CommandBase
 
 	public override async Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
 	{
-		PhigrosLibraryCSharp.SaveSummaryPair? pair = await data.SaveCache.GetAndHandleSave(
-			arg,
-			this._phigrosDataService.DifficultiesMap,
-			this._localization,
-			arg.GetIndexOption(this._localization));
-		if (pair is null)
-			return;
-		(Summary summary, GameSave save) = pair.Value;
+		int index = arg.GetIndexOption(this._localization);
+		SaveContext? context = await this._phigrosService.TryHandleAndFetchContext(data.SaveCache, arg, index);
+		if (context is null) return;
+		GameRecord save = this._phigrosService.HandleAndGetGameRecord(context);
 
 		await arg.QuickReplyWithAttachments(
-			[PSLUtils.ToAttachment(ExportCSV(save.Records, this._phigrosDataService.IdNameMap), "Export.csv")],
+			[PSLUtils.ToAttachment(ExportCSV(save.Records, this._phigrosService.IdNameMap), "Export.csv")],
 			this._localization[PSLNormalCommandKey.ExportScoresReply],
 			save.Records.Count);
 	}

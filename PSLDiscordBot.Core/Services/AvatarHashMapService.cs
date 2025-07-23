@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Options;
-using PSLDiscordBot.Framework.ServiceBase;
+﻿using PSLDiscordBot.Framework.ServiceBase;
 
 namespace PSLDiscordBot.Core.Services;
 public class AvatarHashMapService : FileManagementServiceBase<Dictionary<string, string>>

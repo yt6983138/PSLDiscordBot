@@ -1,5 +1,4 @@
 ﻿using HtmlToImage.NET;
-using Microsoft.Extensions.Options;
 
 namespace PSLDiscordBot.Core.Services;
 

@@ -1,6 +1,4 @@
-﻿using Discord;
-using PSLDiscordBot.Framework.Localization;
-using SmartFormat;
+﻿using SmartFormat;
 using System.Text;
 
 namespace PSLDiscordBot.Core.Utility;
@@ -8,7 +6,7 @@ public class ColumnTextBuilder
 {
 	public struct RowBuilder
 	{
-		public List<string> Columns { get; set; } = new();
+		public List<string> Columns { get; set; } = [];
 
 		public RowBuilder() { }
 		public RowBuilder(params IEnumerable<string> columns)
@@ -171,8 +169,8 @@ public class ColumnTextBuilder
 		(196608, 262141)
 ];
 
-	private List<string> _columnTitles = new();
-	private List<string[]> _rows = new();
+	private List<string> _columnTitles = [];
+	private List<string[]> _rows = [];
 
 	public string Delimiter { get; set; } = " | ";
 	public string ColumnEnd { get; set; } = "\n";
@@ -273,9 +271,9 @@ public class ColumnTextBuilder
 	public static bool IsFullWidth(char first, char second = default)
 	{
 		int combined = first | (second << 16);
-		foreach ((int Minium, int Maxium) item in FullWidthCharRanges)
+		foreach ((int Minium, int Maxium) in FullWidthCharRanges)
 		{
-			if (item.Minium <= combined && combined <= item.Maxium) return true;
+			if (Minium <= combined && combined <= Maxium) return true;
 		}
 		return false;
 	}

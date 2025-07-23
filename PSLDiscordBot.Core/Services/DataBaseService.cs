@@ -1,8 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using PSLDiscordBot.Core.UserDatas;
-using PSLDiscordBot.Core.Utility;
 
 namespace PSLDiscordBot.Core.Services;
 

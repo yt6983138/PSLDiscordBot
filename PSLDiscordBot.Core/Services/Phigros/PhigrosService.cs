@@ -1,15 +1,14 @@
-﻿using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using PSLDiscordBot.Core.Utility;
+﻿using PhigrosLibraryCSharp.Cloud.RawData;
 using yt6983138.Common;
 
 namespace PSLDiscordBot.Core.Services.Phigros;
-public class PhigrosDataService
+public class PhigrosService
 {
-	private static EventId EventId { get; } = new(114510, nameof(PhigrosDataService));
+	private static EventId EventId { get; } = new(114510, nameof(PhigrosService));
 
-	private readonly ILogger<PhigrosDataService> _logger;
+	private readonly ILogger<PhigrosService> _logger;
 	private readonly Config _config;
+	private readonly LocalizationService _localization;
 
 	/// <summary>
 	/// For compatibility, newer api should use <see cref="CheckedDifficulties"/>.
@@ -23,8 +22,7 @@ public class PhigrosDataService
 	public Dictionary<string, DifficultyCCCollection> CheckedDifficulties { get; }
 	public Dictionary<string, SongInfo> SongInfoMap { get; }
 
-#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
-	public PhigrosDataService(IOptions<Config> config, ILogger<PhigrosDataService> logger)
+	public PhigrosService(IOptions<Config> config, ILogger<PhigrosService> logger, LocalizationService localization)
 	{
 		this._logger = logger;
 		this._config = config.Value;
@@ -52,8 +50,8 @@ public class PhigrosDataService
 			KeyToValueTransformer = (src, key) => src[key].Name,
 			ContainsTransformer = (src, key) => src.ContainsKey(key)
 		};
+		this._localization = localization;
 	}
-#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 	public (Dictionary<string, DifficultyCCCollection>, Dictionary<string, SongInfo>) ReadDatas(string diffLocation, string nameLocation)
 	{
 		CsvReader difficultyReader = new(File.ReadAllText(diffLocation), IsTsv(diffLocation) ? "\t" : ",");
@@ -90,4 +88,72 @@ public class PhigrosDataService
 	}
 	public static bool IsTsv(string filename)
 		=> filename.EndsWith(".tsv", StringComparison.InvariantCultureIgnoreCase);
+
+	public async Task<SaveContext?> TryHandleAndFetchContext(Save save, SocketSlashCommand command, int index = 0, bool autoThrow = true)
+	{
+		LocalizedString onOutOfRange = this._localization[PSLCommonKey.SaveHandlerOnOutOfRange];
+		LocalizedString onOtherException = this._localization[PSLCommonKey.SaveHandlerOnOtherException];
+		LocalizedString onNoSaves = this._localization[PSLCommonKey.SaveHandlerOnNoSaves];
+		LocalizedString onPhiLibUriException = this._localization[PSLCommonKey.SaveHandlerOnPhiLibUriException];
+		LocalizedString onPhiLibJsonException = this._localization[PSLCommonKey.SaveHandlerOnPhiLibJsonException];
+		LocalizedString onHttpClientTimeout = this._localization[PSLCommonKey.SaveHandlerOnHttpClientTimeout];
+
+		try
+		{
+			List<RawSave> rawSaves = (await save.GetRawSaveFromCloudAsync()).results;
+
+			if (rawSaves.Count == 0)
+			{
+				await command.QuickReply(onNoSaves);
+				return null;
+			}
+			return await save.GetSaveContextAsync(index);
+		}
+		catch (MaxValueArgumentOutOfRangeException ex) when (ex.ActualValue is int && ex.MaxValue is int)
+		{
+			await command.QuickReply(onOutOfRange, ex.MaxValue, ex.ActualValue);
+		}
+		catch (TaskCanceledException ex)
+		{
+			await command.QuickReply(onHttpClientTimeout, ex.Message);
+		}
+		catch (TimeoutException ex)
+		{
+			await command.QuickReply(onHttpClientTimeout, ex.Message);
+		}
+		catch (InvalidOperationException ex) when (ex.Message.Contains("invalid request URI was provided"))
+		{
+			await command.QuickReply(onPhiLibUriException, ex.Message);
+		}
+		catch (System.Text.Json.JsonException ex)
+		{
+			await command.QuickReply(onPhiLibJsonException, ex.Message);
+		}
+		catch (Exception ex)
+		{
+			await command.QuickReply(onOtherException, ex.Message);
+			if (autoThrow)
+				throw;
+		}
+		return null;
+	}
+	public GameRecord HandleAndGetGameRecord(SaveContext ctx)
+	{
+		return ctx.ReadGameRecord(this.DifficultiesMap, GetGameSave_ExceptionHandler);
+	}
+	private static void GetGameSave_ExceptionHandler(string message, Exception? ex, object? extraArgs)
+	{
+		if (ex is not KeyNotFoundException knfex || extraArgs is not string str)
+		{
+			goto Throw;
+		}
+		if (str == "テリトリーバトル.ツユ")
+			return;
+
+		Throw:
+		if (ex is null)
+			throw new Exception(message, ex);
+
+		throw ex;
+	}
 }

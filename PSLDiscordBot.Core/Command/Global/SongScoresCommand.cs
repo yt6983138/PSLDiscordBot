@@ -1,19 +1,4 @@
-﻿using Discord;
-using Discord.WebSocket;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using PhigrosLibraryCSharp.Cloud.DataStructure;
-using PhigrosLibraryCSharp.GameRecords;
-using PSLDiscordBot.Core.Command.Global.Base;
-using PSLDiscordBot.Core.ImageGenerating;
-using PSLDiscordBot.Core.Localization;
-using PSLDiscordBot.Core.Services;
-using PSLDiscordBot.Core.Services.Phigros;
-using PSLDiscordBot.Core.UserDatas;
-using PSLDiscordBot.Core.Utility;
-using PSLDiscordBot.Framework;
-using PSLDiscordBot.Framework.CommandBase;
-using PSLDiscordBot.Framework.Localization;
+﻿using PSLDiscordBot.Core.ImageGenerating;
 
 namespace PSLDiscordBot.Core.Command.Global;
 
@@ -22,7 +7,7 @@ public class SongScoresCommand : CommandBase
 {
 	private readonly ImageGenerator _imageGenerator;
 
-	public SongScoresCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosDataService phigrosData, ILoggerFactory loggerFactory, ImageGenerator imageGenerator)
+	public SongScoresCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosService phigrosData, ILoggerFactory loggerFactory, ImageGenerator imageGenerator)
 		: base(config, database, localization, phigrosData, loggerFactory)
 	{
 		this._imageGenerator = imageGenerator;
@@ -51,25 +36,17 @@ public class SongScoresCommand : CommandBase
 		string search = arg.GetOption<string>(this._localization[PSLCommonOptionKey.SongSearchOptionName]);
 		int index = arg.GetIndexOption(this._localization);
 
-		List<SongAlias> searchResult = await requester.FindFromIdOrAlias(search, this._phigrosDataService.IdNameMap);
+		List<SongAlias> searchResult = await requester.FindFromIdOrAlias(search, this._phigrosService.IdNameMap);
 		if (searchResult.Count == 0)
 		{
 			await arg.QuickReply(this._localization[PSLCommonMessageKey.SongSearchNoMatch]);
 			return;
 		}
 
-		PhigrosLibraryCSharp.SaveSummaryPair? pair = await data.SaveCache.GetAndHandleSave(
-			arg,
-			this._phigrosDataService.DifficultiesMap,
-			this._localization,
-			index);
-		if (pair is null)
-			return;
-		(Summary summary, GameSave save) = pair.Value;
-		GameUserInfo userInfo = await data.SaveCache.GetGameUserInfoAsync(index);
-		GameProgress progress = await data.SaveCache.GetGameProgressAsync(index);
+		SaveContext? context = await this._phigrosService.TryHandleAndFetchContext(data.SaveCache, arg, index);
+		if (context is null) return;
+		GameRecord save = this._phigrosService.HandleAndGetGameRecord(context);
 		UserInfo outerUserInfo = await data.SaveCache.GetUserInfoAsync();
-		GameSettings settings = await data.SaveCache.GetGameSettingsAsync(index);
 
 		(List<CompleteScore> _, List<CompleteScore> scoresToShow, double rks) = save.GetSortedListForRks();
 		scoresToShow = scoresToShow
@@ -103,12 +80,8 @@ public class SongScoresCommand : CommandBase
 		#endregion
 
 		MemoryStream image = await this._imageGenerator.MakePhoto(
-			save,
 			data,
-			summary,
-			userInfo,
-			progress,
-			settings,
+			context,
 			outerUserInfo,
 			this._config.Value.SongScoresRenderInfo,
 			this._config.Value.DefaultRenderImageType,
@@ -124,7 +97,7 @@ public class SongScoresCommand : CommandBase
 						arg,
 						scoresToShow,
 						rks,
-						this._phigrosDataService.IdNameMap,
+						this._phigrosService.IdNameMap,
 						int.MaxValue,
 						data,
 						this._localization,

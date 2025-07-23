@@ -1,17 +1,4 @@
-﻿using Discord;
-using Discord.WebSocket;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
-using PhigrosLibraryCSharp.Cloud.DataStructure;
-using PSLDiscordBot.Core.Command.Global.Base;
-using PSLDiscordBot.Core.Services;
-using PSLDiscordBot.Core.Services.Phigros;
-using PSLDiscordBot.Core.UserDatas;
-using PSLDiscordBot.Core.Utility;
-using PSLDiscordBot.Framework;
-using PSLDiscordBot.Framework.CommandBase;
-using PSLDiscordBot.Framework.Localization;
+﻿using Newtonsoft.Json;
 using System.Text;
 
 namespace PSLDiscordBot.Core.Command.Global;
@@ -19,7 +6,7 @@ namespace PSLDiscordBot.Core.Command.Global;
 [AddToGlobal]
 public class AnalyzeSaveCommand : AdminCommandBase
 {
-	public AnalyzeSaveCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosDataService phigrosData, ILoggerFactory loggerFactory)
+	public AnalyzeSaveCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosService phigrosData, ILoggerFactory loggerFactory)
 		: base(config, database, localization, phigrosData, loggerFactory)
 	{
 	}
@@ -53,30 +40,25 @@ public class AnalyzeSaveCommand : AdminCommandBase
 		UserData userData = new(userId, token, isInternational);
 		int index = arg.GetIntegerOptionAsInt32OrDefault("index");
 
-		PhigrosLibraryCSharp.SaveSummaryPair? pair = await userData.SaveCache.GetAndHandleSave(
-			arg,
-			this._phigrosDataService.DifficultiesMap,
-			this._localization,
-			index);
-		if (pair is null)
-			return;
-		(Summary summary, GameSave save) = pair.Value;
-		UserInfo userInfo = await userData.SaveCache.GetUserInfoAsync();
-		GameUserInfo gameUserInfo = await userData.SaveCache.GetGameUserInfoAsync(index);
-		GameProgress gameProgress = await userData.SaveCache.GetGameProgressAsync(index);
-		GameSettings gameSettings = await userData.SaveCache.GetGameSettingsAsync(index);
+		SaveContext? context = await this._phigrosService.TryHandleAndFetchContext(userData.SaveCache, arg, index);
+		if (context is null) return;
+		Summary summary = context.ReadSummary();
+		GameProgress progress = context.ReadGameProgress();
+		GameSettings settings = context.ReadGameSettings();
+		GameUserInfo userInfo = context.ReadGameUserInfo();
+		UserInfo outerUserInfo = await userData.SaveCache.GetUserInfoAsync();
 
 		StringBuilder sb = new();
 		sb.AppendLine("Summary:");
 		sb.AppendLine(JsonConvert.SerializeObject(summary, Formatting.Indented));
 		sb.AppendLine("UserInfo:");
-		sb.AppendLine(JsonConvert.SerializeObject(userInfo, Formatting.Indented));
+		sb.AppendLine(JsonConvert.SerializeObject(outerUserInfo, Formatting.Indented));
 		sb.AppendLine("GameUserInfo:");
-		sb.AppendLine(JsonConvert.SerializeObject(gameUserInfo, Formatting.Indented));
+		sb.AppendLine(JsonConvert.SerializeObject(userInfo, Formatting.Indented));
 		sb.AppendLine("GameProgress:");
-		sb.AppendLine(JsonConvert.SerializeObject(gameProgress, Formatting.Indented));
+		sb.AppendLine(JsonConvert.SerializeObject(progress, Formatting.Indented));
 		sb.AppendLine("GameSettings:");
-		sb.AppendLine(JsonConvert.SerializeObject(gameSettings, Formatting.Indented));
+		sb.AppendLine(JsonConvert.SerializeObject(settings, Formatting.Indented));
 
 		await arg.QuickReplyWithAttachments(
 			" ",

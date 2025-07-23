@@ -1,25 +1,9 @@
-﻿using Discord;
-using Discord.WebSocket;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using PhigrosLibraryCSharp.Cloud.DataStructure;
-using PhigrosLibraryCSharp.GameRecords;
-using PSLDiscordBot.Core.Command.Global.Base;
-using PSLDiscordBot.Core.Localization;
-using PSLDiscordBot.Core.Services;
-using PSLDiscordBot.Core.Services.Phigros;
-using PSLDiscordBot.Core.UserDatas;
-using PSLDiscordBot.Core.Utility;
-using PSLDiscordBot.Framework;
-using PSLDiscordBot.Framework.CommandBase;
-using PSLDiscordBot.Framework.Localization;
-
-namespace PSLDiscordBot.Core.Command.Global;
+﻿namespace PSLDiscordBot.Core.Command.Global;
 
 [AddToGlobal]
 public class SetMemorableScoreCommand : CommandBase
 {
-	public SetMemorableScoreCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosDataService phigrosData, ILoggerFactory loggerFactory)
+	public SetMemorableScoreCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosService phigrosData, ILoggerFactory loggerFactory)
 		: base(config, database, localization, phigrosData, loggerFactory)
 	{
 	}
@@ -52,14 +36,9 @@ public class SetMemorableScoreCommand : CommandBase
 		int number = arg.GetIntegerOptionAsInt32(this._localization[PSLNormalCommandKey.SetMemorableScoreOptionScoreNumberName]) - 1;
 		string thoughts = arg.GetOption<string>(this._localization[PSLNormalCommandKey.SetMemorableScoreOptionScoreThoughtsName]);
 
-		PhigrosLibraryCSharp.SaveSummaryPair? pair = await data.SaveCache.GetAndHandleSave(
-			arg,
-			this._phigrosDataService.DifficultiesMap,
-			this._localization,
-			index);
-		if (pair is null)
-			return;
-		(Summary summary, GameSave save) = pair.Value;
+		SaveContext? context = await this._phigrosService.TryHandleAndFetchContext(data.SaveCache, arg, index);
+		if (context is null) return;
+		GameRecord save = this._phigrosService.HandleAndGetGameRecord(context);
 
 		(List<CompleteScore>? scores, _) = save.GetSortedListForRksMerged();
 		if (number >= scores.Count)
@@ -84,7 +63,7 @@ public class SetMemorableScoreCommand : CommandBase
 		await requester.SetOrReplaceMiscInfo(miscInfo);
 
 		await arg.QuickReplyWithAttachments([PSLUtils.ToAttachment(
-				GetScoresCommand.ScoresFormatter(arg, [score], 0, this._phigrosDataService.IdNameMap, 1, data, this._localization, false, false),
+				GetScoresCommand.ScoresFormatter(arg, [score], 0, this._phigrosService.IdNameMap, 1, data, this._localization, false, false),
 				"Score.txt")],
 				this._localization[PSLNormalCommandKey.SetMemorableSuccess]);
 	}
