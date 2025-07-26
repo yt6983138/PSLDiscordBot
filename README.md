@@ -48,3 +48,4 @@ This is a cross platform project, just remember do not compile with "trim unused
 Also, remember to install `Saira` and `Saira ExtraCondensed` fonts (otherwise it will use whatever font the system has).
 
 # [Contributors](https://github.com/yt6983138/PSLDiscordBot/blob/master/Contributor.md)
+# [Help me pay server cost](https://afdian.com/a/psl_bot)
