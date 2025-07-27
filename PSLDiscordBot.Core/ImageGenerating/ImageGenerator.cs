@@ -135,7 +135,7 @@ public class ImageGenerator
 			GameSettings = settings,
 
 			SaveCreationDate = context.OriginalData.createdAt,
-			SaveModificationDate = context.OriginalData.modifiedAt,
+			SaveModificationDate = context.OriginalData.modifiedAt.iso,
 			SaveSummary = save.Summary
 		};
 		map.User.PlayStatistics.MergeWith(this.SongDifficultyCount);
