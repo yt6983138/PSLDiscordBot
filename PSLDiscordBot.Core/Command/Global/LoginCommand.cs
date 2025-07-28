@@ -18,6 +18,21 @@ public class LoginCommand : GuestCommandBase
 		public string EncodedUrl => Uri.EscapeDataString(this.Url);
 		public bool IsInternational { get; set; }
 	}
+	private class CallbackLoginModel : CallbackLoginData
+	{
+		public CallbackLoginModel(CallbackLoginData data, bool isInternational)
+		{
+			this.CodeVerifier = data.CodeVerifier;
+			this.RedirectUrl = data.RedirectUrl;
+			this.State = data.State;
+			this.CodeChallenge = data.CodeChallenge;
+			this.Scope = data.Scope;
+			this.BeginUrl = data.BeginUrl;
+			this.IsInternational = isInternational;
+		}
+		public bool IsInternational { get; set; }
+		public string EncodedBeginUrl => Uri.EscapeDataString(this.BeginUrl);
+	}
 
 	public LoginCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosService phigrosData, ILoggerFactory loggerFactory)
 		: base(config, database, localization, phigrosData, loggerFactory)
@@ -44,7 +59,23 @@ public class LoginCommand : GuestCommandBase
 		DateTime stopAt = DateTime.Now + new TimeSpan(0, 0, qrCode.ExpiresInSeconds - 15);
 		await arg.QuickReply(this._localization[PSLGuestCommandKey.LoginBegin], new QRCodeDataModel(qrCode, !chinaMode));
 		await this.ListenQrCodeChange(arg, qrCode, chinaMode, stopAt, requester);
+
+		/*
+		CallbackLoginData callbackData = this._phigrosService.GenerateCallbackLoginRequest(arg.User.Id, chinaMode, async result =>
+		{
+			TapTapProfileData profile = await TapTapHelper.GetProfile(result.Data, useChinaEndpoint: chinaMode);
+			string token = await LCHelper.LoginAndGetToken(new(profile.Data, result.Data), chinaMode);
+			UserData userData = new(arg.User.Id, token, !chinaMode);
+			_ = await userData.SaveCache.GetUserInfoAsync();
+			await requester.AddOrReplaceUserDataAsync(userData);
+			await arg.QuickReply(this._localization[PSLGuestCommandKey.LoginComplete]);
+		});
+		await arg.QuickReply(this._localization[PSLGuestCommandKey.LoginBegin], new CallbackLoginModel(callbackData, !chinaMode));
+		// i wrote those and than realize the redirect_uri cannot be set to anything except localhost
+		// so basically i just wrote shit bruh
+		*/
 	}
+
 	public async Task ListenQrCodeChange(
 		SocketSlashCommand command,
 		CompleteQRCodeData data,

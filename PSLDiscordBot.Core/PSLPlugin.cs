@@ -2,6 +2,7 @@
 using Discord.Rest;
 using ICSharpCode.SharpZipLib.Zip;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json;
@@ -32,6 +33,7 @@ public class PSLPlugin : IPlugin
 	private IDiscordClientService _discordClientService = null!;
 	private ICommandResolveService _commandResolveService = null!;
 	private int _imageGeneratorFaultCount = 0;
+	private bool _hasOthersRegisteredMvc = false;
 
 	public IUser? AdminUser { get; set; }
 	public IDMChannel? AdminDM { get; set; }
@@ -217,6 +219,11 @@ public class PSLPlugin : IPlugin
 			.AddSingleton<ImageGenerator>()
 			.AddSingleton<StatusService>()
 			.AddSingleton<LocalizationService>();
+
+		this._hasOthersRegisteredMvc = hostBuilder.Services.HasMvcRegistered();
+		hostBuilder.Services.TryAddMvc();
+
+		hostBuilder.Services.GetApplicationPartManager().ApplicationParts.Add(new AssemblyPart(typeof(PSLPlugin).Assembly));
 	}
 	void IPlugin.Setup(IHost host)
 	{
@@ -227,6 +234,18 @@ public class PSLPlugin : IPlugin
 		this._logger = host.Services.GetRequiredService<ILogger<PSLPlugin>>();
 		this._configService = host.Services.GetRequiredService<IWritableOptions<Config>>();
 		LocalizationService localization = host.Services.GetRequiredService<LocalizationService>();
+
+		if (!this._hasOthersRegisteredMvc)
+		{
+			WebApplication app = host.Unbox<WebApplication>();
+			app.MapControllers().AllowAnonymous();
+			app.UseStaticFiles(new StaticFileOptions()
+			{
+				ServeUnknownFileTypes = true
+			});
+			app.UseRouting();
+			app.UseAuthorization();
+		}
 
 		this._program.AfterMainInitialize += this.Program_AfterMainInitialize;
 
@@ -252,8 +271,8 @@ public class PSLPlugin : IPlugin
 		if (this._program.ProgramArguments.Contains("--addNonExistentLocalizations"))
 		{
 			this._logger.LogInformation(EventIdInitialize, "Adding non-existent localizations...");
-			IReadOnlyDictionary<string, Framework.Localization.LocalizedString> newer = localization.Generate().LocalizedStrings;
-			foreach ((string key, Framework.Localization.LocalizedString value) in newer)
+			IReadOnlyDictionary<string, LocalizedString> newer = localization.Generate().LocalizedStrings;
+			foreach ((string key, LocalizedString value) in newer)
 			{
 				if (!localization.Data.LocalizedStrings.ContainsKey(key))
 				{

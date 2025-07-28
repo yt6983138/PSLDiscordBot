@@ -1,7 +1,10 @@
 ﻿using PhigrosLibraryCSharp.Cloud.RawData;
+using SmartFormat;
 using yt6983138.Common;
 
 namespace PSLDiscordBot.Core.Services.Phigros;
+
+public record class CallbackLoginRequest(CallbackLoginData Data, Func<TapTapTokenData, Task> Callback, bool UseChinaEndpoint);
 public class PhigrosService
 {
 	private static EventId EventId { get; } = new(114510, nameof(PhigrosService));
@@ -9,6 +12,9 @@ public class PhigrosService
 	private readonly ILogger<PhigrosService> _logger;
 	private readonly Config _config;
 	private readonly LocalizationService _localization;
+
+	private readonly Dictionary<ulong, CallbackLoginRequest> _callbackLoginRequests = [];
+	public IReadOnlyDictionary<ulong, CallbackLoginRequest> CallbackLoginRequests => this._callbackLoginRequests;
 
 	/// <summary>
 	/// For compatibility, newer api should use <see cref="CheckedDifficulties"/>.
@@ -88,6 +94,24 @@ public class PhigrosService
 	}
 	public static bool IsTsv(string filename)
 		=> filename.EndsWith(".tsv", StringComparison.InvariantCultureIgnoreCase);
+
+	public CallbackLoginData GenerateCallbackLoginRequest(ulong userId, bool useChinaEndpoint, Func<TapTapTokenData, Task> callback)
+	{
+		lock (this._callbackLoginRequests)
+		{
+			CallbackLoginData data = TapTapHelper.GenerateCallbackLoginUrl(Smart.Format(this._config.CallbackLoginUrlTemplate, userId), useChinaEndpoint);
+
+			this._callbackLoginRequests[userId] = new(data, callback, useChinaEndpoint);
+			return data;
+		}
+	}
+	public bool RemoveLoginRequest(ulong userId)
+	{
+		lock (this._callbackLoginRequests)
+		{
+			return this._callbackLoginRequests.Remove(userId);
+		}
+	}
 
 	public async Task<SaveContext?> TryHandleAndFetchContext(Save save, SocketSlashCommand command, int index = 0, bool autoThrow = true)
 	{

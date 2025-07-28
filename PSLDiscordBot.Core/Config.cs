@@ -15,6 +15,13 @@ public class Config
 	public string Token { get; set; } = "";
 	public ulong AdminUserId { get; set; }
 #endif
+
+	/// <summary>
+	/// Note: this is only used for user login callback url, the controller will be hardcoded to "/callback/{discordId}"
+	/// if u need to reroute use nginx
+	/// </summary>
+	public string CallbackLoginUrlTemplate { get; set; } = "https://taptap.yt6983138.top/callback/{0}";
+
 	public string LocalizationLocation { get; set; } = "./PSL/Localization.json";
 
 	public string AvatarHashMapLocation { get; set; } = "./Assets/Avatar/AvatarInfo.json";
