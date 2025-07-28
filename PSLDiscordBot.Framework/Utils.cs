@@ -303,4 +303,21 @@ public static class Utils
 		services.TryAddSingleton(instance);
 		return instance;
 	}
+
+	public static bool HasMvcRegistered(this IServiceCollection services)
+	{
+		return services.GetServiceImplementation<IMvcBuilder>() is not null;
+	}
+	/// <summary>
+	/// return existing IMvcBuilder if exists, otherwise add a new one
+	/// </summary>
+	/// <param name="services"></param>
+	/// <returns></returns>
+	public static IMvcBuilder TryAddMvc(this IServiceCollection services)
+	{
+		IMvcBuilder? existing = services.GetServiceImplementation<IMvcBuilder>();
+		if (existing is not null)
+			return existing;
+		return services.AddMvc();
+	}
 }
