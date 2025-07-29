@@ -454,7 +454,6 @@ public class PSLPlugin : IPlugin
 				chromiumPool.RestartChromium();
 				this._imageGeneratorFaultCount = 0;
 			}
-			return;
 		}
 		if (this.AdminDM is not null)
 		{
