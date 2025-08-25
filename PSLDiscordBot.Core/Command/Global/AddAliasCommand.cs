@@ -29,7 +29,7 @@ public class AddAliasCommand : CommandBase
 		string forSong = arg.GetOption<string>(this._localization[PSLNormalCommandKey.AddAliasOptionForSongName]);
 		string alias = arg.GetOption<string>(this._localization[PSLNormalCommandKey.AddAliasOptionAllayToAddName]);
 
-		List<SongAlias> found = await requester.FindFromIdOrAlias(forSong, this._phigrosService.IdNameMap);
+		List<SongSearchResult> found = requester.SearchSong(this._phigrosService, forSong);
 		if (found.Count == 0)
 		{
 			await arg.QuickReply(this._localization[PSLNormalCommandKey.AddAliasNoMatch]);
@@ -40,17 +40,15 @@ public class AddAliasCommand : CommandBase
 			await arg.QuickReply(this._localization[PSLNormalCommandKey.AddAliasMultipleMatch], found);
 			return;
 		}
-		SongAlias theRealOne = found[0];
+		SongSearchResult theRealOne = found[0];
 		if (theRealOne.Alias.Contains(alias))
 		{
-			await arg.QuickReply(this._localization[PSLNormalCommandKey.AddAliasAlreadyAdded], found);
+			await arg.QuickReply(this._localization[PSLNormalCommandKey.AddAliasAlreadyAdded], theRealOne.Alias);
 			return;
 		}
 
-		string[] newAlias = theRealOne.Alias;
-		Array.Resize(ref newAlias, newAlias.Length + 1);
-		newAlias[^1] = alias;
-		await requester.AddOrReplaceSongAliasAsync(new(theRealOne.SongId, newAlias));
+		string[] newAlias = theRealOne.Alias.WithMoreElement(alias);
+		await requester.AddOrReplaceSongAliasAsync(theRealOne.SongId, newAlias);
 
 		await arg.QuickReply(this._localization[PSLNormalCommandKey.AddAliasSuccess],
 			this._phigrosService.IdNameMap[theRealOne.SongId],

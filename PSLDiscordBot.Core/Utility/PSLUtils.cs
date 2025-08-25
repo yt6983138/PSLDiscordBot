@@ -53,31 +53,6 @@ public static class PSLUtils
 		return command.GetIntegerOptionAsInt32OrDefault(service[PSLCommonOptionKey.IndexOptionName], @default);
 	}
 
-	public static async Task<List<SongAlias>> FindFromIdOrAlias(
-		this DataBaseService.DbDataRequester requester,
-		string idOrAlias,
-		IReadOnlyDictionary<string, string> idNameMap)
-	{
-		string? tryFindInMap = idNameMap
-			.FirstOrDefault(x => x.Value.Equals(idOrAlias, StringComparison.InvariantCultureIgnoreCase))
-			.Key;
-
-		if (tryFindInMap is not null)
-			idOrAlias = tryFindInMap;
-		SongAlias pair;
-		if (idNameMap.ContainsKey(idOrAlias))
-		{
-			pair = await requester.GetSongAliasAsync(idOrAlias) ?? new(idOrAlias, []);
-		}
-		else
-		{
-			List<SongAlias> pairs = await requester.FindSongAliasAsync(idOrAlias);
-			return pairs;
-		}
-
-		return [pair];
-	}
-
 	/// <summary>
 	/// utf-8 default
 	/// </summary>
@@ -161,5 +136,12 @@ public static class PSLUtils
 		{
 			await set.AddOrUpdate(entity);
 		}
+	}
+	public static T[] WithMoreElement<T>(this IList<T> source, params IList<T> items)
+	{
+		T[] array = new T[source.Count + items.Count];
+		source.CopyTo(array, 0);
+		items.CopyTo(array, source.Count);
+		return array;
 	}
 }
