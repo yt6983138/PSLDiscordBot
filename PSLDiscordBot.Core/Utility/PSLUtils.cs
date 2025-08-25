@@ -53,6 +53,7 @@ public static class PSLUtils
 		return command.GetIntegerOptionAsInt32OrDefault(service[PSLCommonOptionKey.IndexOptionName], @default);
 	}
 
+	[Obsolete]
 	public static async Task<List<SongAlias>> FindFromIdOrAlias(
 		this DataBaseService.DbDataRequester requester,
 		string idOrAlias,
@@ -161,5 +162,12 @@ public static class PSLUtils
 		{
 			await set.AddOrUpdate(entity);
 		}
+	}
+	public static T[] WithMoreElement<T>(this IList<T> source, params IList<T> items)
+	{
+		T[] array = new T[source.Count + items.Count];
+		source.CopyTo(array, 0);
+		items.CopyTo(array, source.Count);
+		return array;
 	}
 }

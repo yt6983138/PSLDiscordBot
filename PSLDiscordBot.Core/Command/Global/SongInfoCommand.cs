@@ -22,9 +22,8 @@ public class SongInfoCommand : GuestCommandBase
 
 	public override async Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
 	{
-		List<SongAlias> foundAlias = await requester.FindFromIdOrAlias(
-			arg.GetOption<string>(this._localization[PSLCommonOptionKey.SongSearchOptionName]),
-			this._phigrosService.IdNameMap);
+		List<SongSearchResult> foundAlias = requester.SearchSong(this._phigrosService,
+			arg.GetOption<string>(this._localization[PSLCommonOptionKey.SongSearchOptionName]));
 
 		if (foundAlias.Count == 0)
 		{
@@ -40,9 +39,9 @@ public class SongInfoCommand : GuestCommandBase
 			[PSLUtils.ToAttachment(query.ToString(), "Query.txt")]);
 	}
 
-	public static StringBuilder BuildReturnQueryString(List<SongAlias> foundAlias, PhigrosService service)
+	public static StringBuilder BuildReturnQueryString(List<SongSearchResult> foundAlias, PhigrosService service)
 	{
-		SongAlias first = foundAlias[0];
+		SongSearchResult first = foundAlias[0];
 		SongInfo firstInfo = service.SongInfoMap[first.SongId];
 
 		StringBuilder query = new($"""
@@ -61,7 +60,7 @@ public class SongInfoCommand : GuestCommandBase
 			query.Append("\n\nOther matches: ");
 			for (int i = 1; i < foundAlias.Count; i++)
 			{
-				SongAlias found = foundAlias[i];
+				SongSearchResult found = foundAlias[i];
 				query.Append(found.SongId);
 				query.Append('(');
 				query.Append(service.SongInfoMap[found.SongId].Name);

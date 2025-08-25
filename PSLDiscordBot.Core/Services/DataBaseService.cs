@@ -1,7 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using FuzzySharp;
+using Microsoft.EntityFrameworkCore;
+using System.Collections.Immutable;
 
 namespace PSLDiscordBot.Core.Services;
 
+public record class SongSearchResult(string SongId, ImmutableArray<string> Alias, double Score);
 public sealed class DataBaseService
 {
 	private sealed class LogTracer(Action _onDispose) : IDisposable
@@ -18,11 +21,15 @@ public sealed class DataBaseService
 
 	private readonly IOptions<Config> _config;
 	private readonly ILogger<DataBaseService> _logger;
+	internal Dictionary<string, ImmutableArray<string>> _songAlias = null!;
+
+	public IReadOnlyDictionary<string, ImmutableArray<string>> SongAlias => this._songAlias;
 
 	public DataBaseService(IOptions<Config> config, ILogger<DataBaseService> logger)
 	{
 		this._config = config;
 		this._logger = logger;
+		this.NewRequester().ReadAllAliasToParent().GetAwaiter().GetResult();
 	}
 
 
@@ -31,7 +38,7 @@ public sealed class DataBaseService
 	/// </summary>
 	/// <returns></returns>
 	public DbDataRequester NewRequester(bool saveAutomatically = true)
-		=> new(this._config, this._logger, saveAutomatically);
+		=> new(this, this._config, this._logger, saveAutomatically);
 
 	public sealed class DbDataRequester : DbContext
 	{
@@ -40,6 +47,7 @@ public sealed class DataBaseService
 
 		private readonly ILogger<DataBaseService> _logger;
 		private readonly IOptions<Config> _config;
+		private readonly DataBaseService _parent;
 
 		public bool SaveAutomatically { get; set; }
 
@@ -52,8 +60,9 @@ public sealed class DataBaseService
 		public static ulong UncheckedConvertToULong(long data)
 			=> unchecked((ulong)data);
 
-		internal DbDataRequester(IOptions<Config> config, ILogger<DataBaseService> logger, bool saveAutomatically = true)
+		internal DbDataRequester(DataBaseService parent, IOptions<Config> config, ILogger<DataBaseService> logger, bool saveAutomatically = true)
 		{
+			this._parent = parent;
 			this._config = config;
 			this._logger = logger;
 			this.SaveAutomatically = saveAutomatically;
@@ -93,13 +102,96 @@ public sealed class DataBaseService
 		#endregion
 
 		#region Song alias
+		public async Task ReadAllAliasToParent()
+		{
+			this._parent._songAlias = await this.SongAlias.AsNoTracking().ToDictionaryAsync(x => x.SongId, x => x.Alias.ToImmutableArray());
+		}
+
+		[Obsolete($"Use {nameof(DataBaseService)}.{nameof(DataBaseService._songAlias)} instead")]
 		public async Task<SongAlias?> GetSongAliasAsync(string songId)
 		{
 			return await this.SongAlias.FindAsync(songId);
 		}
+		[Obsolete($"Use {nameof(DataBaseService)}.{nameof(DataBaseService._songAlias)} and {nameof(AddOrReplaceSongAliasAsync)}(songId, alias) instead")]
 		public async Task AddOrReplaceSongAliasAsync(SongAlias info)
 		{
-			await this.SongAlias.AddOrUpdate(info);
+			await this.AddOrReplaceSongAliasAsync(info.SongId, info.Alias);
+		}
+		public async Task AddOrReplaceSongAliasAsync(string songId, IEnumerable<string> alias)
+		{
+			this._parent._songAlias[songId] = alias.ToImmutableArray();
+			await this.SongAlias.AddOrUpdate(new SongAlias(songId, alias.ToArray()));
+		}
+
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="phigrosService"></param>
+		/// <param name="input"></param>
+		/// <param name="threshold"></param>
+		/// <param name="limit"></param>
+		/// <returns></returns>
+		public List<SongSearchResult> SearchSong(PhigrosService phigrosService, string input, double threshold = 0.6, int limit = 10)
+		{
+			input = input.ToLower();
+
+			List<SongSearchResult> results = [];
+			foreach (KeyValuePair<string, SongInfo> item in phigrosService.SongInfoMap)
+			{
+				string id = item.Key;
+				string name = item.Value.Name;
+				ImmutableArray<string> aliases = this._parent._songAlias.TryGetValue(id, out ImmutableArray<string> al) ? al : [];
+
+				double idScore = CalculateScore(input, id.ToLower());
+				double nameScore = CalculateScore(input, name.ToLower());
+
+				double bestScore = Math.Max(idScore, nameScore);
+
+				foreach (string alias in aliases)
+				{
+					double aliasScore = CalculateScore(input, alias.ToLower());
+					if (aliasScore > bestScore) bestScore = aliasScore;
+				}
+				if (bestScore < threshold)
+					continue;
+				results.Add(new(id, aliases, bestScore));
+			}
+
+			results.Sort((x, y) => y.Score.CompareTo(x.Score));
+			if (results.Count > limit)
+				return results[0..limit];
+
+			return results;
+
+			static double CalculateScore(string input, string source)
+			{
+				if (input == source) return 1;
+
+				//return Fuzz.WeightedRatio(input, source) * 0.01d;
+				double simpleRatio = Fuzz.Ratio(input, source) * 0.01d;
+				double partialRatio = Fuzz.PartialRatio(input, source) * 0.01d;
+				double tokenSortRatio = Fuzz.TokenSortRatio(input, source) * 0.01d;
+				double tokenSetRatio = Fuzz.TokenSetRatio(input, source) * 0.01d;
+				double tokenInitialismRatio = Fuzz.TokenInitialismRatio(input, source) * 0.01d;
+				double tokenAbbreviationRatio = Fuzz.TokenAbbreviationRatio(input, source) * 0.01d;
+
+				List<double> ratios = [simpleRatio * 0.9d,
+					partialRatio * 1d,
+					tokenSortRatio * 0.8d,
+					tokenSetRatio * 0.9d,
+					tokenInitialismRatio * 0.75d,
+					tokenAbbreviationRatio * 0.85d];
+				ratios.Sort();
+				ratios.Reverse();
+				return ratios.Take(3).Average();
+
+				//return (simpleRatio * 0.15d) +
+				//	(partialRatio * 0.25d) +
+				//	(tokenSortRatio * 0.05d) +
+				//	(tokenSetRatio * 0.2d) +
+				//	(tokenInitialismRatio * 0.05d) +
+				//	(tokenAbbreviationRatio * 0.3d);
+			}
 		}
 
 		/// <summary>
@@ -107,6 +199,7 @@ public sealed class DataBaseService
 		/// </summary>
 		/// <param name="alias"></param>
 		/// <returns></returns>
+		[Obsolete($"Use {nameof(DataBaseService)}.{nameof(DataBaseService._songAlias)} instead")]
 		public async Task<List<SongAlias>> FindSongAliasAsync(string alias)
 		{
 #pragma warning disable CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons

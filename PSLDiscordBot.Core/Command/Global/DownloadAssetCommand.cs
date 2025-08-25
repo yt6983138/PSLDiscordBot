@@ -29,9 +29,8 @@ public class DownloadAssetCommand : GuestCommandBase
 
 	public override async Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
 	{
-		List<SongAlias> foundAlias = await requester.FindFromIdOrAlias(
-			arg.GetOption<string>(this._localization[PSLCommonOptionKey.SongSearchOptionName]),
-			this._phigrosService.IdNameMap);
+		List<SongSearchResult> foundAlias = requester.SearchSong(this._phigrosService,
+			arg.GetOption<string>(this._localization[PSLCommonOptionKey.SongSearchOptionName]));
 
 		if (foundAlias.Count == 0)
 		{
@@ -41,8 +40,7 @@ public class DownloadAssetCommand : GuestCommandBase
 
 		StringBuilder query = SongInfoCommand.BuildReturnQueryString(foundAlias, this._phigrosService);
 
-		SongAlias first = foundAlias[0];
-		string id = first.SongId;
+		(string id, System.Collections.Immutable.ImmutableArray<string> alias, double Score) = foundAlias[0];
 		SongInfo firstInfo = this._phigrosService.SongInfoMap[id];
 		DifficultyCCCollection diff = this._phigrosService.CheckedDifficulties[id];
 		bool hasAT = diff.AT != 0;
