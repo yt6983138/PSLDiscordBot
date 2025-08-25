@@ -106,17 +106,6 @@ public sealed class DataBaseService
 		{
 			this._parent._songAlias = await this.SongAlias.AsNoTracking().ToDictionaryAsync(x => x.SongId, x => x.Alias.ToImmutableArray());
 		}
-
-		[Obsolete($"Use {nameof(DataBaseService)}.{nameof(DataBaseService._songAlias)} instead")]
-		public async Task<SongAlias?> GetSongAliasAsync(string songId)
-		{
-			return await this.SongAlias.FindAsync(songId);
-		}
-		[Obsolete($"Use {nameof(DataBaseService)}.{nameof(DataBaseService._songAlias)} and {nameof(AddOrReplaceSongAliasAsync)}(songId, alias) instead")]
-		public async Task AddOrReplaceSongAliasAsync(SongAlias info)
-		{
-			await this.AddOrReplaceSongAliasAsync(info.SongId, info.Alias);
-		}
 		public async Task AddOrReplaceSongAliasAsync(string songId, IEnumerable<string> alias)
 		{
 			this._parent._songAlias[songId] = alias.ToImmutableArray();
@@ -192,22 +181,6 @@ public sealed class DataBaseService
 				//	(tokenInitialismRatio * 0.05d) +
 				//	(tokenAbbreviationRatio * 0.3d);
 			}
-		}
-
-		/// <summary>
-		/// Note: this searches case-insensitively
-		/// </summary>
-		/// <param name="alias"></param>
-		/// <returns></returns>
-		[Obsolete($"Use {nameof(DataBaseService)}.{nameof(DataBaseService._songAlias)} instead")]
-		public async Task<List<SongAlias>> FindSongAliasAsync(string alias)
-		{
-#pragma warning disable CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
-			return await this.SongAlias
-				.AsNoTracking()
-				.Where(x => x.Alias.Any(y => y.ToLower() == alias.ToLower()))
-				.ToListAsync();
-#pragma warning restore CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
 		}
 		#endregion
 
