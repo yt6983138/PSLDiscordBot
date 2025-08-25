@@ -43,7 +43,7 @@ public class RemoveAliasCommand : CommandBase
 		SongSearchResult theRealOne = found[0];
 		if (!theRealOne.Alias.Contains(alias))
 		{
-			await arg.QuickReply(this._localization[PSLNormalCommandKey.RemoveAliasAlreadyAdded], found);
+			await arg.QuickReply(this._localization[PSLNormalCommandKey.RemoveAliasAlreadyAdded], theRealOne.Alias);
 			return;
 		}
 

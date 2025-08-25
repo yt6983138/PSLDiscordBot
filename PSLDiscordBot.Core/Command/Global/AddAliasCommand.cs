@@ -43,7 +43,7 @@ public class AddAliasCommand : CommandBase
 		SongSearchResult theRealOne = found[0];
 		if (theRealOne.Alias.Contains(alias))
 		{
-			await arg.QuickReply(this._localization[PSLNormalCommandKey.AddAliasAlreadyAdded], found);
+			await arg.QuickReply(this._localization[PSLNormalCommandKey.AddAliasAlreadyAdded], theRealOne.Alias);
 			return;
 		}
 

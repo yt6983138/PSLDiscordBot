@@ -152,7 +152,7 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 			[AddAliasOptionAllayToAddName] = LocalizedString.CreateDefault("alias"),
 			[AddAliasOptionAllayToAddDescription] = LocalizedString.CreateDefault("The alias to add, note: you may only add one alias at one time."),
 			[AddAliasNoMatch] = LocalizedString.CreateDefault("Sorry, the song you're looking for seems does not exist."),
-			[AddAliasMultipleMatch] = LocalizedString.CreateDefault("There's multiple match for your 'for' input: \n```\n{0:list:{}|\\n}\n```\n" +
+			[AddAliasMultipleMatch] = LocalizedString.CreateDefault("There's multiple match for your 'for' input: \n```\n{0:list:{SongId}|\\n}\n```\n" +
 				"Please re-do this command with the correct 'for' parameter."),
 			[AddAliasAlreadyAdded] = LocalizedString.CreateDefault("Sorry, this alias has already been added! Alias that already exists: \n" +
 				"```\n{0:list:{}|\\n}\n```"),
@@ -208,7 +208,7 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 			[RemoveAliasOptionAllayToAddName] = LocalizedString.CreateDefault("alias"),
 			[RemoveAliasOptionAllayToAddDescription] = LocalizedString.CreateDefault("The alias to remove, note: you may only remove one alias at one time."),
 			[RemoveAliasNoMatch] = LocalizedString.CreateDefault("Sorry, the song you're looking for seems does not exist."),
-			[RemoveAliasMultipleMatch] = LocalizedString.CreateDefault("There's multiple match for your 'for' input: \n```\n{0:list:{}|\n}\n```\n" +
+			[RemoveAliasMultipleMatch] = LocalizedString.CreateDefault("There's multiple match for your 'for' input: \n```\n{0:list:{SongId}|\n}\n```\n" +
 				"Please re-do this command with the correct 'for' parameter."),
 			[RemoveAliasAlreadyAdded] = LocalizedString.CreateDefault("Sorry, this alias does not exist! Alias that already exists: \n" +
 				"```\n{0:list:{}|\\n}\n```"),
