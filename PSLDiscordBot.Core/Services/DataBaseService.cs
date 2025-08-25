@@ -166,10 +166,10 @@ public sealed class DataBaseService
 
 				List<double> ratios = [simpleRatio * 0.9d,
 					partialRatio * 1d,
-					tokenSortRatio * 0.8d,
-					tokenSetRatio * 0.9d,
-					tokenInitialismRatio * 0.75d,
-					tokenAbbreviationRatio * 0.85d];
+					tokenSortRatio * 0.9d,
+					tokenSetRatio * 0.8d,
+					tokenInitialismRatio * 0.7d,
+					tokenAbbreviationRatio * 0.7d];
 				ratios.Sort();
 				ratios.Reverse();
 				return ratios.Take(3).Average();
