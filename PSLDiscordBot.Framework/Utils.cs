@@ -1,6 +1,8 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
+using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using PSLDiscordBot.Framework.Localization;
@@ -319,5 +321,12 @@ public static class Utils
 		if (existing is not null)
 			return existing;
 		return services.AddMvc();
+	}
+
+	public static bool SwaggerRequireInTypeAssembly<TType>(string docName, ApiDescription apiDesc)
+	{
+		System.Reflection.Assembly targetAssembly = typeof(TType).Assembly;
+		ControllerActionDescriptor? controllerAction = apiDesc.ActionDescriptor as ControllerActionDescriptor;
+		return controllerAction?.ControllerTypeInfo.Assembly == targetAssembly;
 	}
 }

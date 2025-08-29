@@ -1,10 +1,19 @@
-﻿using PSLDiscordBot.Framework.BuiltInServices;
+﻿using Microsoft.AspNetCore.Mvc.ApiExplorer;
+using PSLDiscordBot.Framework.BuiltInServices;
+using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Reflection;
 
 namespace PSLDiscordBot.Framework;
 
 public class Program
 {
+	public static Program Instance { get; private set; }
+#if DEBUG
+		= new();
+#else
+		= null!;
+#endif
+
 	private List<ArgParseInfo> _argParseInfos = [];
 
 	private IPluginResolveService _pluginResolveService = null!;
@@ -38,11 +47,22 @@ public class Program
 	public IServiceCollection AllServices => this._builder.Services;
 	public IHost App { get; private set; } = null!;
 
+	/// <summary>
+	/// Note: plugins that needed to use swagger must call app.UseSwagger() and app.UseSwaggerUI() themselves in their plugin's Setup method.
+	/// </summary>
+	public List<Func<string, ApiDescription, bool>> SwaggerGenFilter { get; } = [];
+	/// <summary>
+	/// Ran before adding doc inclusion predicate, can be used to add custom configuration to swagger gen options.
+	/// </summary>
+	public event EventHandler<SwaggerGenOptions>? SwaggerConfigurators;
+
 	public static Task Main(string[] args) => new Program().MainAsync(args);
 
 	public async Task MainAsync(string[] args)
 	{
 		const string CoFrameworkLocation = "./CO_FRAMEWORK_LOCATION";
+
+		Instance = this;
 
 		this.CancellationToken = this.CancellationTokenSource.Token;
 		this.ProgramArguments = args;
@@ -69,6 +89,8 @@ public class Program
 
 		this._pluginResolveService.LoadAllPlugins();
 		this._pluginResolveService.InvokeAll(this._builder);
+
+		this.ConfigureSwagger(this._builder);
 
 		this._commandResolveService.LoadEverything();
 
@@ -165,5 +187,20 @@ public class Program
 	public void AddArgReceiver(ArgParseInfo info)
 	{
 		this._argParseInfos.Add(info);
+	}
+
+#if DEBUG
+	public
+#else
+	private
+#endif
+		void ConfigureSwagger(WebApplicationBuilder builder)
+	{
+		builder.Services.AddEndpointsApiExplorer(); // TODO: add a analyzer to warn for certain apis, so plugins doesnt add this multiple times
+		builder.Services.AddSwaggerGen(config =>
+		{
+			this.SwaggerConfigurators?.Invoke(this, config);
+			config.DocInclusionPredicate((docName, apiDesc) => this.SwaggerGenFilter.Any(x => x.Invoke(docName, apiDesc)));
+		});
 	}
 }
