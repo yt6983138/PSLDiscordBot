@@ -156,23 +156,23 @@ public sealed class DataBaseService
 			{
 				if (input == source) return 1;
 
-				//return Fuzz.WeightedRatio(input, source) * 0.01d;
-				double simpleRatio = Fuzz.Ratio(input, source) * 0.01d;
-				double partialRatio = Fuzz.PartialRatio(input, source) * 0.01d;
-				double tokenSortRatio = Fuzz.TokenSortRatio(input, source) * 0.01d;
-				double tokenSetRatio = Fuzz.TokenSetRatio(input, source) * 0.01d;
-				double tokenInitialismRatio = Fuzz.TokenInitialismRatio(input, source) * 0.01d;
-				double tokenAbbreviationRatio = Fuzz.TokenAbbreviationRatio(input, source) * 0.01d;
+				return Fuzz.Ratio(input, source) * 0.01d;
+				//double simpleRatio = Fuzz.Ratio(input, source) * 0.01d;
+				//double partialRatio = Fuzz.PartialRatio(input, source) * 0.01d;
+				//double tokenSortRatio = Fuzz.TokenSortRatio(input, source) * 0.01d;
+				//double tokenSetRatio = Fuzz.TokenSetRatio(input, source) * 0.01d;
+				//double tokenInitialismRatio = Fuzz.TokenInitialismRatio(input, source) * 0.01d;
+				//double tokenAbbreviationRatio = Fuzz.TokenAbbreviationRatio(input, source) * 0.01d;
 
-				List<double> ratios = [simpleRatio * 0.9d,
-					partialRatio * 1d,
-					tokenSortRatio * 0.9d,
-					tokenSetRatio * 0.8d,
-					tokenInitialismRatio * 0.7d,
-					tokenAbbreviationRatio * 0.7d];
-				ratios.Sort();
-				ratios.Reverse();
-				return ratios.Take(3).Average();
+				//List<double> ratios = [simpleRatio * 0.9d,
+				//	partialRatio * 1d,
+				//	tokenSortRatio * 0.9d,
+				//	tokenSetRatio * 0.8d,
+				//	tokenInitialismRatio * 0.7d,
+				//	tokenAbbreviationRatio * 0.7d];
+				//ratios.Sort();
+				//ratios.Reverse();
+				//return ratios.Take(3).Average();
 
 				//return (simpleRatio * 0.15d) +
 				//	(partialRatio * 0.25d) +
