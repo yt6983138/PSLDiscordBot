@@ -49,10 +49,12 @@ public class Program
 
 	/// <summary>
 	/// Note: plugins that needed to use swagger must call app.UseSwagger() and app.UseSwaggerUI() themselves in their plugin's Setup method.
+	/// if no plugin adds any filter and configurator, swagger will not be added.
 	/// </summary>
 	public List<Func<string, ApiDescription, bool>> SwaggerGenFilter { get; } = [];
 	/// <summary>
 	/// Ran before adding doc inclusion predicate, can be used to add custom configuration to swagger gen options.
+	/// if no plugin adds any filter and configurator, swagger will not be added.
 	/// </summary>
 	public event EventHandler<SwaggerGenOptions>? SwaggerConfigurators;
 
@@ -90,7 +92,8 @@ public class Program
 		this._pluginResolveService.LoadAllPlugins();
 		this._pluginResolveService.InvokeAll(this._builder);
 
-		this.ConfigureSwagger(this._builder);
+		if (this.SwaggerGenFilter.Count != 0 && (SwaggerConfigurators?.GetInvocationList()?.Length > 0) == true)
+			this.ConfigureSwagger(this._builder);
 
 		this._commandResolveService.LoadEverything();
 
