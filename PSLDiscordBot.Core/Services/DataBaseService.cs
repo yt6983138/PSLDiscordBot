@@ -120,7 +120,7 @@ public sealed class DataBaseService
 		/// <param name="threshold"></param>
 		/// <param name="limit"></param>
 		/// <returns></returns>
-		public List<SongSearchResult> SearchSong(PhigrosService phigrosService, string input, double threshold = 0.6, int limit = 10)
+		public List<SongSearchResult> SearchSong(PhigrosService phigrosService, string input, double threshold = 0.75)
 		{
 			input = input.ToLower();
 
@@ -147,9 +147,6 @@ public sealed class DataBaseService
 			}
 
 			results.Sort((x, y) => y.Score.CompareTo(x.Score));
-			if (results.Count > limit)
-				return results[0..limit];
-
 			return results;
 
 			static double CalculateScore(string input, string source)
