@@ -3,6 +3,8 @@
 [AddToGlobal]
 public class AddAliasCommand : CommandBase
 {
+	public const double SearchThreshold = 0.9;
+
 	public AddAliasCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosService phigrosData, ILoggerFactory loggerFactory)
 		: base(config, database, localization, phigrosData, loggerFactory)
 	{
@@ -29,7 +31,7 @@ public class AddAliasCommand : CommandBase
 		string forSong = arg.GetOption<string>(this._localization[PSLNormalCommandKey.AddAliasOptionForSongName]);
 		string alias = arg.GetOption<string>(this._localization[PSLNormalCommandKey.AddAliasOptionAllayToAddName]);
 
-		List<SongSearchResult> found = requester.SearchSong(this._phigrosService, forSong);
+		List<SongSearchResult> found = requester.SearchSong(this._phigrosService, forSong, SearchThreshold);
 		if (found.Count == 0)
 		{
 			await arg.QuickReply(this._localization[PSLNormalCommandKey.AddAliasNoMatch]);

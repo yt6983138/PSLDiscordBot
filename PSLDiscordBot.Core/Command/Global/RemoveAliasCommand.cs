@@ -29,7 +29,7 @@ public class RemoveAliasCommand : CommandBase
 		string forSong = arg.GetOption<string>(this._localization[PSLNormalCommandKey.RemoveAliasOptionForSongName]);
 		string alias = arg.GetOption<string>(this._localization[PSLNormalCommandKey.RemoveAliasOptionAllayToAddName]);
 
-		List<SongSearchResult> found = requester.SearchSong(this._phigrosService, forSong);
+		List<SongSearchResult> found = requester.SearchSong(this._phigrosService, forSong, AddAliasCommand.SearchThreshold);
 		if (found.Count == 0)
 		{
 			await arg.QuickReply(this._localization[PSLNormalCommandKey.RemoveAliasNoMatch]);
