@@ -62,13 +62,10 @@ public class SongScoresCommand : CommandBase
 
 		#region Score preprocessing 
 
-		CompleteScore[] scoresSameToFirstId = scoresToShow
-			.Where(x => x.Id == scoresToShow[0].Id)
-			.ToArray();
-
 		var extraArg = new
 		{
-			Searched = new Dictionary<string, CompleteScore[]>()
+			Searched = new Dictionary<string, CompleteScore[]>(),
+			SearchRanks = searchResult
 		};
 
 		IEnumerable<IGrouping<string, CompleteScore>> grouped = scoresToShow.GroupBy(x => x.Id);

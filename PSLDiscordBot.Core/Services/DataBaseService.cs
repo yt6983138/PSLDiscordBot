@@ -119,8 +119,9 @@ public sealed class DataBaseService
 		/// <param name="input"></param>
 		/// <param name="threshold"></param>
 		/// <param name="limit"></param>
-		/// <returns></returns>
+		/// <returns>A list sorted with score (high to low)</returns>
 		public List<SongSearchResult> SearchSong(PhigrosService phigrosService, string input, double threshold = 0.75)
+		//TODO?: add different threshold for id/name and alias, not sure if needed
 		{
 			input = input.ToLower();
 
