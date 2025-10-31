@@ -176,6 +176,8 @@ public class PSLPlugin : IPlugin
 
 			File.WriteAllText(this._configService.Value.DifficultyMapLocation, diffStr);
 			File.WriteAllText(this._configService.Value.NameMapLocation, infoStr);
+			this._logger.LogInformation(EventIdInitialize, "Info and difficulty updated. Exiting.");
+			this._program.CancellationTokenSource.Cancel();
 		},
 		null);
 	public ArgParseInfo ResetLocalization => new(
@@ -194,7 +196,7 @@ public class PSLPlugin : IPlugin
 		"Add non-existent localizations into the service.",
 		(_) =>
 		{
-			// does nothing here because it needs to be done manually
+			/// does nothing here because it needs to be done manually, see <see cref="IPlugin.Setup(IHost)"/>.
 		},
 		null);
 	#endregion
@@ -438,8 +440,6 @@ public class PSLPlugin : IPlugin
 		}
 	}
 
-	#endregion
-
 	private async Task OnException(Exception exception, SocketCommandBase? interaction = null)
 	{
 		this._logger.LogError(EventId, exception, "Exception received");
@@ -483,4 +483,6 @@ public class PSLPlugin : IPlugin
 			}
 		}
 	}
+
+	#endregion
 }
