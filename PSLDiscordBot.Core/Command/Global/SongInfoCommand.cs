@@ -51,7 +51,7 @@ public class SongInfoCommand : GuestCommandBase
 			Chart Constant: {string.Join(", ", service.DifficultiesMap[first.SongId])}
 			Artist: {firstInfo.Artist}
 			Illustrator: {firstInfo.Illustrator}
-			Charters: {firstInfo.CharterEZ}, {firstInfo.CharterHD}, {firstInfo.CharterHD}
+			Charters: {firstInfo.CharterEZ}, {firstInfo.CharterHD}, {firstInfo.CharterIN}
 			""");
 		if (!string.IsNullOrEmpty(firstInfo.CharterAT)) query.Append($", {firstInfo.CharterAT}");
 
