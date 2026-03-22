@@ -1,15 +1,17 @@
 ﻿## Quick Starting Guide
-If you are first time using this, please follow the guide.
-1. Use `/link-token <token>` or `/login` to link your account first. Having problem? See `/link-token` or `/login` usage.
+If you are using this for the first time, please follow the steps to set up your account for the bot.
+1. Use `/login` to link your account first, you will see a parameter named `is_international`, this depends on where did you get your game.
+For example, on Google play, Apple store, and TapTap (China) you would be using non-internaional account (fill `false` for this), on TapTap Global, you would be using international account (fill `true`).
+ - Alternatively, you can also use `/link-token` if you already have token and can't or don't want to go through the login process. You still need to fill out the `is_international` parameter.
 2. (Optional) Set your score precision using `/set-precision`.
-3. (Optional, this is almost optional in every case) Use `/get-time-index` to find the save you want to see (See `/get-time-index` usage)
+3. (Optional, this is almost optional in every case) Use `/get-time-index` to find the save you want to check, usually only used if you want to see older save (MAY NOT be supported, for detail see `/get-time-index` usage).
 4. Now, you can get your scores by using `/get-scores [index]` or `/get-photo [index]`. Also `/about-me` for summary view.
-## Command usage
 
+## Command usage
 Options in `<example>` are _required_ options, in `[example]` are _optional_ options.
 ### /help
 Usage: `/help` <br/>
-Prints this guide.
+Prints guide for first time use.
 ### /login
 Usage: `/login <is_international>` <br/>
 Example: `/login true` <br/>
@@ -56,7 +58,9 @@ Summary: Grabbing the request sent from Phigros client to Phigros server (`https
 Use an Android device temporally and follow the upper part.
 ### /get-time-index
 Usage: `/get-time-index` <br/>
-It prints out all your save time and index that means it, 0 is always latest. You must do `/link-token` or `/login` first.
+It prints out all your save time and index that points to it, 0 is always latest. You must do `/link-token` or `/login` first. <br/>
+Note: It seems like only a cloud save structure update/change would make a index change. 
+Older save may not be supported due to missing information and different encryption algorithm.
 ### /export-scores
 Usage: `/get-all-scores [index]` <br/>
 Example: `/get-all-scores 0` <br/>
