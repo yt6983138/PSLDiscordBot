@@ -5,7 +5,7 @@ public enum Language
 	EnglishUS,
 
 	[LanguageDetail("id", "Indonesian", "Bahasa Indonesia")]
-	Idonesian,
+	Indonesian,
 
 	[LanguageDetail("da", "Danish", "Dansk")]
 	Danish,
@@ -50,7 +50,7 @@ public enum Language
 	PortugueseBrazilian,
 
 	[LanguageDetail("ro", "Romanian, Romania", "Română")]
-	RomainianRomania,
+	RomanianRomania,
 
 	[LanguageDetail("fi", "Finnish", "Suomi")]
 	Finnish,
@@ -86,10 +86,10 @@ public enum Language
 	Thai,
 
 	[LanguageDetail("zh-CN", "Chinese, China", "中文")]
-	SimpifiedChinese,
+	SimplifiedChinese,
 
 	[LanguageDetail("ja", "Japanese", "日本語")]
-	Japenese,
+	Japanese,
 
 	[LanguageDetail("zh-TW", "Chinese, Taiwan", "繁體中文")]
 	TraditionalChinese,
