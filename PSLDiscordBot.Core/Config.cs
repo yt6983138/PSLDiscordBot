@@ -31,6 +31,7 @@ public class Config
 	public string DifficultyMapLocation { get; set; } = "./PSL/difficulty.tsv";
 	public string NameMapLocation { get; set; } = "./PSL/info.tsv";
 	public string HelpMDLocation { get; set; } = "./PSL/help.md";
+	public string HelpMDMultiLanguageLocation { get; set; } = "./PSL/help_{0}.md";
 
 	public string DifficultyMapGrabLocation { get; set; } = "https://raw.githubusercontent.com/7aGiven/Phigros_Resource/refs/heads/info/difficulty.tsv";
 	public string NameMapGrabLocation { get; set; } = "https://raw.githubusercontent.com/7aGiven/Phigros_Resource/refs/heads/info/info.tsv";
