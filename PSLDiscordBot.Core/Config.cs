@@ -35,7 +35,7 @@ public class Config
 
 	public string DifficultyMapGrabLocation { get; set; } = "https://raw.githubusercontent.com/7aGiven/Phigros_Resource/refs/heads/info/difficulty.tsv";
 	public string NameMapGrabLocation { get; set; } = "https://raw.githubusercontent.com/7aGiven/Phigros_Resource/refs/heads/info/info.tsv";
-	public string HelpMDGrabLocation { get; set; } = "https://raw.githubusercontent.com/yt6983138/PSLDiscordBot/master/help.md";
+	public string HelpMDGrabLocation { get; set; } = "https://raw.githubusercontent.com/yt6983138/PSLDiscordBot/master/Documentation/help.md";
 	public string AssetGrabLocation { get; set; } = "https://github.com/yt6983138/PSLDiscordBot_Resources/archive/refs/heads/main.zip";
 	public bool AssetGrabRemoveParent { get; set; } = true;
 
