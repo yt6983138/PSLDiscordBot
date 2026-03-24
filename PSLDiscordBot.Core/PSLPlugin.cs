@@ -424,6 +424,10 @@ public class PSLPlugin : IPlugin
 		if (msg.Exception is not null
 			and not GatewayReconnectException
 			and not WebSocketClosedException
+			and not ArgumentNullException
+			{
+				ParamName: "target" // suppress this since it is caused by a Discord.Net bug and has no effect on the bot itself
+			}
 			and not JsonSerializationException
 			{
 				Path: "member.joined_at" // i have been informed that this will not be fixed
