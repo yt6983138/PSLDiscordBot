@@ -111,6 +111,7 @@ public class PSLPlugin : IPlugin
 			{
 				c.DifficultyMapLocation = @default.DifficultyMapLocation;
 				c.HelpMDLocation = @default.HelpMDLocation;
+				c.HelpMDMultiLanguageLocation = @default.HelpMDMultiLanguageLocation;
 				c.NameMapLocation = @default.NameMapLocation;
 
 				c.AvatarHashMapLocation = @default.AvatarHashMapLocation;
