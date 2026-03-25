@@ -1,6 +1,5 @@
 ﻿using Discord.Net;
 using Discord.Rest;
-using ICSharpCode.SharpZipLib.Zip;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.Extensions.DependencyInjection;
@@ -68,38 +67,6 @@ public class PSLPlugin : IPlugin
 
 	#region Arg Info
 
-	public ArgParseInfo UpdateFiles => new(
-		"updateAssets",
-		"Update assets and help.md.",
-		(_) => // using async here break shit
-		{
-			this._logger.LogInformation(EventIdInitialize, "Updating assets and help.md...");
-			using HttpClient client = new();
-
-			Task<byte[]> help =
-				client.GetByteArrayAsync(this._configService.Value.HelpMDGrabLocation);
-			Task<byte[]> zip =
-				client.GetByteArrayAsync(this._configService.Value.AssetGrabLocation);
-			help.Wait();
-			zip.Wait();
-
-			File.WriteAllBytes(this._configService.Value.HelpMDLocation, help.Result);
-			File.WriteAllBytes("./Assets.zip", zip.Result);
-			FastZip fastZip = new();
-			if (this._configService.Value.AssetGrabRemoveParent)
-			{
-				DirectoryInfo tmp = Directory.CreateDirectory("./tmp"); // TODO: fix broken
-				fastZip.ExtractZip("./Assets.zip", "./tmp/", "");
-				DirectoryInfo first = tmp.GetDirectories()[0].GetDirectories()[0];
-				first.MoveTo(".");
-				tmp.Delete(true);
-			}
-			else
-			{
-				fastZip.ExtractZip("./Assets.zip", ".", "");
-			}
-		},
-		null);
 	public ArgParseInfo ResetConfig => new(
 		"resetConfig",
 		"Reset configuration (only partially)",
@@ -255,7 +222,7 @@ public class PSLPlugin : IPlugin
 		this._commandResolveService.BeforeSlashCommandExecutes += this.Program_BeforeSlashCommandExecutes;
 		this._commandResolveService.OnSlashCommandError += this.CommandResolveService_OnSlashCommandError;
 
-		this._program.AddArgReceiver(this.UpdateFiles);
+		//this._program.AddArgReceiver(this.UpdateFiles);
 		this._program.AddArgReceiver(this.UpdateInfoAndDifficulty);
 		this._program.AddArgReceiver(this.ResetConfig);
 		this._program.AddArgReceiver(this.ResetConfigFull);
