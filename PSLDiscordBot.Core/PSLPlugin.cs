@@ -306,9 +306,8 @@ public class PSLPlugin : IPlugin
 
 	private void Program_AfterMainInitialize(object? sender, EventArgs e)
 	{
-		this._discordClientService.SocketClient.LoginAsync(TokenType.Bot, this._configService.Value.Token).Wait();
-		this._discordClientService.RestClient.LoginAsync(TokenType.Bot, this._configService.Value.Token).Wait();
-		this._discordClientService.SocketClient.StartAsync().Wait();
+		this._discordClientService.Token = this._configService.Value.Token;
+		this._discordClientService.TryStartBotAsync().GetAwaiter().GetResult();
 	}
 	private void Program_BeforeSlashCommandExecutes(object? sender, SlashCommandEventArgs e)
 	{
