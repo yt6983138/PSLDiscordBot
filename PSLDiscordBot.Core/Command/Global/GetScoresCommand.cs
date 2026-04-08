@@ -1,4 +1,6 @@
-﻿using SmartFormat;
+﻿using PhiInfo.CLI;
+using PhiInfo.Core.Models.Information;
+using SmartFormat;
 using System.Text;
 
 namespace PSLDiscordBot.Core.Command.Global;
@@ -42,7 +44,7 @@ public class GetScoresCommand : CommandBase
 		string result = ScoresFormatter(
 			arg,
 			save,
-			this._phigrosService.IdNameMap,
+			this._phigrosService.NonMultiLanguageInfos,
 			arg.GetIntegerOptionAsInt32OrDefault(this._localization[PSLNormalCommandKey.GetScoresOptionCountName], 28),
 			data,
 			this._localization);
@@ -54,7 +56,7 @@ public class GetScoresCommand : CommandBase
 		IDiscordInteraction interaction,
 		List<CompleteScore> scores,
 		double rks,
-		IReadOnlyDictionary<string, string> map,
+		NonMultiLanguageInfos map,
 		int showCount,
 		UserData userData,
 		LocalizationService localization,
@@ -62,7 +64,7 @@ public class GetScoresCommand : CommandBase
 		bool showScoreNumber = true)
 	{
 		List<(CompleteScore score, string name)> nameScorePairs = scores
-			.Select(x => (x, map.TryGetValue(x.Id, out string? str) ? str : x.Id))
+			.Select(x => (x, map.TryGetSongInfoById(x.Id, out SongInfo? info) ? info.Name : x.Id))
 			.ToList();
 
 		StringBuilder sb = new();
@@ -109,7 +111,7 @@ public class GetScoresCommand : CommandBase
 	public static string ScoresFormatter(
 		IDiscordInteraction interaction,
 		GameRecord save,
-		IReadOnlyDictionary<string, string> map,
+		NonMultiLanguageInfos map,
 		int showCount,
 		UserData userData,
 		LocalizationService localization,

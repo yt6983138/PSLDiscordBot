@@ -55,7 +55,7 @@ public class GetScoresByTokenCommand : AdminCommandBase
 		string result = GetScoresCommand.ScoresFormatter(
 			arg,
 			save,
-			this._phigrosService.IdNameMap,
+			this._phigrosService.NonMultiLanguageInfos,
 			arg.GetIntegerOptionAsInt32OrDefault("count", 19),
 			userData,
 			this._localization);

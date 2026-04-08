@@ -64,21 +64,11 @@ public class ImageGenerator
 		this._chromiumPoolService = chromiumPool;
 		this.SongDifficultyCount = new Dictionary<string, object>()
 		{
-			{
-				"TotalSongEZCount", this._phigrosDataService.DifficultiesMap.Count(x => x.Value.Length >= 1 && x.Value[0] != 0)
-			},
-			{
-				"TotalSongHDCount", this._phigrosDataService.DifficultiesMap.Count(x => x.Value.Length >= 2 && x.Value[1] != 0)
-			},
-			{
-				"TotalSongINCount", this._phigrosDataService.DifficultiesMap.Count(x => x.Value.Length >= 3 && x.Value[2] != 0)
-			},
-			{
-				"TotalSongATCount", this._phigrosDataService.DifficultiesMap.Count(x => x.Value.Length >= 4 && x.Value[3] != 0)
-			},
-			{
-				"TotalSongCount", this._phigrosDataService.DifficultiesMap.Count
-			}
+			{ "TotalSongEZCount", this._phigrosDataService.NonMultiLanguageInfos.Songs.Count(x => x.Levels.ContainsKey(Difficulty.EZ)) },
+			{ "TotalSongHDCount", this._phigrosDataService.NonMultiLanguageInfos.Songs.Count(x => x.Levels.ContainsKey(Difficulty.HD)) },
+			{ "TotalSongINCount", this._phigrosDataService.NonMultiLanguageInfos.Songs.Count(x => x.Levels.ContainsKey(Difficulty.IN)) },
+			{ "TotalSongATCount", this._phigrosDataService.NonMultiLanguageInfos.Songs.Count(x => x.Levels.ContainsKey(Difficulty.AT)) },
+			{ "TotalSongCount", this._phigrosDataService.NonMultiLanguageInfos.Songs.Count }
 		};
 	}
 
@@ -201,11 +191,13 @@ public class ImageGenerator
 
 		string formattedBgPath = "./Assets/Tracks/".ToFullPath();
 		string cutBgId = string.IsNullOrWhiteSpace(gameUserInfo.BackgroundId) ? "" : gameUserInfo.BackgroundId[..^1];
-		KeyValuePair<string, string> firstIdOccurrence = this._phigrosDataService.IdNameMap.FirstOrDefault(p =>
-			p.Value == gameUserInfo.BackgroundId
-			|| p.Value == cutBgId
-			|| p.Key == gameUserInfo.BackgroundId[..^2]); // goddamn why they have to change this every time
-		if (string.IsNullOrEmpty(firstIdOccurrence.Key))
+		(string backgroundId, string _) = this._phigrosDataService.NonMultiLanguageInfos.SongsWithoutSuffix
+			.Select(x => (x.Id, x.Name))
+			.FirstOrDefault(p =>
+				p.Name == gameUserInfo.BackgroundId
+				|| p.Name == cutBgId
+				|| p.Id == gameUserInfo.BackgroundId[..^2]); // goddamn why they have to change this every time
+		if (string.IsNullOrEmpty(backgroundId))
 		{
 			formattedBgPath += "Introduction";
 			if (!gameUserInfo.BackgroundId.Contains("Introduc"))
@@ -215,7 +207,7 @@ public class ImageGenerator
 		}
 		else
 		{
-			formattedBgPath += $"{firstIdOccurrence.Key}.0";
+			formattedBgPath += $"{backgroundId}.0";
 		}
 
 		var image = new
@@ -249,10 +241,11 @@ public class ImageGenerator
 				"INFO", map
 			},
 			{
-				"INFO_MAP_DIFFICULTY", this._phigrosDataService.DifficultiesMap
+				"INFO_MAP_DIFFICULTY", this._phigrosDataService.NonMultiLanguageInfos.SongsWithoutSuffix
+					.ToDictionary(x => x.Id, x => x.ChartConstantArray)
 			},
 			{
-				"INFO_MAP_ID_NAME", this._phigrosDataService.IdNameMap
+				"INFO_MAP_ID_NAME", this._phigrosDataService.NonMultiLanguageInfos.SongsWithoutSuffix.ToDictionary(x => x.Id, x => x.Name)
 			}
 		};
 

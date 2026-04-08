@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using PhiInfo.Core.Models.Information;
+using System.Text;
 
 namespace PSLDiscordBot.Core.Command.Global;
 
@@ -42,18 +43,18 @@ public class SongInfoCommand : GuestCommandBase
 	public static StringBuilder BuildReturnQueryString(List<SongSearchResult> foundAlias, PhigrosService service)
 	{
 		SongSearchResult first = foundAlias[0];
-		SongInfo firstInfo = service.SongInfoMap[first.SongId];
+		SongInfo firstInfo = service.NonMultiLanguageInfos.GetSongInfoById(first.SongId);
 
 		StringBuilder query = new($"""
 			Id: {first.SongId}
 			Name: {firstInfo.Name}
 			Alias: {string.Join(", ", first.Alias)}
-			Chart Constant: {string.Join(", ", service.DifficultiesMap[first.SongId])}
-			Artist: {firstInfo.Artist}
+			Chart Constant: {string.Join(", ", service.NonMultiLanguageInfos.GetSongInfoById(first.SongId).ChartConstantArray)}
+			Composer: {firstInfo.Composer}
 			Illustrator: {firstInfo.Illustrator}
-			Charters: {firstInfo.CharterEZ}, {firstInfo.CharterHD}, {firstInfo.CharterIN}
+			Charters: {firstInfo.Levels[Difficulty.EZ].Charter}, {firstInfo.Levels[Difficulty.AT].Charter}, {firstInfo.Levels[Difficulty.IN].Charter}
 			""");
-		if (!string.IsNullOrEmpty(firstInfo.CharterAT)) query.Append($", {firstInfo.CharterAT}");
+		if (firstInfo.Levels.TryGetValue(Difficulty.AT, out SongLevel? atLevel)) query.Append($", {atLevel.Charter}");
 
 		if (foundAlias.Count > 1)
 		{
@@ -63,7 +64,7 @@ public class SongInfoCommand : GuestCommandBase
 				SongSearchResult found = foundAlias[i];
 				query.Append(found.SongId);
 				query.Append('(');
-				query.Append(service.SongInfoMap[found.SongId].Name);
+				query.Append(service.NonMultiLanguageInfos.GetSongInfoById(found.SongId).Name);
 				query.Append("), ");
 			}
 			query.Remove(query.Length - 2, 2);

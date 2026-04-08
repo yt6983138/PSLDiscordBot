@@ -53,7 +53,7 @@ public class AddAliasCommand : CommandBase
 		await requester.AddOrReplaceSongAliasAsync(theRealOne.SongId, newAlias);
 
 		await arg.QuickReply(this._localization[PSLNormalCommandKey.AddAliasSuccess],
-			this._phigrosService.IdNameMap[theRealOne.SongId],
+			this._phigrosService.NonMultiLanguageInfos.GetSongInfoById(theRealOne.SongId).Name,
 			newAlias);
 	}
 }

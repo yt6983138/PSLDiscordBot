@@ -63,7 +63,7 @@ public class SetMemorableScoreCommand : CommandBase
 		await requester.SetOrReplaceMiscInfo(miscInfo);
 
 		await arg.QuickReplyWithAttachments([PSLUtils.ToAttachment(
-				GetScoresCommand.ScoresFormatter(arg, [score], 0, this._phigrosService.IdNameMap, 1, data, this._localization, false, false),
+				GetScoresCommand.ScoresFormatter(arg, [score], 0, this._phigrosService.NonMultiLanguageInfos, 1, data, this._localization, false, false),
 				"Score.txt")],
 				this._localization[PSLNormalCommandKey.SetMemorableSuccess]);
 	}

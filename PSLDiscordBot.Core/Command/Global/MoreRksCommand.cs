@@ -89,7 +89,7 @@ public class MoreRksCommand : CommandBase
 		for (int j = 0; j < calculatedShowCounts; j++)
 		{
 			TargetRksScorePair item = growableScores[j];
-			string name = this._phigrosService.IdNameMap[item.Score.Id];
+			string name = this._phigrosService.NonMultiLanguageInfos.GetSongInfoById(item.Score.Id).Name;
 
 			columnTextBuilder.WithRow(new ColumnTextBuilder.RowBuilder()
 				.WithFormatAdded(arg, this._localization[PSLNormalCommandKey.MoreRksNumberFormat], j, item)

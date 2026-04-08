@@ -28,16 +28,13 @@ public class Config
 
 	public string PSLDbConnectionString { get; set; } = "Data Source=./PSL/MainUserData.db";
 
-	public string DifficultyMapLocation { get; set; } = "./PSL/difficulty.tsv";
-	public string NameMapLocation { get; set; } = "./PSL/info.tsv";
+	public string NonMultiLanguageInfoLocation { get; set; } = "./PSL/info.json";
+	public string MultiLanguageInfoLocationFormat { get; set; } = "./PSL/tipsAndCollections_{0}.json";
 	public string HelpMDLocation { get; set; } = "./PSL/help.md";
 	public string HelpMDMultiLanguageLocation { get; set; } = "./PSL/help_{0}.md";
 
-	public string DifficultyMapGrabLocation { get; set; } = "https://raw.githubusercontent.com/7aGiven/Phigros_Resource/refs/heads/info/difficulty.tsv";
-	public string NameMapGrabLocation { get; set; } = "https://raw.githubusercontent.com/7aGiven/Phigros_Resource/refs/heads/info/info.tsv";
+	// TODO: separate phigros asset grab to another plugin
 	public string HelpMDGrabLocation { get; set; } = "https://raw.githubusercontent.com/yt6983138/PSLDiscordBot/master/Documentation/help.md";
-	public string AssetGrabLocation { get; set; } = "https://github.com/yt6983138/PSLDiscordBot_Resources/archive/refs/heads/main.zip";
-	public bool AssetGrabRemoveParent { get; set; } = true;
 
 	public int DefaultChromiumTabCacheCount { get; set; } = 5;
 	public ushort ChromiumPort { get; set; } = 0;

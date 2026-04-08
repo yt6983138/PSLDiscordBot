@@ -1,4 +1,5 @@
-﻿using yt6983138.Common;
+﻿using PhiInfo.Core.Models.Information;
+using yt6983138.Common;
 
 namespace PSLDiscordBot.Core.Command.Global;
 
@@ -29,9 +30,15 @@ public class ExportScoresCommand : CommandBase
 		GameRecord save = this._phigrosService.HandleAndGetGameRecord(context);
 
 		await arg.QuickReplyWithAttachments(
-			[PSLUtils.ToAttachment(ExportCSV(save.Records, this._phigrosService.IdNameMap), "Export.csv")],
+			[PSLUtils.ToAttachment(ExportCSV(save.Records, this._phigrosService.NonMultiLanguageInfos.SongsWithoutSuffix), "Export.csv")],
 			this._localization[PSLNormalCommandKey.ExportScoresReply],
 			save.Records.Count);
+	}
+
+	public static string ExportCSV(List<CompleteScore> scores, IEnumerable<SongInfo> songInfos, int countToExport = -1)
+	{
+		IReadOnlyDictionary<string, string> map = songInfos.ToDictionary(x => x.Id, x => x.Name);
+		return ExportCSV(scores, map, countToExport);
 	}
 	public static string ExportCSV(List<CompleteScore> scores, IReadOnlyDictionary<string, string> map, int countToExport = -1)
 	{

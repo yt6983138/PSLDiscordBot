@@ -1,5 +1,8 @@
 ﻿using PhigrosLibraryCSharp.Cloud.RawData;
+using PhiInfo.CLI;
 using SmartFormat;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using yt6983138.Common;
 
 namespace PSLDiscordBot.Core.Services.Phigros;
@@ -8,6 +11,16 @@ public record class CallbackLoginRequest(CallbackLoginData Data, Func<TapTapToke
 public class PhigrosService
 {
 	private static EventId EventId { get; } = new(114510, nameof(PhigrosService));
+	private static readonly JsonSerializerOptions _jsonOptions = new()
+	{
+		PropertyNamingPolicy = null,
+		PropertyNameCaseInsensitive = true,
+		NumberHandling = JsonNumberHandling.AllowReadingFromString,
+		Converters =
+		{
+			new JsonStringEnumConverter()
+		}
+	};
 
 	private readonly ILogger<PhigrosService> _logger;
 	private readonly Config _config;
@@ -16,82 +29,43 @@ public class PhigrosService
 	private readonly Dictionary<ulong, CallbackLoginRequest> _callbackLoginRequests = [];
 	public IReadOnlyDictionary<ulong, CallbackLoginRequest> CallbackLoginRequests => this._callbackLoginRequests;
 
-	/// <summary>
-	/// For compatibility, newer api should use <see cref="CheckedDifficulties"/>.
-	/// </summary>
-	public IReadOnlyDictionary<string, float[]> DifficultiesMap { get; }
-	/// <summary>
-	/// For compatibility, newer api should use <see cref="SongInfoMap"/>.
-	/// </summary>
-	public IReadOnlyDictionary<string, string> IdNameMap { get; }
-
-	public Dictionary<string, DifficultyCCCollection> CheckedDifficulties { get; }
-	public Dictionary<string, SongInfo> SongInfoMap { get; }
+	public NonMultiLanguageInfos NonMultiLanguageInfos { get; private set; } = new([], [], []);
+	// using Localization.Language intentionally since i already make sure enum names in PhiInfo.Core.Models.Language 
+	// are the same as Localization.Language
+	public Dictionary<Language, MultiLanguageInfos> MultiLanguageInfos { get; private set; } = [];
 
 	public PhigrosService(IOptions<Config> config, ILogger<PhigrosService> logger, LocalizationService localization)
 	{
 		this._logger = logger;
 		this._config = config.Value;
 
-		(this.CheckedDifficulties, this.SongInfoMap) =
-			this.ReadDatas(this._config.DifficultyMapLocation, this._config.NameMapLocation);
+		(this.NonMultiLanguageInfos, this.MultiLanguageInfos) =
+			LoadData(this._config.NonMultiLanguageInfoLocation, this._config.MultiLanguageInfoLocationFormat);
 
-		this.DifficultiesMap = new ReadOnlyDictionaryWrapper<string, DifficultyCCCollection, string, float[]>(this.CheckedDifficulties)
-		{
-			EnumeratorTransformer = src => src.Select(x => new KeyValuePair<string, float[]>(x.Key, x.Value.ToFloats())).GetEnumerator(),
-			ValuesTransformer = src => src.Values.Select(x => x.ToFloats()),
-			CountTransformer = src => src.Count,
-			KeysTransformer = src => src.Keys,
-			TryGetTransformer = (src, key) => src.TryGetValue(key, out DifficultyCCCollection val) ? (true, val.ToFloats()) : (false, []),
-			KeyToValueTransformer = (src, key) => src[key].ToFloats(),
-			ContainsTransformer = (src, key) => src.ContainsKey(key)
-		};
-		this.IdNameMap = new ReadOnlyDictionaryWrapper<string, SongInfo, string, string>(this.SongInfoMap)
-		{
-			EnumeratorTransformer = src => src.Select(x => new KeyValuePair<string, string>(x.Key, x.Value.Name)).GetEnumerator(),
-			ValuesTransformer = src => src.Values.Select(x => x.Name),
-			CountTransformer = src => src.Count,
-			KeysTransformer = src => src.Keys,
-			TryGetTransformer = (src, key) => src.TryGetValue(key, out SongInfo? val) ? (true, val.Name) : (false, ""),
-			KeyToValueTransformer = (src, key) => src[key].Name,
-			ContainsTransformer = (src, key) => src.ContainsKey(key)
-		};
 		this._localization = localization;
 	}
-	public (Dictionary<string, DifficultyCCCollection>, Dictionary<string, SongInfo>) ReadDatas(string diffLocation, string nameLocation)
+
+	public static (NonMultiLanguageInfos, Dictionary<Language, MultiLanguageInfos>) LoadData(
+		string nonMultiLanguageInfoLocation,
+		string multiLanguageInfoLocationFormat)
 	{
-		CsvReader difficultyReader = new(File.ReadAllText(diffLocation), IsTsv(diffLocation) ? "\t" : ",");
-		CsvReader infoReader = new(File.ReadAllText(nameLocation), IsTsv(nameLocation) ? "\t" : ",");
+		Dictionary<Language, MultiLanguageInfos> multiLanguageInfos = [];
 
-		Dictionary<string, SongInfo> names = [];
-		Dictionary<string, DifficultyCCCollection> diffculties = [];
-
-		while (difficultyReader.TryReadRow(out _))
+		foreach (Language lang in Enum.GetValues<Language>())
 		{
-			string name = difficultyReader.ReadColumn();
-			DifficultyCCCollection diff = new();
-			for (int i = 0; difficultyReader.TryReadColumn(out string? current); i++)
-			{
-				diff[i] = float.Parse(current);
-			}
+			string path = string.Format(multiLanguageInfoLocationFormat, lang);
+			if (!File.Exists(path))
+				continue;
 
-			diffculties[name] = diff;
+			MultiLanguageInfos? obj = JsonSerializer.Deserialize<MultiLanguageInfos>(
+				File.ReadAllText(path), _jsonOptions).EnsureNotNull();
+			multiLanguageInfos.Add(lang, obj);
 		}
-		while (infoReader.TryReadRow(out _))
-		{
-			string id = infoReader.ReadColumn();
-			SongInfo info = new(
-				infoReader.ReadColumn(),
-				infoReader.ReadColumn(),
-				infoReader.ReadColumn(),
-				infoReader.ReadColumn(),
-				infoReader.ReadColumn(),
-				infoReader.ReadColumn(),
-				infoReader.TryReadColumn(out string? at) ? at : "");
-			names[id] = info;
-		}
-		return (diffculties, names);
+
+		return (JsonSerializer.Deserialize<NonMultiLanguageInfos>(File.ReadAllText(nonMultiLanguageInfoLocation), _jsonOptions).EnsureNotNull(),
+			multiLanguageInfos);
 	}
+
 	public static bool IsTsv(string filename)
 		=> filename.EndsWith(".tsv", StringComparison.InvariantCultureIgnoreCase);
 
@@ -163,7 +137,9 @@ public class PhigrosService
 	}
 	public GameRecord HandleAndGetGameRecord(SaveContext ctx)
 	{
-		return ctx.ReadGameRecord(this.DifficultiesMap, GetGameSave_ExceptionHandler);
+		return ctx.ReadGameRecord(
+			this.NonMultiLanguageInfos.SongsWithoutSuffix.ToDictionary(x => x.Id, x => x.ChartConstantArray),
+			GetGameSave_ExceptionHandler);
 	}
 	private static void GetGameSave_ExceptionHandler(string message, Exception? ex, object? extraArgs)
 	{

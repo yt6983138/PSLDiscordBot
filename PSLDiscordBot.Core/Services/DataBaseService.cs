@@ -1,5 +1,6 @@
 ﻿using FuzzySharp;
 using Microsoft.EntityFrameworkCore;
+using PhiInfo.Core.Models.Information;
 using System.Collections.Immutable;
 
 namespace PSLDiscordBot.Core.Services;
@@ -126,10 +127,10 @@ public sealed class DataBaseService
 			input = input.ToLower();
 
 			List<SongSearchResult> results = [];
-			foreach (KeyValuePair<string, SongInfo> item in phigrosService.SongInfoMap)
+			foreach (SongInfo item in phigrosService.NonMultiLanguageInfos.SongsWithoutSuffix)
 			{
-				string id = item.Key;
-				string name = item.Value.Name;
+				string id = item.Id;
+				string name = item.Name;
 				ImmutableArray<string> aliases = this._parent._songAlias.TryGetValue(id, out ImmutableArray<string> al) ? al : [];
 
 				double idScore = CalculateScore(input, id.ToLower());

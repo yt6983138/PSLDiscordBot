@@ -1,4 +1,6 @@
-﻿using System.IO.Compression;
+﻿using PhiInfo.Core.Models.Information;
+using System.Collections.Immutable;
+using System.IO.Compression;
 using System.Text;
 
 namespace PSLDiscordBot.Core.Command.Global;
@@ -40,10 +42,10 @@ public class DownloadAssetCommand : GuestCommandBase
 
 		StringBuilder query = SongInfoCommand.BuildReturnQueryString(foundAlias, this._phigrosService);
 
-		(string id, System.Collections.Immutable.ImmutableArray<string> alias, double Score) = foundAlias[0];
-		SongInfo firstInfo = this._phigrosService.SongInfoMap[id];
-		DifficultyCCCollection diff = this._phigrosService.CheckedDifficulties[id];
-		bool hasAT = diff.AT != 0;
+		(string id, ImmutableArray<string> alias, double Score) = foundAlias[0];
+		SongInfo firstInfo = this._phigrosService.NonMultiLanguageInfos.GetSongInfoById(id);
+		Dictionary<Difficulty, SongLevel> diff = firstInfo.Levels;
+		bool hasAT = diff.ContainsKey(Difficulty.AT);
 
 		Dictionary<Difficulty, string> chartUrls = Enum.GetValues<Difficulty>()
 			.ToDictionary(x => x, x => SongInfoCommand.BuildChartUrl(id, x));
@@ -54,9 +56,8 @@ public class DownloadAssetCommand : GuestCommandBase
 			$"[Illustration]({illustrationUrl}), " +
 			$"[Music]({musicUrl}), ");
 
-		for (int i = 0; i < 4 && this._phigrosService.CheckedDifficulties[id][i] != 0; i++)
+		foreach (Difficulty difficulty in diff.Keys)
 		{ // UNDONE: localize those
-			Difficulty difficulty = (Difficulty)i;
 			@return.Append($"[Chart {difficulty}](<{chartUrls[difficulty]}>), ");
 		}
 		@return.Remove(@return.Length - 2, 2);
@@ -75,10 +76,10 @@ public class DownloadAssetCommand : GuestCommandBase
 				Song: Music.ogg
 				Picture: Illustration.png
 				Chart: Chart_{parsed}.json
-				Level: {parsed} Lv.{diff[(int)parsed]}
-				Composer: {firstInfo.Artist}
+				Level: {parsed} Lv.{diff[parsed].ChartConstant}
+				Composer: {firstInfo.Composer}
 				Illustrator: {firstInfo.Illustrator}
-				Charter: {firstInfo.GetCharterByIndex((int)parsed)}
+				Charter: {diff[parsed].Charter}
 				""";
 			MemoryStream stream = new();
 			ZipArchive archive = new(stream, ZipArchiveMode.Create, true);

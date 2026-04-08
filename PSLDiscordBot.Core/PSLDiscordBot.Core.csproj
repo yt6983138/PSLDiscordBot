@@ -16,15 +16,16 @@
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.15" />
 		<PackageReference Include="NLog" Version="5.4.0" />
 		<PackageReference Include="NLog.Web.AspNetCore" Version="5.4.0" />
-		<PackageReference Include="SixLabors.ImageSharp" Version="3.1.11" />
 		<PackageReference Include="SixLabors.ImageSharp.Drawing" Version="2.1.5" />
 		<PackageReference Include="SharpZipLib" Version="1.4.2" />
 		<PackageReference Include="System.Runtime.Caching" Version="8.0.1" />
+		<!--<PackageReference Include="yt6983138.PhiInfo.CLI" Version="1.1.1" />-->
+		<!-- TODO: replace project reference with nuget package -->
 	</ItemGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="..\..\HtmlToImage.NET\HtmlToImage.NET\HtmlToImage.NET.csproj" />
-		<ProjectReference Include="..\..\PhigrosLibraryCSharp\PhigrosLibraryCSharp\PhigrosLibraryCSharp.csproj" />
+		<ProjectReference Include="..\..\PhiInfo\PhiInfo.CLI\PhiInfo.CLI.csproj" />
 		<ProjectReference Include="..\..\yt6983138\yt6983138.csproj" />
 		<ProjectReference Include="..\PSLDiscordBot.Framework\PSLDiscordBot.Framework.csproj" />
 		<ProjectReference Include="..\PSLDiscordBot.Analyzer\PSLDiscordBot.Analyzer.csproj" PrivateAssets="all" OutputItemType="Analyzer" />
@@ -45,7 +46,11 @@
 	<PropertyGroup>
 	</PropertyGroup>
 
-	<ProjectExtensions><VisualStudio><UserProperties /></VisualStudio></ProjectExtensions>
+	<ProjectExtensions>
+		<VisualStudio>
+			<UserProperties />
+		</VisualStudio>
+	</ProjectExtensions>
 
 	<!--<ItemGroup>
 		<CoreFiles Include="$(OutDir)$(ProjectName)*" />

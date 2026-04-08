@@ -52,7 +52,7 @@ public class RemoveAliasCommand : CommandBase
 		await requester.AddOrReplaceSongAliasAsync(theRealOne.SongId, newAlias.ToArray());
 
 		await arg.QuickReply(this._localization[PSLNormalCommandKey.RemoveAliasSuccess],
-			this._phigrosService.IdNameMap[theRealOne.SongId],
+			this._phigrosService.NonMultiLanguageInfos.GetSongInfoById(theRealOne.SongId).Name,
 			newAlias);
 	}
 }

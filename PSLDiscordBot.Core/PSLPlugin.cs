@@ -13,7 +13,6 @@ using PSLDiscordBot.Framework.ServiceBase;
 using SixLabors.Fonts;
 using SmartFormat;
 using System.Net.WebSockets;
-using System.Text;
 
 namespace PSLDiscordBot.Core;
 
@@ -76,18 +75,12 @@ public class PSLPlugin : IPlugin
 			Config @default = new();
 			this._configService.Update(c =>
 			{
-				c.DifficultyMapLocation = @default.DifficultyMapLocation;
 				c.HelpMDLocation = @default.HelpMDLocation;
 				c.HelpMDMultiLanguageLocation = @default.HelpMDMultiLanguageLocation;
-				c.NameMapLocation = @default.NameMapLocation;
 
 				c.AvatarHashMapLocation = @default.AvatarHashMapLocation;
 				c.PSLDbConnectionString = @default.PSLDbConnectionString;
-				c.DifficultyMapGrabLocation = @default.DifficultyMapGrabLocation;
-				c.NameMapGrabLocation = @default.NameMapGrabLocation;
 				c.HelpMDGrabLocation = @default.HelpMDGrabLocation;
-				c.AssetGrabLocation = @default.AssetGrabLocation;
-				c.AssetGrabRemoveParent = @default.AssetGrabRemoveParent;
 				c.DefaultChromiumTabCacheCount = @default.DefaultChromiumTabCacheCount;
 				c.ChromiumPort = @default.ChromiumPort;
 				c.ChromiumLocation = @default.ChromiumLocation;
@@ -112,40 +105,6 @@ public class PSLPlugin : IPlugin
 			this._logger.LogInformation(EventIdInitialize, "Resetting config... (full)");
 
 			this._configService.Update(_ => new Config());
-		},
-		null);
-	public ArgParseInfo UpdateInfoAndDifficulty => new(
-		"updateInfoAndDifficulty",
-		"Update info.csv/tsv and difficulty.csv/tsv.",
-		(_) =>
-		{
-			using HttpClient client = new();
-			byte[] diff =
-				client.GetByteArrayAsync(this._configService.Value.DifficultyMapGrabLocation)
-					.GetAwaiter()
-					.GetResult();
-			byte[] info =
-				client.GetByteArrayAsync(this._configService.Value.NameMapGrabLocation)
-					.GetAwaiter()
-					.GetResult();
-
-			string diffStr = Encoding.UTF8.GetString(diff);
-			string infoStr = Encoding.UTF8.GetString(info);
-			if (this._configService.Value.DifficultyMapLocation.EndsWith(".tsv",
-				StringComparison.InvariantCultureIgnoreCase))
-			{
-				diffStr = diffStr.Replace(",", "\t");
-			}
-
-			if (this._configService.Value.NameMapLocation.EndsWith(".tsv", StringComparison.InvariantCultureIgnoreCase))
-			{
-				infoStr = infoStr.Replace("\\", "\t");
-			}
-
-			File.WriteAllText(this._configService.Value.DifficultyMapLocation, diffStr);
-			File.WriteAllText(this._configService.Value.NameMapLocation, infoStr);
-			this._logger.LogInformation(EventIdInitialize, "Info and difficulty updated. Exiting.");
-			this._program.CancellationTokenSource.Cancel();
 		},
 		null);
 	public ArgParseInfo ResetLocalization => new(
@@ -223,7 +182,6 @@ public class PSLPlugin : IPlugin
 		this._commandResolveService.OnSlashCommandError += this.CommandResolveService_OnSlashCommandError;
 
 		//this._program.AddArgReceiver(this.UpdateFiles);
-		this._program.AddArgReceiver(this.UpdateInfoAndDifficulty);
 		this._program.AddArgReceiver(this.ResetConfig);
 		this._program.AddArgReceiver(this.ResetConfigFull);
 		this._program.AddArgReceiver(this.ResetLocalization);

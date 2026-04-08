@@ -94,7 +94,7 @@ public class SongScoresCommand : CommandBase
 						arg,
 						scoresToShow,
 						rks,
-						this._phigrosService.IdNameMap,
+						this._phigrosService.NonMultiLanguageInfos,
 						int.MaxValue,
 						data,
 						this._localization,
