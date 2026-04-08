@@ -5,7 +5,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using yt6983138.Common;
 
-namespace PSLDiscordBot.Core.Services.Phigros;
+namespace PSLDiscordBot.Core.Services;
 
 public record class CallbackLoginRequest(CallbackLoginData Data, Func<TapTapTokenData, Task> Callback, bool UseChinaEndpoint);
 public class PhigrosService
@@ -123,7 +123,7 @@ public class PhigrosService
 		{
 			await command.QuickReply(onPhiLibUriException, ex.Message);
 		}
-		catch (System.Text.Json.JsonException ex)
+		catch (JsonException ex)
 		{
 			await command.QuickReply(onPhiLibJsonException, ex.Message);
 		}
@@ -144,9 +144,7 @@ public class PhigrosService
 	private static void GetGameSave_ExceptionHandler(string message, Exception? ex, object? extraArgs)
 	{
 		if (ex is not KeyNotFoundException knfex || extraArgs is not string str)
-		{
 			goto Throw;
-		}
 		if (str == "テリトリーバトル.ツユ")
 			return;
 

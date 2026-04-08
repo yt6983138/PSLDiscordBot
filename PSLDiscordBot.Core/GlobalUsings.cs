@@ -8,7 +8,6 @@ global using PhigrosLibraryCSharp.GameRecords;
 global using PSLDiscordBot.Core.Command.Global.Base;
 global using PSLDiscordBot.Core.Localization;
 global using PSLDiscordBot.Core.Services;
-global using PSLDiscordBot.Core.Services.Phigros;
 global using PSLDiscordBot.Core.UserDatas;
 global using PSLDiscordBot.Core.Utility;
 global using PSLDiscordBot.Framework;
