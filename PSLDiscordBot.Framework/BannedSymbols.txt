@@ -1,0 +1,3 @@
+﻿T:Microsoft.Extensions.DependencyInjection.SwaggerGenServiceCollectionExtensions; Swagger is managed by PSLDiscordBot.Framework, please see Program.SwaggerGenFilter
+T:Microsoft.Extensions.DependencyInjection.EndpointMetadataApiExplorerServiceCollectionExtensions; Swagger is managed by PSLDiscordBot.Framework, please see Program.SwaggerGenFilter
+T:Microsoft.Extensions.DependencyInjection.MvcServiceCollectionExtensions; Multiple MVC add calls may overwrite each other, please see Utils.TryAddMvc

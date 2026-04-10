@@ -306,6 +306,7 @@ public static class Utils
 		return instance;
 	}
 
+#pragma warning disable RS0030 // Do not use banned APIs
 	public static bool HasMvcRegistered(this IServiceCollection services)
 	{
 		return services.GetServiceImplementation<IMvcBuilder>() is not null;
@@ -322,6 +323,7 @@ public static class Utils
 			return existing;
 		return services.AddMvc();
 	}
+#pragma warning restore RS0030 // Do not use banned APIs
 
 	public static bool SwaggerRequireInTypeAssembly<TType>(string docName, ApiDescription apiDesc)
 	{

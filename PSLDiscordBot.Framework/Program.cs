@@ -192,6 +192,7 @@ public class Program
 		this._argParseInfos.Add(info);
 	}
 
+#pragma warning disable RS0030 // Do not use banned APIs
 #if DEBUG
 	public
 #else
@@ -199,11 +200,12 @@ public class Program
 #endif
 		void ConfigureSwagger(WebApplicationBuilder builder)
 	{
-		builder.Services.AddEndpointsApiExplorer(); // TODO: add a analyzer to warn for certain apis, so plugins doesnt add this multiple times
+		builder.Services.AddEndpointsApiExplorer();
 		builder.Services.AddSwaggerGen(config =>
 		{
 			this.SwaggerConfigurators?.Invoke(this, config);
 			config.DocInclusionPredicate((docName, apiDesc) => this.SwaggerGenFilter.Any(x => x.Invoke(docName, apiDesc)));
 		});
+#pragma warning restore RS0030 // Do not use banned APIs
 	}
 }
