@@ -1,5 +1,5 @@
-﻿using PhiInfo.Core.Models.Information;
-using yt6983138.Common;
+﻿using CsvHelper;
+using PhiInfo.Core.Models.Information;
 
 namespace PSLDiscordBot.Core.Command.Global;
 
@@ -42,13 +42,15 @@ public class ExportScoresCommand : CommandBase
 	}
 	public static string ExportCSV(List<CompleteScore> scores, IReadOnlyDictionary<string, string> map, int countToExport = -1)
 	{
-		CsvBuilder builder = new();
-		builder.AddHeader("ID", "Name", "Difficulty", "Chart Constant", "Score", "Acc", "Rks Given", "Stat");
+		CsvWriter builder = CsvWriter.NewEmpty();
+		builder.WriteFields("ID", "Name", "Difficulty", "Chart Constant", "Score", "Acc", "Rks Given", "Stat");
+		builder.NextRecord();
+
 		int count = countToExport < 1 ? scores.Count : Math.Min(countToExport, scores.Count);
 		for (int i = 0; i < count; i++)
 		{
 			string realName = map.TryGetValue(scores[i].Id, out string? value) ? value : "Unknown";
-			builder.AddRow(
+			builder.WriteFields(
 				scores[i].Id,
 				realName,
 				scores[i].Difficulty.ToString(),
@@ -58,7 +60,8 @@ public class ExportScoresCommand : CommandBase
 				scores[i].Rks.ToString(),
 				scores[i].Status.ToString()
 			);
+			builder.NextRecord();
 		}
-		return builder.ToString();
+		return builder.GetUnderlyingStringBuilder().ToString();
 	}
 }

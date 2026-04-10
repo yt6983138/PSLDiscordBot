@@ -1,7 +1,6 @@
 ﻿using SmartFormat.Core.Extensions;
 using System.Numerics;
 using System.Reflection;
-using yt6983138.Common;
 
 namespace PSLDiscordBot.Core.Utility;
 public class CalculationFormatter : IFormatter

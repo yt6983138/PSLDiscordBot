@@ -3,7 +3,6 @@ using PhiInfo.CLI;
 using SmartFormat;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using yt6983138.Common;
 
 namespace PSLDiscordBot.Core.Services;
 

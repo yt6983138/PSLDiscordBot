@@ -12,6 +12,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<PackageReference Include="CsvHelper" Version="33.1.0" />
 		<PackageReference Include="FuzzySharp" Version="2.0.2" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.15" />
 		<PackageReference Include="NLog" Version="5.4.0" />
@@ -19,14 +20,11 @@
 		<PackageReference Include="SixLabors.ImageSharp.Drawing" Version="2.1.5" />
 		<PackageReference Include="SharpZipLib" Version="1.4.2" />
 		<PackageReference Include="System.Runtime.Caching" Version="8.0.1" />
-		<!--<PackageReference Include="yt6983138.PhiInfo.CLI" Version="1.1.1" />-->
-		<!-- TODO: replace project reference with nuget package -->
+		<PackageReference Include="yt6983138.HtmlToImage.NET" Version="1.0.0" />
+		<PackageReference Include="yt6983138.PhiInfo.CLI.Library" Version="1.1.2" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\..\HtmlToImage.NET\HtmlToImage.NET\HtmlToImage.NET.csproj" />
-		<ProjectReference Include="..\..\PhiInfo\PhiInfo.CLI\PhiInfo.CLI.csproj" />
-		<ProjectReference Include="..\..\yt6983138\yt6983138.csproj" />
 		<ProjectReference Include="..\PSLDiscordBot.Framework\PSLDiscordBot.Framework.csproj" />
 		<ProjectReference Include="..\PSLDiscordBot.Analyzer\PSLDiscordBot.Analyzer.csproj" PrivateAssets="all" OutputItemType="Analyzer" />
 	</ItemGroup>
