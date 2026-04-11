@@ -64,7 +64,7 @@ public class DownloadAssetCommand : GuestCommandBase
 
 		int rawDiff = arg.GetIntegerOptionAsInt32OrDefault("pez_chart_type", -1);
 		Difficulty parsed = (Difficulty)rawDiff;
-		if (rawDiff > -1 && !(!hasAT && parsed == Difficulty.AT))
+		if (diff.ContainsKey(parsed))
 		{
 			using HttpClient client = new();
 			Stream chart = await client.GetStreamAsync(chartUrls[parsed]);
