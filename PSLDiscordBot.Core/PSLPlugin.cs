@@ -144,6 +144,7 @@ public class PSLPlugin : IPlugin
 			.AddSingleton<PhigrosService>()
 			.AddSingleton<AvatarHashMapService>()
 			.AddSingleton<ImageGenerator>()
+			.AddSingleton<BugReportHandlerService>()
 			.AddSingleton<LocalizationService>();
 
 		this._hasOthersRegisteredMvc = hostBuilder.Services.HasMvcRegistered();
@@ -159,6 +160,7 @@ public class PSLPlugin : IPlugin
 		this._logger = host.Services.GetRequiredService<ILogger<PSLPlugin>>();
 		this._configService = host.Services.GetRequiredService<IWritableOptions<Config>>();
 		LocalizationService localization = host.Services.GetRequiredService<LocalizationService>();
+		BugReportHandlerService bugHandler = host.Services.GetRequiredService<BugReportHandlerService>();
 
 		if (!this._hasOthersRegisteredMvc)
 		{
@@ -176,6 +178,8 @@ public class PSLPlugin : IPlugin
 
 		this._commandResolveService.BeforeSlashCommandExecutes += this.Program_BeforeSlashCommandExecutes;
 		this._commandResolveService.OnSlashCommandError += this.CommandResolveService_OnSlashCommandError;
+
+		bugHandler.OnReportReceived += this.BugHandler_OnReportReceived;
 
 		//this._program.AddArgReceiver(this.UpdateFiles);
 		this._program.AddArgReceiver(this.ResetConfig);
@@ -212,6 +216,17 @@ public class PSLPlugin : IPlugin
 			throw new InvalidOperationException("No fonts installed");
 		}
 	}
+
+	private Task BugHandler_OnReportReceived(SocketUser user, string reportContent, IAttachment[] attachments)
+	{
+		this._logger.Log(LogLevel.Information, EventId, "Report from {name} aka {id}:\n{content}", user.GlobalName, user.Id, reportContent);
+		foreach (IAttachment item in attachments)
+		{
+			this._logger.Log(LogLevel.Information, EventId, "Attachment: {url}", item.Url);
+		}
+		return Task.CompletedTask;
+	}
+
 	void IPlugin.Unload(IHost program, bool isDynamicUnloading)
 	{
 		this._logger.LogInformation(EventIdApp, "Service shutting down...");

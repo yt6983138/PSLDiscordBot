@@ -4,11 +4,13 @@
 public class ReportProblemCommand : GuestCommandBase
 {
 	private readonly PSLPlugin _pslPlugin;
+	private readonly BugReportHandlerService _bugReportHandlerService;
 
-	public ReportProblemCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosService phigrosData, ILoggerFactory loggerFactory, PSLPlugin pslPlugin)
+	public ReportProblemCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosService phigrosData, ILoggerFactory loggerFactory, PSLPlugin pslPlugin, BugReportHandlerService bugReportHandlerService)
 		: base(config, database, localization, phigrosData, loggerFactory)
 	{
 		this._pslPlugin = pslPlugin;
+		this._bugReportHandlerService = bugReportHandlerService;
 	}
 
 	public override OneOf<string, LocalizedString> PSLName => this._localization[PSLGuestCommandKey.ReportProblemName];
@@ -33,30 +35,30 @@ public class ReportProblemCommand : GuestCommandBase
 		string message = arg.GetOption<string>(this._localization[PSLGuestCommandKey.ReportProblemOptionMessageName]);
 		IAttachment? attachment = arg.GetOptionOrDefault<IAttachment>(this._localization[PSLGuestCommandKey.ReportProblemOptionAttachmentName]);
 
-		string formatted = $"Report from `{arg.User.Id}` aka <@{arg.User.Id}>:\n{message}";
-		if (this._pslPlugin.AdminDM is not null)
-		{
-			if (attachment is not null)
-			{
-				using HttpClient client = new();
-				await this._pslPlugin.AdminDM.SendFileAsync(
-					await client.GetStreamAsync(attachment.Url), attachment.Filename, formatted);
-			}
-			else
-			{
-				await this._pslPlugin.AdminDM.SendMessageAsync(formatted);
-			}
+		//string formatted = $"Report from `{arg.User.Id}` aka <@{arg.User.Id}>:\n{message}";
+		//if (this._pslPlugin.AdminDM is not null)
+		//{
+		//	if (attachment is not null)
+		//	{
+		//		using HttpClient client = new();
+		//		await this._pslPlugin.AdminDM.SendFileAsync(
+		//			await client.GetStreamAsync(attachment.Url), attachment.Filename, formatted);
+		//	}
+		//	else
+		//	{
+		//		await this._pslPlugin.AdminDM.SendMessageAsync(formatted);
+		//	}
 
-			await arg.QuickReply(this._localization[PSLGuestCommandKey.ReportProblemSuccess]);
+		//	await arg.QuickReply(this._localization[PSLGuestCommandKey.ReportProblemSuccess]);
 
-			goto PrintConsoleDirectly;
-		}
+		//	goto PrintConsoleDirectly;
+		//}
 
-		await arg.QuickReply(this._localization[PSLGuestCommandKey.ReportProblemAdminNotSetUp]);
+		//await arg.QuickReply(this._localization[PSLGuestCommandKey.ReportProblemAdminNotSetUp]);
 
-	PrintConsoleDirectly:
-		this._logger.Log(LogLevel.Information, formatted, this.EventId, this);
-		if (attachment is not null)
-			this._logger.Log(LogLevel.Information, $"Attachment: {attachment.Url}", this.EventId, this);
+		await arg.QuickReply(this._localization[PSLGuestCommandKey.ReportProblemSuccess]);
+		await this._bugReportHandlerService.HandleReportAsync(arg.User, message, attachment is not null ? [attachment] : []);
+
+		//PrintConsoleDirectly:
 	}
 }
