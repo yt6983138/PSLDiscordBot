@@ -1,6 +1,7 @@
 ﻿using CsvHelper;
 using CsvHelper.Configuration;
 using System.Globalization;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace PSLDiscordBot.Core.Utility;
@@ -17,7 +18,7 @@ public static class CsvExtension
 		public StringBuilder? TryGetUnderlyingStringBuilder()
 		{
 			self.Flush();
-			if (self.Context.Writer is StringWriter sw)
+			if (GetWriter(self) is StringWriter sw)
 			{
 				return sw.GetStringBuilder();
 			}
@@ -25,6 +26,10 @@ public static class CsvExtension
 			{
 				return null;
 			}
+
+			// i shouldnt be doing this
+			[UnsafeAccessor(UnsafeAccessorKind.Field, Name = "writer")]
+			extern static TextWriter GetWriter(CsvWriter self);
 		}
 		public StringBuilder GetUnderlyingStringBuilder()
 		{
