@@ -52,7 +52,7 @@ public class SongInfoCommand : GuestCommandBase
 			Chart Constant: {string.Join(", ", service.NonMultiLanguageInfos.GetSongInfoById(first.SongId).ChartConstantArray)}
 			Composer: {firstInfo.Composer}
 			Illustrator: {firstInfo.Illustrator}
-			Charters: {firstInfo.Levels[Difficulty.EZ].Charter}, {firstInfo.Levels[Difficulty.AT].Charter}, {firstInfo.Levels[Difficulty.IN].Charter}
+			Charters: {firstInfo.Levels[Difficulty.EZ].Charter}, {firstInfo.Levels[Difficulty.HD].Charter}, {firstInfo.Levels[Difficulty.IN].Charter}
 			""");
 		if (firstInfo.Levels.TryGetValue(Difficulty.AT, out SongLevel? atLevel)) query.Append($", {atLevel.Charter}");
 
