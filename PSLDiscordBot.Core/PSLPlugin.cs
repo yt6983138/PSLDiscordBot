@@ -26,7 +26,6 @@ public class PSLPlugin : IPlugin
 
 	private ILogger<PSLPlugin> _logger = null!;
 	private IWritableOptions<Config> _configService = null!;
-	private StatusService _statusService = null!;
 	private Program _program = null!;
 	private IDiscordClientService _discordClientService = null!;
 	private ICommandResolveService _commandResolveService = null!;
@@ -133,7 +132,6 @@ public class PSLPlugin : IPlugin
 		File.Create(SafeLockLocation);
 
 		AppDomain.CurrentDomain.UnhandledException += this.CurrentDomain_UnhandledException;
-		Console.CancelKeyPress += this.Console_CancelKeyPress;
 
 		hostBuilder.Logging.ClearProviders();
 		hostBuilder.Host.UseNLog();
@@ -146,7 +144,6 @@ public class PSLPlugin : IPlugin
 			.AddSingleton<PhigrosService>()
 			.AddSingleton<AvatarHashMapService>()
 			.AddSingleton<ImageGenerator>()
-			.AddSingleton<StatusService>()
 			.AddSingleton<LocalizationService>();
 
 		this._hasOthersRegisteredMvc = hostBuilder.Services.HasMvcRegistered();
@@ -159,7 +156,6 @@ public class PSLPlugin : IPlugin
 		this._program = host.Services.GetRequiredService<Program>();
 		this._discordClientService = host.Services.GetRequiredService<IDiscordClientService>();
 		this._commandResolveService = host.Services.GetRequiredService<ICommandResolveService>();
-		this._statusService = host.Services.GetRequiredService<StatusService>();
 		this._logger = host.Services.GetRequiredService<ILogger<PSLPlugin>>();
 		this._configService = host.Services.GetRequiredService<IWritableOptions<Config>>();
 		LocalizationService localization = host.Services.GetRequiredService<LocalizationService>();
@@ -232,34 +228,6 @@ public class PSLPlugin : IPlugin
 		Exception ex = e.ExceptionObject.Unbox<Exception>();
 		this._logger.LogCritical(EventIdApp, ex, "Unhandled exception. Application exiting.");
 		Environment.Exit(ex.HResult);
-	}
-	private void Console_CancelKeyPress(object? sender, ConsoleCancelEventArgs e)
-	{
-		bool @break = e.SpecialKey == ConsoleSpecialKey.ControlBreak;
-		if (@break)
-		{
-			this._logger.LogCritical(EventIdApp, "Hard terminating application. (Ctrl-C to soft terminate)");
-			Environment.FailFast("Ctrl-break triggered, hard terminating.");
-			return;
-		}
-
-		e.Cancel = true;
-		this._statusService.CurrentStatus = Status.ShuttingDown;
-		this._logger.LogInformation(EventIdApp, "Soft terminate initialized. (Ctrl-break to hard terminate)");
-		while (this._program.RunningTasks.Count > 0)
-		{
-			Thread.Sleep(500);
-			this._logger.LogInformation(EventIdApp, "{count} tasks running...", this._program.RunningTasks.Count);
-
-			if (this._statusService.CurrentStatus == Status.Normal)
-			{
-				this._logger.LogInformation(EventIdApp, "Operation canceled.");
-				this._logger.LogInformation(EventIdApp, "Operation canceled.");
-				return;
-			}
-		}
-
-		this._program.CancellationTokenSource.Cancel();
 	}
 
 	private void Program_AfterMainInitialize(object? sender, EventArgs e)
