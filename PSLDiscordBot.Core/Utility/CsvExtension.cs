@@ -29,7 +29,7 @@ public static class CsvExtension
 
 			// i shouldnt be doing this
 			[UnsafeAccessor(UnsafeAccessorKind.Field, Name = "writer")]
-			extern static TextWriter GetWriter(CsvWriter self);
+			extern static ref TextWriter GetWriter(CsvWriter self);
 		}
 		public StringBuilder GetUnderlyingStringBuilder()
 		{
