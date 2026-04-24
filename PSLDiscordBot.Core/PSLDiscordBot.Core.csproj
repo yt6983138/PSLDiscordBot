@@ -21,7 +21,7 @@
 		<PackageReference Include="SharpZipLib" Version="1.4.2" />
 		<PackageReference Include="System.Runtime.Caching" Version="8.0.1" />
 		<PackageReference Include="yt6983138.HtmlToImage.NET" Version="1.0.0" />
-		<PackageReference Include="yt6983138.PhiInfo.CLI.Library" Version="1.1.2" />
+		<PackageReference Include="yt6983138.PhiInfo.CLI.Library" Version="2.0.1" />
 	</ItemGroup>
 
 	<ItemGroup>

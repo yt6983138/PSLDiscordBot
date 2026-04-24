@@ -28,7 +28,7 @@ public class PhigrosService
 	private readonly Dictionary<ulong, CallbackLoginRequest> _callbackLoginRequests = [];
 	public IReadOnlyDictionary<ulong, CallbackLoginRequest> CallbackLoginRequests => this._callbackLoginRequests;
 
-	public NonMultiLanguageInfos NonMultiLanguageInfos { get; private set; } = new([], [], []);
+	public NonMultiLanguageInfos NonMultiLanguageInfos { get; private set; } = new([], [], [], "0.0.0", 0, false);
 	// using Localization.Language intentionally since i already make sure enum names in PhiInfo.Core.Models.Language 
 	// are the same as Localization.Language
 	public Dictionary<Language, MultiLanguageInfos> MultiLanguageInfos { get; private set; } = [];
