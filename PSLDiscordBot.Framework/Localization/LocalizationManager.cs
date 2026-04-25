@@ -52,7 +52,7 @@ public class LocalizationManager
 			{
 				case FallbackLanguageApplyWay.Merge:
 					foreach ((string? key, LocalizedString? value) in this._localization)
-						if (value.FallBackLanguages != this._defaultFallbackLanguages) this.DefaultFallbackLanguages.MergeWith(this.DefaultFallbackLanguages);
+						if (value.FallBackLanguages != this._defaultFallbackLanguages) value.FallBackLanguages.MergeWith(this.DefaultFallbackLanguages);
 					break;
 				case FallbackLanguageApplyWay.OverwriteIfContentNotEqual:
 					foreach ((string? key, LocalizedString? value) in this._localization)
