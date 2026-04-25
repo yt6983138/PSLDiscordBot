@@ -8,7 +8,7 @@ using static PSLDiscordBot.Core.Localization.PSLNormalCommandKey;
 namespace PSLDiscordBot.Core.Services;
 public class LocalizationService : FileManagementServiceBase<LocalizationManager>
 {
-	public IOptions<Config> _config;
+	private readonly IOptions<Config> _config;
 
 	public LocalizationService(IOptions<Config> config)
 	{
