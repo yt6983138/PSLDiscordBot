@@ -127,7 +127,7 @@ public class Program
 		{
 			if (args[i].StartsWith("--") && args[i].Length > 2)
 			{
-				ArgParseInfo? info = this._argParseInfos.FirstOrDefault(x => x.Name == args[i].Replace("-", ""));
+				ArgParseInfo? info = this._argParseInfos.FirstOrDefault(x => x.Name == args[i][2..]);
 				if (info is null)
 				{
 					Console.WriteLine($"No option associated with argument '{args[i]}'.");
