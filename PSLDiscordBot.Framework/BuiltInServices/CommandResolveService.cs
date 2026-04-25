@@ -59,7 +59,7 @@ internal class CommandResolveService : ICommandResolveService, IPrivilegedComman
 		foreach (Type command in commandsUser)
 			this.AddUserCommand(command);
 		foreach (Type command in commandsMessage)
-			this.AddUserCommand(command);
+			this.AddMessageCommand(command);
 	}
 	void IPrivilegedCommandResolveService.SetupEverything(IDiscordClientService discordClientService)
 	{
@@ -186,8 +186,12 @@ internal class CommandResolveService : ICommandResolveService, IPrivilegedComman
 		if (eventArg.Canceled)
 			return Task.CompletedTask;
 
-		BasicCommandBase command = this.GetAllGlobalCommands()
-			.First(x => x.Name == arg.CommandName);
+		BasicCommandBase? command = this.GetAllGlobalCommands()
+			.FirstOrDefault(x => x.Name == arg.CommandName);
+		if (command is null)
+		{
+			return Task.CompletedTask;
+		}
 
 		Task task = command.RunOnDifferentThread ? Task.Run(() => command.Execute(arg, this)) : command.Execute(arg, this);
 		this._program.RunningTasks.Add(task);
