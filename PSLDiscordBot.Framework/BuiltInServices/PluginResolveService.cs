@@ -78,7 +78,7 @@ internal class PluginResolveService : IPluginResolveService
 	}
 	public void SetupAll(IHost host)
 	{
-		foreach (IPlugin item in this.Plugins) item.Setup(host);
+		foreach (IPlugin item in this.Plugins) item.Setup(TODO);
 	}
 	public void UnloadAll(IHost host)
 	{
@@ -86,7 +86,7 @@ internal class PluginResolveService : IPluginResolveService
 		foreach (IPlugin item in this.Plugins)
 		{
 			Console.WriteLine($"Framework: Unloading {item.Name}, Ver. {item.Version} by {item.Author}");
-			item.Unload(host, false);
+			item.Unload(TODO);
 		}
 	}
 }

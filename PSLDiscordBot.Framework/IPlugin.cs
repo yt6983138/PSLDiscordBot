@@ -10,10 +10,7 @@ public interface IPlugin
 	/// </summary>
 	int Priority { get; }
 
-	bool CanBeDynamicallyLoaded { get; }
-	bool CanBeDynamicallyUnloaded { get; }
-
 	void Load(WebApplicationBuilder hostBuilder, bool isDynamicLoading);
-	void Setup(IHost host);
-	void Unload(IHost host, bool isDynamicUnloading);
+	void Setup(WebApplication host);
+	void Unload(WebApplication host);
 }

@@ -3,7 +3,6 @@ using Discord.Rest;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json;
 using NLog.Web;
 using PSLDiscordBot.Core.ImageGenerating;
@@ -57,8 +56,6 @@ public class PSLPlugin : IPlugin
 	Version IPlugin.Version => new(1, 3, 0, 0);
 	string IPlugin.Author => "yt6983138 aka static_void (yt6983138@gmail.com)";
 
-	bool IPlugin.CanBeDynamicallyLoaded => false;
-	bool IPlugin.CanBeDynamicallyUnloaded => false;
 	int IPlugin.Priority => -1;
 
 	#endregion
@@ -122,7 +119,7 @@ public class PSLPlugin : IPlugin
 		"Add non-existent localizations into the service.",
 		(_) =>
 		{
-			/// does nothing here because it needs to be done manually, see <see cref="IPlugin.Setup(IHost)"/>.
+			/// does nothing here because it needs to be done manually, see <see cref="IPlugin.Setup(WebApplication)"/>.
 		},
 		null);
 	#endregion
@@ -152,7 +149,7 @@ public class PSLPlugin : IPlugin
 
 		hostBuilder.Services.GetApplicationPartManager().ApplicationParts.Add(new AssemblyPart(typeof(PSLPlugin).Assembly));
 	}
-	void IPlugin.Setup(IHost host)
+	void IPlugin.Setup(WebApplication host)
 	{
 		this._program = host.Services.GetRequiredService<Program>();
 		this._discordClientService = host.Services.GetRequiredService<IDiscordClientService>();
@@ -227,7 +224,7 @@ public class PSLPlugin : IPlugin
 		return Task.CompletedTask;
 	}
 
-	void IPlugin.Unload(IHost program, bool isDynamicUnloading)
+	void IPlugin.Unload(WebApplication host)
 	{
 		this._logger.LogInformation(EventIdApp, "Service shutting down...");
 
