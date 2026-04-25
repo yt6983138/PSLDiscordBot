@@ -37,6 +37,7 @@ public class ChromiumPoolService
 	private readonly ushort _port;
 	private readonly bool _debug;
 	private readonly bool _showChromiumOutput;
+	private readonly object _lock = new();
 
 	public IReadOnlyCollection<TabInfoPair> ChromiumTabPairs => this._chromiumTabPairs;
 	public HtmlConverter Chromium { get; private set; } = null!;
@@ -81,7 +82,6 @@ public class ChromiumPoolService
 				"--no-sandbox",
 				"--no-first-run",
 				"--no-default-browser-check",
-				"--no-default-browser-check",
 				"--disable-extensions",
 				"--disable-backing-store-limit"
 			]);
@@ -90,7 +90,7 @@ public class ChromiumPoolService
 
 	public TabUsageBlock GetFreeTab()
 	{
-		lock (this)
+		lock (this._lock)
 		{
 			TabInfoPair? first = this.ChromiumTabPairs.FirstOrDefault(x => x.Occupied == false);
 			if (first is null)
@@ -106,7 +106,7 @@ public class ChromiumPoolService
 	}
 	public void RestartChromium()
 	{
-		lock (this)
+		lock (this._lock)
 		{
 			this.Chromium.Dispose();
 			this.SetupChromium();
