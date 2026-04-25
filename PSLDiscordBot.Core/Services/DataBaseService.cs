@@ -11,7 +11,6 @@ public sealed class DataBaseService
 	private sealed class LogTracer(Action _onDispose) : IDisposable
 	{
 		private bool _disposed;
-		~LogTracer() => this.Dispose();
 		public void Dispose()
 		{
 			if (!this._disposed) _onDispose.Invoke();
@@ -202,10 +201,6 @@ public sealed class DataBaseService
 			this._logger.LogDebug(_eventId, "{name} finalizing", nameof(DbDataRequester));
 
 			base.Dispose();
-		}
-		~DbDataRequester()
-		{
-			this.Dispose();
 		}
 		#endregion
 	}
