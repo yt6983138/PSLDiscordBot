@@ -76,6 +76,7 @@ public class SongScoresCommand : CommandBase
 		}
 		#endregion
 
+		using CancellationTokenSource cts = this._config.Value.RenderTimeoutCTS;
 		MemoryStream image = await this._imageGenerator.MakePhoto(
 			data,
 			context,
@@ -83,7 +84,7 @@ public class SongScoresCommand : CommandBase
 			this._config.Value.SongScoresRenderInfo,
 			this._config.Value.DefaultRenderImageType,
 			this._config.Value.RenderQuality,
-			cancellationToken: this._config.Value.RenderTimeoutCTS.Token,
+			cancellationToken: cts.Token,
 			extraArguments: extraArg
 		);
 

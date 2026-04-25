@@ -37,6 +37,7 @@ public class AboutMeCommand : CommandBase
 
 		MiscInfo? miscInfo = await requester.GetMiscInfoAsync(arg.User.Id);
 
+		using CancellationTokenSource cts = this._config.Value.RenderTimeoutCTS;
 		MemoryStream image = await this._imageGenerator.MakePhoto(
 			data,
 			context,
@@ -44,7 +45,7 @@ public class AboutMeCommand : CommandBase
 			this._config.Value.AboutMeRenderInfo,
 			this._config.Value.DefaultRenderImageType,
 			this._config.Value.RenderQuality,
-			cancellationToken: this._config.Value.RenderTimeoutCTS.Token,
+			cancellationToken: cts.Token,
 			extraArguments: new
 			{
 				MemorablePerformance = miscInfo?.MemorableScore,
