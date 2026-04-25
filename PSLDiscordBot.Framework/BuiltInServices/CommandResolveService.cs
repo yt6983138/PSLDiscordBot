@@ -189,7 +189,7 @@ internal class CommandResolveService : ICommandResolveService, IPrivilegedComman
 		BasicCommandBase? command = this.GetAllGlobalCommands()
 			.FirstOrDefault(x => x.Name == arg.CommandName);
 		if (command is null)
-		{
+		{ // ignoring those and just not responding (this shouldnt happen anyways)
 			return Task.CompletedTask;
 		}
 
@@ -213,8 +213,12 @@ internal class CommandResolveService : ICommandResolveService, IPrivilegedComman
 		if (eventArg.Canceled)
 			return Task.CompletedTask;
 
-		BasicUserCommandBase command = this.GetAllUserCommands()
-			.First(x => x.Name == arg.CommandName);
+		BasicUserCommandBase? command = this.GetAllUserCommands()
+			.FirstOrDefault(x => x.Name == arg.CommandName);
+		if (command is null)
+		{
+			return Task.CompletedTask;
+		}
 
 		Task task = command.RunOnDifferentThread ? Task.Run(() => command.Execute(arg, this)) : command.Execute(arg, this);
 		this._program.RunningTasks.Add(task);
@@ -236,8 +240,12 @@ internal class CommandResolveService : ICommandResolveService, IPrivilegedComman
 		if (eventArg.Canceled)
 			return Task.CompletedTask;
 
-		BasicMessageCommandBase command = this.GetAllMessageCommands()
-			.First(x => x.Name == arg.CommandName);
+		BasicMessageCommandBase? command = this.GetAllMessageCommands()
+			.FirstOrDefault(x => x.Name == arg.CommandName);
+		if (command is null)
+		{
+			return Task.CompletedTask;
+		}
 
 		Task task = command.RunOnDifferentThread ? Task.Run(() => command.Execute(arg, this)) : command.Execute(arg, this);
 		this._program.RunningTasks.Add(task);
