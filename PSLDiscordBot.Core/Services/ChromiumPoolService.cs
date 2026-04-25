@@ -1,4 +1,5 @@
 ﻿using HtmlToImage.NET;
+using System.Collections.Concurrent;
 
 namespace PSLDiscordBot.Core.Services;
 
@@ -30,14 +31,14 @@ public class ChromiumPoolService
 		}
 	}
 
-	private List<TabInfoPair> _chromiumTabPairs = [];
-	private string _chromiumPath;
-	private int _defaultTabCount;
-	private ushort _port;
-	private bool _debug;
-	private bool _showChromiumOutput;
+	private readonly ConcurrentQueue<TabInfoPair> _chromiumTabPairs = new();
+	private readonly string _chromiumPath;
+	private readonly int _defaultTabCount;
+	private readonly ushort _port;
+	private readonly bool _debug;
+	private readonly bool _showChromiumOutput;
 
-	public IReadOnlyList<TabInfoPair> ChromiumTabPairs => this._chromiumTabPairs;
+	public IReadOnlyCollection<TabInfoPair> ChromiumTabPairs => this._chromiumTabPairs;
 	public HtmlConverter Chromium { get; private set; } = null!;
 
 	private ChromiumPoolService(string chromiumPath,
@@ -84,8 +85,7 @@ public class ChromiumPoolService
 				"--disable-extensions",
 				"--disable-backing-store-limit"
 			]);
-		List<TabInfoPair> tabs = [];
-		Parallel.For(0, this._defaultTabCount, _ => this._chromiumTabPairs.Add(new(this.Chromium.NewTab(), false)));
+		Parallel.For(0, this._defaultTabCount, _ => this._chromiumTabPairs.Enqueue(new(this.Chromium.NewTab(), false)));
 	}
 
 	public TabUsageBlock GetFreeTab()
@@ -96,10 +96,11 @@ public class ChromiumPoolService
 			if (first is null)
 			{
 				TabInfoPair info = new(this.Chromium.NewTab(), true);
-				this._chromiumTabPairs.Add(info);
+				this._chromiumTabPairs.Enqueue(info);
 				return new(info, TabFinalizer);
 			}
 
+			first.Occupied = true;
 			return new(first, TabFinalizer);
 		}
 	}
@@ -114,7 +115,15 @@ public class ChromiumPoolService
 
 	private static async void TabFinalizer(TabInfoPair pair)
 	{
-		await pair.Tab.NavigateTo("about:blank");
+		try
+		{
+			await pair.Tab.NavigateTo("about:blank");
+		}
+		catch
+		{
+			// ignore errors since we just want it to use less resources, and if it fails to do that
+			// it doesn't matter that much
+		}
 		pair.Occupied = false;
 	}
 }
