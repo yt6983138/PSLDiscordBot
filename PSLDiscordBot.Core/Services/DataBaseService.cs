@@ -30,7 +30,10 @@ public sealed class DataBaseService
 	{
 		this._config = config;
 		this._logger = logger;
-		this.NewRequester().ReadAllAliasToParent().GetAwaiter().GetResult();
+		using DbDataRequester requester = this.NewRequester();
+		requester.ReadAllAliasToParent().GetAwaiter().GetResult();
+		// this is intentionally blocking, since we need the alias data to be loaded before doing anything else
+		// could be optimized by using lazy loading
 	}
 
 
@@ -50,6 +53,9 @@ public sealed class DataBaseService
 		private readonly IOptions<Config> _config;
 		private readonly DataBaseService _parent;
 
+		/// <summary>
+		/// note: tracking are never enabled
+		/// </summary>
 		public bool SaveAutomatically { get; set; }
 
 		public DbSet<UserData> UserData { get; set; }
