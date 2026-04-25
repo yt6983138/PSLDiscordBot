@@ -113,6 +113,7 @@ public class Program
 			Console.WriteLine($"Exception: {ex}");
 			this._pluginResolveService.UnloadAll(this.App, false);
 			this._coFramework?.Unload(this, this.App, false);
+			return;
 		}
 
 		#region Argument parsing
