@@ -1,8 +1,6 @@
 ﻿namespace PSLDiscordBot.Core.Command.Global.Base;
 public abstract class CommandBase : BasicCommandBase
 {
-	private protected static int EventIdCount;
-
 	#region Injection
 	protected readonly IOptions<Config> _config;
 	protected readonly DataBaseService _dataBaseService;
@@ -40,16 +38,15 @@ public abstract class CommandBase : BasicCommandBase
 	{
 		using DataBaseService.DbDataRequester requester = this._dataBaseService.NewRequester();
 		await arg.DeferAsync(ephemeral: this.IsEphemeral);
-		if (!this.CheckHasRegisteredAndReply(arg, out UserData? userData))
+		if (!this.CheckHasRegisteredAndReply(arg, requester, out UserData? userData))
 			return;
 
 		await this.Callback(arg, userData!, requester, executer);
 	}
 
-	public bool CheckHasRegisteredAndReply(SocketSlashCommand task, out UserData? userData)
+	public bool CheckHasRegisteredAndReply(SocketSlashCommand task, DataBaseService.DbDataRequester requester, out UserData? userData)
 	{
 		ulong userId = task.User.Id;
-		using DataBaseService.DbDataRequester requester = this._dataBaseService.NewRequester();
 
 		userData = requester.GetUserDataDirectlyAsync(userId).GetAwaiter().GetResult();
 		if (userData is null)
