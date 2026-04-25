@@ -117,10 +117,11 @@ public static class PSLUtils
 		chars[0] = char.ToUpper(chars[0]);
 		return new(chars);
 	}
-	public static async Task AddOrUpdate<TEntity>(this DbSet<TEntity> set, TEntity entity)
+	public static async Task AddOrUpdate<TEntity>(this DbSet<TEntity> set, TEntity entity, Func<TEntity, TEntity, bool>? comparer = null)
 		where TEntity : class
 	{
-		if (await set.AnyAsync(e => e == entity))
+		comparer ??= ((x, y) => EqualityComparer<TEntity>.Default.Equals(x, y));
+		if (await set.AnyAsync(e => comparer.Invoke(e, entity)))
 		{
 			set.Update(entity);
 		}
