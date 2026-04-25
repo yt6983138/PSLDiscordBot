@@ -37,7 +37,7 @@ public class AboutMeCommand : CommandBase
 
 		MiscInfo? miscInfo = await requester.GetMiscInfoAsync(arg.User.Id);
 
-		using CancellationTokenSource cts = this._config.Value.RenderTimeoutCTS;
+		using CancellationTokenSource cts = this._config.Value.GetRenderTimeoutCTS();
 		MemoryStream image = await this._imageGenerator.MakePhoto(
 			data,
 			context,

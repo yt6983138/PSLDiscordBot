@@ -133,7 +133,7 @@ public class GetPhotoCommand : CommandBase
 		MemoryStream image;
 		try
 		{
-			using CancellationTokenSource cts = this._config.Value.RenderTimeoutCTS;
+			using CancellationTokenSource cts = this._config.Value.GetRenderTimeoutCTS();
 			image = await this._imageGenerator.MakePhoto(
 				data,
 				context,
