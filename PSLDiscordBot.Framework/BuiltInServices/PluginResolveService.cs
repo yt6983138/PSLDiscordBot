@@ -61,7 +61,7 @@ internal class PluginResolveService : IPluginResolveService
 		this.Plugins.AddRange(pluginsFromSubFolders);
 		this.Plugins.Sort((x, y) => x.Priority.CompareTo(y.Priority));
 	}
-	public void InvokeAll(WebApplicationBuilder builder)
+	public void LoadAll(WebApplicationBuilder builder)
 	{
 		if (this.Plugins.Count == 0)
 		{
@@ -71,22 +71,26 @@ internal class PluginResolveService : IPluginResolveService
 		}
 		foreach (IPlugin item in this.Plugins)
 		{
-			item.Load(builder, false);
+			item.Load(builder);
 			Console.WriteLine($"Framework: Loaded {item.Name}, Ver. {item.Version} by {item.Author}");
 		}
 		Console.WriteLine();
 	}
-	public void SetupAll(IHost host)
+	public void ConfigureDiscordClientAll(DiscordClientServiceConfig config)
 	{
-		foreach (IPlugin item in this.Plugins) item.Setup(TODO);
+		foreach (IPlugin item in this.Plugins) item.ConfigureDiscordClient(config);
 	}
-	public void UnloadAll(IHost host)
+	public void SetupAll(WebApplication host)
+	{
+		foreach (IPlugin item in this.Plugins) item.Setup(host);
+	}
+	public void UnloadAll(WebApplication host, bool isSafeUnload)
 	{
 		Console.WriteLine();
 		foreach (IPlugin item in this.Plugins)
 		{
 			Console.WriteLine($"Framework: Unloading {item.Name}, Ver. {item.Version} by {item.Author}");
-			item.Unload(TODO);
+			item.Unload(host, isSafeUnload);
 		}
 	}
 }

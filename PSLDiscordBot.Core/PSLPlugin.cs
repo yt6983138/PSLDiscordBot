@@ -124,7 +124,7 @@ public class PSLPlugin : IPlugin
 		null);
 	#endregion
 
-	void IPlugin.Load(WebApplicationBuilder hostBuilder, bool isDynamicLoading)
+	void IPlugin.Load(WebApplicationBuilder hostBuilder)
 	{
 		File.Create(SafeLockLocation);
 
@@ -148,6 +148,13 @@ public class PSLPlugin : IPlugin
 		hostBuilder.Services.TryAddMvc();
 
 		hostBuilder.Services.GetApplicationPartManager().ApplicationParts.Add(new AssemblyPart(typeof(PSLPlugin).Assembly));
+	}
+	void IPlugin.ConfigureDiscordClient(DiscordClientServiceConfig config)
+	{
+		config.Token = this._configService.Value.Token;
+		config.SocketConfig.GatewayIntents |= GatewayIntents.AllUnprivileged
+			^ GatewayIntents.GuildScheduledEvents
+			^ GatewayIntents.GuildInvites;
 	}
 	void IPlugin.Setup(WebApplication host)
 	{
@@ -184,12 +191,6 @@ public class PSLPlugin : IPlugin
 		this._program.AddArgReceiver(this.ResetLocalization);
 		this._program.AddArgReceiver(this.AddNonExistentLocalizations);
 
-		this._discordClientService.SocketClient = new(new()
-		{
-			GatewayIntents = GatewayIntents.AllUnprivileged
-			^ GatewayIntents.GuildScheduledEvents
-			^ GatewayIntents.GuildInvites
-		});
 		this._discordClientService.SocketClient.Ready += this.Client_Ready;
 		this._discordClientService.SocketClient.Log += this.Log;
 
@@ -214,6 +215,17 @@ public class PSLPlugin : IPlugin
 		}
 	}
 
+	void IPlugin.Unload(WebApplication host, bool isSafeUnload)
+	{
+		this._logger.LogInformation(EventIdApp, "Service shutting down...");
+
+		if (isSafeUnload)
+			File.Delete(SafeLockLocation);
+	}
+
+	#endregion
+
+	#region Event Handler
 	private Task BugHandler_OnReportReceived(SocketUser user, string reportContent, IAttachment[] attachments)
 	{
 		this._logger.Log(LogLevel.Information, EventId, "Report from {name} aka {id}:\n{content}", user.GlobalName, user.Id, reportContent);
@@ -224,17 +236,6 @@ public class PSLPlugin : IPlugin
 		return Task.CompletedTask;
 	}
 
-	void IPlugin.Unload(WebApplication host)
-	{
-		this._logger.LogInformation(EventIdApp, "Service shutting down...");
-
-		File.Delete(SafeLockLocation);
-	}
-
-	#endregion
-
-	#region Event Handler
-
 	private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
 	{
 		Exception ex = e.ExceptionObject.Unbox<Exception>();
@@ -244,8 +245,6 @@ public class PSLPlugin : IPlugin
 
 	private void Program_AfterMainInitialize(object? sender, EventArgs e)
 	{
-		this._discordClientService.Token = this._configService.Value.Token;
-		this._discordClientService.TryStartBotAsync().GetAwaiter().GetResult();
 	}
 	private void Program_BeforeSlashCommandExecutes(object? sender, SlashCommandEventArgs e)
 	{

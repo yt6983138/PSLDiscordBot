@@ -22,7 +22,7 @@ public class Program
 	private WebApplicationBuilder _builder = null!;
 
 	// so basically it goes like this:
-	// plugin loading -> AfterPluginsLoaded -> ArgParsing ->
+	// plugin loading -> AfterPluginsLoaded -> plugin configure discord -> plugin.Setup calls -> ArgParsing ->
 	// AfterArgParse -> AfterCommandLoaded -> AfterMainInitialize ->
 	// (waiting for exit) -> BeforeMainExiting -> plugin unload
 
@@ -45,7 +45,7 @@ public class Program
 	public List<Task> RunningTasks { get; } = [];
 	public string[] ProgramArguments { get; private set; } = [];
 	public IServiceCollection AllServices => this._builder.Services;
-	public IHost App { get; private set; } = null!;
+	public WebApplication App { get; private set; } = null!;
 
 	/// <summary>
 	/// Note: plugins that needed to use swagger must call app.UseSwagger() and app.UseSwaggerUI() themselves in their plugin's Setup method.
@@ -86,22 +86,34 @@ public class Program
 
 		this._builder.Services.AddSingleton(this)
 			.AddSingleton(this._pluginResolveService)
-			.AddSingleton<ICommandResolveService>(this._commandResolveService)
-			.AddSingleton<IDiscordClientService, DiscordClientService>();
+			.AddSingleton<ICommandResolveService>(this._commandResolveService);
 
 		this._pluginResolveService.LoadAllPlugins();
-		this._pluginResolveService.InvokeAll(this._builder);
+		this._pluginResolveService.LoadAll(this._builder);
 
-		if (this.SwaggerGenFilter.Count != 0 && (SwaggerConfigurators?.GetInvocationList()?.Length > 0) == true)
+		if (this.SwaggerGenFilter.Count != 0 || (SwaggerConfigurators?.GetInvocationList()?.Length > 0))
 			this.ConfigureSwagger(this._builder);
 
 		this._commandResolveService.LoadEverything();
+
+		DiscordClientServiceConfig discordConfig = new();
+		this._pluginResolveService.ConfigureDiscordClientAll(discordConfig);
+		DiscordClientService discordClientService = new(discordConfig);
+		this._builder.Services.AddSingleton<IDiscordClientService>(discordClientService);
 
 		this.App = this._builder.Build();
 
 		this.AfterPluginsLoaded?.Invoke(this, EventArgs.Empty);
 
 		this._pluginResolveService.SetupAll(this.App);
+		(bool success, Exception? ex) = await discordClientService.TryStartBotAsync();
+		if (!success)
+		{
+			Console.WriteLine("Framework: Failed to start bot client. Will now unload and exit.");
+			Console.WriteLine($"Exception: {ex}");
+			this._pluginResolveService.UnloadAll(this.App, false);
+			this._coFramework?.Unload(this, this.App, false);
+		}
 
 		#region Argument parsing
 		if (args.Contains("--help"))
@@ -183,8 +195,8 @@ public class Program
 
 		BeforeMainExiting?.Invoke(this, EventArgs.Empty);
 
-		this._pluginResolveService.UnloadAll(this.App);
-		this._coFramework?.Unload(this, this.App);
+		this._pluginResolveService.UnloadAll(this.App, true);
+		this._coFramework?.Unload(this, this.App, false);
 	}
 
 	public void AddArgReceiver(ArgParseInfo info)
