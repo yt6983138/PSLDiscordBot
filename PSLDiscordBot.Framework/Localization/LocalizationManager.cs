@@ -100,11 +100,9 @@ public class LocalizationManager
 	}
 	public void Clear()
 	{
-		using IEnumerator<string> enumerator = this._localization.Keys.GetEnumerator();
-		while (enumerator.MoveNext())
+		while (this._localization.Count > 0)
 		{
-			this.Remove(enumerator.Current);
-			enumerator.Reset();
+			this.Remove(this._localization.First().Key);
 		}
 	}
 
