@@ -58,7 +58,7 @@ public static class Utils
 	{
 		foreach (T t in source)
 		{
-			if (self.Contains(t)) break;
+			if (self.Contains(t)) continue;
 			self.Add(t);
 		}
 	}
@@ -276,7 +276,7 @@ public static class Utils
 			name,
 			description,
 			minLength,
-			minLength,
+			maxLength,
 			choices);
 	}
 	public static void ConfigureWritable<T>(
