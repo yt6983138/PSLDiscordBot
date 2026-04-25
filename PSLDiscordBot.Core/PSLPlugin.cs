@@ -20,7 +20,7 @@ public class PSLPlugin : IPlugin
 	public const string SafeLockLocation = "./SAFE_LOCK";
 
 	private static EventId EventId { get; } = new(114511, "PSL");
-	private static EventId EventIdInitialize { get; } = new(114511, "PSL.Initializing");
+	private static EventId EventIdInitialize { get; } = new(114510, "PSL.Initializing");
 	private static EventId EventIdApp { get; } = new(114509, "PSL.Application");
 
 	private ILogger<PSLPlugin> _logger = null!;

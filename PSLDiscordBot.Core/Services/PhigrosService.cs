@@ -8,7 +8,6 @@ namespace PSLDiscordBot.Core.Services;
 public record class CallbackLoginRequest(CallbackLoginData Data, Func<TapTapTokenData, Task> Callback, bool UseChinaEndpoint);
 public class PhigrosService
 {
-	private static EventId EventId { get; } = new(114510, nameof(PhigrosService));
 
 	private readonly ILogger<PhigrosService> _logger;
 	private readonly Config _config;
