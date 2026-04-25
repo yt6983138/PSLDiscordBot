@@ -49,14 +49,14 @@ public class MoreRksCommand : CommandBase
 
 		SaveContext? context = await this._phigrosService.TryHandleAndFetchContext(data.SaveCache, arg, index);
 		if (context is null) return;
-		GameRecord save = this._phigrosService.HandleAndGetGameRecord(context);
-		(List<CompleteScore>? scores, double rks) = save.GetSortedListForRksMerged();
+		GameRecord save = context.ReadGameRecord();
+		this._phigrosService.GetCompleteScores(save, out List<CompleteScore>? scores, out double rks);
 
 		double leastRksInBests = scores[Math.Min(29, scores.Count) - 1].Rks;
 		giveLeastRks = giveLeastRks < 0 ? Math.Round(rks, 2, MidpointRounding.ToEven) + 0.005d - rks : giveLeastRks;
 		giveLeastRks *= 30;
 
-		List<TargetRksScorePair> growableScores = save.Records
+		List<TargetRksScorePair> growableScores = save.GetCompleteScores(this._phigrosService.ChartConstantMap, this._phigrosService.NameMap)
 			.Select(r => BuildPair(r, giveLeastRks, leastRksInBests))
 			.Where(r => r.AccIsInValidRange)
 			.ToList();
@@ -89,11 +89,11 @@ public class MoreRksCommand : CommandBase
 		for (int j = 0; j < calculatedShowCounts; j++)
 		{
 			TargetRksScorePair item = growableScores[j];
-			string name = this._phigrosService.NonMultiLanguageInfos.GetSongInfoById(item.Score.Id).Name;
+			string name = this._phigrosService.NonMultiLanguageInfos.GetSongInfoById(item.Score.Score.Id).Name;
 
 			columnTextBuilder.WithRow(new ColumnTextBuilder.RowBuilder()
 				.WithFormatAdded(arg, this._localization[PSLNormalCommandKey.MoreRksNumberFormat], j, item)
-				.WithUserFormatStringAdded(arg, data, this._localization[PSLNormalCommandKey.MoreRksAccuracyChangeFormat], item.Score.Accuracy, item.TargetAcc)
+				.WithUserFormatStringAdded(arg, data, this._localization[PSLNormalCommandKey.MoreRksAccuracyChangeFormat], item.Score.Score.Accuracy, item.TargetAcc)
 				.WithUserFormatStringAdded(arg, data, this._localization[PSLNormalCommandKey.MoreRksRksChangeFormat], item.Score.Rks, item.TargetRks)
 				.WithFormatAdded(arg, this._localization[PSLNormalCommandKey.MoreRksSongFormat], name, item.Score));
 		}

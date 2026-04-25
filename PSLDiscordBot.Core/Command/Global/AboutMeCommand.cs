@@ -33,7 +33,7 @@ public class AboutMeCommand : CommandBase
 
 		SaveContext? context = await this._phigrosService.TryHandleAndFetchContext(data.SaveCache, arg, index);
 		if (context is null) return;
-		UserInfo outerUserInfo = await data.SaveCache.GetUserInfoAsync();
+		PlayerInfo outerUserInfo = await data.SaveCache.GetPlayerInfoAsync();
 
 		MiscInfo? miscInfo = await requester.GetMiscInfoAsync(arg.User.Id);
 

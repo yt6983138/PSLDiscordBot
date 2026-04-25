@@ -38,9 +38,9 @@ public class SetMemorableScoreCommand : CommandBase
 
 		SaveContext? context = await this._phigrosService.TryHandleAndFetchContext(data.SaveCache, arg, index);
 		if (context is null) return;
-		GameRecord save = this._phigrosService.HandleAndGetGameRecord(context);
+		GameRecord save = context.ReadGameRecord();
 
-		(List<CompleteScore>? scores, _) = save.GetSortedListForRksMerged();
+		this._phigrosService.GetCompleteScores(save, out List<CompleteScore>? scores, out double _);
 		if (number >= scores.Count)
 		{
 			await arg.QuickReply(this._localization[PSLNormalCommandKey.SetMemorableNoValidScore]);
@@ -48,7 +48,7 @@ public class SetMemorableScoreCommand : CommandBase
 		}
 
 		CompleteScore score = scores[number];
-		if (score == CompleteScore.Empty)
+		if (score.Equals(default))
 		{
 			await arg.QuickReply(this._localization[PSLNormalCommandKey.SetMemorableNoValidScore]);
 			return;

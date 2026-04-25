@@ -127,7 +127,7 @@ public sealed class DataBaseService
 			input = input.ToLower();
 
 			List<SongSearchResult> results = [];
-			foreach (SongInfo item in phigrosService.NonMultiLanguageInfos.SongsWithoutSuffix)
+			foreach (SongInfo item in phigrosService.NonMultiLanguageInfos.Songs)
 			{
 				string id = item.Id;
 				string name = item.Name;

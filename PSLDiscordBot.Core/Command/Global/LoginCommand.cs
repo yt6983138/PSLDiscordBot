@@ -92,7 +92,7 @@ public class LoginCommand : GuestCommandBase
 				TapTapProfileData profile = await TapTapHelper.GetProfile(result.Data, useChinaEndpoint: chinaMode);
 				string token = await LCHelper.LoginAndGetToken(new(profile.Data, result.Data), chinaMode);
 				UserData userData = new(command.User.Id, token, !chinaMode);
-				_ = await userData.SaveCache.GetUserInfoAsync();
+				_ = await userData.SaveCache.GetPlayerInfoAsync();
 				await requester.AddOrReplaceUserDataAsync(userData);
 				await command.QuickReply(this._localization[PSLGuestCommandKey.LoginComplete]);
 				return;

@@ -126,7 +126,7 @@ public class GetPhotoCommand : CommandBase
 
 		SaveContext? context = await this._phigrosService.TryHandleAndFetchContext(data.SaveCache, arg, index);
 		if (context is null) return;
-		UserInfo outerUserInfo = await data.SaveCache.GetUserInfoAsync();
+		PlayerInfo playerInfo = await data.SaveCache.GetPlayerInfoAsync();
 
 		await arg.QuickReply(this._localization[PSLNormalCommandKey.GetPhotoGenerating]);
 
@@ -136,7 +136,7 @@ public class GetPhotoCommand : CommandBase
 			image = await this._imageGenerator.MakePhoto(
 				data,
 				context,
-				outerUserInfo,
+				playerInfo,
 				this._config.Value.GetPhotoRenderInfo,
 				usePng ? PhotoType.Png : this._config.Value.DefaultRenderImageType,
 				this._config.Value.RenderQuality,

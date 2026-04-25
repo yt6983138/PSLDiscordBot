@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
+using PhigrosLibraryCSharp.CloudSave;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PSLDiscordBot.Core.UserDatas;

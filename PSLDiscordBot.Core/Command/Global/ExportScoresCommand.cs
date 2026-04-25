@@ -27,10 +27,14 @@ public class ExportScoresCommand : CommandBase
 		int index = arg.GetIndexOption(this._localization);
 		SaveContext? context = await this._phigrosService.TryHandleAndFetchContext(data.SaveCache, arg, index);
 		if (context is null) return;
-		GameRecord save = this._phigrosService.HandleAndGetGameRecord(context);
+		GameRecord save = context.ReadGameRecord();
 
 		await arg.QuickReplyWithAttachments(
-			[PSLUtils.ToAttachment(ExportCSV(save.Records, this._phigrosService.NonMultiLanguageInfos.SongsWithoutSuffix), "Export.csv")],
+			[PSLUtils.ToAttachment(
+				ExportCSV(
+					save.GetCompleteScores(this._phigrosService.ChartConstantMap, this._phigrosService.NameMap).ToList(),
+					this._phigrosService.NonMultiLanguageInfos.Songs),
+				"Export.csv")],
 			this._localization[PSLNormalCommandKey.ExportScoresReply],
 			save.Records.Count);
 	}
@@ -49,16 +53,16 @@ public class ExportScoresCommand : CommandBase
 		int count = countToExport < 1 ? scores.Count : Math.Min(countToExport, scores.Count);
 		for (int i = 0; i < count; i++)
 		{
-			string realName = map.TryGetValue(scores[i].Id, out string? value) ? value : "Unknown";
+			string realName = map.TryGetValue(scores[i].Score.Id, out string? value) ? value : "Unknown";
 			builder.WriteFields(
-				scores[i].Id,
+				scores[i].Score.Id,
 				realName,
-				scores[i].Difficulty.ToString(),
+				scores[i].Score.Difficulty.ToString(),
 				scores[i].ChartConstant.ToString(),
 				scores[i].Score.ToString(),
-				scores[i].Accuracy.ToString(),
+				scores[i].Score.Accuracy.ToString(),
 				scores[i].Rks.ToString(),
-				scores[i].Status.ToString()
+				scores[i].Score.Status.ToString()
 			);
 			builder.NextRecord();
 		}

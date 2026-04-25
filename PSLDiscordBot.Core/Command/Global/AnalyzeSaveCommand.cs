@@ -46,7 +46,7 @@ public class AnalyzeSaveCommand : AdminCommandBase
 		GameProgress progress = context.ReadGameProgress();
 		GameSettings settings = context.ReadGameSettings();
 		GameUserInfo userInfo = context.ReadGameUserInfo();
-		UserInfo outerUserInfo = await userData.SaveCache.GetUserInfoAsync();
+		PlayerInfo outerUserInfo = await userData.SaveCache.GetPlayerInfoAsync();
 
 		StringBuilder sb = new();
 		sb.AppendLine("Summary:");

@@ -1,8 +1,7 @@
-﻿using PhigrosLibraryCSharp.Cloud.RawData;
-using PhiInfo.CLI;
+﻿using PhiInfo.CLI;
+using PhiInfo.Core.Models.Information;
 using SmartFormat;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace PSLDiscordBot.Core.Services;
 
@@ -10,16 +9,6 @@ public record class CallbackLoginRequest(CallbackLoginData Data, Func<TapTapToke
 public class PhigrosService
 {
 	private static EventId EventId { get; } = new(114510, nameof(PhigrosService));
-	private static readonly JsonSerializerOptions _jsonOptions = new()
-	{
-		PropertyNamingPolicy = null,
-		PropertyNameCaseInsensitive = true,
-		NumberHandling = JsonNumberHandling.AllowReadingFromString,
-		Converters =
-		{
-			new JsonStringEnumConverter()
-		}
-	};
 
 	private readonly ILogger<PhigrosService> _logger;
 	private readonly Config _config;
@@ -32,6 +21,16 @@ public class PhigrosService
 	// using Localization.Language intentionally since i already make sure enum names in PhiInfo.Core.Models.Language 
 	// are the same as Localization.Language
 	public Dictionary<Language, MultiLanguageInfos> MultiLanguageInfos { get; set; } = [];
+	/// <summary>
+	/// checked using <see cref="string.StartsWith(string)"/>.
+	/// 
+	/// those are ignored because they were either removed, or not obtainable normally.
+	/// also those are only used during score parsing, please do not use it for other purposes since it may cause unexpected issues.
+	/// </summary>
+	public List<string> IgnoredSongId { get; set; } = ["テリトリーバトル.ツユ.0", "Introduction"];
+
+	public IReadOnlyDictionary<string, string> NameMap { get; }
+	public IReadOnlyDictionary<ChartConstantKey, float> ChartConstantMap { get; }
 
 	public PhigrosService(IOptions<Config> config, ILogger<PhigrosService> logger, LocalizationService localization)
 	{
@@ -42,6 +41,83 @@ public class PhigrosService
 			LoadData(this._config.NonMultiLanguageInfoLocation, this._config.MultiLanguageInfoLocationFormat);
 
 		this._localization = localization;
+
+		static bool IsSpecialScore(PhigrosService self, string id)
+		{
+			if (self.IgnoredSongId.Any(id.StartsWith))
+				return true;
+			return false;
+		}
+
+		// capturing this because we want the transformers be able to access the record after something set the properties
+		this.NameMap = new ReadOnlyDictionaryWrapper<PhigrosService, string, string>(this)
+		{
+			KeysTransformer = self => self.NonMultiLanguageInfos.Songs.Select(x => x.Id),
+			ValuesTransformer = self => self.NonMultiLanguageInfos.Songs.Select(x => x.Name),
+			CountTransformer = self => self.NonMultiLanguageInfos.Songs.Count,
+			EnumeratorTransformer = self => self.NonMultiLanguageInfos.Songs
+				.Select(x => new KeyValuePair<string, string>(x.Id, x.Name))
+				.Concat(self.IgnoredSongId.Select(x => new KeyValuePair<string, string>(x, x)))
+				.GetEnumerator(),
+			KeyToValueTransformer = (self, key) =>
+			{
+				if (IsSpecialScore(self, key)) return key;
+				return self.NonMultiLanguageInfos.Songs.First(x => x.Id == key).Name;
+			},
+			// not ignoring special songs here to prevent potential key not found exception
+			ContainsTransformer = (self, key) => self.NonMultiLanguageInfos.Songs.Any(x => x.Id == key) || IsSpecialScore(self, key),
+			TryGetTransformer = (self, key) =>
+			{
+				if (IsSpecialScore(self, key)) return (true, key);
+				SongInfo? info = self.NonMultiLanguageInfos.Songs.FirstOrDefault(x => x.Id == key);
+				if (info is null)
+					return (false, default!);
+
+				return (true, info.Name);
+			}
+		};
+		this.ChartConstantMap = new ReadOnlyDictionaryWrapper<PhigrosService, ChartConstantKey, float>(this)
+		{
+			KeysTransformer = self => self.NonMultiLanguageInfos.Songs
+				.SelectMany(x =>
+					x.Levels.Select(y => new ChartConstantKey(x.Id, y.Key))),
+			ValuesTransformer = self => self.NonMultiLanguageInfos.Songs.SelectMany(x => x.Levels.Values).Select(x => x.ChartConstant),
+			CountTransformer = self => self.NonMultiLanguageInfos.Songs.Sum(x => x.Levels.Count),
+			EnumeratorTransformer = self => self.NonMultiLanguageInfos.Songs
+				.SelectMany(x =>
+					x.Levels.Select(
+						y => new KeyValuePair<ChartConstantKey, float>(new ChartConstantKey(x.Id, y.Key), y.Value.ChartConstant)))
+				.Concat(self.IgnoredSongId
+					.SelectMany(x => Enum.GetValues<Difficulty>()
+						.Select(y => new KeyValuePair<ChartConstantKey, float>(new(x, y), 0))))
+				.GetEnumerator(),
+			KeyToValueTransformer = (self, key) =>
+			{
+				if (IsSpecialScore(self, key.SongId)) return 0;
+				foreach (SongInfo item in self.NonMultiLanguageInfos.Songs)
+				{
+					if (item.Id != key.SongId)
+						continue;
+					foreach (KeyValuePair<Difficulty, SongLevel> level in item.Levels)
+						if (level.Key == key.Difficulty) return level.Value.ChartConstant;
+				}
+				throw new KeyNotFoundException();
+			},
+			ContainsTransformer = (self, key) => self.NonMultiLanguageInfos.Songs
+				.Any(x => x.Id == key.SongId && x.Levels.ContainsKey(key.Difficulty)) || IsSpecialScore(self, key.SongId),
+			TryGetTransformer = (self, key) =>
+			{
+				if (IsSpecialScore(self, key.SongId)) return (true, 0);
+				foreach (SongInfo item in self.NonMultiLanguageInfos.Songs)
+				{
+					if (item.Id != key.SongId)
+						continue;
+					foreach (KeyValuePair<Difficulty, SongLevel> level in item.Levels)
+						if (level.Key == key.Difficulty) return (true, level.Value.ChartConstant);
+				}
+				return (false, default);
+			}
+		};
 	}
 
 	public static (NonMultiLanguageInfos, Dictionary<Language, MultiLanguageInfos>) LoadData(
@@ -57,11 +133,11 @@ public class PhigrosService
 				continue;
 
 			MultiLanguageInfos? obj = JsonSerializer.Deserialize<MultiLanguageInfos>(
-				File.ReadAllText(path), _jsonOptions).EnsureNotNull();
+				File.ReadAllText(path), CLI.JsonOptions).EnsureNotNull();
 			multiLanguageInfos.Add(lang, obj);
 		}
 
-		return (JsonSerializer.Deserialize<NonMultiLanguageInfos>(File.ReadAllText(nonMultiLanguageInfoLocation), _jsonOptions).EnsureNotNull(),
+		return (JsonSerializer.Deserialize<NonMultiLanguageInfos>(File.ReadAllText(nonMultiLanguageInfoLocation), CLI.JsonOptions).EnsureNotNull(),
 			multiLanguageInfos);
 	}
 
@@ -97,7 +173,7 @@ public class PhigrosService
 
 		try
 		{
-			List<RawSave> rawSaves = (await save.GetRawSaveFromCloudAsync()).results;
+			List<SaveInfo> rawSaves = (await save.GetSaveInfoFromCloudAsync()).Results;
 
 			if (rawSaves.Count == 0)
 			{
@@ -134,12 +210,31 @@ public class PhigrosService
 		}
 		return null;
 	}
-	public GameRecord HandleAndGetGameRecord(SaveContext ctx)
+	public void GetCompleteScores(GameRecord record, out List<CompleteScore> phis, out List<CompleteScore> others, out double rks)
 	{
-		return ctx.ReadGameRecord(
-			this.NonMultiLanguageInfos.SongsWithoutSuffix.ToDictionary(x => x.Id, x => x.ChartConstantArray),
-			GetGameSave_ExceptionHandler);
+		(List<CompleteScore> Phis, List<CompleteScore> OtherScores, double Rks) = record.GetSortedListForRks(
+			this.ChartConstantMap, this.NameMap);
+		phis = Phis;
+		others = OtherScores;
+		rks = Rks;
 	}
+	/// <summary>
+	/// phi 3 is padded using <see langword="default"/> to make sure the returned list always has at least 3 items.
+	/// this is done for compatibility reasons and make code easier to write
+	/// </summary>
+	/// <param name="record"></param>
+	/// <param name="scores"></param>
+	/// <param name="rks"></param>
+	public void GetCompleteScores(GameRecord record, out List<CompleteScore> scores, out double rks)
+	{
+		(List<CompleteScore> Phis, List<CompleteScore> OtherScores, double Rks) = record.GetSortedListForRks(
+			this.ChartConstantMap, this.NameMap);
+		scores = OtherScores;
+		while (Phis.Count < 3) Phis.Add(default);
+		scores.InsertRange(0, Phis);
+		rks = Rks;
+	}
+
 	private static void GetGameSave_ExceptionHandler(string message, Exception? ex, object? extraArgs)
 	{
 		if (ex is not KeyNotFoundException knfex || extraArgs is not string str)
