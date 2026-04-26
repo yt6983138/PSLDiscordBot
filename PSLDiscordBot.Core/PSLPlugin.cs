@@ -124,7 +124,7 @@ public class PSLPlugin : IPlugin
 
 	void IPlugin.Load(WebApplicationBuilder hostBuilder)
 	{
-		File.Create(SafeLockLocation);
+		File.Create(SafeLockLocation).Dispose();
 
 		AppDomain.CurrentDomain.UnhandledException += this.CurrentDomain_UnhandledException;
 
@@ -254,8 +254,15 @@ public class PSLPlugin : IPlugin
 			&& (!e.Arg.HasResponded || awaited.Flags.GetValueOrDefault().HasFlag(MessageFlags.Loading))
 			)
 		{
-			await e.Arg.QuickReplyWithAttachments(formmated,
-				PSLUtils.ToAttachment(e.Exception.ToString(), "StackTrace.txt"));
+			try
+			{
+				await e.Arg.QuickReplyWithAttachments(formmated,
+					PSLUtils.ToAttachment(e.Exception.ToString(), "StackTrace.txt"));
+			}
+			catch (Exception ex)
+			{
+				this._logger.LogWarning(EventId, ex, "Unable to send message to user about the exception!");
+			}
 		}
 	}
 
