@@ -194,11 +194,11 @@ internal class CommandResolveService : ICommandResolveService, IPrivilegedComman
 		}
 
 		Task task = command.RunOnDifferentThread ? Task.Run(() => command.Execute(arg, this)) : command.Execute(arg, this);
-		this._program.RunningTasks.Add(task);
+		this._program.RunningTasks.AddOrUpdate(task, (object?)null, (_, _2) => null);
 
 		_ = Utils.RunWithTaskOnEnd(
 			task,
-			() => this._program.RunningTasks.Remove(task),
+			() => this._program.RunningTasks.TryRemove(task, out _),
 			(e) =>
 			{
 				this.OnSlashCommandError?.Invoke(this, new(e, command, task, arg));
@@ -221,11 +221,11 @@ internal class CommandResolveService : ICommandResolveService, IPrivilegedComman
 		}
 
 		Task task = command.RunOnDifferentThread ? Task.Run(() => command.Execute(arg, this)) : command.Execute(arg, this);
-		this._program.RunningTasks.Add(task);
+		this._program.RunningTasks.AddOrUpdate(task, (object?)null, (_, _2) => null);
 
 		_ = Utils.RunWithTaskOnEnd(
 			task,
-			() => this._program.RunningTasks.Remove(task),
+			() => this._program.RunningTasks.TryRemove(task, out _),
 			(e) =>
 			{
 				this.OnUserCommandError?.Invoke(this, new(e, command, task, arg));
@@ -248,11 +248,11 @@ internal class CommandResolveService : ICommandResolveService, IPrivilegedComman
 		}
 
 		Task task = command.RunOnDifferentThread ? Task.Run(() => command.Execute(arg, this)) : command.Execute(arg, this);
-		this._program.RunningTasks.Add(task);
+		this._program.RunningTasks.AddOrUpdate(task, (object?)null, (_, _2) => null);
 
 		_ = Utils.RunWithTaskOnEnd(
 			task,
-			() => this._program.RunningTasks.Remove(task),
+			() => this._program.RunningTasks.TryRemove(task, out _),
 			(e) =>
 			{
 				this.OnMessageCommandError?.Invoke(this, new(e, command, task, arg));

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using PSLDiscordBot.Framework.BuiltInServices;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using System.Collections.Concurrent;
 using System.Reflection;
 
 namespace PSLDiscordBot.Framework;
@@ -42,7 +43,10 @@ public class Program
 
 	public CancellationTokenSource CancellationTokenSource { get; } = new();
 	public CancellationToken CancellationToken { get; private set; }
-	public List<Task> RunningTasks { get; } = [];
+	/// <summary>
+	/// this acts like a concurrent hash set, the value is currently not used
+	/// </summary>
+	public ConcurrentDictionary<Task, object?> RunningTasks { get; } = [];
 	public string[] ProgramArguments { get; private set; } = [];
 	public IServiceCollection AllServices => this._builder.Services;
 	public WebApplication App { get; private set; } = null!;
