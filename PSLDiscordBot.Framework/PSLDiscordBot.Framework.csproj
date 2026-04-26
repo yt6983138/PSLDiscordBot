@@ -25,7 +25,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<AdditionalFiles Include="$(MSBuildThisFileDirectory)BannedSymbols.txt" />
+		<AdditionalFiles Include="disabled.BannedSymbols.txt" />
 	</ItemGroup>
 
 	<Target Name="PreBuild" BeforeTargets="PreBuildEvent">

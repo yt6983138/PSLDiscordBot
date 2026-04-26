@@ -305,25 +305,21 @@ public static class Utils
 		services.TryAddSingleton(instance);
 		return instance;
 	}
-
-#pragma warning disable RS0030 // Do not use banned APIs
-	public static bool HasMvcRegistered(this IServiceCollection services)
+	public static void AddAssemblyToMvc<T>(this IServiceCollection services)
 	{
-		return services.GetServiceImplementation<IMvcBuilder>() is not null;
+		ApplicationPartManager manager = services.GetApplicationPartManager();
+		manager.ApplicationParts.Add(new AssemblyPart(typeof(T).Assembly));
 	}
 	/// <summary>
-	/// return existing IMvcBuilder if exists, otherwise add a new one
+	/// convenience wrapper so plugins can just call services.AddAssemblyToMvc(this)
 	/// </summary>
+	/// <typeparam name="T"></typeparam>
 	/// <param name="services"></param>
-	/// <returns></returns>
-	public static IMvcBuilder TryAddMvc(this IServiceCollection services)
+	/// <param name="_"></param>
+	public static void AddAssemblyToMvc<T>(this IServiceCollection services, T _)
 	{
-		IMvcBuilder? existing = services.GetServiceImplementation<IMvcBuilder>();
-		if (existing is not null)
-			return existing;
-		return services.AddMvc();
+		services.AddAssemblyToMvc<T>();
 	}
-#pragma warning restore RS0030 // Do not use banned APIs
 
 	public static bool SwaggerRequireInTypeAssembly<TType>(string docName, ApiDescription apiDesc)
 	{

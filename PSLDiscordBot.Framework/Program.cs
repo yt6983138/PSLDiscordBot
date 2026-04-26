@@ -86,7 +86,8 @@ public class Program
 
 		this._builder.Services.AddSingleton(this)
 			.AddSingleton(this._pluginResolveService)
-			.AddSingleton<ICommandResolveService>(this._commandResolveService);
+			.AddSingleton<ICommandResolveService>(this._commandResolveService)
+			.AddMvc();
 
 		this._pluginResolveService.LoadAllPlugins();
 		this._pluginResolveService.LoadAll(this._builder);
@@ -99,7 +100,10 @@ public class Program
 		DiscordClientServiceConfig discordConfig = new();
 		this._pluginResolveService.ConfigureDiscordClientAll(discordConfig);
 		DiscordClientService discordClientService = new(discordConfig);
-		this._builder.Services.AddSingleton<IDiscordClientService>(discordClientService);
+		MvcConfigurationService mvcService = new();
+
+		this._builder.Services.AddSingleton<IDiscordClientService>(discordClientService)
+			.AddSingleton<IMvcConfigurationService>(mvcService);
 
 		this.App = this._builder.Build();
 
@@ -115,6 +119,7 @@ public class Program
 			this._coFramework?.Unload(this, this.App, false);
 			return;
 		}
+		mvcService.ApplyMiddleware(this.App);
 
 		#region Argument parsing
 		if (args.Contains("--help"))

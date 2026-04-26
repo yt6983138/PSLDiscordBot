@@ -1,7 +1,6 @@
 ﻿using Discord.Net;
 using Discord.Rest;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using NLog.Web;
@@ -29,7 +28,6 @@ public class PSLPlugin : IPlugin
 	private IDiscordClientService _discordClientService = null!;
 	private ICommandResolveService _commandResolveService = null!;
 	private int _imageGeneratorFaultCount = 0;
-	private bool _hasOthersRegisteredMvc = false;
 
 	public IUser? AdminUser { get; set; }
 	public IDMChannel? AdminDM { get; set; }
@@ -144,10 +142,7 @@ public class PSLPlugin : IPlugin
 			.AddSingleton<BugReportHandlerService>()
 			.AddSingleton<LocalizationService>();
 
-		this._hasOthersRegisteredMvc = hostBuilder.Services.HasMvcRegistered();
-		hostBuilder.Services.TryAddMvc();
-
-		hostBuilder.Services.GetApplicationPartManager().ApplicationParts.Add(new AssemblyPart(typeof(PSLPlugin).Assembly));
+		hostBuilder.Services.AddAssemblyToMvc(this);
 	}
 	void IPlugin.ConfigureDiscordClient(DiscordClientServiceConfig config)
 	{
@@ -165,18 +160,7 @@ public class PSLPlugin : IPlugin
 		this._configService = host.Services.GetRequiredService<IWritableOptions<Config>>();
 		LocalizationService localization = host.Services.GetRequiredService<LocalizationService>();
 		BugReportHandlerService bugHandler = host.Services.GetRequiredService<BugReportHandlerService>();
-
-		if (!this._hasOthersRegisteredMvc)
-		{
-			WebApplication app = host.Unbox<WebApplication>();
-			app.MapControllers().AllowAnonymous();
-			app.UseStaticFiles(new StaticFileOptions()
-			{
-				ServeUnknownFileTypes = true
-			});
-			app.UseRouting();
-			app.UseAuthorization();
-		}
+		host.Services.GetRequiredService<IMvcConfigurationService>().StaticFileOptions.ServeUnknownFileTypes = true;
 
 		this._program.AfterMainInitialize += this.Program_AfterMainInitialize;
 
