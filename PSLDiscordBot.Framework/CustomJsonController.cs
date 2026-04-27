@@ -28,9 +28,9 @@ public abstract class CustomJsonController : Controller
 		serializeSettings ??= this.JsonSerializerOptions;
 		if (serializeSettings is Newtonsoft.Json.JsonSerializerSettings nSettings)
 		{
-			byte[] buffer = new byte[this.Request.Body.Length];
-			await this.Request.Body.ReadExactlyAsync(buffer);
-			return Newtonsoft.Json.JsonConvert.DeserializeObject<T>(Encoding.UTF8.GetString(buffer), nSettings);
+			using MemoryStream memoryStream = new();
+			await this.Request.Body.CopyToAsync(memoryStream);
+			return Newtonsoft.Json.JsonConvert.DeserializeObject<T>(Encoding.UTF8.GetString(memoryStream.ToArray()), nSettings);
 		}
 		else if (serializeSettings is JsonSerializerOptions sSettings)
 		{
