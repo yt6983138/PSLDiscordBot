@@ -2,6 +2,7 @@
 using Discord.WebSocket;
 using PSLDiscordBot.Framework.CommandBase;
 using PSLDiscordBot.Framework.MiscEventArgs;
+using System.Collections.Concurrent;
 using System.Reflection;
 
 namespace PSLDiscordBot.Framework.BuiltInServices;
@@ -12,14 +13,49 @@ internal class CommandResolveService : ICommandResolveService, IPrivilegedComman
 	private readonly WebApplicationBuilder _applicationBuilder;
 	private IDiscordClientService? _discordClientService;
 
-	public event EventHandler<SlashCommandEventArgs>? BeforeSlashCommandExecutes;
-	public event EventHandler<BasicCommandExceptionEventArgs<BasicCommandBase>>? OnSlashCommandError;
+	private readonly ConcurrentDictionary<AsyncEventHandler<SlashCommandEventArgs>, object?> _beforeSlashCommandExecutes = new();
+	private readonly ConcurrentDictionary<AsyncEventHandler<BasicCommandExceptionEventArgs<BasicCommandBase>>, object?> _onSlashCommandError = new();
 
-	public event EventHandler<MessageCommandEventArgs>? BeforeMessageCommandExecutes;
-	public event EventHandler<BasicCommandExceptionEventArgs<BasicMessageCommandBase>>? OnMessageCommandError;
+	private readonly ConcurrentDictionary<AsyncEventHandler<MessageCommandEventArgs>, object?> _beforeMessageCommandExecutes = new();
+	private readonly ConcurrentDictionary<AsyncEventHandler<BasicCommandExceptionEventArgs<BasicMessageCommandBase>>, object?> _onMessageCommandError = new();
 
-	public event EventHandler<UserCommandEventArgs>? BeforeUserCommandExecutes;
-	public event EventHandler<BasicCommandExceptionEventArgs<BasicUserCommandBase>>? OnUserCommandError;
+	private readonly ConcurrentDictionary<AsyncEventHandler<UserCommandEventArgs>, object?> _beforeUserCommandExecutes = new();
+	private readonly ConcurrentDictionary<AsyncEventHandler<BasicCommandExceptionEventArgs<BasicUserCommandBase>>, object?> _onUserCommandError = new();
+
+	public event AsyncEventHandler<SlashCommandEventArgs> BeforeSlashCommandExecutes
+	{
+		add => this._beforeSlashCommandExecutes.AddOrUpdate(value, (object?)null, (_, _) => null);
+		remove => this._beforeSlashCommandExecutes.TryRemove(value, out _);
+	}
+	public event AsyncEventHandler<BasicCommandExceptionEventArgs<BasicCommandBase>> OnSlashCommandError
+	{
+		add => this._onSlashCommandError.AddOrUpdate(value, (object?)null, (_, _) => null);
+		remove => this._onSlashCommandError.TryRemove(value, out _);
+	}
+
+	public event AsyncEventHandler<MessageCommandEventArgs> BeforeMessageCommandExecutes
+	{
+		add => this._beforeMessageCommandExecutes.AddOrUpdate(value, (object?)null, (_, _) => null);
+		remove => this._beforeMessageCommandExecutes.TryRemove(value, out _);
+	}
+	public event AsyncEventHandler<BasicCommandExceptionEventArgs<BasicMessageCommandBase>> OnMessageCommandError
+	{
+		add => this._onMessageCommandError.AddOrUpdate(value, (object?)null, (_, _) => null);
+		remove => this._onMessageCommandError.TryRemove(value, out _);
+	}
+
+	public event AsyncEventHandler<UserCommandEventArgs> BeforeUserCommandExecutes
+	{
+		add => this._beforeUserCommandExecutes.AddOrUpdate(value, (object?)null, (_, _) => null);
+		remove => this._beforeUserCommandExecutes.TryRemove(value, out _);
+	}
+	public event AsyncEventHandler<BasicCommandExceptionEventArgs<BasicUserCommandBase>> OnUserCommandError
+	{
+		add => this._onUserCommandError.AddOrUpdate(value, (object?)null, (_, _) => null);
+		remove => this._onUserCommandError.TryRemove(value, out _);
+	}
+
+	public event EventHandler<EventHandlerError>? OnEventHandlerError;
 
 	public List<Type> GlobalCommands { get; set; } = [];
 	public List<Type> GuildCommands { get; set; } = [];
@@ -42,6 +78,20 @@ internal class CommandResolveService : ICommandResolveService, IPrivilegedComman
 		{
 			Console.WriteLine($"{cmdName} causing problem :skull:"); // no logger here
 			throw;
+		}
+	}
+	private async Task InvokeAll<T>(ConcurrentDictionary<AsyncEventHandler<T>, object?> handlers, T args)
+	{
+		foreach (KeyValuePair<AsyncEventHandler<T>, object?> item in handlers.ToArray())
+		{
+			try
+			{
+				await item.Key.Invoke(this, args);
+			}
+			catch (Exception ex)
+			{
+				this.OnEventHandlerError?.Invoke(this, new(typeof(T), ex));
+			}
 		}
 	}
 
@@ -178,46 +228,47 @@ internal class CommandResolveService : ICommandResolveService, IPrivilegedComman
 	#endregion
 
 	#region Discord Event Handler 
-	protected Task SocketClient_SlashCommandExecuted(SocketSlashCommand arg)
+	protected async Task SocketClient_SlashCommandExecuted(SocketSlashCommand arg)
 	{
 		SlashCommandEventArgs eventArg = new(arg);
 
-		this.BeforeSlashCommandExecutes?.Invoke(this, eventArg);
+		await this.InvokeAll(this._beforeSlashCommandExecutes, eventArg);
 		if (eventArg.Canceled)
-			return Task.CompletedTask;
+			return;
 
 		BasicCommandBase? command = this.GetAllGlobalCommands()
 			.FirstOrDefault(x => x.Name == arg.CommandName);
 		if (command is null)
 		{ // ignoring those and just not responding (this shouldnt happen anyways)
-			return Task.CompletedTask;
+			return;
 		}
 
 		Task task = command.RunOnDifferentThread ? Task.Run(() => command.Execute(arg, this)) : command.Execute(arg, this);
 		this._program.RunningTasks.AddOrUpdate(task, (object?)null, (_, _2) => null);
 
+		// prevent blocking the entire discord event handler, this happened before
 		_ = Utils.RunWithTaskOnEnd(
 			task,
 			() => this._program.RunningTasks.TryRemove(task, out _),
-			(e) =>
+			async (e) =>
 			{
-				this.OnSlashCommandError?.Invoke(this, new(e, command, task, arg));
+				await this.InvokeAll(this._onSlashCommandError, new(e, command, task, arg));
 			});
-		return Task.CompletedTask;
+		return;
 	}
-	protected Task SocketClient_UserCommandExecuted(SocketUserCommand arg)
+	protected async Task SocketClient_UserCommandExecuted(SocketUserCommand arg)
 	{
 		UserCommandEventArgs eventArg = new(arg);
 
-		this.BeforeUserCommandExecutes?.Invoke(this, eventArg);
+		await this.InvokeAll(this._beforeUserCommandExecutes, eventArg);
 		if (eventArg.Canceled)
-			return Task.CompletedTask;
+			return;
 
 		BasicUserCommandBase? command = this.GetAllUserCommands()
 			.FirstOrDefault(x => x.Name == arg.CommandName);
 		if (command is null)
 		{
-			return Task.CompletedTask;
+			return;
 		}
 
 		Task task = command.RunOnDifferentThread ? Task.Run(() => command.Execute(arg, this)) : command.Execute(arg, this);
@@ -226,25 +277,25 @@ internal class CommandResolveService : ICommandResolveService, IPrivilegedComman
 		_ = Utils.RunWithTaskOnEnd(
 			task,
 			() => this._program.RunningTasks.TryRemove(task, out _),
-			(e) =>
+			async (e) =>
 			{
-				this.OnUserCommandError?.Invoke(this, new(e, command, task, arg));
+				await this.InvokeAll(this._onUserCommandError, new(e, command, task, arg));
 			});
-		return Task.CompletedTask;
+		return;
 	}
-	protected Task SocketClient_MessageCommandExecuted(SocketMessageCommand arg)
+	protected async Task SocketClient_MessageCommandExecuted(SocketMessageCommand arg)
 	{
 		MessageCommandEventArgs eventArg = new(arg);
 
-		this.BeforeMessageCommandExecutes?.Invoke(this, eventArg);
+		await this.InvokeAll(this._beforeMessageCommandExecutes, eventArg);
 		if (eventArg.Canceled)
-			return Task.CompletedTask;
+			return;
 
 		BasicMessageCommandBase? command = this.GetAllMessageCommands()
 			.FirstOrDefault(x => x.Name == arg.CommandName);
 		if (command is null)
 		{
-			return Task.CompletedTask;
+			return;
 		}
 
 		Task task = command.RunOnDifferentThread ? Task.Run(() => command.Execute(arg, this)) : command.Execute(arg, this);
@@ -253,11 +304,11 @@ internal class CommandResolveService : ICommandResolveService, IPrivilegedComman
 		_ = Utils.RunWithTaskOnEnd(
 			task,
 			() => this._program.RunningTasks.TryRemove(task, out _),
-			(e) =>
+			async (e) =>
 			{
-				this.OnMessageCommandError?.Invoke(this, new(e, command, task, arg));
+				await this.InvokeAll(this._onMessageCommandError, new(e, command, task, arg));
 			});
-		return Task.CompletedTask;
+		return;
 	}
 	#endregion
 }

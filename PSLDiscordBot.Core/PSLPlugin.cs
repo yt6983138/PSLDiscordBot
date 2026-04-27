@@ -232,7 +232,7 @@ public class PSLPlugin : IPlugin
 	private void Program_AfterMainInitialize(object? sender, EventArgs e)
 	{
 	}
-	private void Program_BeforeSlashCommandExecutes(object? sender, SlashCommandEventArgs e)
+	private Task Program_BeforeSlashCommandExecutes(object? sender, SlashCommandEventArgs e)
 	{
 		SocketSlashCommand arg = e.SocketSlashCommand;
 		int i = 0;
@@ -242,20 +242,20 @@ public class PSLPlugin : IPlugin
 			arg.User.GlobalName,
 			arg.User.Id,
 			string.Join(",", e.SocketSlashCommand.Data.Options.Select(x => $"{i++}_{x.Name}({x.Type}): {x.Value}")));
+		return Task.CompletedTask;
 	}
-	private async void CommandResolveService_OnSlashCommandError(object? sender,
+	private async Task CommandResolveService_OnSlashCommandError(object? sender,
 		BasicCommandExceptionEventArgs<BasicCommandBase> e)
 	{
 		try
 		{
-			Task<RestInteractionMessage> oringal = e.Arg.GetOriginalResponseAsync(); // speed up, idk why
+			RestInteractionMessage original = await e.Arg.GetOriginalResponseAsync();
 			await this.OnException(e.Exception, e.Arg);
 			string formmated = $"This exception has been caught by global handler. " +
 				$"Use `/report-problem` to report. Exception:";
 
-			RestInteractionMessage? awaited = await oringal;
-			if (awaited is not null
-				&& (!e.Arg.HasResponded || awaited.Flags.GetValueOrDefault().HasFlag(MessageFlags.Loading)))
+			if (original is not null
+				&& (!e.Arg.HasResponded || original.Flags.GetValueOrDefault().HasFlag(MessageFlags.Loading)))
 			{
 				await e.Arg.QuickReplyWithAttachments(formmated,
 					PSLUtils.ToAttachment(e.Exception.ToString(), "StackTrace.txt"));
