@@ -102,7 +102,7 @@ public class Program
 		this._commandResolveService.LoadEverything();
 
 		DiscordClientServiceConfig discordConfig = new();
-		this._pluginResolveService.ConfigureDiscordClientAll(discordConfig);
+		this._pluginResolveService.ConfigureDiscordClientAll(this._builder, discordConfig);
 		DiscordClientService discordClientService = new(discordConfig);
 		MvcConfigurationService mvcService = new();
 

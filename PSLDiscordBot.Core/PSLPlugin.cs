@@ -1,6 +1,7 @@
 ﻿using Discord.Net;
 using Discord.Rest;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using NLog.Web;
@@ -144,9 +145,10 @@ public class PSLPlugin : IPlugin
 
 		hostBuilder.Services.AddAssemblyToMvc(this);
 	}
-	void IPlugin.ConfigureDiscordClient(DiscordClientServiceConfig config)
+	void IPlugin.ConfigureDiscordClient(WebApplicationBuilder builder, DiscordClientServiceConfig config)
 	{
-		config.Token = this._configService.Value.Token;
+		// if no token provided, it will throw when TryStartBot is called (aka im lazy to type throw expr)
+		config.Token = builder.Configuration.GetRequiredSection("Config")[nameof(Config.Token)] ?? "";
 		config.SocketConfig.GatewayIntents |= GatewayIntents.AllUnprivileged
 			^ GatewayIntents.GuildScheduledEvents
 			^ GatewayIntents.GuildInvites;
@@ -242,27 +244,26 @@ public class PSLPlugin : IPlugin
 			string.Join(",", e.SocketSlashCommand.Data.Options.Select(x => $"{i++}_{x.Name}({x.Type}): {x.Value}")));
 	}
 	private async void CommandResolveService_OnSlashCommandError(object? sender,
-		BasicCommandExceptionEventArgs<Framework.CommandBase.BasicCommandBase> e)
+		BasicCommandExceptionEventArgs<BasicCommandBase> e)
 	{
-		Task<RestInteractionMessage> oringal = e.Arg.GetOriginalResponseAsync(); // speed up, idk why
-		await this.OnException(e.Exception, e.Arg);
-		string formmated = $"This exception has been caught by global handler. " +
-			$"Use `/report-problem` to report. Exception:";
-
-		RestInteractionMessage? awaited = await oringal;
-		if (awaited is not null
-			&& (!e.Arg.HasResponded || awaited.Flags.GetValueOrDefault().HasFlag(MessageFlags.Loading))
-			)
+		try
 		{
-			try
+			Task<RestInteractionMessage> oringal = e.Arg.GetOriginalResponseAsync(); // speed up, idk why
+			await this.OnException(e.Exception, e.Arg);
+			string formmated = $"This exception has been caught by global handler. " +
+				$"Use `/report-problem` to report. Exception:";
+
+			RestInteractionMessage? awaited = await oringal;
+			if (awaited is not null
+				&& (!e.Arg.HasResponded || awaited.Flags.GetValueOrDefault().HasFlag(MessageFlags.Loading)))
 			{
 				await e.Arg.QuickReplyWithAttachments(formmated,
 					PSLUtils.ToAttachment(e.Exception.ToString(), "StackTrace.txt"));
 			}
-			catch (Exception ex)
-			{
-				this._logger.LogWarning(EventId, ex, "Unable to send message to user about the exception!");
-			}
+		}
+		catch (Exception ex)
+		{
+			this._logger.LogError(EventId, ex, "Failed to handle slash command error");
 		}
 	}
 

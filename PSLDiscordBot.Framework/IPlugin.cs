@@ -13,7 +13,7 @@ public interface IPlugin
 	int Priority { get; }
 
 	void Load(WebApplicationBuilder hostBuilder);
-	void ConfigureDiscordClient(DiscordClientServiceConfig config);
+	void ConfigureDiscordClient(WebApplicationBuilder builder, DiscordClientServiceConfig config);
 	void Setup(WebApplication host);
 	void Unload(WebApplication host, bool isSafeUnload);
 }

@@ -76,9 +76,9 @@ internal class PluginResolveService : IPluginResolveService
 		}
 		Console.WriteLine();
 	}
-	public void ConfigureDiscordClientAll(DiscordClientServiceConfig config)
+	public void ConfigureDiscordClientAll(WebApplicationBuilder builder, DiscordClientServiceConfig config)
 	{
-		foreach (IPlugin item in this.Plugins) item.ConfigureDiscordClient(config);
+		foreach (IPlugin item in this.Plugins) item.ConfigureDiscordClient(builder, config);
 	}
 	public void SetupAll(WebApplication host)
 	{
