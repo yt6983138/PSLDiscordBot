@@ -199,7 +199,7 @@ public class ImageGenerator
 		}
 		else
 		{
-			formattedBgPath += $"{backgroundId}.0";
+			formattedBgPath += backgroundId;
 		}
 
 		var image = new
@@ -215,15 +215,22 @@ public class ImageGenerator
 
 		mapPostProcessing?.Invoke(map, image);
 
+		var infoObject = new
+		{
+			this._phigrosDataService.NonMultiLanguageInfos.Songs,
+			this._phigrosDataService.NonMultiLanguageInfos.Chapters,
+			this._phigrosDataService.NonMultiLanguageInfos.VersionString,
+			this._phigrosDataService.NonMultiLanguageInfos.VersionInteger,
+			this._phigrosDataService.NonMultiLanguageInfos.IsInternational
+		};
 		Dictionary<string, object> thingsToSet = new()
 		{
 			{ "CURRENT_DIRECTORY", Environment.CurrentDirectory },
 			{ "PSL_FILES", "./PSL/".ToFullPath() },
 			{ "ASSET_FOLDER", "./Assets/".ToFullPath() },
 			{ "INFO_IMAGE_PATHS", image },
-			{ "INFO", map },
-			{ "INFO_MAP_DIFFICULTY", this._phigrosDataService.NonMultiLanguageInfos.Songs.ToDictionary(x => x.Id, x => x.ChartConstantArray) },
-			{ "INFO_MAP_ID_NAME", this._phigrosDataService.NonMultiLanguageInfos.Songs.ToDictionary(x => x.Id, x => x.Name) }
+			{ "PLAYER_DATA", map },
+			{ "INFO", infoObject }
 		};
 
 		using ChromiumPoolService.TabUsageBlock t = this._chromiumPoolService.GetFreeTab();
@@ -251,7 +258,7 @@ public class ImageGenerator
 			cancellationToken);
 
 		this._logger.LogDebug(EventId, tab.CdpInfo.ToString());
-		this._logger.LogDebug(EventId, "localhost:{port}{url}", this._chromiumPoolService.Chromium.CdpPort, tab.CdpInfo.DevToolsFrontendUrl);
+		//this._logger.LogDebug(EventId, "localhost:{port}{url}", this._chromiumPoolService.Chromium.CdpPort, tab.CdpInfo.DevToolsFrontendUrl);
 
 		bool ready = false;
 		do
