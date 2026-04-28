@@ -8,7 +8,6 @@ namespace PSLDiscordBot.Core.Services;
 public record class CallbackLoginRequest(CallbackLoginData Data, Func<TapTapTokenData, Task> Callback, bool UseChinaEndpoint);
 public class PhigrosService
 {
-
 	private readonly ILogger<PhigrosService> _logger;
 	private readonly Config _config;
 	private readonly LocalizationService _localization;
@@ -61,7 +60,10 @@ public class PhigrosService
 			KeyToValueTransformer = (self, key) =>
 			{
 				if (IsSpecialScore(self, key)) return key;
-				return self.NonMultiLanguageInfos.Songs.First(x => x.Id == key).Name;
+				SongInfo? value = self.NonMultiLanguageInfos.Songs.FirstOrDefault(x => x.Id == key);
+				if (value is null)
+					throw new KeyNotFoundException($"Failed to find name for song id '{key}'");
+				return value.Name;
 			},
 			// not ignoring special songs here to prevent potential key not found exception
 			ContainsTransformer = (self, key) => self.NonMultiLanguageInfos.Songs.Any(x => x.Id == key) || IsSpecialScore(self, key),
@@ -100,7 +102,7 @@ public class PhigrosService
 					foreach (KeyValuePair<Difficulty, SongLevel> level in item.Levels)
 						if (level.Key == key.Difficulty) return level.Value.ChartConstant;
 				}
-				throw new KeyNotFoundException();
+				throw new KeyNotFoundException($"Failed to find chart constants for '{key}'");
 			},
 			ContainsTransformer = (self, key) => self.NonMultiLanguageInfos.Songs
 				.Any(x => x.Id == key.SongId && x.Levels.ContainsKey(key.Difficulty)) || IsSpecialScore(self, key.SongId),
