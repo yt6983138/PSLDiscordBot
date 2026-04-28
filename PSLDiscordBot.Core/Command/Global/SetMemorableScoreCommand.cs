@@ -57,7 +57,7 @@ public class SetMemorableScoreCommand : CommandBase
 		MiscInfo? miscInfo = await requester.GetMiscInfoAsync(arg.User.Id);
 		miscInfo ??= new(arg.User.Id);
 
-		miscInfo.MemorableScore = score;
+		miscInfo.MemorableScore = score.Score;
 		miscInfo.MemorableScoreThoughts = thoughts;
 
 		await requester.SetOrReplaceMiscInfo(miscInfo);

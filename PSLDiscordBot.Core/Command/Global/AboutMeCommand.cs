@@ -48,7 +48,7 @@ public class AboutMeCommand : CommandBase
 			cancellationToken: cts.Token,
 			extraArguments: new
 			{
-				MemorablePerformance = miscInfo?.MemorableScore,
+				MemorablePerformance = miscInfo?.MemorableScore is null ? (CompleteScore?)null : new CompleteScore(miscInfo.MemorableScore, this._phigrosService.ChartConstantMap, this._phigrosService.NameMap),
 				Thoughts = miscInfo?.MemorableScoreThoughts,
 			}
 		);
