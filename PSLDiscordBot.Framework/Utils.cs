@@ -310,6 +310,7 @@ public static class Utils
 	{
 		ApplicationPartManager manager = services.GetApplicationPartManager();
 		manager.ApplicationParts.Add(new AssemblyPart(typeof(T).Assembly));
+		manager.ApplicationParts.Add(new CompiledRazorAssemblyPart(typeof(T).Assembly));
 	}
 	/// <summary>
 	/// convenience wrapper so plugins can just call services.AddAssemblyToMvc(this)
