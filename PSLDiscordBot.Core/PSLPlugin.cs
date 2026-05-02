@@ -1,9 +1,8 @@
 ﻿using Discord.Net;
 using Discord.Rest;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Mvc.ApplicationParts;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json;
 using NLog.Web;
 using PSLDiscordBot.Core.ImageGenerating;
@@ -21,7 +20,7 @@ public class PSLPlugin : IPlugin
 	public const string SafeLockLocation = "./SAFE_LOCK";
 
 	private static EventId EventId { get; } = new(114511, "PSL");
-	private static EventId EventIdInitialize { get; } = new(114511, "PSL.Initializing");
+	private static EventId EventIdInitialize { get; } = new(114510, "PSL.Initializing");
 	private static EventId EventIdApp { get; } = new(114509, "PSL.Application");
 
 	private ILogger<PSLPlugin> _logger = null!;
@@ -30,7 +29,6 @@ public class PSLPlugin : IPlugin
 	private IDiscordClientService _discordClientService = null!;
 	private ICommandResolveService _commandResolveService = null!;
 	private int _imageGeneratorFaultCount = 0;
-	private bool _hasOthersRegisteredMvc = false;
 
 	public IUser? AdminUser { get; set; }
 	public IDMChannel? AdminDM { get; set; }
@@ -57,8 +55,6 @@ public class PSLPlugin : IPlugin
 	Version IPlugin.Version => new(1, 3, 0, 0);
 	string IPlugin.Author => "yt6983138 aka static_void (yt6983138@gmail.com)";
 
-	bool IPlugin.CanBeDynamicallyLoaded => false;
-	bool IPlugin.CanBeDynamicallyUnloaded => false;
 	int IPlugin.Priority => -1;
 
 	#endregion
@@ -122,14 +118,14 @@ public class PSLPlugin : IPlugin
 		"Add non-existent localizations into the service.",
 		(_) =>
 		{
-			/// does nothing here because it needs to be done manually, see <see cref="IPlugin.Setup(IHost)"/>.
+			/// does nothing here because it needs to be done manually, see <see cref="IPlugin.Setup(WebApplication)"/>.
 		},
 		null);
 	#endregion
 
-	void IPlugin.Load(WebApplicationBuilder hostBuilder, bool isDynamicLoading)
+	void IPlugin.Load(WebApplicationBuilder hostBuilder)
 	{
-		File.Create(SafeLockLocation);
+		File.Create(SafeLockLocation).Dispose();
 
 		AppDomain.CurrentDomain.UnhandledException += this.CurrentDomain_UnhandledException;
 
@@ -147,12 +143,17 @@ public class PSLPlugin : IPlugin
 			.AddSingleton<BugReportHandlerService>()
 			.AddSingleton<LocalizationService>();
 
-		this._hasOthersRegisteredMvc = hostBuilder.Services.HasMvcRegistered();
-		hostBuilder.Services.TryAddMvc();
-
-		hostBuilder.Services.GetApplicationPartManager().ApplicationParts.Add(new AssemblyPart(typeof(PSLPlugin).Assembly));
+		hostBuilder.Services.AddAssemblyToMvc(this);
 	}
-	void IPlugin.Setup(IHost host)
+	void IPlugin.ConfigureDiscordClient(WebApplicationBuilder builder, DiscordClientServiceConfig config)
+	{
+		// if no token provided, it will throw when TryStartBot is called (aka im lazy to type throw expr)
+		config.Token = builder.Configuration.GetRequiredSection("Config")[nameof(Config.Token)] ?? "";
+		config.SocketConfig.GatewayIntents |= GatewayIntents.AllUnprivileged
+			^ GatewayIntents.GuildScheduledEvents
+			^ GatewayIntents.GuildInvites;
+	}
+	void IPlugin.Setup(WebApplication host)
 	{
 		this._program = host.Services.GetRequiredService<Program>();
 		this._discordClientService = host.Services.GetRequiredService<IDiscordClientService>();
@@ -161,18 +162,7 @@ public class PSLPlugin : IPlugin
 		this._configService = host.Services.GetRequiredService<IWritableOptions<Config>>();
 		LocalizationService localization = host.Services.GetRequiredService<LocalizationService>();
 		BugReportHandlerService bugHandler = host.Services.GetRequiredService<BugReportHandlerService>();
-
-		if (!this._hasOthersRegisteredMvc)
-		{
-			WebApplication app = host.Unbox<WebApplication>();
-			app.MapControllers().AllowAnonymous();
-			app.UseStaticFiles(new StaticFileOptions()
-			{
-				ServeUnknownFileTypes = true
-			});
-			app.UseRouting();
-			app.UseAuthorization();
-		}
+		host.Services.GetRequiredService<IMvcConfigurationService>().StaticFileOptions.ServeUnknownFileTypes = true;
 
 		this._program.AfterMainInitialize += this.Program_AfterMainInitialize;
 
@@ -187,12 +177,6 @@ public class PSLPlugin : IPlugin
 		this._program.AddArgReceiver(this.ResetLocalization);
 		this._program.AddArgReceiver(this.AddNonExistentLocalizations);
 
-		this._discordClientService.SocketClient = new(new()
-		{
-			GatewayIntents = GatewayIntents.AllUnprivileged
-			^ GatewayIntents.GuildScheduledEvents
-			^ GatewayIntents.GuildInvites
-		});
 		this._discordClientService.SocketClient.Ready += this.Client_Ready;
 		this._discordClientService.SocketClient.Log += this.Log;
 
@@ -217,6 +201,17 @@ public class PSLPlugin : IPlugin
 		}
 	}
 
+	void IPlugin.Unload(WebApplication host, bool isSafeUnload)
+	{
+		this._logger.LogInformation(EventIdApp, "Service shutting down...");
+
+		if (isSafeUnload)
+			File.Delete(SafeLockLocation);
+	}
+
+	#endregion
+
+	#region Event Handler
 	private Task BugHandler_OnReportReceived(SocketUser user, string reportContent, IAttachment[] attachments)
 	{
 		this._logger.Log(LogLevel.Information, EventId, "Report from {name} aka {id}:\n{content}", user.GlobalName, user.Id, reportContent);
@@ -227,17 +222,6 @@ public class PSLPlugin : IPlugin
 		return Task.CompletedTask;
 	}
 
-	void IPlugin.Unload(IHost program, bool isDynamicUnloading)
-	{
-		this._logger.LogInformation(EventIdApp, "Service shutting down...");
-
-		File.Delete(SafeLockLocation);
-	}
-
-	#endregion
-
-	#region Event Handler
-
 	private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
 	{
 		Exception ex = e.ExceptionObject.Unbox<Exception>();
@@ -247,10 +231,8 @@ public class PSLPlugin : IPlugin
 
 	private void Program_AfterMainInitialize(object? sender, EventArgs e)
 	{
-		this._discordClientService.Token = this._configService.Value.Token;
-		this._discordClientService.TryStartBotAsync().GetAwaiter().GetResult();
 	}
-	private void Program_BeforeSlashCommandExecutes(object? sender, SlashCommandEventArgs e)
+	private Task Program_BeforeSlashCommandExecutes(object? sender, SlashCommandEventArgs e)
 	{
 		SocketSlashCommand arg = e.SocketSlashCommand;
 		int i = 0;
@@ -260,22 +242,28 @@ public class PSLPlugin : IPlugin
 			arg.User.GlobalName,
 			arg.User.Id,
 			string.Join(",", e.SocketSlashCommand.Data.Options.Select(x => $"{i++}_{x.Name}({x.Type}): {x.Value}")));
+		return Task.CompletedTask;
 	}
-	private async void CommandResolveService_OnSlashCommandError(object? sender,
-		BasicCommandExceptionEventArgs<Framework.CommandBase.BasicCommandBase> e)
+	private async Task CommandResolveService_OnSlashCommandError(object? sender,
+		BasicCommandExceptionEventArgs<BasicCommandBase> e)
 	{
-		Task<RestInteractionMessage> oringal = e.Arg.GetOriginalResponseAsync(); // speed up, idk why
-		await this.OnException(e.Exception, e.Arg);
-		string formmated = $"This exception has been caught by global handler. " +
-			$"Use `/report-problem` to report. Exception:";
-
-		RestInteractionMessage? awaited = await oringal;
-		if (awaited is not null
-			&& (!e.Arg.HasResponded || awaited.Flags.GetValueOrDefault().HasFlag(MessageFlags.Loading))
-			)
+		try
 		{
-			await e.Arg.QuickReplyWithAttachments(formmated,
-				PSLUtils.ToAttachment(e.Exception.ToString(), "StackTrace.txt"));
+			RestInteractionMessage original = await e.Arg.GetOriginalResponseAsync();
+			await this.OnException(e.Exception, e.Arg);
+			string formmated = $"This exception has been caught by global handler. " +
+				$"Use `/report-problem` to report. Exception:";
+
+			if (original is not null
+				&& (!e.Arg.HasResponded || original.Flags.GetValueOrDefault().HasFlag(MessageFlags.Loading)))
+			{
+				await e.Arg.QuickReplyWithAttachments(formmated,
+					PSLUtils.ToAttachment(e.Exception.ToString(), "StackTrace.txt"));
+			}
+		}
+		catch (Exception ex)
+		{
+			this._logger.LogError(EventId, ex, "Failed to handle slash command error");
 		}
 	}
 

@@ -1,5 +1,4 @@
 ﻿using HtmlToImage.NET;
-using Newtonsoft.Json;
 using PSLDiscordBot.Core.ImageGenerating;
 
 namespace PSLDiscordBot.Core;
@@ -45,9 +44,7 @@ public class Config
 	public string ChromiumLocation { get; set; } = "";
 	public TimeSpan RenderTimeout { get; set; } = TimeSpan.FromSeconds(32);
 #endif
-	[JsonIgnore]
-	[System.Text.Json.Serialization.JsonIgnore]
-	public CancellationTokenSource RenderTimeoutCTS => new(this.RenderTimeout);
+	public CancellationTokenSource GetRenderTimeoutCTS() => new(this.RenderTimeout);
 
 	public TimeSpan GetPhotoCoolDown { get; set; } = TimeSpan.FromMinutes(69);
 	public int GetPhotoCoolDownWhenLargerThan { get; set; } = 69;

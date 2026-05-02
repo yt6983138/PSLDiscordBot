@@ -52,7 +52,7 @@ public class LocalizationManager
 			{
 				case FallbackLanguageApplyWay.Merge:
 					foreach ((string? key, LocalizedString? value) in this._localization)
-						if (value.FallBackLanguages != this._defaultFallbackLanguages) this.DefaultFallbackLanguages.MergeWith(this.DefaultFallbackLanguages);
+						if (value.FallBackLanguages != this._defaultFallbackLanguages) value.FallBackLanguages.MergeWith(this.DefaultFallbackLanguages);
 					break;
 				case FallbackLanguageApplyWay.OverwriteIfContentNotEqual:
 					foreach ((string? key, LocalizedString? value) in this._localization)
@@ -100,11 +100,9 @@ public class LocalizationManager
 	}
 	public void Clear()
 	{
-		using IEnumerator<string> enumerator = this._localization.Keys.GetEnumerator();
-		while (enumerator.MoveNext())
+		while (this._localization.Count > 0)
 		{
-			this.Remove(enumerator.Current);
-			enumerator.Reset();
+			this.Remove(this._localization.First().Key);
 		}
 	}
 

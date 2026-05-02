@@ -1,4 +1,6 @@
-﻿namespace PSLDiscordBot.Framework;
+﻿using PSLDiscordBot.Framework.BuiltInServices;
+
+namespace PSLDiscordBot.Framework;
 public interface IPlugin
 {
 	string Name { get; }
@@ -10,10 +12,8 @@ public interface IPlugin
 	/// </summary>
 	int Priority { get; }
 
-	bool CanBeDynamicallyLoaded { get; }
-	bool CanBeDynamicallyUnloaded { get; }
-
-	void Load(WebApplicationBuilder hostBuilder, bool isDynamicLoading);
-	void Setup(IHost host);
-	void Unload(IHost host, bool isDynamicUnloading);
+	void Load(WebApplicationBuilder hostBuilder);
+	void ConfigureDiscordClient(WebApplicationBuilder builder, DiscordClientServiceConfig config);
+	void Setup(WebApplication host);
+	void Unload(WebApplication host, bool isSafeUnload);
 }

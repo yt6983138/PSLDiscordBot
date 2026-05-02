@@ -39,7 +39,7 @@ public class GrabRawZipCommand : AdminCommandBase
 		try
 		{
 			save = new(token, arg.GetOption<bool>("is_international"));
-			byte[] d = await save.GetSaveRawZipAsync((await save.GetRawSaveFromCloudAsync()).GetParsedSaves()[index]);
+			byte[] d = await save.GetSaveZipAsync((await save.GetSaveInfoFromCloudAsync()).GetParsedSaves()[index]);
 			newStream = new(d);
 		}
 		catch (Exception ex)

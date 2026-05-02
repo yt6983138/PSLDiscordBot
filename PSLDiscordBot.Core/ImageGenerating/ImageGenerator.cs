@@ -75,7 +75,7 @@ public class ImageGenerator
 	public async Task<MemoryStream> MakePhoto(
 		UserData userData,
 		SaveContext context,
-		UserInfo userInfo,
+		PlayerInfo playerInfo,
 		BasicHtmlImageInfo basicHtmlImageInfo,
 		HtmlConverter.Tab.PhotoType photoType,
 		byte quality,
@@ -84,13 +84,14 @@ public class ImageGenerator
 		CancellationToken cancellationToken = default)
 	{
 		Summary summary = context.ReadSummary();
-		GameRecord save = this._phigrosDataService.HandleAndGetGameRecord(context);
+		GameRecord save = context.ReadGameRecord();
 		GameUserInfo gameUserInfo = context.ReadGameUserInfo();
 		GameProgress progress = context.ReadGameProgress();
 		GameSettings settings = context.ReadGameSettings();
 
-		(List<CompleteScore>? sortedBestsIncludePhis, double rks) = save.GetSortedListForRksMerged();
+		this._phigrosDataService.GetCompleteScores(save, out List<CompleteScore> sortedBestsIncludePhis, out double rks);
 		List<CompleteScore> sortedBestsWithoutPhis = sortedBestsIncludePhis.Skip(3).ToList();
+		// i know this is dumb but i cba to change existing code
 
 		#region Textmap
 
@@ -101,22 +102,14 @@ public class ImageGenerator
 				Rks = rks,
 				PlayStatistics = new Dictionary<string, object>()
 				{
-					{
-						"EZClearCount", sortedBestsWithoutPhis.Count(x => x.Difficulty == Difficulty.EZ)
-					},
-					{
-						"HDClearCount", sortedBestsWithoutPhis.Count(x => x.Difficulty == Difficulty.HD)
-					},
-					{
-						"INClearCount", sortedBestsWithoutPhis.Count(x => x.Difficulty == Difficulty.IN)
-					},
-					{
-						"ATClearCount", sortedBestsWithoutPhis.Count(x => x.Difficulty == Difficulty.AT)
-					}
+					{ "EZClearCount", sortedBestsWithoutPhis.Count(x => x.Score.Difficulty == Difficulty.EZ) },
+					{ "HDClearCount", sortedBestsWithoutPhis.Count(x => x.Score.Difficulty == Difficulty.HD) },
+					{ "INClearCount", sortedBestsWithoutPhis.Count(x => x.Score.Difficulty == Difficulty.IN) },
+					{ "ATClearCount", sortedBestsWithoutPhis.Count(x => x.Score.Difficulty == Difficulty.AT) }
 				},
 				Data = userData
 			},
-			UserInfo = userInfo,
+			UserInfo = playerInfo,
 			UserProgress = progress,
 			Summary = summary,
 			GameUserInfo = gameUserInfo,
@@ -124,9 +117,8 @@ public class ImageGenerator
 			ExtraArguments = extraArguments,
 			GameSettings = settings,
 
-			SaveCreationDate = context.OriginalData.createdAt,
-			SaveModificationDate = context.OriginalData.modifiedAt.iso,
-			SaveSummary = save.Summary
+			SaveCreationDate = context.OriginalCloudObject.CreatedAt,
+			SaveModificationDate = context.OriginalCloudObject.ModifiedAt.Time,
 		};
 		map.User.PlayStatistics.MergeWith(this.SongDifficultyCount);
 		foreach (ScoreStatus status in Enum.GetValues<ScoreStatus>())
@@ -138,38 +130,38 @@ public class ImageGenerator
 
 				map.User.PlayStatistics.Add(
 					$"TotalEZ{status}Count",
-					sortedBestsWithoutPhis.Count(x => x.Difficulty == Difficulty.EZ && included.Contains(x.Status)));
+					sortedBestsWithoutPhis.Count(x => x.Score.Difficulty == Difficulty.EZ && included.Contains(x.Score.Status)));
 				map.User.PlayStatistics.Add(
 					$"TotalHD{status}Count",
-					sortedBestsWithoutPhis.Count(x => x.Difficulty == Difficulty.HD && included.Contains(x.Status)));
+					sortedBestsWithoutPhis.Count(x => x.Score.Difficulty == Difficulty.HD && included.Contains(x.Score.Status)));
 				map.User.PlayStatistics.Add(
 					$"TotalIN{status}Count",
-						sortedBestsWithoutPhis.Count(x => x.Difficulty == Difficulty.IN && included.Contains(x.Status)));
+						sortedBestsWithoutPhis.Count(x => x.Score.Difficulty == Difficulty.IN && included.Contains(x.Score.Status)));
 				map.User.PlayStatistics.Add(
 					$"TotalAT{status}Count",
-					sortedBestsWithoutPhis.Count(x => x.Difficulty == Difficulty.AT && included.Contains(x.Status)));
+					sortedBestsWithoutPhis.Count(x => x.Score.Difficulty == Difficulty.AT && included.Contains(x.Score.Status)));
 				map.User.PlayStatistics.Add(
 					$"Total{status}Count",
-					sortedBestsWithoutPhis.Count(x => included.Contains(x.Status)));
+					sortedBestsWithoutPhis.Count(x => included.Contains(x.Score.Status)));
 
 				continue;
 			}
 
 			map.User.PlayStatistics.Add(
 				$"TotalEZ{status}Count",
-				sortedBestsWithoutPhis.Count(x => x.Difficulty == Difficulty.EZ && x.Status == status));
+				sortedBestsWithoutPhis.Count(x => x.Score.Difficulty == Difficulty.EZ && x.Score.Status == status));
 			map.User.PlayStatistics.Add(
 				$"TotalHD{status}Count",
-				sortedBestsWithoutPhis.Count(x => x.Difficulty == Difficulty.HD && x.Status == status));
+				sortedBestsWithoutPhis.Count(x => x.Score.Difficulty == Difficulty.HD && x.Score.Status == status));
 			map.User.PlayStatistics.Add(
 				$"TotalIN{status}Count",
-				sortedBestsWithoutPhis.Count(x => x.Difficulty == Difficulty.IN && x.Status == status));
+				sortedBestsWithoutPhis.Count(x => x.Score.Difficulty == Difficulty.IN && x.Score.Status == status));
 			map.User.PlayStatistics.Add(
 				$"TotalAT{status}Count",
-				sortedBestsWithoutPhis.Count(x => x.Difficulty == Difficulty.AT && x.Status == status));
+				sortedBestsWithoutPhis.Count(x => x.Score.Difficulty == Difficulty.AT && x.Score.Status == status));
 			map.User.PlayStatistics.Add(
 				$"Total{status}Count",
-				sortedBestsWithoutPhis.Count(x => x.Status == status));
+				sortedBestsWithoutPhis.Count(x => x.Score.Status == status));
 		}
 
 		#endregion
@@ -191,12 +183,12 @@ public class ImageGenerator
 
 		string formattedBgPath = "./Assets/Tracks/".ToFullPath();
 		string cutBgId = string.IsNullOrWhiteSpace(gameUserInfo.BackgroundId) ? "" : gameUserInfo.BackgroundId[..^1];
-		(string backgroundId, string _) = this._phigrosDataService.NonMultiLanguageInfos.SongsWithoutSuffix
+		(string backgroundId, string _) = this._phigrosDataService.NonMultiLanguageInfos.Songs
 			.Select(x => (x.Id, x.Name))
 			.FirstOrDefault(p =>
 				p.Name == gameUserInfo.BackgroundId
 				|| p.Name == cutBgId
-				|| p.Id == gameUserInfo.BackgroundId[..^2]); // goddamn why they have to change this every time
+				|| p.Id == gameUserInfo.BackgroundId); // goddamn why they have to change this every time
 		if (string.IsNullOrEmpty(backgroundId))
 		{
 			formattedBgPath += "Introduction";
@@ -207,7 +199,7 @@ public class ImageGenerator
 		}
 		else
 		{
-			formattedBgPath += $"{backgroundId}.0";
+			formattedBgPath += backgroundId;
 		}
 
 		var image = new
@@ -223,30 +215,22 @@ public class ImageGenerator
 
 		mapPostProcessing?.Invoke(map, image);
 
+		var infoObject = new
+		{
+			this._phigrosDataService.NonMultiLanguageInfos.Songs,
+			this._phigrosDataService.NonMultiLanguageInfos.Chapters,
+			this._phigrosDataService.NonMultiLanguageInfos.VersionString,
+			this._phigrosDataService.NonMultiLanguageInfos.VersionInteger,
+			this._phigrosDataService.NonMultiLanguageInfos.IsInternational
+		};
 		Dictionary<string, object> thingsToSet = new()
 		{
-			{
-				"CURRENT_DIRECTORY", Environment.CurrentDirectory
-			},
-			{
-				"PSL_FILES", "./PSL/".ToFullPath()
-			},
-			{
-				"ASSET_FOLDER", "./Assets/".ToFullPath()
-			},
-			{
-				"INFO_IMAGE_PATHS", image
-			},
-			{
-				"INFO", map
-			},
-			{
-				"INFO_MAP_DIFFICULTY", this._phigrosDataService.NonMultiLanguageInfos.SongsWithoutSuffix
-					.ToDictionary(x => x.Id, x => x.ChartConstantArray)
-			},
-			{
-				"INFO_MAP_ID_NAME", this._phigrosDataService.NonMultiLanguageInfos.SongsWithoutSuffix.ToDictionary(x => x.Id, x => x.Name)
-			}
+			{ "CURRENT_DIRECTORY", Environment.CurrentDirectory },
+			{ "PSL_FILES", "./PSL/".ToFullPath() },
+			{ "ASSET_FOLDER", "./Assets/".ToFullPath() },
+			{ "INFO_IMAGE_PATHS", image },
+			{ "PLAYER_DATA", map },
+			{ "INFO", infoObject }
 		};
 
 		using ChromiumPoolService.TabUsageBlock t = this._chromiumPoolService.GetFreeTab();
@@ -274,7 +258,7 @@ public class ImageGenerator
 			cancellationToken);
 
 		this._logger.LogDebug(EventId, tab.CdpInfo.ToString());
-		this._logger.LogDebug(EventId, "localhost:{port}{url}", this._chromiumPoolService.Chromium.CdpPort, tab.CdpInfo.DevToolsFrontendUrl);
+		//this._logger.LogDebug(EventId, "localhost:{port}{url}", this._chromiumPoolService.Chromium.CdpPort, tab.CdpInfo.DevToolsFrontendUrl);
 
 		bool ready = false;
 		do

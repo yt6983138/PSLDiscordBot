@@ -105,7 +105,7 @@ public abstract class FileManagementServiceBase<T>
 	public void WriteJsonToFile<TFile>(FileInfo info, TFile data, JsonSerializerSettings? settings = null)
 	{
 		settings ??= this._defaultSettings;
-		using FileStream stream = info.OpenWrite();
+		using FileStream stream = info.Open(FileMode.Create, FileAccess.Write);
 		stream.Write(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(data, settings)));
 	}
 }

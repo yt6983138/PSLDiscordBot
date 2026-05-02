@@ -5,53 +5,43 @@ using Discord.WebSocket;
 
 namespace PSLDiscordBot.Framework.BuiltInServices;
 
+public class DiscordClientServiceConfig
+{
+	public DiscordSocketConfig SocketConfig { get; set; } = new();
+	public DiscordRestConfig RestConfig { get; set; } = new();
+	public string Token { get; set; } = "";
+}
 [AutoExtractInterface(accessibility: Accessibility.Public)]
 internal class DiscordClientService : IDiscordClientService // TODO: refactor this
 {
-	public DiscordSocketClient SocketClient { get; set; } = new();
-	public DiscordRestClient RestClient { get; set; } = new();
+	private readonly DiscordClientServiceConfig _config;
 
-	public string Token { get; set; } = "";
-	public bool HasStartedSuccessfully { get; private set; } = false;
+	public DiscordSocketClient SocketClient { get; set; }
+	public DiscordRestClient RestClient { get; set; }
 
-	public async Task<bool> TryStartBotAsync(bool failOnAlreadyStarted = false)
+	public DiscordClientService(DiscordClientServiceConfig config)
 	{
-		if (this.HasStartedSuccessfully)
-			return !failOnAlreadyStarted;
+		this._config = config;
+		this.SocketClient = new(config.SocketConfig);
+		this.RestClient = new(config.RestConfig);
+	}
 
-		if (string.IsNullOrEmpty(this.Token))
-			return false;
+	public async Task<(bool Success, Exception? Exception)> TryStartBotAsync()
+	{
+		if (string.IsNullOrEmpty(this._config.Token))
+			return (false, new ArgumentException("Token is not provided."));
 
 		try
 		{
-			await this.SocketClient.LoginAsync(Discord.TokenType.Bot, this.Token);
-			await this.RestClient.LoginAsync(Discord.TokenType.Bot, this.Token);
+			await this.SocketClient.LoginAsync(Discord.TokenType.Bot, this._config.Token);
+			await this.RestClient.LoginAsync(Discord.TokenType.Bot, this._config.Token);
 			await this.SocketClient.StartAsync();
 
-			this.HasStartedSuccessfully = true;
-
-			return true;
+			return (true, null);
 		}
-		catch
+		catch (Exception ex)
 		{
-			return false;
+			return (false, ex);
 		}
-	}
-
-	public async Task StartBotAsync(bool failOnAlreadyStarted = false)
-	{
-		if (this.HasStartedSuccessfully)
-		{
-			if (failOnAlreadyStarted)
-				throw new InvalidOperationException("Bot has already been started.");
-
-			return;
-		}
-
-		await this.SocketClient.LoginAsync(Discord.TokenType.Bot, this.Token);
-		await this.RestClient.LoginAsync(Discord.TokenType.Bot, this.Token);
-		await this.SocketClient.StartAsync();
-
-		this.HasStartedSuccessfully = true;
 	}
 }

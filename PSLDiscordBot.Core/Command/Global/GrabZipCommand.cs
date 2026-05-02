@@ -43,7 +43,7 @@ public class GrabZipCommand : AdminCommandBase
 		try
 		{
 			save = new(token, arg.GetOption<bool>("is_international"));
-			byte[] d = await save.GetSaveRawZipAsync((await save.GetRawSaveFromCloudAsync()).GetParsedSaves()[index]);
+			byte[] d = await save.GetSaveZipAsync((await save.GetSaveInfoFromCloudAsync()).GetParsedSaves()[index]);
 			using ZipFile rawZip = new(new MemoryStream(d));
 
 			foreach (ZipEntry entry in rawZip)

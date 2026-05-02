@@ -12,21 +12,32 @@ public class MiscInfo
 	public string? MemorableScoreThoughts { get; set; }
 
 	[NotMapped]
-	public CompleteScore? MemorableScore { get; set; }
+	public SongScore? MemorableScore { get; set; }
 	[Obsolete("This is reserved for EF mapper. Do not use it.")]
 	public string? MemorableScoreJson
 	{
 		get => JsonConvert.SerializeObject(this.MemorableScore);
-		set => this.MemorableScore = value is null ? null : JsonConvert.DeserializeObject<CompleteScore?>(value);
+		set
+		{
+			if (string.IsNullOrWhiteSpace(value) || value.Trim().ToLower() == "null")
+			{
+				this.MemorableScore = null;
+				return;
+			}
+
+			SongScore instance = SongScore.Default;
+			JsonConvert.PopulateObject(value, instance);
+			this.MemorableScore = instance;
+		}
 	}
 
 	[Obsolete("This is reserved for EF mapper. Do not use it.")]
 	public MiscInfo(ulong userId, int defaultGetPhotoShowCount, string? memorableScoreJson, string memorableScoreThoughts)
-		: this(userId, defaultGetPhotoShowCount, (CompleteScore?)null, memorableScoreThoughts)
+		: this(userId, defaultGetPhotoShowCount, (SongScore?)null, memorableScoreThoughts)
 	{
 		this.MemorableScoreJson = memorableScoreJson;
 	}
-	public MiscInfo(ulong userId, int defaultGetPhotoShowCount = 30, CompleteScore? memorableScore = null, string? memorableScoreThoughts = null)
+	public MiscInfo(ulong userId, int defaultGetPhotoShowCount = 30, SongScore? memorableScore = null, string? memorableScoreThoughts = null)
 	{
 		this.UserId = userId;
 		this.DefaultGetPhotoShowCount = defaultGetPhotoShowCount;

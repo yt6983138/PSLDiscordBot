@@ -39,7 +39,7 @@ public class GetScoresCommand : CommandBase
 		int index = arg.GetIndexOption(this._localization);
 		SaveContext? context = await this._phigrosService.TryHandleAndFetchContext(data.SaveCache, arg, index);
 		if (context is null) return;
-		GameRecord save = this._phigrosService.HandleAndGetGameRecord(context);
+		GameRecord save = context.ReadGameRecord();
 
 		string result = ScoresFormatter(
 			arg,
@@ -47,7 +47,8 @@ public class GetScoresCommand : CommandBase
 			this._phigrosService.NonMultiLanguageInfos,
 			arg.GetIntegerOptionAsInt32OrDefault(this._localization[PSLNormalCommandKey.GetScoresOptionCountName], 28),
 			data,
-			this._localization);
+			this._localization,
+			this._phigrosService);
 
 		await arg.QuickReplyWithAttachments([PSLUtils.ToAttachment(result, "Scores.txt")],
 			this._localization[PSLNormalCommandKey.GetScoresDone]);
@@ -64,7 +65,7 @@ public class GetScoresCommand : CommandBase
 		bool showScoreNumber = true)
 	{
 		List<(CompleteScore score, string name)> nameScorePairs = scores
-			.Select(x => (x, map.TryGetSongInfoById(x.Id, out SongInfo? info) ? info.Name : x.Id))
+			.Select(x => (x, map.TryGetSongInfoById(x.Score.Id, out SongInfo? info) ? info.Name : x.Score.Id))
 			.ToList();
 
 		StringBuilder sb = new();
@@ -93,11 +94,11 @@ public class GetScoresCommand : CommandBase
 			(CompleteScore score, string name) = nameScorePairs[j];
 
 			ColumnTextBuilder.RowBuilder row = new ColumnTextBuilder.RowBuilder()
-				.WithFormatAdded(interaction, localization[PSLCommonKey.ScoreFormatterStatusFormat], score.Status)
-				.WithUserFormatStringAdded(interaction, userData, localization[PSLCommonKey.ScoreFormatterAccuracyFormat], score.Accuracy)
+				.WithFormatAdded(interaction, localization[PSLCommonKey.ScoreFormatterStatusFormat], score.Score.Status)
+				.WithUserFormatStringAdded(interaction, userData, localization[PSLCommonKey.ScoreFormatterAccuracyFormat], score.Score.Accuracy)
 				.WithUserFormatStringAdded(interaction, userData, localization[PSLCommonKey.ScoreFormatterRksFormat], score.Rks)
-				.WithFormatAdded(interaction, localization[PSLCommonKey.ScoreFormatterScoreFormat], score.Score)
-				.WithFormatAdded(interaction, localization[PSLCommonKey.ScoreFormatterDifficultyFormat], score.Difficulty)
+				.WithFormatAdded(interaction, localization[PSLCommonKey.ScoreFormatterScoreFormat], score.Score.Score)
+				.WithFormatAdded(interaction, localization[PSLCommonKey.ScoreFormatterDifficultyFormat], score.Score.Difficulty)
 				.WithFormatAdded(interaction, localization[PSLCommonKey.ScoreFormatterChartConstantFormat], score.ChartConstant)
 				.WithFormatAdded(interaction, localization[PSLCommonKey.ScoreFormatterNameFormat], name);
 
@@ -115,11 +116,12 @@ public class GetScoresCommand : CommandBase
 		int showCount,
 		UserData userData,
 		LocalizationService localization,
+		PhigrosService phiService,
 		bool showUserRks = true,
 		bool showScoreNumber = true,
 		bool showBest = true)
 	{
-		(List<CompleteScore> scores, double rks) = save.GetSortedListForRksMerged();
+		phiService.GetCompleteScores(save, out List<CompleteScore>? scores, out double rks);
 		if (!showBest) scores.RemoveRange(0, 3);
 
 		return ScoresFormatter(

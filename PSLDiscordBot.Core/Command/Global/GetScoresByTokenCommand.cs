@@ -50,7 +50,7 @@ public class GetScoresByTokenCommand : AdminCommandBase
 
 		SaveContext? context = await this._phigrosService.TryHandleAndFetchContext(userData.SaveCache, arg, arg.GetIntegerOptionAsInt32("index"));
 		if (context is null) return;
-		GameRecord save = this._phigrosService.HandleAndGetGameRecord(context);
+		GameRecord save = context.ReadGameRecord();
 
 		string result = GetScoresCommand.ScoresFormatter(
 			arg,
@@ -58,7 +58,8 @@ public class GetScoresByTokenCommand : AdminCommandBase
 			this._phigrosService.NonMultiLanguageInfos,
 			arg.GetIntegerOptionAsInt32OrDefault("count", 19),
 			userData,
-			this._localization);
+			this._localization,
+			this._phigrosService);
 
 		await arg.QuickReplyWithAttachments("Got score! Now showing for token ||{token}||...", PSLUtils.ToAttachment(result, "Scores.txt"));
 	}

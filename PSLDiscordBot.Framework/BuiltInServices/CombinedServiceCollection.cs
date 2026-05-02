@@ -16,11 +16,11 @@ public class CombinedServiceCollection : IServiceCollection
 			int elapsedCount = 0;
 			foreach (IServiceCollection service in this.Collections)
 			{
-				elapsedCount += service.Count;
-				if (index < elapsedCount)
+				if (index < elapsedCount + service.Count)
 				{
-					return service[index - elapsedCount - service.Count];
+					return service[index - elapsedCount];
 				}
+				elapsedCount += service.Count;
 			}
 			throw new IndexOutOfRangeException("Index out of range");
 		}
@@ -30,12 +30,12 @@ public class CombinedServiceCollection : IServiceCollection
 			int elapsedCount = 0;
 			foreach (IServiceCollection service in this.Collections)
 			{
-				elapsedCount += service.Count;
-				if (index < elapsedCount)
+				if (index < elapsedCount + service.Count)
 				{
-					service[index - elapsedCount - service.Count] = value;
+					service[index - elapsedCount] = value;
 					return;
 				}
+				elapsedCount += service.Count;
 			}
 			throw new IndexOutOfRangeException("Index out of range");
 		}

@@ -1,0 +1,4 @@
+﻿M:PhigrosLibraryCSharp.CloudSave.GameRecord.GetSortedListForRksMerged(System.Collections.Generic.IReadOnlyDictionary{PhigrosLibraryCSharp.CloudSave.ChartConstantKey,System.Single},System.Collections.Generic.IReadOnlyDictionary{System.String,System.String}); Please use PhigrosService to get the sorted list
+M:PhigrosLibraryCSharp.CloudSave.GameRecord.GetSortedListForRks(System.Collections.Generic.IReadOnlyDictionary{PhigrosLibraryCSharp.CloudSave.ChartConstantKey,System.Single},System.Collections.Generic.IReadOnlyDictionary{System.String,System.String}); Please use PhigrosService to get the sorted list
+M:PhigrosLibraryCSharp.CloudSave.Save.GetSaveContextAsync(PhigrosLibraryCSharp.CloudSave.HttpModels.SaveInfo); Please use PhigrosService to get the save context
+M:PhigrosLibraryCSharp.CloudSave.Save.GetSaveContextAsync(System.Int32); Please use PhigrosService to get the save context

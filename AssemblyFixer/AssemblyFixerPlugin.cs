@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.Hosting;
 using PSLDiscordBot.Framework;
+using PSLDiscordBot.Framework.BuiltInServices;
 using System.Runtime.Loader;
 
 namespace AssemblyFixer;
@@ -12,8 +12,6 @@ public class AssemblyFixerPlugin : IPlugin
 	public Version Version => new(1, 0, 0, 0);
 	public string Author => "yt6983138";
 	public int Priority => int.MinValue;
-	public bool CanBeDynamicallyLoaded => false;
-	public bool CanBeDynamicallyUnloaded => false;
 
 	static AssemblyFixerPlugin()
 	{
@@ -29,15 +27,19 @@ public class AssemblyFixerPlugin : IPlugin
 		};
 	}
 
-	public void Load(WebApplicationBuilder hostBuilder, bool isDynamicLoading)
+	public void Load(WebApplicationBuilder hostBuilder)
 	{
 	}
 
-	public void Setup(IHost host)
+	public void ConfigureDiscordClient(WebApplicationBuilder builder, DiscordClientServiceConfig config)
 	{
 	}
 
-	public void Unload(IHost host, bool isDynamicUnloading)
+	public void Setup(WebApplication host)
+	{
+	}
+
+	public void Unload(WebApplication host, bool isSafeUnload)
 	{
 	}
 }

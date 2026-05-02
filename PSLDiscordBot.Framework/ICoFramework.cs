@@ -8,5 +8,5 @@ public interface ICoFramework
 		WebApplicationBuilder builder,
 		ref IPrivilegedCommandResolveService commandResolveService,
 		ref IPluginResolveService pluginResolveService);
-	void Unload(Program program, IHost app);
+	void Unload(Program program, WebApplication app, bool isSafeUnload);
 }

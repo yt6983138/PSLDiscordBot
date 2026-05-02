@@ -33,10 +33,11 @@ public class AboutMeCommand : CommandBase
 
 		SaveContext? context = await this._phigrosService.TryHandleAndFetchContext(data.SaveCache, arg, index);
 		if (context is null) return;
-		UserInfo outerUserInfo = await data.SaveCache.GetUserInfoAsync();
+		PlayerInfo outerUserInfo = await data.SaveCache.GetPlayerInfoAsync();
 
 		MiscInfo? miscInfo = await requester.GetMiscInfoAsync(arg.User.Id);
 
+		using CancellationTokenSource cts = this._config.Value.GetRenderTimeoutCTS();
 		MemoryStream image = await this._imageGenerator.MakePhoto(
 			data,
 			context,
@@ -44,10 +45,10 @@ public class AboutMeCommand : CommandBase
 			this._config.Value.AboutMeRenderInfo,
 			this._config.Value.DefaultRenderImageType,
 			this._config.Value.RenderQuality,
-			cancellationToken: this._config.Value.RenderTimeoutCTS.Token,
+			cancellationToken: cts.Token,
 			extraArguments: new
 			{
-				MemorablePerformance = miscInfo?.MemorableScore,
+				MemorablePerformance = miscInfo?.MemorableScore is null ? (CompleteScore?)null : new CompleteScore(miscInfo.MemorableScore, this._phigrosService.ChartConstantMap, this._phigrosService.NameMap),
 				Thoughts = miscInfo?.MemorableScoreThoughts,
 			}
 		);

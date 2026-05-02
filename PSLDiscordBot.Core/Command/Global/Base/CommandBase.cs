@@ -1,8 +1,6 @@
 ﻿namespace PSLDiscordBot.Core.Command.Global.Base;
 public abstract class CommandBase : BasicCommandBase
 {
-	private protected static int EventIdCount;
-
 	#region Injection
 	protected readonly IOptions<Config> _config;
 	protected readonly DataBaseService _dataBaseService;
@@ -40,25 +38,24 @@ public abstract class CommandBase : BasicCommandBase
 	{
 		using DataBaseService.DbDataRequester requester = this._dataBaseService.NewRequester();
 		await arg.DeferAsync(ephemeral: this.IsEphemeral);
-		if (!this.CheckHasRegisteredAndReply(arg, out UserData? userData))
+		UserData? userData = await this.CheckHasRegisteredAndReply(arg, requester);
+		if (userData is null)
 			return;
 
-		await this.Callback(arg, userData!, requester, executer);
+		await this.Callback(arg, userData, requester, executer);
 	}
 
-	public bool CheckHasRegisteredAndReply(SocketSlashCommand task, out UserData? userData)
+	public async Task<UserData?> CheckHasRegisteredAndReply(SocketSlashCommand task, DataBaseService.DbDataRequester requester)
 	{
 		ulong userId = task.User.Id;
-		using DataBaseService.DbDataRequester requester = this._dataBaseService.NewRequester();
 
-		userData = requester.GetUserDataDirectlyAsync(userId).GetAwaiter().GetResult();
+		UserData? userData = await requester.GetUserDataDirectlyAsync(userId);
 		if (userData is null)
 		{
-			_ = task.QuickReply(this._localization[PSLCommonKey.CommandBaseNotRegistered][task.UserLocale]);
-			userData = default!;
-			return false;
+			await task.QuickReply(this._localization[PSLCommonKey.CommandBaseNotRegistered][task.UserLocale]);
+			return null;
 		}
-		return true;
+		return userData;
 	}
 	public async Task<bool> CheckIfUserIsAdminAndRespond(SocketSlashCommand command)
 	{

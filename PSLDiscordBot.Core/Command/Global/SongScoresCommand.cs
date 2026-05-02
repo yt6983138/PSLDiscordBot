@@ -45,13 +45,13 @@ public class SongScoresCommand : CommandBase
 
 		SaveContext? context = await this._phigrosService.TryHandleAndFetchContext(data.SaveCache, arg, index);
 		if (context is null) return;
-		GameRecord save = this._phigrosService.HandleAndGetGameRecord(context);
-		UserInfo outerUserInfo = await data.SaveCache.GetUserInfoAsync();
+		GameRecord save = context.ReadGameRecord();
+		PlayerInfo outerUserInfo = await data.SaveCache.GetPlayerInfoAsync();
 
-		(List<CompleteScore> _, List<CompleteScore> scoresToShow, double rks) = save.GetSortedListForRks();
+		this._phigrosService.GetCompleteScores(save, out List<CompleteScore> _, out List<CompleteScore>? scoresToShow, out double rks);
 		scoresToShow = scoresToShow
 			.Where(x =>
-				searchResult.Any(y => y.SongId == x.Id))
+				searchResult.Any(y => y.SongId == x.Score.Id))
 			.ToList();
 
 		if (scoresToShow.Count == 0)
@@ -68,7 +68,7 @@ public class SongScoresCommand : CommandBase
 			SearchRanks = searchResult
 		};
 
-		IEnumerable<IGrouping<string, CompleteScore>> grouped = scoresToShow.GroupBy(x => x.Id);
+		IEnumerable<IGrouping<string, CompleteScore>> grouped = scoresToShow.GroupBy(x => x.Score.Id);
 
 		foreach (IGrouping<string, CompleteScore> item in grouped)
 		{
@@ -76,6 +76,7 @@ public class SongScoresCommand : CommandBase
 		}
 		#endregion
 
+		using CancellationTokenSource cts = this._config.Value.GetRenderTimeoutCTS();
 		MemoryStream image = await this._imageGenerator.MakePhoto(
 			data,
 			context,
@@ -83,7 +84,7 @@ public class SongScoresCommand : CommandBase
 			this._config.Value.SongScoresRenderInfo,
 			this._config.Value.DefaultRenderImageType,
 			this._config.Value.RenderQuality,
-			cancellationToken: this._config.Value.RenderTimeoutCTS.Token,
+			cancellationToken: cts.Token,
 			extraArguments: extraArg
 		);
 

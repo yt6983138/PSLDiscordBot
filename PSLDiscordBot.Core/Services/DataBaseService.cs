@@ -11,7 +11,6 @@ public sealed class DataBaseService
 	private sealed class LogTracer(Action _onDispose) : IDisposable
 	{
 		private bool _disposed;
-		~LogTracer() => this.Dispose();
 		public void Dispose()
 		{
 			if (!this._disposed) _onDispose.Invoke();
@@ -30,7 +29,10 @@ public sealed class DataBaseService
 	{
 		this._config = config;
 		this._logger = logger;
-		this.NewRequester().ReadAllAliasToParent().GetAwaiter().GetResult();
+		using DbDataRequester requester = this.NewRequester();
+		requester.ReadAllAliasToParent().GetAwaiter().GetResult();
+		// this is intentionally blocking, since we need the alias data to be loaded before doing anything else
+		// could be optimized by using lazy loading
 	}
 
 
@@ -50,6 +52,9 @@ public sealed class DataBaseService
 		private readonly IOptions<Config> _config;
 		private readonly DataBaseService _parent;
 
+		/// <summary>
+		/// note: tracking are never enabled
+		/// </summary>
 		public bool SaveAutomatically { get; set; }
 
 		public DbSet<UserData> UserData { get; set; }
@@ -127,7 +132,7 @@ public sealed class DataBaseService
 			input = input.ToLower();
 
 			List<SongSearchResult> results = [];
-			foreach (SongInfo item in phigrosService.NonMultiLanguageInfos.SongsWithoutSuffix)
+			foreach (SongInfo item in phigrosService.NonMultiLanguageInfos.Songs)
 			{
 				string id = item.Id;
 				string name = item.Name;
@@ -196,10 +201,6 @@ public sealed class DataBaseService
 			this._logger.LogDebug(_eventId, "{name} finalizing", nameof(DbDataRequester));
 
 			base.Dispose();
-		}
-		~DbDataRequester()
-		{
-			this.Dispose();
 		}
 		#endregion
 	}
