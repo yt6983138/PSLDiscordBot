@@ -1,7 +1,9 @@
 ﻿using Discord.Net;
 using Discord.Rest;
 using Microsoft.AspNetCore.Builder;
+#if !DEBUG
 using Microsoft.Extensions.Configuration;
+#endif
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using NLog.Web;
@@ -148,7 +150,12 @@ public class PSLPlugin : IPlugin
 	void IPlugin.ConfigureDiscordClient(WebApplicationBuilder builder, DiscordClientServiceConfig config)
 	{
 		// if no token provided, it will throw when TryStartBot is called (aka im lazy to type throw expr)
-		config.Token = builder.Configuration.GetRequiredSection("Config")[nameof(Config.Token)] ?? "";
+		config.Token =
+#if DEBUG
+			Secret.Token;
+#else
+			builder.Configuration.GetRequiredSection("Config")[nameof(Config.Token)] ?? "";
+#endif
 		config.SocketConfig.GatewayIntents |= GatewayIntents.AllUnprivileged
 			^ GatewayIntents.GuildScheduledEvents
 			^ GatewayIntents.GuildInvites;
