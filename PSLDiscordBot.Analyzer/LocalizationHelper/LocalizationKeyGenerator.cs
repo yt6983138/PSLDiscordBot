@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using System.IO;
+﻿using System.IO;
 using System.Text;
 
 namespace PSLDiscordBot.Analyzer.LocalizationHelper;
@@ -99,11 +98,5 @@ public class LocalizationKeyGenerator : ISourceGenerator
 
 	public void Initialize(GeneratorInitializationContext context)
 	{
-#if DEBUG
-		if (!Debugger.IsAttached)
-		{
-			Debugger.Launch();
-		}
-#endif
 	}
 }
