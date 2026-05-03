@@ -220,8 +220,8 @@ public class PhigrosService
 		rks = Rks;
 	}
 	/// <summary>
-	/// phi 3 is padded using <see langword="default"/> to make sure the returned list always has at least 3 items.
-	/// this is done for compatibility reasons and make code easier to write
+	/// phi 3 is padded using <see cref="CompleteScore.Default"/> to make sure the returned list always has at least 3 items.
+	/// this is done for compatibility reasons and make code easier to write (same to <see cref="GameRecord.GetSortedListForRksMerged(IReadOnlyDictionary{ChartConstantKey, float}, IReadOnlyDictionary{string, string})"/>)
 	/// </summary>
 	/// <param name="record"></param>
 	/// <param name="scores"></param>
@@ -231,7 +231,6 @@ public class PhigrosService
 		(List<CompleteScore> Phis, List<CompleteScore> OtherScores, double Rks) = record.GetSortedListForRks(
 			this.ChartConstantMap, this.NameMap);
 		scores = OtherScores;
-		while (Phis.Count < 3) Phis.Add(default);
 		scores.InsertRange(0, Phis);
 		rks = Rks;
 	}

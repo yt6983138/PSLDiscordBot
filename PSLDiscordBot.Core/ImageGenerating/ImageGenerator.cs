@@ -56,6 +56,16 @@ public class ImageGenerator
 
 	private static EventId EventId { get; } = new(114512, "ImageGenerator");
 
+	private static readonly string _defaultId = "NULL.0";
+	private static IReadOnlyDictionary<string, string> _defaultNameMap = new Dictionary<string, string>()
+	{
+		{ _defaultId, "NULL" }
+	};
+	private static IReadOnlyDictionary<ChartConstantKey, float> _defaultCCMap = new Dictionary<ChartConstantKey, float>()
+	{
+		{ new(_defaultId, Difficulty.EZ), 0f }
+	};
+
 	public ImageGenerator(ILogger<ImageGenerator> logger, PhigrosService phigrosData, AvatarHashMapService avatarHashMap, ChromiumPoolService chromiumPool)
 	{
 		this._logger = logger;
@@ -72,6 +82,10 @@ public class ImageGenerator
 		};
 	}
 
+	private static CompleteScore CreateDefault()
+	{
+		return new(new(0, 0, _defaultId, false, Difficulty.EZ), _defaultCCMap, _defaultNameMap);
+	}
 	public async Task<MemoryStream> MakePhoto(
 		UserData userData,
 		SaveContext context,

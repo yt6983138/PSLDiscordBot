@@ -63,7 +63,7 @@ public class MoreRksCommand : CommandBase
 			.Select(r => BuildPair(r, giveLeastRks, leastRksInBests))
 			.Where(r => r.AccIsInValidRange)
 			.ToList();
-		ImmutableArray<CompleteScore> originalPhi3NoPadding = scores.Take(3).Where(x => !x.Equals(default)).ToImmutableArray();
+		ImmutableArray<CompleteScore> originalPhi3NoPadding = scores.Take(3).Where(x => x != CompleteScore.Default).ToImmutableArray();
 
 		// growableScores.AddRange(save.Records
 		// 	.Select(r => BuildPair(r, giveLeastRks, leastRksInBests))
