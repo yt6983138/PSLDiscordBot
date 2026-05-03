@@ -7,8 +7,7 @@ public class AboutMeCommand : CommandBase
 {
 	private readonly ImageGenerator _imageGenerator;
 
-	public AboutMeCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosService phigrosData, ILoggerFactory loggerFactory, ImageGenerator imageGenerator)
-		: base(config, database, localization, phigrosData, loggerFactory)
+	public AboutMeCommand(IServiceProvider provider, ImageGenerator imageGenerator) : base(provider)
 	{
 		this._imageGenerator = imageGenerator;
 	}

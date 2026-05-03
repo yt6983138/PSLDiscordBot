@@ -3,8 +3,7 @@
 [AddToGlobal]
 public class GetScoresByTokenCommand : AdminCommandBase
 {
-	public GetScoresByTokenCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosService phigrosData, ILoggerFactory loggerFactory)
-		: base(config, database, localization, phigrosData, loggerFactory)
+	public GetScoresByTokenCommand(IServiceProvider provider) : base(provider)
 	{
 	}
 
@@ -46,7 +45,7 @@ public class GetScoresByTokenCommand : AdminCommandBase
 		ulong userId = arg.User.Id;
 		string token = arg.Data.Options.ElementAt(0).Value.Unbox<string>();
 		bool isInternational = arg.GetOption<bool>("is_international");
-		UserData userData = new(userId, token, isInternational);
+		UserData userData = new(userId, token, isInternational, 0, false);
 
 		SaveContext? context = await this._phigrosService.TryHandleAndFetchContext(userData.SaveCache, arg, arg.GetIntegerOptionAsInt32("index"));
 		if (context is null) return;

@@ -3,8 +3,7 @@
 //[AddToGlobal]
 public class GetLogsCommand : AdminCommandBase
 {
-	public GetLogsCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosService phigrosData, ILoggerFactory loggerFactory)
-		: base(config, database, localization, phigrosData, loggerFactory)
+	public GetLogsCommand(IServiceProvider provider) : base(provider)
 	{
 	}
 

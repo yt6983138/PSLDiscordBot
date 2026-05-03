@@ -3,8 +3,7 @@
 [AddToGlobal]
 public class GetMoneyCommand : CommandBase
 {
-	public GetMoneyCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosService phigrosData, ILoggerFactory loggerFactory)
-		: base(config, database, localization, phigrosData, loggerFactory)
+	public GetMoneyCommand(IServiceProvider provider) : base(provider)
 	{
 	}
 

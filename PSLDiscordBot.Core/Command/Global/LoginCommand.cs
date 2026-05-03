@@ -34,8 +34,7 @@ public class LoginCommand : GuestCommandBase
 		public string EncodedBeginUrl => Uri.EscapeDataString(this.BeginUrl);
 	}
 
-	public LoginCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosService phigrosData, ILoggerFactory loggerFactory)
-		: base(config, database, localization, phigrosData, loggerFactory)
+	public LoginCommand(IServiceProvider provider) : base(provider)
 	{
 	}
 

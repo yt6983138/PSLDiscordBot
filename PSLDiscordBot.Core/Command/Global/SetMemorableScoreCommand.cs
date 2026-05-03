@@ -3,8 +3,7 @@
 [AddToGlobal]
 public class SetMemorableScoreCommand : CommandBase
 {
-	public SetMemorableScoreCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosService phigrosData, ILoggerFactory loggerFactory)
-		: base(config, database, localization, phigrosData, loggerFactory)
+	public SetMemorableScoreCommand(IServiceProvider provider) : base(provider)
 	{
 	}
 

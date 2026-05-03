@@ -3,8 +3,7 @@
 //[AddToGlobal]
 public class ExampleAdminCommand : AdminCommandBase
 {
-	public ExampleAdminCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosService phigrosData, ILoggerFactory loggerFactory)
-		: base(config, database, localization, phigrosData, loggerFactory)
+	public ExampleAdminCommand(IServiceProvider provider) : base(provider)
 	{
 	}
 

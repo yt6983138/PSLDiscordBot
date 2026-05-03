@@ -18,8 +18,7 @@ public class ConfigCommand : AdminCommandBase
 
 	private readonly IWritableOptions<Config> _writableConfig;
 
-	public ConfigCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosService phigrosData, ILoggerFactory loggerFactory, IWritableOptions<Config> writableConfig)
-		: base(config, database, localization, phigrosData, loggerFactory)
+	public ConfigCommand(IServiceProvider provider, IWritableOptions<Config> writableConfig) : base(provider)
 	{
 		this._writableConfig = writableConfig;
 	}

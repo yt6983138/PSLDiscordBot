@@ -3,8 +3,7 @@
 [AddToGlobal]
 public class ClearMemorableScoreCommand : CommandBase
 {
-	public ClearMemorableScoreCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosService phigrosData, ILoggerFactory loggerFactory)
-		: base(config, database, localization, phigrosData, loggerFactory)
+	public ClearMemorableScoreCommand(IServiceProvider provider) : base(provider)
 	{
 	}
 

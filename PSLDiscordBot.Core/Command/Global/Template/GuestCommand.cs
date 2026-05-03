@@ -3,8 +3,7 @@
 //[AddToGlobal]
 public class ExampleGuestCommand : GuestCommandBase
 {
-	public ExampleGuestCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosService phigrosData, ILoggerFactory loggerFactory)
-		: base(config, database, localization, phigrosData, loggerFactory)
+	public ExampleGuestCommand(IServiceProvider provider) : base(provider)
 	{
 	}
 

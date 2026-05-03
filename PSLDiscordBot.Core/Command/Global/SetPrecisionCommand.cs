@@ -5,8 +5,7 @@ namespace PSLDiscordBot.Core.Command.Global;
 [AddToGlobal]
 public class SetPrecisionCommand : CommandBase
 {
-	public SetPrecisionCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosService phigrosData, ILoggerFactory loggerFactory)
-		: base(config, database, localization, phigrosData, loggerFactory)
+	public SetPrecisionCommand(IServiceProvider provider) : base(provider)
 	{
 	}
 

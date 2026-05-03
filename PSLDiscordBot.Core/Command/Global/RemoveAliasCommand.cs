@@ -3,8 +3,7 @@
 [AddToGlobal]
 public class RemoveAliasCommand : CommandBase
 {
-	public RemoveAliasCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosService phigrosData, ILoggerFactory loggerFactory)
-		: base(config, database, localization, phigrosData, loggerFactory)
+	public RemoveAliasCommand(IServiceProvider provider) : base(provider)
 	{
 	}
 

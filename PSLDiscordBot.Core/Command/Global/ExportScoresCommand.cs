@@ -6,8 +6,7 @@ namespace PSLDiscordBot.Core.Command.Global;
 [AddToGlobal]
 public class ExportScoresCommand : CommandBase
 {
-	public ExportScoresCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosService phigrosData, ILoggerFactory loggerFactory)
-		: base(config, database, localization, phigrosData, loggerFactory)
+	public ExportScoresCommand(IServiceProvider provider) : base(provider)
 	{
 	}
 

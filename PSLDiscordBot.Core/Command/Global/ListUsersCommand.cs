@@ -3,8 +3,7 @@
 //[AddToGlobal] // might be added soon
 public class ListUsersCommand : AdminCommandBase
 {
-	public ListUsersCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosService phigrosData, ILoggerFactory loggerFactory)
-		: base(config, database, localization, phigrosData, loggerFactory)
+	public ListUsersCommand(IServiceProvider provider) : base(provider)
 	{
 	}
 

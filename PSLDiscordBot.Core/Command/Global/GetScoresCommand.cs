@@ -8,8 +8,7 @@ namespace PSLDiscordBot.Core.Command.Global;
 [AddToGlobal]
 public class GetScoresCommand : CommandBase
 {
-	public GetScoresCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosService phigrosData, ILoggerFactory loggerFactory)
-		: base(config, database, localization, phigrosData, loggerFactory)
+	public GetScoresCommand(IServiceProvider provider) : base(provider)
 	{
 	}
 

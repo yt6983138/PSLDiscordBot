@@ -3,8 +3,7 @@
 [AddToGlobal]
 public class SetShowCountDefaultCommand : CommandBase
 {
-	public SetShowCountDefaultCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosService phigrosData, ILoggerFactory loggerFactory)
-		: base(config, database, localization, phigrosData, loggerFactory)
+	public SetShowCountDefaultCommand(IServiceProvider provider) : base(provider)
 	{
 	}
 

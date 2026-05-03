@@ -6,8 +6,8 @@ public class ReportProblemCommand : GuestCommandBase
 	private readonly PSLPlugin _pslPlugin;
 	private readonly BugReportHandlerService _bugReportHandlerService;
 
-	public ReportProblemCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosService phigrosData, ILoggerFactory loggerFactory, PSLPlugin pslPlugin, BugReportHandlerService bugReportHandlerService)
-		: base(config, database, localization, phigrosData, loggerFactory)
+	public ReportProblemCommand(IServiceProvider provider, PSLPlugin pslPlugin, BugReportHandlerService bugReportHandlerService)
+		: base(provider)
 	{
 		this._pslPlugin = pslPlugin;
 		this._bugReportHandlerService = bugReportHandlerService;

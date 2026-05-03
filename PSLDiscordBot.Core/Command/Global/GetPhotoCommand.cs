@@ -10,8 +10,8 @@ public class GetPhotoCommand : CommandBase
 	private readonly ImageGenerator _imageGenerator;
 	private readonly IDiscordClientService _discordClientService;
 
-	public GetPhotoCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosService phigrosData, ILoggerFactory loggerFactory, ImageGenerator imageGenerator, IDiscordClientService discordClientService)
-		: base(config, database, localization, phigrosData, loggerFactory)
+	public GetPhotoCommand(IServiceProvider provider, IDiscordClientService discordClientService, ImageGenerator imageGenerator)
+		: base(provider)
 	{
 		this._imageGenerator = imageGenerator;
 		this._discordClientService = discordClientService;

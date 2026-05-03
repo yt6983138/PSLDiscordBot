@@ -3,8 +3,7 @@
 [AddToGlobal]
 public class GrabRawZipCommand : AdminCommandBase
 {
-	public GrabRawZipCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosService phigrosData, ILoggerFactory loggerFactory)
-		: base(config, database, localization, phigrosData, loggerFactory)
+	public GrabRawZipCommand(IServiceProvider provider) : base(provider)
 	{
 	}
 

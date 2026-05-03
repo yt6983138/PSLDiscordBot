@@ -5,8 +5,7 @@ namespace PSLDiscordBot.Core.Command.Global;
 [AddToGlobal]
 public class GetTimeIndexCommand : CommandBase
 {
-	public GetTimeIndexCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosService phigrosData, ILoggerFactory loggerFactory)
-		: base(config, database, localization, phigrosData, loggerFactory)
+	public GetTimeIndexCommand(IServiceProvider provider) : base(provider)
 	{
 	}
 
