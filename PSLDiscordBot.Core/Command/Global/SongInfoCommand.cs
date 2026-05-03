@@ -72,7 +72,7 @@ public class SongInfoCommand : GuestCommandBase
 		return query;
 	}
 	public static string BuildAssetUrl(string id, string branch, string ext)
-	   => $"https://raw.githubusercontent.com/7aGiven/Phigros_Resource/refs/heads/{branch}/{id}.{ext}";
+	   => $"https://raw.githubusercontent.com/7aGiven/Phigros_Resource/refs/heads/{branch}/{id[..^2]}.{ext}";
 	public static string BuildChartUrl(string id, Difficulty difficulty)
-		=> $"https://raw.githubusercontent.com/7aGiven/Phigros_Resource/refs/heads/chart/{id}.0/{difficulty}.json";
+		=> $"https://raw.githubusercontent.com/7aGiven/Phigros_Resource/refs/heads/chart/{id}/{difficulty}.json";
 }
