@@ -43,6 +43,8 @@ public class LoginCommand : GuestCommandBase
 	public override OneOf<string, LocalizedString> PSLName => this._localization[PSLGuestCommandKey.LoginName];
 	public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLGuestCommandKey.LoginDescription];
 
+	public override bool RequireTOSAcceptance => true;
+
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder
 		.AddOption(this._localization[PSLGuestCommandKey.LoginOptionIsInternationalName],
@@ -90,7 +92,7 @@ public class LoginCommand : GuestCommandBase
 			{
 				TapTapProfileData profile = await TapTapHelper.GetProfile(result.Data, useChinaEndpoint: chinaMode);
 				string token = await LCHelper.LoginAndGetToken(new(profile.Data, result.Data), chinaMode);
-				UserData userData = new(command.User.Id, token, !chinaMode);
+				UserData userData = new(command.User.Id, token, !chinaMode, this._config.Value.CurrentTOSAgreementLevel, false);
 				_ = await userData.SaveCache.GetPlayerInfoAsync();
 				await requester.AddOrReplaceUserDataAsync(userData);
 				await command.QuickReply(this._localization[PSLGuestCommandKey.LoginComplete]);

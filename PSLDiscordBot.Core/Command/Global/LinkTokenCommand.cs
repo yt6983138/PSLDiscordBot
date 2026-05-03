@@ -10,6 +10,8 @@ public class LinkTokenCommand : GuestCommandBase
 	public override OneOf<string, LocalizedString> PSLName => this._localization[PSLGuestCommandKey.LinkTokenName];
 	public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLGuestCommandKey.LinkTokenDescription];
 
+	public override bool RequireTOSAcceptance => true;
+
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder.AddOption(
 			this._localization[PSLGuestCommandKey.LinkTokenOptionTokenName],
@@ -35,7 +37,12 @@ public class LinkTokenCommand : GuestCommandBase
 			return;
 		}
 
-		UserData tmp = new(userId, token, arg.GetOption<bool>(this._localization[PSLGuestCommandKey.LoginOptionIsInternationalName]));
+		UserData tmp = new(
+			userId,
+			token,
+			arg.GetOption<bool>(this._localization[PSLGuestCommandKey.LoginOptionIsInternationalName]),
+			this._config.Value.CurrentTOSAgreementLevel,
+			false);
 		SaveContext? fetched = await this._phigrosService.TryHandleAndFetchContext(tmp.SaveCache, arg, 0, false);
 
 		if (fetched is null)
