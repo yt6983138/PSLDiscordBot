@@ -4,7 +4,6 @@ using System.Runtime.Caching;
 namespace PSLDiscordBot.Core.Utility;
 public class GenericMemoryCache<TKey, TValue> : IEnumerable<TValue>
 	where TKey : notnull
-	where TValue : class
 {
 	private sealed class Enumerator(MemoryCache _cache) : IEnumerator<TValue>
 	{
@@ -37,12 +36,16 @@ public class GenericMemoryCache<TKey, TValue> : IEnumerable<TValue>
 	{
 		get
 		{
-			return (TValue)this.UnderlyingCache[this.HashKey(key)];
+			return (TValue?)(this.UnderlyingCache[this.HashKey(key)] ?? default);
 		}
 		set
 		{
 			this.UnderlyingCache[this.HashKey(key)] = value;
 		}
+	}
+	public void Set(TKey key, TValue value, CacheItemPolicy? policy = null)
+	{
+		this.UnderlyingCache.Set(this.HashKey(key), value, policy ?? new CacheItemPolicy());
 	}
 
 	private string HashKey(TKey key)

@@ -28,6 +28,7 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 		{
 			[AdminCommandBasePermissionDenied] = LocalizedString.CreateDefault("Permission denied."),
 			[CommandBaseNotRegistered] = LocalizedString.CreateDefault("You haven't logged in/linked token. Please use /login or /link-token first."),
+			[CommandBaseTOSNotAgreed] = LocalizedString.CreateDefault("You have not agreed to the Terms of Service. Please read and agree to the TOS using `/tos` command in order to use commands."),
 
 			[SaveHandlerOnOutOfRange] = LocalizedString.CreateDefault("Error: Expected index less than {0}, more or equal to 0. You entered {1}."),
 			[SaveHandlerOnOtherException] = LocalizedString.CreateDefault("Error: {0}\nYou may try again or report to author (`/report-problem`)."),

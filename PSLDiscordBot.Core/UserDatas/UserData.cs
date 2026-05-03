@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
-using PhigrosLibraryCSharp.CloudSave;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PSLDiscordBot.Core.UserDatas;
@@ -12,6 +11,8 @@ public class UserData
 	public string Token { get; set; }
 	public string ShowFormat { get; set; }
 	public bool IsInternational { get; set; }
+	public int TOSAgreementLevel { get; set; }
+	public bool PublicVisibility { get; set; }
 
 	[NotMapped]
 	[JsonIgnore]
@@ -20,12 +21,14 @@ public class UserData
 	[JsonIgnore]
 	public DateTime GetPhotoCoolDownUntil { get; set; } = default;
 
-	public UserData(ulong userId, string token, bool isInternational, string showFormat = ".00")
+	public UserData(ulong userId, string token, bool isInternational, int tosAgreementLevel, bool publicVisibility, string showFormat = ".00")
 	{
 		this.Token = token;
 		this.IsInternational = isInternational;
 		this.SaveCache = new(this.Token, this.IsInternational);
 		this.UserId = userId;
 		this.ShowFormat = showFormat;
+		this.TOSAgreementLevel = tosAgreementLevel;
+		this.PublicVisibility = publicVisibility;
 	}
 }

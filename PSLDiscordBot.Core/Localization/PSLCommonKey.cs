@@ -8,6 +8,7 @@ public static partial class PSLCommonKey
 	#region Command base replies
 	public static partial string AdminCommandBasePermissionDenied { get; }
 	public static partial string CommandBaseNotRegistered { get; }
+	public static partial string CommandBaseTOSNotAgreed { get; }
 	#endregion
 
 	#region Save handler utility method

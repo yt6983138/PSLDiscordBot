@@ -1,8 +1,8 @@
 ﻿namespace PSLDiscordBot.Core.Command.Global.Base;
 public abstract class AdminCommandBase : CommandBase
 {
-	protected AdminCommandBase(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosService phigrosData, ILoggerFactory loggerFactory)
-		: base(config, database, localization, phigrosData, loggerFactory)
+	protected AdminCommandBase(IServiceProvider provider)
+		: base(provider)
 	{
 	}
 
@@ -14,6 +14,8 @@ public abstract class AdminCommandBase : CommandBase
 	[
 		ApplicationIntegrationType.GuildInstall
 	];
+
+	public sealed override bool RequireTOSAcceptance => false;
 
 	public override async Task Execute(SocketSlashCommand arg, object executer)
 	{

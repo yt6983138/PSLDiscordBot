@@ -27,12 +27,13 @@ public class Config
 
 	public string PSLDbConnectionString { get; set; } = "Data Source=./PSL/MainUserData.db";
 
+	public int CurrentTOSAgreementLevel { get; set; } = 1;
+
 	public string NonMultiLanguageInfoLocation { get; set; } = "./PSL/info.json";
 	public string MultiLanguageInfoLocationFormat { get; set; } = "./PSL/tipsAndCollections_{0}.json";
 	public string HelpMDLocation { get; set; } = "./PSL/help.md";
 	public string HelpMDMultiLanguageLocation { get; set; } = "./PSL/help_{0}.md";
 
-	// TODO: separate phigros asset grab to another plugin
 	public string HelpMDGrabLocation { get; set; } = "https://raw.githubusercontent.com/yt6983138/PSLDiscordBot/master/Documentation/help.md";
 
 	public int DefaultChromiumTabCacheCount { get; set; } = 5;
