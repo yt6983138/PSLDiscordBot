@@ -171,4 +171,14 @@ public static partial class PSLNormalCommandKey
 
 	public static partial string LogoutSuccessful { get; }
 	#endregion
+
+	#region SetPublicVisibilityCommand
+	public static partial string SetPublicVisibilityName { get; }
+	public static partial string SetPublicVisibilityDescription { get; }
+
+	public static partial string SetPublicVisibilityOptionVisibilityName { get; }
+	public static partial string SetPublicVisibilityOptionVisibilityDescription { get; }
+
+	public static partial string SetPublicVisibilitySuccess { get; }
+	#endregion
 }
