@@ -43,14 +43,12 @@ using Image = SixLabors.ImageSharp.Image;
 
 namespace PSLDiscordBot.Core.ImageGenerating;
 
-public class ImageGenerator
+public partial class ImageGenerator
 {
 	private readonly PhigrosService _phigrosDataService;
 	private readonly ILogger<ImageGenerator> _logger;
 	private readonly AvatarHashMapService _avatarMapService;
 	private readonly ChromiumPoolService _chromiumPoolService;
-
-	public delegate void MapProcessor(object map, object image);
 
 	public IReadOnlyDictionary<string, object> SongDifficultyCount { get; }
 
@@ -82,20 +80,11 @@ public class ImageGenerator
 		};
 	}
 
-	private static CompleteScore CreateDefault()
-	{
-		return new(new(0, 0, _defaultId, false, Difficulty.EZ), _defaultCCMap, _defaultNameMap);
-	}
-	public async Task<MemoryStream> MakePhoto(
+	public (TextMap_Anonymous, ImageMap_Anonymous) CreateMaps(
 		UserData userData,
 		SaveContext context,
 		PlayerInfo playerInfo,
-		BasicHtmlImageInfo basicHtmlImageInfo,
-		HtmlConverter.Tab.PhotoType photoType,
-		byte quality,
-		object? extraArguments = null,
-		MapProcessor? mapPostProcessing = null,
-		CancellationToken cancellationToken = default)
+		object? extraArguments = null)
 	{
 		Summary summary = context.ReadSummary();
 		GameRecord save = context.ReadGameRecord();
@@ -109,31 +98,36 @@ public class ImageGenerator
 
 		#region Textmap
 
-		var map = new
+#pragma warning disable IDE0008 // Use explicit type
+		// bruh can't set namespace manually
+		// DONT TOUCH THE NAMESPACE OR DECLARATION or source generator will fuck up
+		var userMap = new PSLDiscordBot.Core.ImageGenerating.UserInfo_Anonymous()
 		{
-			User = new
-			{
-				Rks = rks,
-				PlayStatistics = new Dictionary<string, object>()
+			Rks = rks,
+			PlayStatistics = new Dictionary<string, object>()
 				{
 					{ "EZClearCount", sortedBestsWithoutPhis.Count(x => x.Score.Difficulty == Difficulty.EZ) },
 					{ "HDClearCount", sortedBestsWithoutPhis.Count(x => x.Score.Difficulty == Difficulty.HD) },
 					{ "INClearCount", sortedBestsWithoutPhis.Count(x => x.Score.Difficulty == Difficulty.IN) },
 					{ "ATClearCount", sortedBestsWithoutPhis.Count(x => x.Score.Difficulty == Difficulty.AT) }
 				},
-				Data = userData
-			},
+			Data = userData
+		};
+		var map = new PSLDiscordBot.Core.ImageGenerating.TextMap_Anonymous()
+		{
+			User = userMap,
 			UserInfo = playerInfo,
 			UserProgress = progress,
 			Summary = summary,
 			GameUserInfo = gameUserInfo,
 			Records = sortedBestsIncludePhis,
-			ExtraArguments = extraArguments,
+			ExtraArguments = extraArguments!,
 			GameSettings = settings,
 
 			SaveCreationDate = context.OriginalCloudObject.CreatedAt,
 			SaveModificationDate = context.OriginalCloudObject.ModifiedAt.Time,
 		};
+#pragma warning restore IDE0008 // Use explicit type
 		map.User.PlayStatistics.MergeWith(this.SongDifficultyCount);
 		foreach (ScoreStatus status in Enum.GetValues<ScoreStatus>())
 		{
@@ -216,19 +210,24 @@ public class ImageGenerator
 			formattedBgPath += backgroundId;
 		}
 
-		var image = new
+#pragma warning disable IDE0008
+		var userImageMap = new PSLDiscordBot.Core.ImageGenerating.UserImageMap_Anonymous()
 		{
-			User = new
-			{
-				Avatar = avatarPath.ToFullPath(),
-				BackgroundBasePath = formattedBgPath.ToFullPath()
-			}
+			Avatar = avatarPath.ToFullPath(),
+			BackgroundBasePath = formattedBgPath.ToFullPath()
 		};
+		var image = new PSLDiscordBot.Core.ImageGenerating.ImageMap_Anonymous()
+		{
+			User = userImageMap
+		};
+#pragma warning restore IDE0008
 
 		#endregion
 
-		mapPostProcessing?.Invoke(map, image);
-
+		return (map, image);
+	}
+	public Dictionary<string, object> CreateDefaultInjectionParameters(TextMap_Anonymous map, ImageMap_Anonymous image)
+	{
 		var infoObject = new
 		{
 			this._phigrosDataService.NonMultiLanguageInfos.Songs,
@@ -246,7 +245,43 @@ public class ImageGenerator
 			{ "PLAYER_DATA", map },
 			{ "INFO", infoObject }
 		};
+		return thingsToSet;
+	}
 
+	// for compatibility rn
+	public Task<MemoryStream> MakePhoto(
+		UserData userData,
+		SaveContext context,
+		PlayerInfo playerInfo,
+		BasicHtmlImageInfo basicHtmlImageInfo,
+		HtmlConverter.Tab.PhotoType photoType,
+		byte quality,
+		object? extraArguments = null,
+		CancellationToken cancellationToken = default)
+	{
+		(TextMap_Anonymous map, ImageMap_Anonymous image) = this.CreateMaps(userData, context, playerInfo, extraArguments);
+		return this.MakePhoto(map, image, basicHtmlImageInfo, photoType, quality, cancellationToken);
+	}
+
+	public Task<MemoryStream> MakePhoto(
+		TextMap_Anonymous map,
+		ImageMap_Anonymous image,
+		BasicHtmlImageInfo basicHtmlImageInfo,
+		HtmlConverter.Tab.PhotoType photoType,
+		byte quality,
+		CancellationToken cancellationToken = default)
+	{
+		Dictionary<string, object> thingsToSet = this.CreateDefaultInjectionParameters(map, image);
+
+		return this.MakePhoto(thingsToSet, basicHtmlImageInfo, photoType, quality, cancellationToken);
+	}
+	public async Task<MemoryStream> MakePhoto(
+		Dictionary<string, object> thingsToSet,
+		BasicHtmlImageInfo basicHtmlImageInfo,
+		HtmlConverter.Tab.PhotoType photoType,
+		byte quality,
+		CancellationToken cancellationToken = default)
+	{
 		using ChromiumPoolService.TabUsageBlock t = this._chromiumPoolService.GetFreeTab();
 		HtmlConverter.Tab tab = t.Tab;
 
