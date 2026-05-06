@@ -54,16 +54,6 @@ public partial class ImageGenerator
 
 	private static EventId EventId { get; } = new(114512, "ImageGenerator");
 
-	private static readonly string _defaultId = "NULL.0";
-	private static IReadOnlyDictionary<string, string> _defaultNameMap = new Dictionary<string, string>()
-	{
-		{ _defaultId, "NULL" }
-	};
-	private static IReadOnlyDictionary<ChartConstantKey, float> _defaultCCMap = new Dictionary<ChartConstantKey, float>()
-	{
-		{ new(_defaultId, Difficulty.EZ), 0f }
-	};
-
 	public ImageGenerator(ILogger<ImageGenerator> logger, PhigrosService phigrosData, AvatarHashMapService avatarHashMap, ChromiumPoolService chromiumPool)
 	{
 		this._logger = logger;
@@ -101,7 +91,7 @@ public partial class ImageGenerator
 #pragma warning disable IDE0008 // Use explicit type
 		// bruh can't set namespace manually
 		// DONT TOUCH THE NAMESPACE OR DECLARATION or source generator will fuck up
-		var userMap = new PSLDiscordBot.Core.ImageGenerating.UserInfo_Anonymous()
+		var userTextMap = new PSLDiscordBot.Core.ImageGenerating.UserInfo_Anonymous()
 		{
 			Rks = rks,
 			PlayStatistics = new Dictionary<string, object>()
@@ -113,9 +103,9 @@ public partial class ImageGenerator
 				},
 			Data = userData
 		};
-		var map = new PSLDiscordBot.Core.ImageGenerating.TextMap_Anonymous()
+		var textMap = new PSLDiscordBot.Core.ImageGenerating.TextMap_Anonymous()
 		{
-			User = userMap,
+			User = userTextMap,
 			UserInfo = playerInfo,
 			UserProgress = progress,
 			Summary = summary,
@@ -128,7 +118,7 @@ public partial class ImageGenerator
 			SaveModificationDate = context.OriginalCloudObject.ModifiedAt.Time,
 		};
 #pragma warning restore IDE0008 // Use explicit type
-		map.User.PlayStatistics.MergeWith(this.SongDifficultyCount);
+		textMap.User.PlayStatistics.MergeWith(this.SongDifficultyCount);
 		foreach (ScoreStatus status in Enum.GetValues<ScoreStatus>())
 		{
 			if (status == ScoreStatus.Bugged || status == ScoreStatus.NotFc) continue;
@@ -136,38 +126,38 @@ public partial class ImageGenerator
 			{
 				ScoreStatus[] included = [ScoreStatus.Fc, ScoreStatus.Phi];
 
-				map.User.PlayStatistics.Add(
+				textMap.User.PlayStatistics.Add(
 					$"TotalEZ{status}Count",
 					sortedBestsWithoutPhis.Count(x => x.Score.Difficulty == Difficulty.EZ && included.Contains(x.Score.Status)));
-				map.User.PlayStatistics.Add(
+				textMap.User.PlayStatistics.Add(
 					$"TotalHD{status}Count",
 					sortedBestsWithoutPhis.Count(x => x.Score.Difficulty == Difficulty.HD && included.Contains(x.Score.Status)));
-				map.User.PlayStatistics.Add(
+				textMap.User.PlayStatistics.Add(
 					$"TotalIN{status}Count",
 						sortedBestsWithoutPhis.Count(x => x.Score.Difficulty == Difficulty.IN && included.Contains(x.Score.Status)));
-				map.User.PlayStatistics.Add(
+				textMap.User.PlayStatistics.Add(
 					$"TotalAT{status}Count",
 					sortedBestsWithoutPhis.Count(x => x.Score.Difficulty == Difficulty.AT && included.Contains(x.Score.Status)));
-				map.User.PlayStatistics.Add(
+				textMap.User.PlayStatistics.Add(
 					$"Total{status}Count",
 					sortedBestsWithoutPhis.Count(x => included.Contains(x.Score.Status)));
 
 				continue;
 			}
 
-			map.User.PlayStatistics.Add(
+			textMap.User.PlayStatistics.Add(
 				$"TotalEZ{status}Count",
 				sortedBestsWithoutPhis.Count(x => x.Score.Difficulty == Difficulty.EZ && x.Score.Status == status));
-			map.User.PlayStatistics.Add(
+			textMap.User.PlayStatistics.Add(
 				$"TotalHD{status}Count",
 				sortedBestsWithoutPhis.Count(x => x.Score.Difficulty == Difficulty.HD && x.Score.Status == status));
-			map.User.PlayStatistics.Add(
+			textMap.User.PlayStatistics.Add(
 				$"TotalIN{status}Count",
 				sortedBestsWithoutPhis.Count(x => x.Score.Difficulty == Difficulty.IN && x.Score.Status == status));
-			map.User.PlayStatistics.Add(
+			textMap.User.PlayStatistics.Add(
 				$"TotalAT{status}Count",
 				sortedBestsWithoutPhis.Count(x => x.Score.Difficulty == Difficulty.AT && x.Score.Status == status));
-			map.User.PlayStatistics.Add(
+			textMap.User.PlayStatistics.Add(
 				$"Total{status}Count",
 				sortedBestsWithoutPhis.Count(x => x.Score.Status == status));
 		}
@@ -216,7 +206,7 @@ public partial class ImageGenerator
 			Avatar = avatarPath.ToFullPath(),
 			BackgroundBasePath = formattedBgPath.ToFullPath()
 		};
-		var image = new PSLDiscordBot.Core.ImageGenerating.ImageMap_Anonymous()
+		var imageMap = new PSLDiscordBot.Core.ImageGenerating.ImageMap_Anonymous()
 		{
 			User = userImageMap
 		};
@@ -224,7 +214,7 @@ public partial class ImageGenerator
 
 		#endregion
 
-		return (map, image);
+		return (textMap, imageMap);
 	}
 	public Dictionary<string, object> CreateDefaultInjectionParameters(TextMap_Anonymous map, ImageMap_Anonymous image)
 	{
@@ -264,19 +254,19 @@ public partial class ImageGenerator
 	}
 
 	public Task<MemoryStream> MakePhoto(
-		TextMap_Anonymous map,
-		ImageMap_Anonymous image,
+		TextMap_Anonymous textMap,
+		ImageMap_Anonymous imageMap,
 		BasicHtmlImageInfo basicHtmlImageInfo,
 		HtmlConverter.Tab.PhotoType photoType,
 		byte quality,
 		CancellationToken cancellationToken = default)
 	{
-		Dictionary<string, object> thingsToSet = this.CreateDefaultInjectionParameters(map, image);
+		Dictionary<string, object> thingsToSet = this.CreateDefaultInjectionParameters(textMap, imageMap);
 
 		return this.MakePhoto(thingsToSet, basicHtmlImageInfo, photoType, quality, cancellationToken);
 	}
 	public async Task<MemoryStream> MakePhoto(
-		Dictionary<string, object> thingsToSet,
+		Dictionary<string, object> injectionParams,
 		BasicHtmlImageInfo basicHtmlImageInfo,
 		HtmlConverter.Tab.PhotoType photoType,
 		byte quality,
@@ -300,7 +290,7 @@ public partial class ImageGenerator
 				while (tab.Queue.FirstOrDefault(x => (string)x["method"]! == "Debugger.paused") is null)
 					await tab.ReadOneMessage(cancellationToken);
 				string str = string.Join(';',
-					thingsToSet.Select(x => $"window.{x.Key}={JsonConvert.SerializeObject(x.Value)}"));
+					injectionParams.Select(x => $"window.{x.Key}={JsonConvert.SerializeObject(x.Value)}"));
 				await tab.EvaluateJavaScript(str, cancellationToken);
 				await tab.SendCommand("Debugger.resume", cancellationToken: cancellationToken);
 			},
