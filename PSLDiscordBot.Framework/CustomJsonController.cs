@@ -4,10 +4,6 @@ using System.Text.Json;
 
 namespace PSLDiscordBot.Framework;
 
-/// <summary>
-/// remember to use [Controller] if u inherit this
-/// </summary>
-[NonController]
 public abstract class CustomJsonController : Controller
 {
 	protected abstract object JsonSerializerOptions { get; }
