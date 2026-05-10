@@ -11,6 +11,7 @@ public static partial class PSLNormalCommandKey
 
 	public static partial string SongScoresSongNotPlayed { get; }
 	public static partial string SongScoresQueryResult { get; }
+	public static partial string SongScoresQueryResultForOther { get; }
 	#endregion
 
 	#region SetShowCountDefaultCommand

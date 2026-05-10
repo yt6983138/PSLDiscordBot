@@ -10,5 +10,7 @@ public static partial class PSLCommonMessageKey
 	public static partial string OperationDone { get; }
 	public static partial string CommandUnavailable { get; }
 	public static partial string ImageGenerated { get; }
+	public static partial string ImageGeneratedForOther { get; }
+	public static partial string GenerateForNoPermission { get; }
 	#endregion
 }

@@ -1,4 +1,5 @@
 ﻿using PSLDiscordBot.Core.ImageGenerating;
+using PSLDiscordBot.Core.Models;
 using PSLDiscordBot.Framework.BuiltInServices;
 using static HtmlToImage.NET.HtmlConverter.Tab;
 
@@ -71,7 +72,12 @@ public class GetPhotoCommand : CommandBase
 				this._localization[PSLNormalCommandKey.GetPhotoOptionCCFilterHigherBoundDescription],
 				isRequired: false,
 				minValue: 0,
-				maxValue: 20);
+				maxValue: 20)
+			.AddOption(
+				this._localization[PSLCommonOptionKey.GenerateForOptionName],
+				ApplicationCommandOptionType.User,
+				this._localization[PSLCommonOptionKey.GenerateForOptionDescription],
+				isRequired: false);
 
 	public override async Task Callback(SocketSlashCommand arg,
 		UserData data,
@@ -85,6 +91,19 @@ public class GetPhotoCommand : CommandBase
 		double ccLowerBound = arg.GetOptionOrDefault<double>(this._localization[PSLNormalCommandKey.GetPhotoOptionCCFilterLowerBoundName]);
 		double ccHigherBound = arg.GetOptionOrDefault<double>(this._localization[PSLNormalCommandKey.GetPhotoOptionCCFilterHigherBoundName], int.MaxValue);
 		string? showingGrades = arg.GetOptionOrDefault<string>(this._localization[PSLNormalCommandKey.GetPhotoOptionGradesToShowName]);
+		IUser? generateFor = arg.GetOptionOrDefault<IUser>(this._localization[PSLCommonOptionKey.GenerateForOptionName]);
+
+		UserData? generateForUserData = null;
+		if (generateFor is not null)
+		{
+			generateForUserData = await requester.GetUserDataDirectlyAsync(generateFor.Id);
+			if (generateForUserData is null)
+			{
+				await arg.QuickReply(this._localization[PSLCommonMessageKey.GenerateForNoPermission]);
+				return;
+			}
+		}
+
 		ScoreStatus[]? showingGradesParsed = null;
 		if (!string.IsNullOrWhiteSpace(showingGrades))
 		{
@@ -124,33 +143,41 @@ public class GetPhotoCommand : CommandBase
 			data.GetPhotoCoolDownUntil = DateTime.Now + this._config.Value.GetPhotoCoolDown;
 		}
 
-		SaveContext? context = await this._phigrosService.TryHandleAndFetchContext(data.SaveCache, arg, index);
+		SaveContext? context = await this._phigrosService.TryHandleAndFetchContext((generateForUserData ?? data).SaveCache, arg, index);
 		if (context is null) return;
-		PlayerInfo playerInfo = await data.SaveCache.GetPlayerInfoAsync();
+		PlayerInfo playerInfo = await (generateForUserData ?? data).SaveCache.GetPlayerInfoAsync();
 
 		await arg.QuickReply(this._localization[PSLNormalCommandKey.GetPhotoGenerating]);
 
 		MemoryStream image;
+		TextMap_Anonymous textMap;
 		try
 		{
 			using CancellationTokenSource cts = this._config.Value.GetRenderTimeoutCTS();
-			image = await this._imageGenerator.MakePhoto(
-				data,
+
+			(textMap, ImageMap_Anonymous? imageMap) = this._imageGenerator.CreateMaps(
+				generateForUserData ?? data,
 				context,
 				playerInfo,
-				this._config.Value.GetPhotoRenderInfo,
-				usePng ? PhotoType.Png : this._config.Value.DefaultRenderImageType,
-				this._config.Value.RenderQuality,
 				new
 				{
 					ShowCount = count,
 					LowerBound = lowerBound,
 					AllowedGrades = showingGradesParsed,
 					CCLowerBound = ccLowerBound,
-					CCHigherBound = ccHigherBound
-				},
-				cancellationToken: cts.Token
-		   );
+					CCHigherBound = ccHigherBound,
+					GeneratingForOther = generateForUserData is not null,
+				});
+
+			if (generateForUserData is not null) ImageGenerator.RedactSensetiveInfo(textMap, imageMap);
+
+			image = await this._imageGenerator.MakePhoto(
+				textMap,
+				imageMap,
+				this._config.Value.GetPhotoRenderInfo,
+				usePng ? PhotoType.Png : this._config.Value.DefaultRenderImageType,
+				this._config.Value.RenderQuality,
+				cancellationToken: cts.Token);
 		}
 		catch (Exception ex)
 		{
@@ -162,7 +189,9 @@ public class GetPhotoCommand : CommandBase
 		{
 			try
 			{
-				await arg.QuickReplyWithAttachments([new(image, "Score.png")], this._localization[PSLCommonMessageKey.ImageGenerated]);
+				await arg.QuickReplyWithAttachments([new(image, "Score.png")],
+					this._localization[generateForUserData is not null ? PSLCommonMessageKey.ImageGeneratedForOther : PSLCommonMessageKey.ImageGenerated],
+					new GeneratedForLocalizationModel(arg, textMap));
 			}
 			catch (Exception ex)
 			{

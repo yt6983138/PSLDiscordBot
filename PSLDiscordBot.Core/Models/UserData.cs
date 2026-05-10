@@ -31,4 +31,9 @@ public class UserData
 		this.TOSAgreementLevel = tosAgreementLevel;
 		this.PublicVisibility = publicVisibility;
 	}
+
+	public virtual UserData ShallowCopy()
+	{
+		return (UserData)this.MemberwiseClone();
+	}
 }
