@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 
-namespace PSLDiscordBot.Core.UserDatas;
+namespace PSLDiscordBot.Core.Models;
 
 [PrimaryKey(nameof(SongId))]
 public class SongAlias
