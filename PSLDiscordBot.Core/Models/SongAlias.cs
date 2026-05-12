@@ -13,4 +13,7 @@ public class SongAlias
 		this.SongId = songId;
 		this.Alias = alias ?? [];
 	}
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
+	private SongAlias() { }
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
 }

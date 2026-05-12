@@ -16,7 +16,15 @@ public class UserData
 
 	[NotMapped]
 	[JsonIgnore]
-	public Save SaveCache { get; init; }
+	public Save SaveCache
+	{
+		get
+		{
+			field ??= new(this.Token, this.IsInternational);
+			return field;
+		}
+	}
+	// TODO: i just realized since we removed caching this wouldn't work anymore, need to create a new service for this
 	[NotMapped]
 	[JsonIgnore]
 	public DateTime GetPhotoCoolDownUntil { get; set; } = default;
@@ -25,12 +33,14 @@ public class UserData
 	{
 		this.Token = token;
 		this.IsInternational = isInternational;
-		this.SaveCache = new(this.Token, this.IsInternational);
 		this.UserId = userId;
 		this.ShowFormat = showFormat;
 		this.TOSAgreementLevel = tosAgreementLevel;
 		this.PublicVisibility = publicVisibility;
 	}
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
+	private UserData() { }
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
 
 	public virtual UserData ShallowCopy()
 	{
