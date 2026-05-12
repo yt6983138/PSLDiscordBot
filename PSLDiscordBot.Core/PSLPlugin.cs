@@ -144,7 +144,8 @@ public class PSLPlugin : IPlugin
 			.AddSingleton<ImageGenerator>()
 			.AddSingleton<BugReportHandlerService>()
 			.AddSingleton<LocalizationService>()
-			.AddSingleton<TemporaryTOSAgreementService>();
+			.AddSingleton<TemporaryTOSAgreementService>()
+			.AddSingleton<LeaderboardService>();
 
 		hostBuilder.Services.AddAssemblyToMvc(this);
 	}

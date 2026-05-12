@@ -60,6 +60,7 @@ public sealed class DataBaseService
 		public DbSet<UserData> UserData { get; set; }
 		public DbSet<MiscInfo> MiscData { get; set; }
 		public DbSet<SongAlias> SongAlias { get; set; }
+		public DbSet<LeaderboardEntry> Leaderboard { get; set; }
 
 		public static long UncheckedConvertToLong(ulong data)
 			=> unchecked((long)data);
@@ -185,6 +186,25 @@ public sealed class DataBaseService
 				//	(tokenInitialismRatio * 0.05d) +
 				//	(tokenAbbreviationRatio * 0.3d);
 			}
+		}
+		#endregion
+
+		#region Leaderboard
+		public Task AddOrReplaceLeaderboardEntryAsync(LeaderboardEntry entry)
+		{
+			return this.Leaderboard.AddOrUpdate(entry);
+		}
+		public Task RemoveLeaderboardEntryAsync(ulong userId)
+		{
+			return this.Leaderboard.Where(x => x.UserId == userId).ExecuteDeleteAsync();
+		}
+		public async Task<LeaderboardEntry?> GetLeaderboardEntryAsync(ulong userId)
+		{
+			return await this.Leaderboard.FindAsync(userId);
+		}
+		public async Task<List<LeaderboardEntry>> GetAllLeaderboardEntriesAsync()
+		{
+			return await this.Leaderboard.AsNoTracking().ToListAsync();
 		}
 		#endregion
 

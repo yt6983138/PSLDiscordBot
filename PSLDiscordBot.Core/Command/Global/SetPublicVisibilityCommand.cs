@@ -24,6 +24,11 @@ public class SetPublicVisibilityCommand : CommandBase
 
 		data.PublicVisibility = isPublic;
 		await requester.AddOrReplaceUserDataAsync(data);
+		if (!isPublic)
+		{
+			await requester.RemoveLeaderboardEntryAsync(data.UserId);
+		}
+
 		await arg.QuickReply(this._localization[PSLNormalCommandKey.SetPublicVisibilitySuccess]);
 	}
 }

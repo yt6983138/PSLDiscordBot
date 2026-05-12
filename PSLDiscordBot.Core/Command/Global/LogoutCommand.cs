@@ -21,6 +21,8 @@ public class LogoutCommand : CommandBase
 		{
 			requester.MiscData.Remove(miscData);
 		}
+		await requester.RemoveLeaderboardEntryAsync(arg.User.Id);
+
 		await requester.SaveChangesAsync();
 
 		await arg.QuickReply(this._localization[PSLNormalCommandKey.LogoutSuccessful]);

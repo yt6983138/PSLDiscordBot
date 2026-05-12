@@ -36,6 +36,9 @@ public class Config
 
 	public string HelpMDGrabLocation { get; set; } = "https://raw.githubusercontent.com/yt6983138/PSLDiscordBot/master/Documentation/help.md";
 
+	public int LeaderboardRefreshEachIntervalMilliseconds { get; set; } = 2000;
+	public TimeSpan LeaderboardRefreshInterval { get; set; } = TimeSpan.FromHours(12);
+
 	public int DefaultChromiumTabCacheCount { get; set; } = 5;
 	public ushort ChromiumPort { get; set; } = 0;
 #if DEBUG
