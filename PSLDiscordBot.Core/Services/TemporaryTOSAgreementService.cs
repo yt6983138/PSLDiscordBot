@@ -1,27 +1,22 @@
-﻿using System.Runtime.Caching;
-
-namespace PSLDiscordBot.Core.Services;
+﻿namespace PSLDiscordBot.Core.Services;
 
 public class TemporaryTOSAgreementService
 {
 	public record struct TOSAgreementRecord(bool Agreed, bool Read);
 
-	public GenericMemoryCache<ulong, TOSAgreementRecord> Cache { get; } = new(nameof(TemporaryTOSAgreementService));
+	public GenericMemoryCache<ulong, TOSAgreementRecord> Cache { get; } = [];
 
 	public void Set(ulong userId, TOSAgreementRecord record)
 	{
-		CacheItemPolicy option = new()
-		{
-			SlidingExpiration = TimeSpan.FromMinutes(15)
-		};
-		this.Cache.Set(userId, record, option);
+		this.Cache.Set(userId, record, DateTime.Now.AddMinutes(15));
 	}
 	public TOSAgreementRecord Get(ulong userId)
 	{
-		return this.Cache[userId];
+		this.Cache.TryGetValue(userId, out TOSAgreementRecord record);
+		return record;
 	}
 	public bool HasAgreed(ulong userId)
 	{
-		return this.Cache[userId].Agreed;
+		return this.Get(userId).Agreed;
 	}
 }

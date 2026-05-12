@@ -143,7 +143,8 @@ public class PSLPlugin : IPlugin
 			.AddSingleton<AvatarHashMapService>()
 			.AddSingleton<ImageGenerator>()
 			.AddSingleton<BugReportHandlerService>()
-			.AddSingleton<LocalizationService>();
+			.AddSingleton<LocalizationService>()
+			.AddSingleton<TemporaryTOSAgreementService>();
 
 		hostBuilder.Services.AddAssemblyToMvc(this);
 	}
