@@ -1,5 +1,4 @@
 ﻿using PSLDiscordBot.Core.ImageGenerating;
-using PSLDiscordBot.Core.Models;
 using PSLDiscordBot.Framework.BuiltInServices;
 using static HtmlToImage.NET.HtmlConverter.Tab;
 
@@ -97,7 +96,7 @@ public class GetPhotoCommand : CommandBase
 		if (generateFor is not null)
 		{
 			generateForUserData = await requester.GetUserDataDirectlyAsync(generateFor.Id);
-			if (generateForUserData is null)
+			if (generateForUserData is null || !generateForUserData.PublicVisibility)
 			{
 				await arg.QuickReply(this._localization[PSLCommonMessageKey.GenerateForNoPermission]);
 				return;
@@ -191,7 +190,7 @@ public class GetPhotoCommand : CommandBase
 			{
 				await arg.QuickReplyWithAttachments([new(image, "Score.png")],
 					this._localization[generateForUserData is not null ? PSLCommonMessageKey.ImageGeneratedForOther : PSLCommonMessageKey.ImageGenerated],
-					new GeneratedForLocalizationModel(arg, textMap));
+					new GeneratedForLocalizationModel(generateFor ?? arg.User, textMap));
 			}
 			catch (Exception ex)
 			{
@@ -202,7 +201,9 @@ public class GetPhotoCommand : CommandBase
 			return;
 		}
 
-		await arg.QuickReplyWithAttachments([new(image, "Score.jpg")], this._localization[PSLCommonMessageKey.ImageGenerated]);
+		await arg.QuickReplyWithAttachments([new(image, "Score.jpg")],
+			this._localization[generateForUserData is not null ? PSLCommonMessageKey.ImageGeneratedForOther : PSLCommonMessageKey.ImageGenerated],
+			new GeneratedForLocalizationModel(generateFor ?? arg.User, textMap));
 	}
 
 	public static ScoreStatus? ParseScoreStatus(string str)

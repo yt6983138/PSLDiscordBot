@@ -59,19 +59,19 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 			[IndexOptionDescription] = LocalizedString.CreateDefault("Save time converted to index, 0 is always latest. Do /get-time-index to get other index."),
 			[SongSearchOptionDescription] = LocalizedString.CreateDefault("Searching strings, you can either put id, put alias, or put the song name."),
 			[SongSearchOptionName] = LocalizedString.CreateDefault("search"),
-			[GenerateForOptionName] = LocalizedString.CreateDefault("generate-for"),
-			[GenerateForOptionDescription] = LocalizedString.CreateDefault("Generate for other user. Users without public visibility on won't be generated."),
+			[GenerateForOptionName] = LocalizedString.CreateDefault("generate_for"),
+			[GenerateForOptionDescription] = LocalizedString.CreateDefault("Generate for other user. Users without `/set-public-visibility` on won't be generated."),
 
 			[SongSearchNoMatch] = LocalizedString.CreateDefault("Sorry, nothing matched your query."),
 			[OperationDone] = LocalizedString.CreateDefault("The operation has done successfully."),
 			[CommandUnavailable] = LocalizedString.CreateDefault("Sorry, this command is currently not available."),
 			[ImageGenerated] = LocalizedString.CreateDefault("Generated!"),
-			[ImageGeneratedForOther] = LocalizedString.CreateDefault("Generated for `{0.Command.User.Name}`, aka `{0.Data.UserInfo.NickName}`"),
-			[GenerateForNoPermission] = LocalizedString.CreateDefault("Sorry, the user you specified does not exist or does not have public visibility turned on."),
+			[ImageGeneratedForOther] = LocalizedString.CreateDefault("Generated for `{0.User.GlobalName}`, aka `{0.Data.UserInfo.NickName}`"),
+			[GenerateForNoPermission] = LocalizedString.CreateDefault("Sorry, the user you specified does not exist or does not have `/set-public-visibility` turned on."),
 
 			[SongScoresSongNotPlayed] = LocalizedString.CreateDefault("Sorry, you seems haven't played the songs you have been searching for."),
 			[SongScoresQueryResult] = LocalizedString.CreateDefault("You looked for song `{0}`, showing..."),
-			[SongScoresQueryResultForOther] = LocalizedString.CreateDefault("You looked for song `{0}`, showing for `{1.Command.User.Name}`, aka `{1.Data.UserInfo.NickName}`..."),
+			[SongScoresQueryResultForOther] = LocalizedString.CreateDefault("You looked for song `{0}`, showing for `{1.User.GlobalName}`, aka `{1.Data.UserInfo.NickName}`..."),
 			[SongScoresName] = LocalizedString.CreateDefault("song-scores"),
 			[SongScoresDescription] = LocalizedString.CreateDefault("Get scores for a specified song(s)."),
 
@@ -240,7 +240,7 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 
 			[TOSName] = LocalizedString.CreateDefault("tos"),
 			[TOSDescription] = LocalizedString.CreateDefault("View the Terms of Service. Do this command twice agrees it."),
-			[TOSAgreed] = LocalizedString.CreateDefault("You have agreed to the Terms of Service. Thank you for using the bot."),
+			[TOSAgreed] = LocalizedString.CreateDefault("You have agreed to the Terms of Service{0:cond:|, please do /login or /link-token in 15 mins to start using the bot}. Thank you for your cooperation."),
 			[TOSContent] = LocalizedString.CreateDefault("Please view it [here](), once you are done, please do this command again in 15 mins to agree TOS."),
 			// TODO: fill tos url
 

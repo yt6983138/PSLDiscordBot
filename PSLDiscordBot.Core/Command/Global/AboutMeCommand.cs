@@ -1,5 +1,4 @@
 ﻿using PSLDiscordBot.Core.ImageGenerating;
-using PSLDiscordBot.Core.Models;
 
 namespace PSLDiscordBot.Core.Command.Global;
 
@@ -25,7 +24,15 @@ public class AboutMeCommand : CommandBase
 			ApplicationCommandOptionType.Integer,
 			this._localization[PSLCommonOptionKey.IndexOptionDescription],
 			isRequired: false,
-			minValue: 0);
+			minValue: 0)
+		//.AddOption(
+		//	this._localization[PSLCommonOptionKey.GenerateForOptionName],
+		//	ApplicationCommandOptionType.User,
+		//	this._localization[PSLCommonOptionKey.GenerateForOptionDescription],
+		//	isRequired: false)
+		// TODO: still thinking should we enable this
+		;
+
 
 	public override async Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
 	{
@@ -36,7 +43,7 @@ public class AboutMeCommand : CommandBase
 		if (generateFor is not null)
 		{
 			generateForUserData = await requester.GetUserDataDirectlyAsync(generateFor.Id);
-			if (generateForUserData is null)
+			if (generateForUserData is null || !generateForUserData.PublicVisibility)
 			{
 				await arg.QuickReply(this._localization[PSLCommonMessageKey.GenerateForNoPermission]);
 				return;
@@ -47,7 +54,11 @@ public class AboutMeCommand : CommandBase
 		if (context is null) return;
 		PlayerInfo outerUserInfo = await (generateForUserData ?? data).SaveCache.GetPlayerInfoAsync();
 
-		MiscInfo? miscInfo = await requester.GetMiscInfoAsync(arg.User.Id);
+		MiscInfo? miscInfo;
+		if (generateForUserData is null)
+			miscInfo = await requester.GetMiscInfoAsync(arg.User.Id);
+		else
+			miscInfo = await requester.GetMiscInfoAsync(generateForUserData.UserId);
 
 		using CancellationTokenSource cts = this._config.Value.GetRenderTimeoutCTS();
 		(TextMap_Anonymous, ImageMap_Anonymous) maps = this._imageGenerator.CreateMaps(
@@ -74,6 +85,6 @@ public class AboutMeCommand : CommandBase
 
 		await arg.QuickReplyWithAttachments([new(image, "Score.png")],
 			this._localization[generateForUserData is not null ? PSLCommonMessageKey.ImageGeneratedForOther : PSLCommonMessageKey.ImageGenerated],
-			new GeneratedForLocalizationModel(arg, maps.Item1));
+			new GeneratedForLocalizationModel(generateFor ?? arg.User, maps.Item1));
 	}
 }

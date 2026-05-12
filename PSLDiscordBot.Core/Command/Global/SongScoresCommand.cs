@@ -1,5 +1,4 @@
 ﻿using PSLDiscordBot.Core.ImageGenerating;
-using PSLDiscordBot.Core.Models;
 
 namespace PSLDiscordBot.Core.Command.Global;
 
@@ -29,7 +28,12 @@ public class SongScoresCommand : CommandBase
 			ApplicationCommandOptionType.Integer,
 			this._localization[PSLCommonOptionKey.IndexOptionDescription],
 			isRequired: false,
-			minValue: 0);
+			minValue: 0)
+		.AddOption(
+			this._localization[PSLCommonOptionKey.GenerateForOptionName],
+			ApplicationCommandOptionType.User,
+			this._localization[PSLCommonOptionKey.GenerateForOptionDescription],
+			isRequired: false);
 
 	public override async Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
 	{
@@ -41,7 +45,7 @@ public class SongScoresCommand : CommandBase
 		if (generateFor is not null)
 		{
 			generateForUserData = await requester.GetUserDataDirectlyAsync(generateFor.Id);
-			if (generateForUserData is null)
+			if (generateForUserData is null || !generateForUserData.PublicVisibility)
 			{
 				await arg.QuickReply(this._localization[PSLCommonMessageKey.GenerateForNoPermission]);
 				return;
@@ -124,6 +128,6 @@ public class SongScoresCommand : CommandBase
 			attachments,
 			this._localization[generateForUserData is not null ? PSLNormalCommandKey.SongScoresQueryResultForOther : PSLNormalCommandKey.SongScoresQueryResult],
 			search,
-			new GeneratedForLocalizationModel(arg, maps.Item1));
+			new GeneratedForLocalizationModel(generateFor ?? arg.User, maps.Item1));
 	}
 }
