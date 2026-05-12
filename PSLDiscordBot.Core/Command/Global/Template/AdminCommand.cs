@@ -8,7 +8,7 @@ public class ExampleAdminCommand : AdminCommandBase
 	}
 
 	public override OneOf<string, LocalizedString> PSLName => "example";
-	public override OneOf<string, LocalizedString> PSLDescription => "Example. [Admin command]";
+	public override OneOf<string, LocalizedString> PSLDescription => "[Admin command] Example.";
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder;

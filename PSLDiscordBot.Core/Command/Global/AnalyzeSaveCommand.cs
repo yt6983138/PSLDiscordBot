@@ -3,6 +3,7 @@ using System.Text;
 
 namespace PSLDiscordBot.Core.Command.Global;
 
+// tbh i feels like all analyze command are not useful since PhigrosSaveDumper exists
 [AddToGlobal]
 public class AnalyzeSaveCommand : AdminCommandBase
 {
@@ -11,7 +12,7 @@ public class AnalyzeSaveCommand : AdminCommandBase
 	}
 
 	public override OneOf<string, LocalizedString> PSLName => "analyze-save";
-	public override OneOf<string, LocalizedString> PSLDescription => "Analyze someone's save. [Admin command]";
+	public override OneOf<string, LocalizedString> PSLDescription => "[Admin command] Analyze someone's save.";
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder

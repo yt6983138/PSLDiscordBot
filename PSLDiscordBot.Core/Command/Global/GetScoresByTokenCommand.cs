@@ -8,7 +8,7 @@ public class GetScoresByTokenCommand : AdminCommandBase
 	}
 
 	public override OneOf<string, LocalizedString> PSLName => "get-scores-by-token";
-	public override OneOf<string, LocalizedString> PSLDescription => "Get scores. [Admin command]";
+	public override OneOf<string, LocalizedString> PSLDescription => "[Admin command] Get scores using token.";
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder.AddOption(
