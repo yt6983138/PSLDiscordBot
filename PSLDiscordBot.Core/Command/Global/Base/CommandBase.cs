@@ -17,7 +17,7 @@ public abstract class CommandBase : BasicCommandBase
 		: base()
 	{
 		this._serviceProvider = provider;
-		this._logger = provider.GetRequiredService<LoggerFactory>().CreateLogger(this.GetType());
+		this._logger = provider.GetRequiredService<ILoggerFactory>().CreateLogger(this.GetType());
 		this._config = provider.GetRequiredService<IOptions<Config>>();
 		this._dataBaseService = provider.GetRequiredService<DataBaseService>();
 		this._localization = provider.GetRequiredService<LocalizationService>();
