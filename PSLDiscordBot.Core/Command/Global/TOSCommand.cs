@@ -18,7 +18,13 @@ public class TOSCommand : GuestCommandBase
 		TemporaryTOSAgreementService.TOSAgreementRecord tosRecord = this._temporaryTOSAgreementService.Get(arg.User.Id);
 		if (tosRecord.Read)
 		{
-			await arg.QuickReply(this._localization[PSLGuestCommandKey.TOSAgreed]);
+			this._temporaryTOSAgreementService.Set(arg.User.Id, new(true, true));
+			if (data is not null)
+			{
+				data.TOSAgreementLevel = this._config.Value.CurrentTOSAgreementLevel;
+				await requester.AddOrReplaceUserDataAsync(data);
+			}
+			await arg.QuickReply(this._localization[PSLGuestCommandKey.TOSAgreed], data is not null);
 		}
 		else
 		{
