@@ -100,19 +100,42 @@ public class LeaderboardService
 
 				this._phigrosService.GetCompleteScores(gameRecord, out List<CompleteScore>? phis, out List<CompleteScore>? others, out double rks);
 
+				Dictionary<DifficultyStatus, int> achievedCounts = [];
+				Dictionary<DifficultyStatus, double> averageAccuracies = [];
+				Dictionary<DifficultyStatus, double> averageScores = [];
+				foreach (CompleteScore score in others)
+				{
+					DifficultyStatus difficultyStatus = new(score.Score.Status, score.Score.Difficulty);
+					int count = achievedCounts.GetValueOrDefault(difficultyStatus) + 1;
+					double averageAccuracy = averageAccuracies.GetValueOrDefault(difficultyStatus) + score.Score.Accuracy;
+					double averageScore = averageScores.GetValueOrDefault(difficultyStatus) + score.Score.Score;
+
+					achievedCounts[difficultyStatus] = count;
+					averageAccuracies[difficultyStatus] = averageAccuracy / others.Count;
+					averageScores[difficultyStatus] = averageScore / others.Count;
+				}
+
 				// why are they not using nullables bruh
 				IUser? discordUser = await this._discordClient.SocketClient.GetUserAsync(item.UserId);
 				if (discordUser is null)
 					this._logger.LogWarning("Failed to fetch user {id} while refreshing leaderboard cache", item.UserId);
 
-				// TODO: add more info to the entry if needed
 				LeaderboardEntry entry = new()
 				{
 					UserId = item.UserId,
+					InGameNickName = playerInfo.NickName,
+					DiscordDisplayName = discordUser?.GlobalName,
 					CachedAt = DateTime.Now,
 					GameVersion = summary.GameVersion,
-					RKS = rks
+					AnalyzedData = new()
+					{
+						RKS = rks,
+						AchievedCounts = achievedCounts,
+						AverageAccuracies = averageAccuracies,
+						AverageScores = averageScores
+					}
 				};
+				entries.Add(entry);
 			}
 			catch (Exception ex)
 			{
