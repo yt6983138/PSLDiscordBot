@@ -58,6 +58,83 @@ public class LeaderboardService
 		return await requester.Leaderboard.ToListAsync();
 	}
 
+	public Task<LeaderboardEntry?> TryAnalyzeUser(UserData user, CancellationToken ct = default)
+	{
+		return this.TryAnalyzeUser(user.SaveCache, user.UserId, user.IsInternational, ct);
+	}
+	public Task<LeaderboardEntry?> TryAnalyzeUser(ulong userId, string token, bool isInternational, CancellationToken ct = default)
+	{
+		return this.TryAnalyzeUser(new(token, isInternational), userId, isInternational, ct);
+	}
+	public async Task<LeaderboardEntry?> TryAnalyzeUser(Save save, ulong userId, bool isInternational, CancellationToken ct = default)
+	{
+		this._logger.LogDebug("Analyzing leaderboard cache for user {id}", userId);
+		try
+		{
+			// maybe we should make save async apis accept cancellation token?
+			// TODO: think ^
+			PlayerInfo playerInfo = await save.GetPlayerInfoAsync();
+			SaveContext context = await save.GetSaveContextAsync(0);
+
+			GameRecord gameRecord = context.ReadGameRecord();
+			GameProgress gameProgress = context.ReadGameProgress();
+			GameSettings gameSettings = context.ReadGameSettings();
+			GameUserInfo userInfo = context.ReadGameUserInfo();
+			Summary summary = context.ReadSummary();
+
+			this._phigrosService.GetCompleteScores(gameRecord, out List<CompleteScore>? phis, out List<CompleteScore>? others, out double rks);
+
+			Dictionary<DifficultyStatus, int> achievedCounts = [];
+			Dictionary<DifficultyStatus, double> averageAccuracies = [];
+			Dictionary<DifficultyStatus, double> averageScores = [];
+			foreach (CompleteScore scoreData in others)
+			{
+				DifficultyStatus difficultyStatus = new(scoreData.Score.Status, scoreData.Score.Difficulty);
+				int count = achievedCounts.GetValueOrDefault(difficultyStatus) + 1;
+				double acc = averageAccuracies.GetValueOrDefault(difficultyStatus) + scoreData.Score.Accuracy;
+				double score = averageScores.GetValueOrDefault(difficultyStatus) + scoreData.Score.Score;
+
+				achievedCounts[difficultyStatus] = count;
+				averageAccuracies[difficultyStatus] = acc;
+				averageScores[difficultyStatus] = score;
+			}
+
+			foreach ((DifficultyStatus index, int count) in achievedCounts)
+			{
+				averageAccuracies[index] /= count;
+				averageScores[index] /= count;
+			}
+
+			// why are they not using nullables bruh
+			IUser? discordUser = await this._discordClient.SocketClient.GetUserAsync(userId);
+			if (discordUser is null)
+				this._logger.LogWarning("Failed to fetch user {id} while analyzing leaderboard cache", userId);
+
+			LeaderboardEntry entry = new()
+			{
+				UserId = userId,
+				InGameNickName = playerInfo.NickName,
+				DiscordDisplayName = discordUser?.GlobalName,
+				CachedAt = DateTime.Now,
+				GameVersion = summary.GameVersion,
+				AnalyzedData = new()
+				{
+					RKS = rks,
+					AchievedCounts = achievedCounts,
+					AverageAccuracies = averageAccuracies,
+					AverageScores = averageScores,
+					ChallengeRank = gameProgress.ChallengeModeRank
+				}
+			};
+			return entry;
+		}
+		catch (Exception ex)
+		{
+			this._logger.LogWarning(ex, "Failed to analyze leaderboard cache for user {id}", userId);
+		}
+		return null;
+	}
+
 	public async Task RefreshCache(CancellationToken ct)
 	{
 		this._logger.LogInformation("Refreshing leaderboard cache...");
@@ -84,63 +161,11 @@ public class LeaderboardService
 			}
 			i++;
 
-			this._logger.LogDebug("Refreshing cache for user {id}", item.UserId);
 			await Task.Delay(this._config.Value.LeaderboardRefreshEachIntervalMilliseconds, ct);
-			try
+			LeaderboardEntry? entry = await this.TryAnalyzeUser(item.UserId, item.Token, item.IsInternational, ct);
+			if (entry is not null)
 			{
-				using Save save = new(item.Token, item.IsInternational);
-				PlayerInfo playerInfo = await save.GetPlayerInfoAsync();
-				SaveContext context = await save.GetSaveContextAsync(0);
-
-				GameRecord gameRecord = context.ReadGameRecord();
-				GameProgress gameProgress = context.ReadGameProgress();
-				GameSettings gameSettings = context.ReadGameSettings();
-				GameUserInfo userInfo = context.ReadGameUserInfo();
-				Summary summary = context.ReadSummary();
-
-				this._phigrosService.GetCompleteScores(gameRecord, out List<CompleteScore>? phis, out List<CompleteScore>? others, out double rks);
-
-				Dictionary<DifficultyStatus, int> achievedCounts = [];
-				Dictionary<DifficultyStatus, double> averageAccuracies = [];
-				Dictionary<DifficultyStatus, double> averageScores = [];
-				foreach (CompleteScore score in others)
-				{
-					DifficultyStatus difficultyStatus = new(score.Score.Status, score.Score.Difficulty);
-					int count = achievedCounts.GetValueOrDefault(difficultyStatus) + 1;
-					double averageAccuracy = averageAccuracies.GetValueOrDefault(difficultyStatus) + score.Score.Accuracy;
-					double averageScore = averageScores.GetValueOrDefault(difficultyStatus) + score.Score.Score;
-
-					achievedCounts[difficultyStatus] = count;
-					averageAccuracies[difficultyStatus] = averageAccuracy / others.Count;
-					averageScores[difficultyStatus] = averageScore / others.Count;
-				}
-
-				// why are they not using nullables bruh
-				IUser? discordUser = await this._discordClient.SocketClient.GetUserAsync(item.UserId);
-				if (discordUser is null)
-					this._logger.LogWarning("Failed to fetch user {id} while refreshing leaderboard cache", item.UserId);
-
-				LeaderboardEntry entry = new()
-				{
-					UserId = item.UserId,
-					InGameNickName = playerInfo.NickName,
-					DiscordDisplayName = discordUser?.GlobalName,
-					CachedAt = DateTime.Now,
-					GameVersion = summary.GameVersion,
-					AnalyzedData = new()
-					{
-						RKS = rks,
-						AchievedCounts = achievedCounts,
-						AverageAccuracies = averageAccuracies,
-						AverageScores = averageScores
-					}
-				};
 				entries.Add(entry);
-			}
-			catch (Exception ex)
-			{
-				this._logger.LogWarning(ex, "Failed to fetch save for user {id} while refreshing leaderboard cache", item.UserId);
-				continue;
 			}
 		}
 
