@@ -85,29 +85,80 @@ public static class PSLUtils
 	{
 		return str[0..Math.Min(str.Length, maxLength)];
 	}
-	public static string ToSnakeCase(this string text)
+	public static string ToSnakeCase(this string text, char delimiter = '_')
 	{
+		// consider following strings:
+		// SomeAPIEndpoint -> some_api_endpoint
+		// SomeApiEndpoint -> some_api_endpoint
+		// someAPIEndpoint -> some_api_endpoint
+
 		ArgumentNullException.ThrowIfNull(text);
-		if (text.Length < 2)
+		int currentIndex = FindNextUpperCaseIndex(0);
+		if (currentIndex == -1) return text;
+
+		List<int> indexes = [];
+		while (currentIndex != -1)
 		{
-			return text.ToLowerInvariant();
+			indexes.Add(currentIndex);
+			currentIndex = FindNextUpperCaseIndex(currentIndex + 1);
 		}
+		if (indexes[0] != 0) indexes.Insert(0, 0);
+
 		StringBuilder sb = new();
-		sb.Append(char.ToLowerInvariant(text[0]));
-		for (int i = 1; i < text.Length; ++i)
+		for (int i = 0; i < indexes.Count; i++)
 		{
-			char c = text[i];
-			if (char.IsUpper(c))
+			int current = indexes[i];
+			int? next = i + 1 >= indexes.Count ? null : indexes[i + 1];
+
+			if (next is null)
 			{
-				sb.Append('_');
-				sb.Append(char.ToLowerInvariant(c));
+				sb.Append(text[current..].ToLower());
+				break;
 			}
-			else
+			// ex. SomeText
+			//     ^   ^
+			if (current + 1 != next)
 			{
-				sb.Append(c);
+				sb.Append(text[current..next.Value].ToLower());
+				sb.Append(delimiter);
+				continue;
+			}
+			// ex. SomeAPIEndpoint, SomeAPI
+			//         ^^^              ^^
+			if (current + 1 == next)
+			{
+				int veryEnd = current;
+				while (true)
+				{
+					i++;
+					if (i >= indexes.Count) break;
+					if (indexes[i] != veryEnd + 1) break;
+					veryEnd = indexes[i];
+				}
+				i -= 2;
+				if (veryEnd == text.Length - 1)
+				{
+					sb.Append(text[current..].ToLower());
+					break;
+				}
+
+				sb.Append(text[current..veryEnd].ToLower());
+				sb.Append(delimiter);
+				continue;
 			}
 		}
+
 		return sb.ToString();
+
+		int FindNextUpperCaseIndex(int start)
+		{
+			if (start >= text.Length) return -1;
+			for (int i = start; i < text.Length; i++)
+			{
+				if (char.IsUpper(text[i])) return i;
+			}
+			return -1;
+		}
 	}
 	public static string ToPascalCase(this string text)
 	{
