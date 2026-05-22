@@ -25,6 +25,16 @@ public class LeaderboardCommand : CommandBase
 		.ToFrozenDictionary();
 	public static readonly FrozenDictionary<string, ByWhat> ByWhatReverseLookup = ByWhatNames.ToFrozenDictionary(x => x.Value, x => x.Key);
 
+	// https://canary.discord.com/channels/805962920650604594/1024805501151756359/1507397158838603896
+	public static readonly FrozenDictionary<ChallengeRank, double> ChallengeRankWeights = new Dictionary<ChallengeRank, double>
+	{
+		{ ChallengeRank.Green, 0.3599999999999997 },
+		{ ChallengeRank.Blue, 0.5377777777777777 },
+		{ ChallengeRank.Red, 0.790123456790123 },
+		{ ChallengeRank.Gold, 0.9130864197530861 },
+		{ ChallengeRank.Rainbow, 2 },
+	}.ToFrozenDictionary();
+
 	public static readonly FrozenSet<ScoreStatus> ClearedScoreStatus = new ScoreStatus[] {
 		ScoreStatus.False,
 		ScoreStatus.C,
@@ -172,6 +182,10 @@ public class LeaderboardCommand : CommandBase
 
 		return entries;
 	}
+	public static double GetChallengeRankWeight(Challenge challengeRank)
+	{
+		return ChallengeRankWeights.GetValueOrDefault(challengeRank.Rank, 0) * challengeRank.Level;
+	}
 	public static Dictionary<ulong, object> SortLeaderboardEntryWithOptions(List<LeaderboardEntry> entries, ByWhat byWhat, Difficulty? difficulty)
 	{
 		Dictionary<ulong, object> result = [];
@@ -188,7 +202,7 @@ public class LeaderboardCommand : CommandBase
 		}
 		else if (byWhat == ByWhat.ChallengeRank)
 		{
-			entries.Sort((x, y) => y.AnalyzedData.ChallengeRank.RawCode.CompareTo(x.AnalyzedData.ChallengeRank.RawCode));
+			entries.Sort((x, y) => GetChallengeRankWeight(y.AnalyzedData.ChallengeRank).CompareTo(GetChallengeRankWeight(x.AnalyzedData.ChallengeRank)));
 			result = entries.ToDictionary(x => x.UserId, x => (object)x.AnalyzedData.ChallengeRank);
 		}
 		else if (byWhat == ByWhat.Accuracy)
