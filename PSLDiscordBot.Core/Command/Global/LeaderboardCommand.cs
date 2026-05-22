@@ -43,24 +43,23 @@ public class LeaderboardCommand : CommandBase
 		this._leaderboardService = leaderboardService;
 	}
 
-	public override OneOf<string, LocalizedString> PSLName => "leaderboard";
-	public override OneOf<string, LocalizedString> PSLDescription => "Displays the leaderboard.";
+	public override OneOf<string, LocalizedString> PSLName => this._localization[PSLNormalCommandKey.LeaderboardName];
+	public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLNormalCommandKey.LeaderboardDescription];
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder
-		.AddOptions(GetRankUsingOption(this._localization, new SlashCommandOptionBuilder()
-			.WithName("count")
-			.WithDescription("Number of entries to display, defaults to 50")
+		.AddOptions(CreateRankUsingOption(this._localization, new SlashCommandOptionBuilder()
+			.WithName(this._localization[PSLNormalCommandKey.LeaderboardOptionCountName])
+			.WithDescription(this._localization[PSLNormalCommandKey.LeaderboardOptionCountDescription])
 			.WithType(ApplicationCommandOptionType.Integer)
 			.WithMinValue(0)
 			.WithMaxValue(114514)
 			.WithRequired(false)));
 
-	// TODO: localize this entire thing
 	public override async Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
 	{
-		GetRankUsingParameters(arg, this._localization, out ByWhat byWhat, out Difficulty? difficulty, out List<SocketSlashCommandDataOption>? otherOptions);
-		long count = ((long?)otherOptions?.FirstOrDefault(x => x.Name == "count")?.Value) ?? 50;
+		GetRankUsingParameters(arg, this._localization, out ByWhat byWhat, out Difficulty? difficulty, out SocketSlashCommandDataOption? otherOptions);
+		long count = otherOptions?.GetOptionOrDefault<long>(this._localization[PSLNormalCommandKey.LeaderboardOptionCountName], 50) ?? 50;
 
 		List<LeaderboardEntry>? entries = await PrepareLeaderboardEntries(arg, this._localization, this._leaderboardService, data);
 		if (entries is null) return;
@@ -70,29 +69,35 @@ public class LeaderboardCommand : CommandBase
 		int userIndex = entries.FindIndex(x => x.UserId == data.UserId);
 		LeaderboardEntry userEntry = entries[userIndex];
 
-		string? difficultyString = difficulty == DifficultyAll ? "All Difficulties" : difficulty.ToString();
-		List<string> titles = ["Rank", "Discord Name", "Nickname"];
+		string? difficultyString = difficulty == DifficultyAll ? DifficultyAllString : difficulty.ToString();
+		List<string> titles = [
+			this._localization[PSLNormalCommandKey.LeaderboardRankTitle][arg.UserLocale],
+			this._localization[PSLNormalCommandKey.LeaderboardDiscordNameTitle][arg.UserLocale],
+			this._localization[PSLNormalCommandKey.LeaderboardNicknameTitle][arg.UserLocale]
+		];
 		switch (byWhat)
 		{
 			case ByWhat.RKS:
-				titles.Insert(1, "RKS");
+				titles.Insert(1, this._localization[PSLNormalCommandKey.LeaderboardRksTitle][arg.UserLocale]);
 				break;
 			case ByWhat.ChallengeRank:
-				titles.Insert(1, $"Challenge Rank");
+				titles.Insert(1, this._localization[PSLNormalCommandKey.LeaderboardChallengeRankTitle][arg.UserLocale]);
 				break;
 			case ByWhat.Accuracy:
-				titles.Insert(1, $"Average Accuracy ({difficultyString})");
+				titles.Insert(1, this._localization[PSLNormalCommandKey.LeaderboardAccuracyTitle].GetFormatted(arg.UserLocale, difficultyString));
 				break;
 			case ByWhat.AverageScore:
-				titles.Insert(1, $"Average Score ({difficultyString})");
+				titles.Insert(1, this._localization[PSLNormalCommandKey.LeaderboardAverageScoreTitle].GetFormatted(arg.UserLocale, difficultyString));
 				break;
 			case ByWhat.TotalScore:
-				titles.Insert(1, $"Total Score ({difficultyString})");
+				titles.Insert(1, this._localization[PSLNormalCommandKey.LeaderboardTotalScoreTitle].GetFormatted(arg.UserLocale, difficultyString));
 				break;
 			case ByWhat.Count:
-				titles.Insert(1, $"Achieved Count ({difficultyString})");
+				titles.Insert(1, this._localization[PSLNormalCommandKey.LeaderboardCountTitle].GetFormatted(arg.UserLocale, difficultyString));
 				break;
 		}
+
+		// currently many formats of statistics is hard coded (im lazy to create localizations one by one)
 
 		int index = 0;
 		ColumnTextBuilder builder = new(titles);
@@ -100,26 +105,26 @@ public class LeaderboardCommand : CommandBase
 		{
 			object comparedData = sortedData[item.UserId];
 			ColumnTextBuilder.RowBuilder row = new ColumnTextBuilder.RowBuilder()
-				.WithFormatAdded("#{0}", index);
+				.WithFormatAdded(this._localization[PSLNormalCommandKey.LeaderboardRowRankFormat][arg.UserLocale], index);
 
 			if (comparedData is int or long or uint or ulong)
 			{
 				row.WithFormatAdded("{0}", comparedData);
 			}
-			else if (comparedData is IFormattable formattableData)
+			else if (comparedData is IFormattable formattableData) // double, floats
 			{
 				row.WithUserFormatStringAdded(data, formattableData);
 			}
 			else if (comparedData is Challenge challenge)
 			{
-				row.WithFormatAdded("{0:D3}", challenge.RawCode);
+				row.WithFormatAdded(arg, this._localization[PSLNormalCommandKey.LeaderboardChallengeFormat], challenge);
 			}
 			else
 			{
 				row.WithFormatAdded("{0}", comparedData);
 			}
 
-			row.WithFormatAdded("{0}", item.DiscordDisplayName ?? "Unknown User")
+			row.WithFormatAdded("{0}", item.DiscordDisplayName ?? "<Unknown>")
 				.WithFormatAdded("{0}", item.InGameNickName);
 
 			builder.WithRow(row);
@@ -133,7 +138,8 @@ public class LeaderboardCommand : CommandBase
 				=> userEntry.AnalyzedData.RKS.ToString(data.ShowFormat),
 
 			ByWhat.ChallengeRank
-				=> userEntry.AnalyzedData.ChallengeRank.RawCode.ToString("D3"),
+				=> this._localization[PSLNormalCommandKey.LeaderboardChallengeFormat]
+				.GetFormatted(arg.UserLocale, userEntry.AnalyzedData.ChallengeRank),
 
 			ByWhat.Accuracy or ByWhat.AverageScore
 				=> ((double)sortedData[userEntry.UserId]).ToString(data.ShowFormat),
@@ -143,8 +149,8 @@ public class LeaderboardCommand : CommandBase
 
 			_ => throw new InvalidOperationException("Invalid ByWhat value"),
 		};
-		await arg.QuickReplyWithAttachments($"You are at rank {userIndex}, with statistic of {statisticString}:",
-			[PSLUtils.ToAttachment(sb.ToString(), "Leaderboard.txt")]);
+		await arg.QuickReplyWithAttachments([PSLUtils.ToAttachment(sb.ToString(), "Leaderboard.txt")],
+			this._localization[PSLNormalCommandKey.LeaderboardReply], userIndex, statisticString);
 	}
 
 	public static async Task<List<LeaderboardEntry>?> PrepareLeaderboardEntries(IDiscordInteraction arg, LocalizationService localization, LeaderboardService leaderboardService, UserData data)
@@ -156,7 +162,7 @@ public class LeaderboardCommand : CommandBase
 			userEntry = await leaderboardService.TryAnalyzeUser(data);
 			if (userEntry is null)
 			{
-				await arg.QuickReply("Failed to calculate your rank on leaderboard! Please do `/get-scores` to check if your save is good.");
+				await arg.QuickReply(localization[PSLNormalCommandKey.LeaderboardFailedToAnalyze][arg.UserLocale]);
 				return null;
 			}
 			entries.Add(userEntry);
@@ -252,7 +258,8 @@ public class LeaderboardCommand : CommandBase
 		[NotNullWhen(true)] out SocketSlashCommandDataOption? option)
 	{
 		byWhat = default;
-		option = arg.Data.Options.FirstOrDefault(x => x.Name == "rank-using");
+		option = arg.Data.Options
+			.FirstOrDefault(x => x.Name == localization[PSLNormalCommandKey.LeaderboardOptionRankUsingName].Default);
 		if (option is null) return false;
 
 		byWhat = ByWhatReverseLookup[option.Options.First().Name];
@@ -270,7 +277,7 @@ public class LeaderboardCommand : CommandBase
 		LocalizationService localization,
 		out ByWhat byWhat,
 		out Difficulty? difficulty,
-		[NotNullWhen(true)] out List<SocketSlashCommandDataOption>? otherLastOptions)
+		[NotNullWhen(true)] out SocketSlashCommandDataOption? otherLastOptions)
 	{
 		if (!HasRankUsingOption(arg, localization, out byWhat, out SocketSlashCommandDataOption? option))
 		{
@@ -282,14 +289,15 @@ public class LeaderboardCommand : CommandBase
 		if (byWhat == ByWhat.RKS || byWhat == ByWhat.ChallengeRank)
 		{
 			difficulty = null;
-			otherLastOptions = option.Options.First().Options.Where(x => x.Name != "difficulty").ToList();
+			otherLastOptions = option.Options.First();
 			return true;
 		}
 
 		SocketSlashCommandDataOption subcommand = option.Options.First();
 
-		otherLastOptions = subcommand.Options.Where(x => x.Name != "difficulty").ToList();
-		SocketSlashCommandDataOption? difficultyOption = subcommand.Options.FirstOrDefault(x => x.Name == "difficulty");
+		otherLastOptions = subcommand;
+		SocketSlashCommandDataOption? difficultyOption = subcommand.Options
+			.FirstOrDefault(x => x.Name == localization[PSLNormalCommandKey.LeaderboardOptionDifficultyName].Default);
 		if (difficultyOption is null)
 		{
 			difficulty = DifficultyAll;
@@ -301,24 +309,25 @@ public class LeaderboardCommand : CommandBase
 
 		return true;
 	}
-	public static SlashCommandOptionBuilder GetRankUsingOption(LocalizationService localization, params SlashCommandOptionBuilder[] additionalOptionsAtLast)
+	public static SlashCommandOptionBuilder CreateRankUsingOption(LocalizationService localization, params SlashCommandOptionBuilder[] additionalOptionsAtLast)
 	{
 		SlashCommandOptionBuilder builder = new SlashCommandOptionBuilder()
-			.WithName("rank-using")
-			.WithDescription("Options for ranking criteria")
+			.WithName(localization[PSLNormalCommandKey.LeaderboardOptionRankUsingName])
+			.WithDescription(localization[PSLNormalCommandKey.LeaderboardOptionRankUsingDescription])
 			.WithType(ApplicationCommandOptionType.SubCommandGroup)
 			.WithRequired(false)
 			.AddOptions(Enum.GetValues<ByWhat>()
 				.SkipLast(2) // add rks and challenge at last
 				.Select(byWhat => new SlashCommandOptionBuilder()
 					.WithName(ByWhatNames[byWhat])
-					.WithDescription($"Ranks by {byWhat.ToString().ToSnakeCase(' ')}")
+					.WithDescription(localization[PSLNormalCommandKey.LeaderboardOptionRankUsingSubcommandDescription]
+						.MakePreFormatted(byWhat))
 					.WithType(ApplicationCommandOptionType.SubCommand)
 					.WithRequired(false)
 					.AddOption(
-						"difficulty",
+						localization[PSLNormalCommandKey.LeaderboardOptionDifficultyName],
 						ApplicationCommandOptionType.Integer,
-						"Use what difficulty to rank by",
+						localization[PSLNormalCommandKey.LeaderboardOptionDifficultyDescription],
 						isRequired: false,
 						choices: Enum.GetValues<Difficulty>()
 							.SkipLast(1) // skip sp
@@ -339,7 +348,8 @@ public class LeaderboardCommand : CommandBase
 				.TakeLast(2)
 				.Select(byWhat => new SlashCommandOptionBuilder()
 					.WithName(ByWhatNames[byWhat])
-					.WithDescription($"Ranks by {byWhat.ToString().ToSnakeCase(' ')}")
+					.WithDescription(localization[PSLNormalCommandKey.LeaderboardOptionRankUsingSubcommandDescription]
+						.MakePreFormatted(byWhat))
 					.WithType(ApplicationCommandOptionType.SubCommand)
 					.WithRequired(false)
 					.AddOptions(additionalOptionsAtLast))
