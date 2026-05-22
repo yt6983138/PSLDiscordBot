@@ -2,12 +2,8 @@
 using System.Text;
 using System.Text.Json;
 
-namespace PSLDiscordBot.Framework;
+namespace PSLDiscordBot.Framework.Utilities;
 
-/// <summary>
-/// remember to use [Controller] if u inherit this
-/// </summary>
-[NonController]
 public abstract class CustomJsonController : Controller
 {
 	protected abstract object JsonSerializerOptions { get; }

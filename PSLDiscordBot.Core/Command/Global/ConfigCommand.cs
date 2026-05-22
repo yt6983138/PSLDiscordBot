@@ -18,14 +18,13 @@ public class ConfigCommand : AdminCommandBase
 
 	private readonly IWritableOptions<Config> _writableConfig;
 
-	public ConfigCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosService phigrosData, ILoggerFactory loggerFactory, IWritableOptions<Config> writableConfig)
-		: base(config, database, localization, phigrosData, loggerFactory)
+	public ConfigCommand(IServiceProvider provider, IWritableOptions<Config> writableConfig) : base(provider)
 	{
 		this._writableConfig = writableConfig;
 	}
 
 	public override OneOf<string, LocalizedString> PSLName => "config";
-	public override OneOf<string, LocalizedString> PSLDescription => "Config the application. [Admin command]";
+	public override OneOf<string, LocalizedString> PSLDescription => "[Admin command] Config the application.";
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder
@@ -40,6 +39,8 @@ public class ConfigCommand : AdminCommandBase
 			"Set value (Use json!) Ignore this to get the current value.",
 			isRequired: false);
 
+	// this was commented out at 4a663ce46b322fb3dfd43617c3d74a43a11c380f for some reason (i cant remember why even i did it lmao)
+	// might be useful in the future so i just keep it here
 	public override async Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
 	{
 		await Task.CompletedTask;

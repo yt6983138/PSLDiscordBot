@@ -11,5 +11,9 @@ public static partial class PSLCommonOptionKey
 
 	public static partial string SongSearchOptionDescription { get; }
 	public static partial string SongSearchOptionName { get; }
+
+	// generate image for another person
+	public static partial string GenerateForOptionName { get; }
+	public static partial string GenerateForOptionDescription { get; }
 	#endregion
 }

@@ -3,8 +3,7 @@
 //[AddToGlobal]
 public class ExampleNormalCommand : CommandBase
 {
-	public ExampleNormalCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosService phigrosData, ILoggerFactory loggerFactory)
-		: base(config, database, localization, phigrosData, loggerFactory)
+	public ExampleNormalCommand(IServiceProvider provider) : base(provider)
 	{
 	}
 

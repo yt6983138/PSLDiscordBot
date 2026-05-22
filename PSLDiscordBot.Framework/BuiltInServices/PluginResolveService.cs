@@ -1,5 +1,6 @@
 ﻿using Antelcat.AutoGen.ComponentModel;
 using Antelcat.AutoGen.ComponentModel.Diagnostic;
+using PSLDiscordBot.Framework.Utilities;
 using System.Reflection;
 
 namespace PSLDiscordBot.Framework.BuiltInServices;

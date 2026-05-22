@@ -1,5 +1,6 @@
 ﻿using HtmlToImage.NET;
 using Newtonsoft.Json;
+using PSLDiscordBot.Framework.Utilities;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats.Png;
 using SixLabors.ImageSharp.PixelFormats;
@@ -43,28 +44,16 @@ using Image = SixLabors.ImageSharp.Image;
 
 namespace PSLDiscordBot.Core.ImageGenerating;
 
-public class ImageGenerator
+public partial class ImageGenerator
 {
 	private readonly PhigrosService _phigrosDataService;
 	private readonly ILogger<ImageGenerator> _logger;
 	private readonly AvatarHashMapService _avatarMapService;
 	private readonly ChromiumPoolService _chromiumPoolService;
 
-	public delegate void MapProcessor(object map, object image);
-
 	public IReadOnlyDictionary<string, object> SongDifficultyCount { get; }
 
 	private static EventId EventId { get; } = new(114512, "ImageGenerator");
-
-	private static readonly string _defaultId = "NULL.0";
-	private static IReadOnlyDictionary<string, string> _defaultNameMap = new Dictionary<string, string>()
-	{
-		{ _defaultId, "NULL" }
-	};
-	private static IReadOnlyDictionary<ChartConstantKey, float> _defaultCCMap = new Dictionary<ChartConstantKey, float>()
-	{
-		{ new(_defaultId, Difficulty.EZ), 0f }
-	};
 
 	public ImageGenerator(ILogger<ImageGenerator> logger, PhigrosService phigrosData, AvatarHashMapService avatarHashMap, ChromiumPoolService chromiumPool)
 	{
@@ -82,20 +71,17 @@ public class ImageGenerator
 		};
 	}
 
-	private static CompleteScore CreateDefault()
+	public static void RedactSensetiveInfo(TextMap_Anonymous textMap, ImageMap_Anonymous imageMap)
 	{
-		return new(new(0, 0, _defaultId, false, Difficulty.EZ), _defaultCCMap, _defaultNameMap);
+		textMap.User.Data = textMap.User.Data.ShallowCopy();
+		textMap.User.Data.Token = "<redacted>";
 	}
-	public async Task<MemoryStream> MakePhoto(
+
+	public (TextMap_Anonymous, ImageMap_Anonymous) CreateMaps(
 		UserData userData,
 		SaveContext context,
 		PlayerInfo playerInfo,
-		BasicHtmlImageInfo basicHtmlImageInfo,
-		HtmlConverter.Tab.PhotoType photoType,
-		byte quality,
-		object? extraArguments = null,
-		MapProcessor? mapPostProcessing = null,
-		CancellationToken cancellationToken = default)
+		object? extraArguments = null)
 	{
 		Summary summary = context.ReadSummary();
 		GameRecord save = context.ReadGameRecord();
@@ -109,32 +95,37 @@ public class ImageGenerator
 
 		#region Textmap
 
-		var map = new
+#pragma warning disable IDE0008 // Use explicit type
+		// bruh can't set namespace manually
+		// DONT TOUCH THE NAMESPACE OR DECLARATION or source generator will fuck up
+		var userTextMap = new PSLDiscordBot.Core.ImageGenerating.UserInfo_Anonymous()
 		{
-			User = new
-			{
-				Rks = rks,
-				PlayStatistics = new Dictionary<string, object>()
+			Rks = rks,
+			PlayStatistics = new Dictionary<string, object>()
 				{
 					{ "EZClearCount", sortedBestsWithoutPhis.Count(x => x.Score.Difficulty == Difficulty.EZ) },
 					{ "HDClearCount", sortedBestsWithoutPhis.Count(x => x.Score.Difficulty == Difficulty.HD) },
 					{ "INClearCount", sortedBestsWithoutPhis.Count(x => x.Score.Difficulty == Difficulty.IN) },
 					{ "ATClearCount", sortedBestsWithoutPhis.Count(x => x.Score.Difficulty == Difficulty.AT) }
 				},
-				Data = userData
-			},
+			Data = userData
+		};
+		var textMap = new PSLDiscordBot.Core.ImageGenerating.TextMap_Anonymous()
+		{
+			User = userTextMap,
 			UserInfo = playerInfo,
 			UserProgress = progress,
 			Summary = summary,
 			GameUserInfo = gameUserInfo,
 			Records = sortedBestsIncludePhis,
-			ExtraArguments = extraArguments,
+			ExtraArguments = extraArguments!,
 			GameSettings = settings,
 
 			SaveCreationDate = context.OriginalCloudObject.CreatedAt,
 			SaveModificationDate = context.OriginalCloudObject.ModifiedAt.Time,
 		};
-		map.User.PlayStatistics.MergeWith(this.SongDifficultyCount);
+#pragma warning restore IDE0008 // Use explicit type
+		textMap.User.PlayStatistics.MergeWith(this.SongDifficultyCount);
 		foreach (ScoreStatus status in Enum.GetValues<ScoreStatus>())
 		{
 			if (status == ScoreStatus.Bugged || status == ScoreStatus.NotFc) continue;
@@ -142,38 +133,38 @@ public class ImageGenerator
 			{
 				ScoreStatus[] included = [ScoreStatus.Fc, ScoreStatus.Phi];
 
-				map.User.PlayStatistics.Add(
+				textMap.User.PlayStatistics.Add(
 					$"TotalEZ{status}Count",
 					sortedBestsWithoutPhis.Count(x => x.Score.Difficulty == Difficulty.EZ && included.Contains(x.Score.Status)));
-				map.User.PlayStatistics.Add(
+				textMap.User.PlayStatistics.Add(
 					$"TotalHD{status}Count",
 					sortedBestsWithoutPhis.Count(x => x.Score.Difficulty == Difficulty.HD && included.Contains(x.Score.Status)));
-				map.User.PlayStatistics.Add(
+				textMap.User.PlayStatistics.Add(
 					$"TotalIN{status}Count",
 						sortedBestsWithoutPhis.Count(x => x.Score.Difficulty == Difficulty.IN && included.Contains(x.Score.Status)));
-				map.User.PlayStatistics.Add(
+				textMap.User.PlayStatistics.Add(
 					$"TotalAT{status}Count",
 					sortedBestsWithoutPhis.Count(x => x.Score.Difficulty == Difficulty.AT && included.Contains(x.Score.Status)));
-				map.User.PlayStatistics.Add(
+				textMap.User.PlayStatistics.Add(
 					$"Total{status}Count",
 					sortedBestsWithoutPhis.Count(x => included.Contains(x.Score.Status)));
 
 				continue;
 			}
 
-			map.User.PlayStatistics.Add(
+			textMap.User.PlayStatistics.Add(
 				$"TotalEZ{status}Count",
 				sortedBestsWithoutPhis.Count(x => x.Score.Difficulty == Difficulty.EZ && x.Score.Status == status));
-			map.User.PlayStatistics.Add(
+			textMap.User.PlayStatistics.Add(
 				$"TotalHD{status}Count",
 				sortedBestsWithoutPhis.Count(x => x.Score.Difficulty == Difficulty.HD && x.Score.Status == status));
-			map.User.PlayStatistics.Add(
+			textMap.User.PlayStatistics.Add(
 				$"TotalIN{status}Count",
 				sortedBestsWithoutPhis.Count(x => x.Score.Difficulty == Difficulty.IN && x.Score.Status == status));
-			map.User.PlayStatistics.Add(
+			textMap.User.PlayStatistics.Add(
 				$"TotalAT{status}Count",
 				sortedBestsWithoutPhis.Count(x => x.Score.Difficulty == Difficulty.AT && x.Score.Status == status));
-			map.User.PlayStatistics.Add(
+			textMap.User.PlayStatistics.Add(
 				$"Total{status}Count",
 				sortedBestsWithoutPhis.Count(x => x.Score.Status == status));
 		}
@@ -216,19 +207,24 @@ public class ImageGenerator
 			formattedBgPath += backgroundId;
 		}
 
-		var image = new
+#pragma warning disable IDE0008
+		var userImageMap = new PSLDiscordBot.Core.ImageGenerating.UserImageMap_Anonymous()
 		{
-			User = new
-			{
-				Avatar = avatarPath.ToFullPath(),
-				BackgroundBasePath = formattedBgPath.ToFullPath()
-			}
+			Avatar = avatarPath.ToFullPath(),
+			BackgroundBasePath = formattedBgPath.ToFullPath()
 		};
+		var imageMap = new PSLDiscordBot.Core.ImageGenerating.ImageMap_Anonymous()
+		{
+			User = userImageMap
+		};
+#pragma warning restore IDE0008
 
 		#endregion
 
-		mapPostProcessing?.Invoke(map, image);
-
+		return (textMap, imageMap);
+	}
+	public Dictionary<string, object> CreateDefaultInjectionParameters(TextMap_Anonymous map, ImageMap_Anonymous image)
+	{
 		var infoObject = new
 		{
 			this._phigrosDataService.NonMultiLanguageInfos.Songs,
@@ -246,7 +242,43 @@ public class ImageGenerator
 			{ "PLAYER_DATA", map },
 			{ "INFO", infoObject }
 		};
+		return thingsToSet;
+	}
 
+	// for compatibility rn
+	public Task<MemoryStream> MakePhoto(
+		UserData userData,
+		SaveContext context,
+		PlayerInfo playerInfo,
+		BasicHtmlImageInfo basicHtmlImageInfo,
+		HtmlConverter.Tab.PhotoType photoType,
+		byte quality,
+		object? extraArguments = null,
+		CancellationToken cancellationToken = default)
+	{
+		(TextMap_Anonymous map, ImageMap_Anonymous image) = this.CreateMaps(userData, context, playerInfo, extraArguments);
+		return this.MakePhoto(map, image, basicHtmlImageInfo, photoType, quality, cancellationToken);
+	}
+
+	public Task<MemoryStream> MakePhoto(
+		TextMap_Anonymous textMap,
+		ImageMap_Anonymous imageMap,
+		BasicHtmlImageInfo basicHtmlImageInfo,
+		HtmlConverter.Tab.PhotoType photoType,
+		byte quality,
+		CancellationToken cancellationToken = default)
+	{
+		Dictionary<string, object> thingsToSet = this.CreateDefaultInjectionParameters(textMap, imageMap);
+
+		return this.MakePhoto(thingsToSet, basicHtmlImageInfo, photoType, quality, cancellationToken);
+	}
+	public async Task<MemoryStream> MakePhoto(
+		Dictionary<string, object> injectionParams,
+		BasicHtmlImageInfo basicHtmlImageInfo,
+		HtmlConverter.Tab.PhotoType photoType,
+		byte quality,
+		CancellationToken cancellationToken = default)
+	{
 		using ChromiumPoolService.TabUsageBlock t = this._chromiumPoolService.GetFreeTab();
 		HtmlConverter.Tab tab = t.Tab;
 
@@ -265,7 +297,7 @@ public class ImageGenerator
 				while (tab.Queue.FirstOrDefault(x => (string)x["method"]! == "Debugger.paused") is null)
 					await tab.ReadOneMessage(cancellationToken);
 				string str = string.Join(';',
-					thingsToSet.Select(x => $"window.{x.Key}={JsonConvert.SerializeObject(x.Value)}"));
+					injectionParams.Select(x => $"window.{x.Key}={JsonConvert.SerializeObject(x.Value)}"));
 				await tab.EvaluateJavaScript(str, cancellationToken);
 				await tab.SendCommand("Debugger.resume", cancellationToken: cancellationToken);
 			},

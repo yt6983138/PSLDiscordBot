@@ -11,6 +11,7 @@ using PSLDiscordBot.Core.ImageGenerating;
 using PSLDiscordBot.Framework.BuiltInServices;
 using PSLDiscordBot.Framework.MiscEventArgs;
 using PSLDiscordBot.Framework.ServiceBase;
+using PSLDiscordBot.Framework.Utilities;
 using SixLabors.Fonts;
 using SmartFormat;
 using System.Net.WebSockets;
@@ -143,7 +144,9 @@ public class PSLPlugin : IPlugin
 			.AddSingleton<AvatarHashMapService>()
 			.AddSingleton<ImageGenerator>()
 			.AddSingleton<BugReportHandlerService>()
-			.AddSingleton<LocalizationService>();
+			.AddSingleton<LocalizationService>()
+			.AddSingleton<TemporaryTOSAgreementService>()
+			.AddSingleton<LeaderboardService>();
 
 		hostBuilder.Services.AddAssemblyToMvc(this);
 	}

@@ -28,6 +28,7 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 		{
 			[AdminCommandBasePermissionDenied] = LocalizedString.CreateDefault("Permission denied."),
 			[CommandBaseNotRegistered] = LocalizedString.CreateDefault("You haven't logged in/linked token. Please use /login or /link-token first."),
+			[CommandBaseTOSNotAgreed] = LocalizedString.CreateDefault("You have not agreed to the Terms of Service. Please read and agree to the TOS using `/tos` command in order to use commands."),
 
 			[SaveHandlerOnOutOfRange] = LocalizedString.CreateDefault("Error: Expected index less than {0}, more or equal to 0. You entered {1}."),
 			[SaveHandlerOnOtherException] = LocalizedString.CreateDefault("Error: {0}\nYou may try again or report to author (`/report-problem`)."),
@@ -58,14 +59,19 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 			[IndexOptionDescription] = LocalizedString.CreateDefault("Save time converted to index, 0 is always latest. Do /get-time-index to get other index."),
 			[SongSearchOptionDescription] = LocalizedString.CreateDefault("Searching strings, you can either put id, put alias, or put the song name."),
 			[SongSearchOptionName] = LocalizedString.CreateDefault("search"),
+			[GenerateForOptionName] = LocalizedString.CreateDefault("generate_for"),
+			[GenerateForOptionDescription] = LocalizedString.CreateDefault("Generate for other user. Users without `/set-public-visibility` on won't be generated."),
 
 			[SongSearchNoMatch] = LocalizedString.CreateDefault("Sorry, nothing matched your query."),
 			[OperationDone] = LocalizedString.CreateDefault("The operation has done successfully."),
 			[CommandUnavailable] = LocalizedString.CreateDefault("Sorry, this command is currently not available."),
 			[ImageGenerated] = LocalizedString.CreateDefault("Generated!"),
+			[ImageGeneratedForOther] = LocalizedString.CreateDefault("Generated for `{0.User.GlobalName}`, aka `{0.Data.UserInfo.NickName}`"),
+			[GenerateForNoPermission] = LocalizedString.CreateDefault("Sorry, the user you specified does not exist or does not have `/set-public-visibility` turned on."),
 
 			[SongScoresSongNotPlayed] = LocalizedString.CreateDefault("Sorry, you seems haven't played the songs you have been searching for."),
 			[SongScoresQueryResult] = LocalizedString.CreateDefault("You looked for song `{0}`, showing..."),
+			[SongScoresQueryResultForOther] = LocalizedString.CreateDefault("You looked for song `{0}`, showing for `{1.User.GlobalName}`, aka `{1.Data.UserInfo.NickName}`..."),
 			[SongScoresName] = LocalizedString.CreateDefault("song-scores"),
 			[SongScoresDescription] = LocalizedString.CreateDefault("Get scores for a specified song(s)."),
 
@@ -231,7 +237,42 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 			[LogoutName] = LocalizedString.CreateDefault("logout"),
 			[LogoutDescription] = LocalizedString.CreateDefault("Logs you out of the bot. (Your settings will be wiped too!)"),
 			[LogoutSuccessful] = LocalizedString.CreateDefault("Logged you out successfully."),
-			//[] = LocalizedString.CreateDefault(),
+
+			[TOSName] = LocalizedString.CreateDefault("tos"),
+			[TOSDescription] = LocalizedString.CreateDefault("View the Terms of Service. Do this command twice agrees it."),
+			[TOSAgreed] = LocalizedString.CreateDefault("You have agreed to the Terms of Service{0:cond:|, please do /login or /link-token in 15 mins to start using the bot}. Thank you for your cooperation."),
+			[TOSContent] = LocalizedString.CreateDefault("Please view it [here](https://github.com/yt6983138/PSLDiscordBot/blob/master/Documentation/TermsOfServiceV2.md), once you are done, please do this command again in 15 mins to agree TOS."),
+
+			[SetPublicVisibilityName] = LocalizedString.CreateDefault("set-public-visibility"),
+			[SetPublicVisibilityDescription] = LocalizedString.CreateDefault("Set whether your scores or statistics is visible to public or not."),
+			[SetPublicVisibilityOptionVisibilityName] = LocalizedString.CreateDefault("visibility"),
+			[SetPublicVisibilityOptionVisibilityDescription] = LocalizedString.CreateDefault("Whether your data is visible to public or not."),
+			[SetPublicVisibilitySuccess] = LocalizedString.CreateDefault("Your public visibility has been set successfully."),
+
+			[LeaderboardName] = LocalizedString.CreateDefault("leaderboard"),
+			[LeaderboardDescription] = LocalizedString.CreateDefault("Displays the leaderboard."),
+			[LeaderboardOptionRankUsingSubcommandDescription] = LocalizedString.CreateDefault("Ranks by {0}"),
+			[LeaderboardOptionCountName] = LocalizedString.CreateDefault("count"),
+			[LeaderboardOptionCountDescription] = LocalizedString.CreateDefault("Number of entries to display, defaults to 50"),
+			[LeaderboardOptionRankUsingName] = LocalizedString.CreateDefault("rank-using"),
+			[LeaderboardOptionRankUsingDescription] = LocalizedString.CreateDefault("Options for ranking criteria"),
+			[LeaderboardOptionDifficultyName] = LocalizedString.CreateDefault("difficulty"),
+			[LeaderboardOptionDifficultyDescription] = LocalizedString.CreateDefault("Use what difficulty to rank by"),
+			[LeaderboardRankTitle] = LocalizedString.CreateDefault("Rank"),
+			[LeaderboardDiscordNameTitle] = LocalizedString.CreateDefault("Discord Name"),
+			[LeaderboardNicknameTitle] = LocalizedString.CreateDefault("Nickname"),
+			[LeaderboardRksTitle] = LocalizedString.CreateDefault("RKS"),
+			[LeaderboardChallengeRankTitle] = LocalizedString.CreateDefault("Challenge Rank"),
+			[LeaderboardAccuracyTitle] = LocalizedString.CreateDefault("Average Accuracy ({0})"),
+			[LeaderboardAverageScoreTitle] = LocalizedString.CreateDefault("Average Score ({0})"),
+			[LeaderboardTotalScoreTitle] = LocalizedString.CreateDefault("Total Score ({0})"),
+			[LeaderboardCountTitle] = LocalizedString.CreateDefault("Achieved Count ({0})"),
+			[LeaderboardRowRankFormat] = LocalizedString.CreateDefault("#{0:calc(+1)}"),
+			[LeaderboardChallengeFormat] = LocalizedString.CreateDefault("{0.Rank} {0.Level}"),
+			[LeaderboardReply] = LocalizedString.CreateDefault("You are at rank {0:calc(+1)}, with statistic of {1}:"),
+			[LeaderboardFailedToAnalyze] = LocalizedString.CreateDefault("Failed to calculate your rank on leaderboard! Please do `/get-scores` to check if your save is good."),
+
+			// [] = LocalizedString.CreateDefault(""),
 		});
 	}
 	protected override bool Load(out LocalizationManager data)

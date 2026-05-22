@@ -1,7 +1,7 @@
 ﻿## Quick Starting Guide
 If you are using this for the first time, please follow the steps to set up your account for the bot.
 1. Use `/login` to link your account first, you will see a parameter named `is_international`, this depends on where did you get your game.
-For example, on Google play, Apple store, and TapTap (China) you would be using non-internaional account (fill `false` for this), on TapTap Global, you would be using international account (fill `true`).
+For example, on Apple store or TapTap (China) you would be using non-internaional account (fill `false` for this), on TapTap Global or Google Play, you would be using international account (fill `true`).
  - Alternatively, you can also use `/link-token` if you already have token and can't or don't want to go through the login process. You still need to fill out the `is_international` parameter.
 2. (Optional) Set your score precision using `/set-precision`.
 3. (Optional, this is almost optional in every case) Use `/get-time-index` to find the save you want to check, usually only used if you want to see older save (MAY NOT be supported, for detail see `/get-time-index` usage).

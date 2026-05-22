@@ -14,6 +14,7 @@
 	<ItemGroup>
 		<PackageReference Include="CsvHelper" Version="33.1.0" />
 		<PackageReference Include="FuzzySharp" Version="2.0.2" />
+		<PackageReference Include="MemoryPack" Version="1.21.4" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.15" />
 		<PackageReference Include="NLog" Version="5.4.0" />
 		<PackageReference Include="NLog.Web.AspNetCore" Version="5.4.0" />
@@ -22,7 +23,7 @@
 		<PackageReference Include="System.Runtime.Caching" Version="8.0.1" />
 		<PackageReference Include="yt6983138.HtmlToImage.NET" Version="1.0.0" />
 		<PackageReference Include="yt6983138.PhiInfo.CLI.Library" Version="2.0.3" />
-		<PackageReference Include="PhigrosLibraryCSharp" Version="4.1.0" />
+		<PackageReference Include="PhigrosLibraryCSharp" Version="4.2.0" />
 		<PackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="3.3.4">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

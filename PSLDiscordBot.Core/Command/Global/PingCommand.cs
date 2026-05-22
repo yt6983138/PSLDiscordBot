@@ -14,8 +14,7 @@ public class PingCommand : GuestCommandBase
 		{ "Dns and Github", [new("http://8.8.8.8/"), new("https://github.com")] }
 	};
 
-	public PingCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosService phigrosData, ILoggerFactory loggerFactory)
-		: base(config, database, localization, phigrosData, loggerFactory)
+	public PingCommand(IServiceProvider provider) : base(provider)
 	{
 	}
 

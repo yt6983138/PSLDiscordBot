@@ -2,7 +2,7 @@
 using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace PSLDiscordBot.Core.UserDatas;
+namespace PSLDiscordBot.Core.Models;
 
 [PrimaryKey(nameof(UserId))]
 public class MiscInfo

@@ -11,6 +11,7 @@ public static partial class PSLNormalCommandKey
 
 	public static partial string SongScoresSongNotPlayed { get; }
 	public static partial string SongScoresQueryResult { get; }
+	public static partial string SongScoresQueryResultForOther { get; }
 	#endregion
 
 	#region SetShowCountDefaultCommand
@@ -170,5 +171,47 @@ public static partial class PSLNormalCommandKey
 	public static partial string LogoutDescription { get; }
 
 	public static partial string LogoutSuccessful { get; }
+	#endregion
+
+	#region SetPublicVisibilityCommand
+	public static partial string SetPublicVisibilityName { get; }
+	public static partial string SetPublicVisibilityDescription { get; }
+
+	public static partial string SetPublicVisibilityOptionVisibilityName { get; }
+	public static partial string SetPublicVisibilityOptionVisibilityDescription { get; }
+
+	public static partial string SetPublicVisibilitySuccess { get; }
+	#endregion
+
+	#region LeaderboardCommand
+	public static partial string LeaderboardName { get; }
+	public static partial string LeaderboardDescription { get; }
+
+	public static partial string LeaderboardOptionRankUsingSubcommandDescription { get; }
+
+	public static partial string LeaderboardOptionCountName { get; }
+	public static partial string LeaderboardOptionCountDescription { get; }
+
+	public static partial string LeaderboardOptionRankUsingName { get; }
+	public static partial string LeaderboardOptionRankUsingDescription { get; }
+
+	public static partial string LeaderboardOptionDifficultyName { get; }
+	public static partial string LeaderboardOptionDifficultyDescription { get; }
+
+	public static partial string LeaderboardRankTitle { get; }
+	public static partial string LeaderboardDiscordNameTitle { get; }
+	public static partial string LeaderboardNicknameTitle { get; }
+	public static partial string LeaderboardRksTitle { get; }
+	public static partial string LeaderboardChallengeRankTitle { get; }
+	public static partial string LeaderboardAccuracyTitle { get; }
+	public static partial string LeaderboardAverageScoreTitle { get; }
+	public static partial string LeaderboardTotalScoreTitle { get; }
+	public static partial string LeaderboardCountTitle { get; }
+
+	public static partial string LeaderboardRowRankFormat { get; }
+	public static partial string LeaderboardChallengeFormat { get; }
+
+	public static partial string LeaderboardReply { get; }
+	public static partial string LeaderboardFailedToAnalyze { get; }
 	#endregion
 }

@@ -3,8 +3,7 @@
 [AddToGlobal]
 public class LogoutCommand : CommandBase
 {
-	public LogoutCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosService phigrosData, ILoggerFactory loggerFactory)
-		: base(config, database, localization, phigrosData, loggerFactory)
+	public LogoutCommand(IServiceProvider provider) : base(provider)
 	{
 	}
 
@@ -22,6 +21,8 @@ public class LogoutCommand : CommandBase
 		{
 			requester.MiscData.Remove(miscData);
 		}
+		await requester.RemoveLeaderboardEntryAsync(arg.User.Id);
+
 		await requester.SaveChangesAsync();
 
 		await arg.QuickReply(this._localization[PSLNormalCommandKey.LogoutSuccessful]);

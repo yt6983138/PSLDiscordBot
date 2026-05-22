@@ -1,5 +1,6 @@
 ﻿using PhiInfo.CLI;
 using PhiInfo.Core.Models.Information;
+using PSLDiscordBot.Framework.Utilities;
 using SmartFormat;
 using System.Text.Json;
 

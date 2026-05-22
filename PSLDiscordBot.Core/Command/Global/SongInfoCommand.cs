@@ -6,8 +6,7 @@ namespace PSLDiscordBot.Core.Command.Global;
 [AddToGlobal]
 public class SongInfoCommand : GuestCommandBase
 {
-	public SongInfoCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosService phigrosData, ILoggerFactory loggerFactory)
-		: base(config, database, localization, phigrosData, loggerFactory)
+	public SongInfoCommand(IServiceProvider provider) : base(provider)
 	{
 	}
 

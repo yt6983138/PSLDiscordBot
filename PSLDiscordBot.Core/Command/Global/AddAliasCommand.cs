@@ -5,8 +5,7 @@ public class AddAliasCommand : CommandBase
 {
 	public const double SearchThreshold = 0.9;
 
-	public AddAliasCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosService phigrosData, ILoggerFactory loggerFactory)
-		: base(config, database, localization, phigrosData, loggerFactory)
+	public AddAliasCommand(IServiceProvider provider) : base(provider)
 	{
 	}
 

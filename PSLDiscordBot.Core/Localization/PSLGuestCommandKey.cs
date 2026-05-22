@@ -67,4 +67,12 @@ public static partial class PSLGuestCommandKey
 	public static partial string DownloadAssetOptionDownloadPEZName { get; }
 	public static partial string DownloadAssetOptionDownloadPEZDescription { get; }
 	#endregion
+
+	#region TOSCommand
+	public static partial string TOSName { get; }
+	public static partial string TOSDescription { get; }
+
+	public static partial string TOSAgreed { get; }
+	public static partial string TOSContent { get; }
+	#endregion
 }

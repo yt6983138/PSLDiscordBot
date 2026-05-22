@@ -3,16 +3,16 @@ using System.Text;
 
 namespace PSLDiscordBot.Core.Command.Global;
 
+// tbh i feels like all analyze command are not useful since PhigrosSaveDumper exists
 [AddToGlobal]
 public class AnalyzeSaveCommand : AdminCommandBase
 {
-	public AnalyzeSaveCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosService phigrosData, ILoggerFactory loggerFactory)
-		: base(config, database, localization, phigrosData, loggerFactory)
+	public AnalyzeSaveCommand(IServiceProvider provider) : base(provider)
 	{
 	}
 
 	public override OneOf<string, LocalizedString> PSLName => "analyze-save";
-	public override OneOf<string, LocalizedString> PSLDescription => "Analyze someone's save. [Admin command]";
+	public override OneOf<string, LocalizedString> PSLDescription => "[Admin command] Analyze someone's save.";
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder
@@ -37,7 +37,7 @@ public class AnalyzeSaveCommand : AdminCommandBase
 		ulong userId = arg.User.Id;
 		string token = arg.GetOption<string>("token");
 		bool isInternational = arg.GetOption<bool>("is_international");
-		UserData userData = new(userId, token, isInternational);
+		UserData userData = new(userId, token, isInternational, 0, false);
 		int index = arg.GetIntegerOptionAsInt32OrDefault("index");
 
 		SaveContext? context = await this._phigrosService.TryHandleAndFetchContext(userData.SaveCache, arg, index);

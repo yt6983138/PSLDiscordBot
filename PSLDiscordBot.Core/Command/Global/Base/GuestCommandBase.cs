@@ -1,7 +1,12 @@
-﻿namespace PSLDiscordBot.Core.Command.Global.Base;
+﻿using PSLDiscordBot.Framework.Utilities;
+
+namespace PSLDiscordBot.Core.Command.Global.Base;
 public abstract class GuestCommandBase : CommandBase
 {
-	protected GuestCommandBase(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosService phigrosData, ILoggerFactory loggerFactory) : base(config, database, localization, phigrosData, loggerFactory)
+	public override bool RequireTOSAcceptance => false;
+
+	protected GuestCommandBase(IServiceProvider provider)
+		: base(provider)
 	{
 	}
 
@@ -9,7 +14,18 @@ public abstract class GuestCommandBase : CommandBase
 	{
 		using DataBaseService.DbDataRequester requester = this._dataBaseService.NewRequester();
 		await arg.DeferAsync(ephemeral: this.IsEphemeral);
-		await this.Callback(arg, null, requester, executer);
+		UserData? userData = await requester.GetUserDataDirectlyAsync(arg.User.Id);
+
+		bool hasAgreedTos = (userData?.TOSAgreementLevel).GetValueOrDefault() >= this._config.Value.CurrentTOSAgreementLevel
+			|| this._temporaryTOSAgreementService.HasAgreed(arg.User.Id);
+
+		if (!hasAgreedTos && this.RequireTOSAcceptance)
+		{
+			await arg.QuickReply(this._localization[PSLCommonKey.CommandBaseTOSNotAgreed]);
+			return;
+		}
+
+		await this.Callback(arg, userData, requester, executer);
 	}
 
 	public abstract override Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer);

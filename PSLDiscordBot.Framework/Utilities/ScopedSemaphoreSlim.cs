@@ -1,4 +1,4 @@
-﻿namespace PSLDiscordBot.Framework;
+﻿namespace PSLDiscordBot.Framework.Utilities;
 
 public class ScopedSemaphoreSlim : IDisposable
 {

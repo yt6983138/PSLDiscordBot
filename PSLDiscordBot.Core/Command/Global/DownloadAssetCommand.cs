@@ -8,8 +8,7 @@ namespace PSLDiscordBot.Core.Command.Global;
 [AddToGlobal]
 public class DownloadAssetCommand : GuestCommandBase
 {
-	public DownloadAssetCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosService phigrosData, ILoggerFactory loggerFactory)
-		: base(config, database, localization, phigrosData, loggerFactory)
+	public DownloadAssetCommand(IServiceProvider provider) : base(provider)
 	{
 	}
 
@@ -26,7 +25,7 @@ public class DownloadAssetCommand : GuestCommandBase
 			this._localization[PSLGuestCommandKey.DownloadAssetOptionDownloadPEZName],
 			ApplicationCommandOptionType.Integer,
 			this._localization[PSLGuestCommandKey.DownloadAssetOptionDownloadPEZDescription],
-			choices: Utils.CreateChoicesFromEnum<Difficulty>(),
+			choices: BuilderUtility.CreateChoicesFromEnum<Difficulty>(),
 			isRequired: false);
 
 	public override async Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)

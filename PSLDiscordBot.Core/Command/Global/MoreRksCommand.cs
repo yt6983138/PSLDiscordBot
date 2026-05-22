@@ -7,8 +7,7 @@ namespace PSLDiscordBot.Core.Command.Global;
 [AddToGlobal]
 public class MoreRksCommand : CommandBase
 {
-	public MoreRksCommand(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosService phigrosData, ILoggerFactory loggerFactory)
-		: base(config, database, localization, phigrosData, loggerFactory)
+	public MoreRksCommand(IServiceProvider provider) : base(provider)
 	{
 	}
 

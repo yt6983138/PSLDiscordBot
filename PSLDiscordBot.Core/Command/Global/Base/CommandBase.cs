@@ -1,4 +1,7 @@
-﻿namespace PSLDiscordBot.Core.Command.Global.Base;
+﻿using Microsoft.Extensions.DependencyInjection;
+using PSLDiscordBot.Framework.Utilities;
+
+namespace PSLDiscordBot.Core.Command.Global.Base;
 public abstract class CommandBase : BasicCommandBase
 {
 	#region Injection
@@ -7,16 +10,20 @@ public abstract class CommandBase : BasicCommandBase
 	protected readonly LocalizationService _localization;
 	protected readonly ILogger _logger;
 	protected readonly PhigrosService _phigrosService;
+	protected readonly TemporaryTOSAgreementService _temporaryTOSAgreementService;
+	protected readonly IServiceProvider _serviceProvider;
 	#endregion
 
-	public CommandBase(IOptions<Config> config, DataBaseService database, LocalizationService localization, PhigrosService phigrosData, ILoggerFactory loggerFactory)
+	public CommandBase(IServiceProvider provider)
 		: base()
 	{
-		this._logger = loggerFactory.CreateLogger(this.GetType());
-		this._config = config;
-		this._dataBaseService = database;
-		this._localization = localization;
-		this._phigrosService = phigrosData;
+		this._serviceProvider = provider;
+		this._logger = provider.GetRequiredService<ILoggerFactory>().CreateLogger(this.GetType());
+		this._config = provider.GetRequiredService<IOptions<Config>>();
+		this._dataBaseService = provider.GetRequiredService<DataBaseService>();
+		this._localization = provider.GetRequiredService<LocalizationService>();
+		this._phigrosService = provider.GetRequiredService<PhigrosService>();
+		this._temporaryTOSAgreementService = provider.GetRequiredService<TemporaryTOSAgreementService>();
 	}
 
 
@@ -27,6 +34,8 @@ public abstract class CommandBase : BasicCommandBase
 
 	public abstract OneOf<string, LocalizedString> PSLName { get; }
 	public abstract OneOf<string, LocalizedString> PSLDescription { get; }
+
+	public virtual bool RequireTOSAcceptance => true;
 
 	protected override SlashCommandBuilder BasicBuilder =>
 		base.BasicBuilder
@@ -41,6 +50,15 @@ public abstract class CommandBase : BasicCommandBase
 		UserData? userData = await this.CheckHasRegisteredAndReply(arg, requester);
 		if (userData is null)
 			return;
+
+		bool hasAgreedTos = userData.TOSAgreementLevel >= this._config.Value.CurrentTOSAgreementLevel
+			|| this._temporaryTOSAgreementService.HasAgreed(arg.User.Id);
+
+		if (!hasAgreedTos && this.RequireTOSAcceptance)
+		{
+			await arg.QuickReply(this._localization[PSLCommonKey.CommandBaseTOSNotAgreed]);
+			return;
+		}
 
 		await this.Callback(arg, userData, requester, executer);
 	}
