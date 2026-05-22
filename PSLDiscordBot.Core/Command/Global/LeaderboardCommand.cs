@@ -177,6 +177,10 @@ public class LeaderboardCommand : CommandBase
 		Dictionary<ulong, object> result = [];
 
 		Difficulty difficultyOrDefault = difficulty ?? DifficultyAll;
+
+		FrozenDictionary<ulong, int> targetDifficultyCount =
+			entries.ToFrozenDictionary(x => x.UserId, x => x.AnalyzedData.AchievedCounts.WhereMatchesDifficulty(difficultyOrDefault).Sum(x => x.Value));
+
 		if (byWhat == ByWhat.RKS)
 		{
 			entries.Sort((x, y) => y.AnalyzedData.RKS.CompareTo(x.AnalyzedData.RKS));
@@ -193,10 +197,10 @@ public class LeaderboardCommand : CommandBase
 			{
 				double xAcc = x.AnalyzedData.AverageAccuracies.WhereMatchesDifficulty(difficultyOrDefault)
 					.DefaultIfEmpty()
-					.Average(x => x.Value);
+					.Sum(z => z.Value.GetWeighted(targetDifficultyCount[x.UserId]));
 				double yAcc = y.AnalyzedData.AverageAccuracies.WhereMatchesDifficulty(difficultyOrDefault)
 					.DefaultIfEmpty()
-					.Average(x => x.Value);
+					.Sum(z => z.Value.GetWeighted(targetDifficultyCount[y.UserId]));
 
 				result[x.UserId] = xAcc;
 				result[y.UserId] = yAcc;
@@ -209,10 +213,10 @@ public class LeaderboardCommand : CommandBase
 			{
 				double xScore = x.AnalyzedData.AverageScores.WhereMatchesDifficulty(difficultyOrDefault)
 					.DefaultIfEmpty()
-					.Sum(z => z.Value * x.AnalyzedData.AchievedCounts.GetValueOrDefault(z.Key));
+					.Sum(z => z.Value.Data * z.Value.Count);
 				double yScore = y.AnalyzedData.AverageScores.WhereMatchesDifficulty(difficultyOrDefault)
 					.DefaultIfEmpty()
-					.Sum(z => z.Value * y.AnalyzedData.AchievedCounts.GetValueOrDefault(z.Key));
+					.Sum(z => z.Value.Data * z.Value.Count);
 
 				result[x.UserId] = (int)xScore;
 				result[y.UserId] = (int)yScore;
@@ -225,10 +229,10 @@ public class LeaderboardCommand : CommandBase
 			{
 				double xScore = x.AnalyzedData.AverageScores.WhereMatchesDifficulty(difficultyOrDefault)
 					.DefaultIfEmpty()
-					.Average(x => x.Value);
+					.Sum(z => z.Value.GetWeighted(targetDifficultyCount[x.UserId]));
 				double yScore = y.AnalyzedData.AverageScores.WhereMatchesDifficulty(difficultyOrDefault)
 					.DefaultIfEmpty()
-					.Average(x => x.Value);
+					.Sum(z => z.Value.GetWeighted(targetDifficultyCount[y.UserId]));
 
 				result[x.UserId] = xScore;
 				result[y.UserId] = yScore;

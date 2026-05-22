@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PSLDiscordBot.Framework.BuiltInServices;
-using PSLDiscordBot.Framework.Utilities;
 
 namespace PSLDiscordBot.Core.Services;
 
@@ -86,14 +85,17 @@ public class LeaderboardService
 			this._phigrosService.GetCompleteScores(gameRecord, out List<CompleteScore>? phis, out List<CompleteScore>? others, out double rks);
 
 			Dictionary<DifficultyStatus, int> achievedCounts = [];
-			Dictionary<DifficultyStatus, double> averageAccuracies = [];
-			Dictionary<DifficultyStatus, double> averageScores = [];
+			Dictionary<DifficultyStatus, AverageData> averageAccuracies = [];
+			Dictionary<DifficultyStatus, AverageData> averageScores = [];
 			foreach (CompleteScore scoreData in others)
 			{
 				DifficultyStatus difficultyStatus = new(scoreData.Score.Status, scoreData.Score.Difficulty);
 				int count = achievedCounts.GetValueOrDefault(difficultyStatus) + 1;
-				double acc = averageAccuracies.GetValueOrDefault(difficultyStatus) + scoreData.Score.Accuracy;
-				double score = averageScores.GetValueOrDefault(difficultyStatus) + scoreData.Score.Score;
+				AverageData acc = averageAccuracies.GetValueOrDefault(difficultyStatus);
+				AverageData score = averageScores.GetValueOrDefault(difficultyStatus);
+
+				acc = new(acc.Data + scoreData.Score.Accuracy, acc.Count + 1);
+				score = new(score.Data + scoreData.Score.Score, score.Count + 1);
 
 				achievedCounts[difficultyStatus] = count;
 				averageAccuracies[difficultyStatus] = acc;
@@ -102,8 +104,10 @@ public class LeaderboardService
 
 			foreach ((DifficultyStatus index, int count) in achievedCounts)
 			{
-				averageAccuracies[index] /= count;
-				averageScores[index] /= count;
+				AverageData acc = averageAccuracies[index];
+				AverageData score = averageScores[index];
+				averageAccuracies[index] = acc with { Data = acc.Data / count };
+				averageScores[index] = score with { Data = score.Data / count };
 			}
 
 			// why are they not using nullables bruh
