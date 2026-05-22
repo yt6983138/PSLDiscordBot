@@ -241,8 +241,7 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 			[TOSName] = LocalizedString.CreateDefault("tos"),
 			[TOSDescription] = LocalizedString.CreateDefault("View the Terms of Service. Do this command twice agrees it."),
 			[TOSAgreed] = LocalizedString.CreateDefault("You have agreed to the Terms of Service{0:cond:|, please do /login or /link-token in 15 mins to start using the bot}. Thank you for your cooperation."),
-			[TOSContent] = LocalizedString.CreateDefault("Please view it [here](), once you are done, please do this command again in 15 mins to agree TOS."),
-			// TODO: fill tos url
+			[TOSContent] = LocalizedString.CreateDefault("Please view it [here](https://github.com/yt6983138/PSLDiscordBot/blob/master/Documentation/TermsOfServiceV2.md), once you are done, please do this command again in 15 mins to agree TOS."),
 
 			[SetPublicVisibilityName] = LocalizedString.CreateDefault("set-public-visibility"),
 			[SetPublicVisibilityDescription] = LocalizedString.CreateDefault("Set whether your scores or statistics is visible to public or not."),
