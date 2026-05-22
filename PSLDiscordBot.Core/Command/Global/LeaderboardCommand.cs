@@ -46,6 +46,8 @@ public class LeaderboardCommand : CommandBase
 	public override OneOf<string, LocalizedString> PSLName => this._localization[PSLNormalCommandKey.LeaderboardName];
 	public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLNormalCommandKey.LeaderboardDescription];
 
+	public override bool IsEphemeral => false;
+
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder
 		.AddOptions(CreateRankUsingOption(this._localization, new SlashCommandOptionBuilder()
