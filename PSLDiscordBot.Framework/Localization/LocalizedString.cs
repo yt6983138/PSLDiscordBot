@@ -126,6 +126,30 @@ public class LocalizedString : IDictionary<string, string>, IReadOnlyDictionary<
 
 		return (str = this._code) is not null;
 	}
+
+	public Dictionary<Language, string> BuildFormattedDictionary(params object?[] format)
+	{
+		return this.LocalizedStrings.ToDictionary(
+			x => x.Key,
+			x => Smart.Format(x.Value, format)
+		);
+	}
+	public Dictionary<string, string> BuildDiscordFormattedDictionary(params object?[] format)
+	{
+		return this.LocalizedStrings.ToDictionary(
+			x => x.Key.GetCode(),
+			x => Smart.Format(x.Value, format)
+		);
+	}
+	public LocalizedString MakePreFormatted(params object?[] format)
+	{
+		LocalizedString newString = new(this.BuildFormattedDictionary(format), this._code)
+		{
+			FallBackLanguages = [.. this.FallBackLanguages]
+		};
+		return newString;
+	}
+
 	public LocalizedString CloneAsNew()
 	{
 		LocalizedString newString = new(this.LocalizedStrings, null);
