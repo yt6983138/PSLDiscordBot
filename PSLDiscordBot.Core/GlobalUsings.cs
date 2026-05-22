@@ -14,3 +14,4 @@ global using PSLDiscordBot.Core.Utility;
 global using PSLDiscordBot.Framework;
 global using PSLDiscordBot.Framework.CommandBase;
 global using PSLDiscordBot.Framework.Localization;
+global using PSLDiscordBot.Framework.Utilities;

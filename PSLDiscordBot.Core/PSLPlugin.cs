@@ -11,6 +11,7 @@ using PSLDiscordBot.Core.ImageGenerating;
 using PSLDiscordBot.Framework.BuiltInServices;
 using PSLDiscordBot.Framework.MiscEventArgs;
 using PSLDiscordBot.Framework.ServiceBase;
+using PSLDiscordBot.Framework.Utilities;
 using SixLabors.Fonts;
 using SmartFormat;
 using System.Net.WebSockets;

@@ -2,7 +2,7 @@
 using System.Text;
 using System.Text.Json;
 
-namespace PSLDiscordBot.Framework;
+namespace PSLDiscordBot.Framework.Utilities;
 
 public abstract class CustomJsonController : Controller
 {

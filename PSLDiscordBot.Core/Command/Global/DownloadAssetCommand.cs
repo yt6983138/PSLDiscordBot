@@ -25,7 +25,7 @@ public class DownloadAssetCommand : GuestCommandBase
 			this._localization[PSLGuestCommandKey.DownloadAssetOptionDownloadPEZName],
 			ApplicationCommandOptionType.Integer,
 			this._localization[PSLGuestCommandKey.DownloadAssetOptionDownloadPEZDescription],
-			choices: Utils.CreateChoicesFromEnum<Difficulty>(),
+			choices: BuilderUtility.CreateChoicesFromEnum<Difficulty>(),
 			isRequired: false);
 
 	public override async Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)

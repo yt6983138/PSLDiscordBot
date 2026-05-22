@@ -1,4 +1,6 @@
-﻿namespace PSLDiscordBot.Core.Command.Global.Base;
+﻿using PSLDiscordBot.Framework.Utilities;
+
+namespace PSLDiscordBot.Core.Command.Global.Base;
 public abstract class GuestCommandBase : CommandBase
 {
 	public override bool RequireTOSAcceptance => false;

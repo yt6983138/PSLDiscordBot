@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using PSLDiscordBot.Framework.Utilities;
 
 namespace PSLDiscordBot.Core.Command.Global.Base;
 public abstract class CommandBase : BasicCommandBase
