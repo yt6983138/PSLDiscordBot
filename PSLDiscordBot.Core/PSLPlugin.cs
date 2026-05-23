@@ -11,7 +11,6 @@ using PSLDiscordBot.Core.ImageGenerating;
 using PSLDiscordBot.Framework.BuiltInServices;
 using PSLDiscordBot.Framework.MiscEventArgs;
 using PSLDiscordBot.Framework.ServiceBase;
-using PSLDiscordBot.Framework.Utilities;
 using SixLabors.Fonts;
 using SmartFormat;
 using System.Net.WebSockets;
@@ -173,6 +172,9 @@ public class PSLPlugin : IPlugin
 		LocalizationService localization = host.Services.GetRequiredService<LocalizationService>();
 		BugReportHandlerService bugHandler = host.Services.GetRequiredService<BugReportHandlerService>();
 		host.Services.GetRequiredService<IMvcConfigurationService>().StaticFileOptions.ServeUnknownFileTypes = true;
+
+		// force it to register the event callback
+		host.Services.GetRequiredService<LeaderboardService>();
 
 		this._program.AfterMainInitialize += this.Program_AfterMainInitialize;
 

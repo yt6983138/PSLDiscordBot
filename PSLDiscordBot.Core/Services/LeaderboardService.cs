@@ -29,25 +29,27 @@ public class LeaderboardService
 		this._discordClient = discordClient;
 		this._phigrosService = phigrosService;
 
-		if (this._config.Value.LeaderboardRefreshInterval.TotalSeconds > 1)
-		{
-			this._refreshTimer = new(_ => this.AutoRefresh(),
-				null,
-				this._config.Value.LeaderboardRefreshInterval,
-				this._config.Value.LeaderboardRefreshInterval);
-		}
+		this._phigrosService.OnSaveContextFetched += this.PhigrosService_OnSaveContextFetched;
 	}
 
-	private async void AutoRefresh()
+	private async void PhigrosService_OnSaveContextFetched(object? sender, SaveContextFetchEventArg e)
 	{
-		using CancellationTokenSource cts = new(this._config.Value.LeaderboardRefreshInterval);
 		try
 		{
-			await this.RefreshCache(cts.Token);
+			using DataBaseService.DbDataRequester requester = this._dataBase.NewRequester();
+			UserData? userData = await requester.GetUserDataDirectlyAsync(e.Interaction.User.Id);
+
+			if (userData is null)
+			{
+				this._logger.LogWarning("User {id} not found in database when trying to refresh leaderboard cache after save context fetched", e.Interaction.User.Id);
+				return;
+			}
+
+			await this.RefreshForUser(userData.SaveCache, userData.UserId, userData.IsInternational);
 		}
 		catch (Exception ex)
 		{
-			this._logger.LogError(ex, "Failed to auto refresh leaderboard cache");
+			this._logger.LogError(ex, "Failed to refresh leaderboard for user {id} using hook", e.Interaction.User.Id);
 		}
 	}
 
@@ -138,6 +140,19 @@ public class LeaderboardService
 			this._logger.LogWarning(ex, "Failed to analyze leaderboard cache for user {id}", userId);
 		}
 		return null;
+	}
+
+	public async Task RefreshForUser(Save save, ulong userId, bool isInternational, CancellationToken ct = default)
+	{
+		LeaderboardEntry? entry = await this.TryAnalyzeUser(save, userId, isInternational, ct);
+
+		if (entry is null)
+			throw new InvalidOperationException("Failed to analyze user data, cannot refresh leaderboard cache for user");
+
+		using ScopedSemaphoreSlim.Scope _ = await this._fullLeaderboardOperationLock.EnterScopeAsync(ct);
+		using DataBaseService.DbDataRequester requester = this._dataBase.NewRequester();
+		await requester.Leaderboard.AddOrUpdate(entry);
+		await requester.SaveChangesAsync(ct);
 	}
 
 	public async Task RefreshCache(CancellationToken ct)

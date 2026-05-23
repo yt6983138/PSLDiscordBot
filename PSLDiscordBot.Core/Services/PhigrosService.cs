@@ -1,12 +1,12 @@
 ﻿using PhiInfo.CLI;
 using PhiInfo.Core.Models.Information;
-using PSLDiscordBot.Framework.Utilities;
 using SmartFormat;
 using System.Text.Json;
 
 namespace PSLDiscordBot.Core.Services;
 
 public record class CallbackLoginRequest(CallbackLoginData Data, Func<TapTapTokenData, Task> Callback, bool UseChinaEndpoint);
+public record class SaveContextFetchEventArg(Save Save, SaveContext Context, IDiscordInteraction Interaction);
 public class PhigrosService
 {
 	private readonly ILogger<PhigrosService> _logger;
@@ -30,6 +30,8 @@ public class PhigrosService
 
 	public IReadOnlyDictionary<string, string> NameMap { get; }
 	public IReadOnlyDictionary<ChartConstantKey, float> ChartConstantMap { get; }
+
+	public event EventHandler<SaveContextFetchEventArg>? OnSaveContextFetched;
 
 	public PhigrosService(IOptions<Config> config, ILogger<PhigrosService> logger, LocalizationService localization)
 	{
@@ -182,7 +184,15 @@ public class PhigrosService
 				await command.QuickReply(onNoSaves);
 				return null;
 			}
-			return await save.GetSaveContextAsync(index);
+			SaveContext ctx = await save.GetSaveContextAsync(index);
+			try
+			{
+				this.OnSaveContextFetched?.Invoke(this, new SaveContextFetchEventArg(save, ctx, command));
+			}
+			catch (Exception ex)
+			{
+				this._logger.LogError(ex, "An error occurred while invoking OnSaveContextFetched event");
+			}
 		}
 		catch (MaxValueArgumentOutOfRangeException ex) when (ex.ActualValue is int && ex.MaxValue is int)
 		{
