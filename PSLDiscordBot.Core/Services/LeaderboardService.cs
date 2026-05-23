@@ -45,6 +45,11 @@ public class LeaderboardService
 				return;
 			}
 
+			if (userData.PublicVisibility == false || !this._config.Value.AgreedTOS(userData))
+			{
+				return;
+			}
+
 			await this.RefreshForUser(userData.SaveCache, userData.UserId, userData.IsInternational);
 		}
 		catch (Exception ex)
