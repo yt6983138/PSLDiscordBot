@@ -124,6 +124,7 @@ public class LeaderboardService
 				DiscordDisplayName = discordUser?.GlobalName,
 				CachedAt = DateTime.Now,
 				GameVersion = summary.GameVersion,
+				IsInternational = isInternational,
 				AnalyzedData = new()
 				{
 					RKS = rks,

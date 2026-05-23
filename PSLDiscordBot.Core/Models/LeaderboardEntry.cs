@@ -13,6 +13,7 @@ public class LeaderboardEntry
 	public string? DiscordDisplayName { get; set; }
 
 	public required short GameVersion { get; set; }
+	public required bool IsInternational { get; set; }
 
 	[NotMapped]
 	public required LeaderboardAnalyzedData AnalyzedData { get; set; }
