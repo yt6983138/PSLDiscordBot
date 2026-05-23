@@ -193,6 +193,7 @@ public class PhigrosService
 			{
 				this._logger.LogError(ex, "An error occurred while invoking OnSaveContextFetched event");
 			}
+			return ctx;
 		}
 		catch (MaxValueArgumentOutOfRangeException ex) when (ex.ActualValue is int && ex.MaxValue is int)
 		{
