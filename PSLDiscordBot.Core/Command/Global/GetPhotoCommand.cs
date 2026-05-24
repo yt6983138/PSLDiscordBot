@@ -9,12 +9,14 @@ public class GetPhotoCommand : CommandBase
 {
 	private readonly ImageGenerator _imageGenerator;
 	private readonly IDiscordClientService _discordClientService;
+	private readonly LargeImageCoolDownService _coolDownService;
 
-	public GetPhotoCommand(IServiceProvider provider, IDiscordClientService discordClientService, ImageGenerator imageGenerator)
+	public GetPhotoCommand(IServiceProvider provider, IDiscordClientService discordClientService, ImageGenerator imageGenerator, LargeImageCoolDownService coolDownService)
 		: base(provider)
 	{
 		this._imageGenerator = imageGenerator;
 		this._discordClientService = discordClientService;
+		this._coolDownService = coolDownService;
 	}
 
 	public static Dictionary<string, ScoreStatus> ScoreStatusAlias { get; set; } = new()
@@ -132,14 +134,14 @@ public class GetPhotoCommand : CommandBase
 		}
 		if (shouldUseCoolDown)
 		{
-			if (DateTime.Now < data.GetPhotoCoolDownUntil)
+			if (this._coolDownService.IsInCooldown(arg.User.Id, out DateTime coolDownUntil))
 			{
 				await arg.QuickReply(this._localization[PSLNormalCommandKey.GetPhotoStillInCoolDown],
 					this._config.Value.GetPhotoCoolDownWhenLargerThan,
-					data.GetPhotoCoolDownUntil - DateTime.Now);
+					coolDownUntil - DateTime.Now);
 				return;
 			}
-			data.GetPhotoCoolDownUntil = DateTime.Now + this._config.Value.GetPhotoCoolDown;
+			this._coolDownService.Set(arg.User.Id);
 		}
 
 		SaveContext? context = await this._phigrosService.TryHandleAndFetchContext((generateForUserData ?? data).SaveCache, arg, index);

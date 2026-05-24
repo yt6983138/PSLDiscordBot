@@ -24,10 +24,6 @@ public class UserData
 			return field;
 		}
 	}
-	// TODO: i just realized since we removed caching this wouldn't work anymore, need to create a new service for this
-	[NotMapped]
-	[JsonIgnore]
-	public DateTime GetPhotoCoolDownUntil { get; set; } = default;
 
 	public UserData(ulong userId, string token, bool isInternational, int tosAgreementLevel, bool publicVisibility, string showFormat = ".00")
 	{
