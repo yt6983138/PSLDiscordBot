@@ -12,7 +12,7 @@ public class DiscordClientServiceConfig
 	public string Token { get; set; } = "";
 }
 [AutoExtractInterface(accessibility: Accessibility.Public)]
-internal class DiscordClientService : IDiscordClientService // TODO: refactor this
+internal class DiscordClientService : IDiscordClientService
 {
 	private readonly DiscordClientServiceConfig _config;
 

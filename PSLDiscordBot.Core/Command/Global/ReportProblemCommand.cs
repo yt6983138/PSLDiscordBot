@@ -31,7 +31,7 @@ public class ReportProblemCommand : GuestCommandBase
 			isRequired: false);
 
 	public override async Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
-	{ // TODO: make a service for this and add something like a backend gui in AdminHelper
+	{
 		string message = arg.GetOption<string>(this._localization[PSLGuestCommandKey.ReportProblemOptionMessageName]);
 		IAttachment? attachment = arg.GetOptionOrDefault<IAttachment>(this._localization[PSLGuestCommandKey.ReportProblemOptionAttachmentName]);
 

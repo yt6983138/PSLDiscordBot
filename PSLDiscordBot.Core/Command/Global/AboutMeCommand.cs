@@ -30,7 +30,6 @@ public class AboutMeCommand : CommandBase
 		//	ApplicationCommandOptionType.User,
 		//	this._localization[PSLCommonOptionKey.GenerateForOptionDescription],
 		//	isRequired: false)
-		// TODO: still thinking should we enable this
 		;
 
 
