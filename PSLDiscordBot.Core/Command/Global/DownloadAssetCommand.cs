@@ -39,77 +39,94 @@ public class DownloadAssetCommand : GuestCommandBase
 			return;
 		}
 
-		StringBuilder query = SongInfoCommand.BuildReturnQueryString(foundAlias, this._phigrosService);
+		string query = SongInfoCommand.BuildReturnQueryString(foundAlias, this._phigrosService).ToString();
 
 		(string id, ImmutableArray<string> alias, double Score) = foundAlias[0];
 		SongInfo firstInfo = this._phigrosService.NonMultiLanguageInfos.GetSongInfoById(id);
-		Dictionary<Difficulty, SongLevel> diff = firstInfo.Levels;
-		bool hasAT = diff.ContainsKey(Difficulty.AT);
 
-		Dictionary<Difficulty, string> chartUrls = Enum.GetValues<Difficulty>()
-			.ToDictionary(x => x, x => SongInfoCommand.BuildChartUrl(id, x));
-		string illustrationUrl = SongInfoCommand.BuildAssetUrl(id, "illustration", "png");
-		string musicUrl = SongInfoCommand.BuildAssetUrl(id, "music", "ogg");
+		Dictionary<Difficulty, string> chartPaths = firstInfo.Levels.Keys.ToDictionary(x => x, x => SongInfoCommand.GetChartPath(id, x));
+		Dictionary<SongInfoCommand.IllustrationType, string> illustrationPaths = Enum.GetValues<SongInfoCommand.IllustrationType>()
+			.ToDictionary(x => x, type => SongInfoCommand.GetIllustrationPath(id, type));
+		string musicPath = SongInfoCommand.GetMusicPath(id);
 
-		StringBuilder @return = new($"Found {foundAlias.Count} match(es). Assets: " +
-			$"[Illustration]({illustrationUrl}), " +
-			$"[Music]({musicUrl}), ");
+		List<FileAttachment> attachments = [
+			new FileAttachment(File.OpenRead(illustrationPaths[SongInfoCommand.IllustrationType.LowRes]), "preview.png"),
+			PSLUtils.ToAttachment(query, "Query.txt")
+		];
 
-		foreach (Difficulty difficulty in diff.Keys)
-		{ // UNDONE: localize those
-			@return.Append($"[Chart {difficulty}](<{chartUrls[difficulty]}>), ");
-		}
-		@return.Remove(@return.Length - 2, 2);
-
-		int rawDiff = arg.GetIntegerOptionAsInt32OrDefault("pez_chart_type", -1);
-		Difficulty parsed = (Difficulty)rawDiff;
-		if (diff.ContainsKey(parsed))
+		#region Normal ZIP Generation
+		MemoryStream zipStream = new();
+		using (ZipArchive zipArchive = new(zipStream, ZipArchiveMode.Create, true))
 		{
-			using HttpClient client = new();
-			Stream chart = await client.GetStreamAsync(chartUrls[parsed]);
-			Stream music = await client.GetStreamAsync(musicUrl);
-			Stream illustration = await client.GetStreamAsync(illustrationUrl);
+			foreach (KeyValuePair<Difficulty, string> item in chartPaths)
+			{
+				using FileStream chartStream = File.OpenRead(item.Value);
+				await chartStream.CopyToEntry(zipArchive.CreateEntry($"Chart_{item.Key}.json"));
+			}
+			foreach (KeyValuePair<SongInfoCommand.IllustrationType, string> item in illustrationPaths)
+			{
+				using FileStream illustrationStream = File.OpenRead(item.Value);
+				bool isFullRes = item.Key == SongInfoCommand.IllustrationType.FullRes;
+				await illustrationStream.CopyToEntry(zipArchive.CreateEntry($"Illustration{(isFullRes ? "" : item.Key.ToString())}.png"));
+			}
+
+			using FileStream musicStream = File.OpenRead(musicPath);
+			await musicStream.CopyToEntry(zipArchive.CreateEntry("music.wav"));
+
+			using Stream infoStream = zipArchive.CreateEntry("info.txt").Open();
+			infoStream.Write(Encoding.UTF8.GetBytes(query));
+		}
+		attachments.Add(new(zipStream, $"{id}.zip"));
+		#endregion
+
+		#region PEZ generation
+		int rawDiff = arg.GetIntegerOptionAsInt32OrDefault("pez_chart_type", -1);
+		Difficulty parsedDiff = (Difficulty)rawDiff;
+		if (firstInfo.Levels.TryGetValue(parsedDiff, out SongLevel? level))
+		{
+			MemoryStream pezStream = new();
+			ZipArchive pezArchive = new(pezStream, ZipArchiveMode.Create, true);
+
+			using Stream chart = File.OpenRead(chartPaths[parsedDiff]);
+			await chart.CopyToEntry(pezArchive.CreateEntry($"Chart_{parsedDiff}.json"));
+
+			using Stream illustration = File.OpenRead(illustrationPaths[SongInfoCommand.IllustrationType.FullRes]);
+			await illustration.CopyToEntry(pezArchive.CreateEntry("Illustration.png"));
+
+			using Stream music = File.OpenRead(musicPath);
+			await music.CopyToEntry(pezArchive.CreateEntry("Music.ogg"));
+
+
 			string infoTxt = $"""
 				#
 				Name: {firstInfo.Name}
 				Song: Music.ogg
 				Picture: Illustration.png
-				Chart: Chart_{parsed}.json
-				Level: {parsed} Lv.{diff[parsed].ChartConstant}
+				Chart: Chart_{parsedDiff}.json
+				Level: {parsedDiff} Lv.{level.ChartConstant}
 				Composer: {firstInfo.Composer}
 				Illustrator: {firstInfo.Illustrator}
-				Charter: {diff[parsed].Charter}
+				Charter: {level.Charter}
 				""";
-			MemoryStream stream = new();
-			ZipArchive archive = new(stream, ZipArchiveMode.Create, true);
+			using (Stream infoStream = pezArchive.CreateEntry("info.txt").Open())
+			{
+				infoStream.Write(Encoding.UTF8.GetBytes(infoTxt));
+			}
 
-			Stream chartStream = archive.CreateEntry($"Chart_{parsed}.json").Open();
-			chart.CopyTo(chartStream);
-			chartStream.Dispose();
+			pezArchive.Dispose();
 
-			Stream illustrationStream = archive.CreateEntry("Illustration.png").Open();
-			illustration.CopyTo(illustrationStream);
-			illustrationStream.Close();
-
-			Stream musicStream = archive.CreateEntry("Music.ogg").Open();
-			music.CopyTo(musicStream);
-			musicStream.Close();
-
-			Stream infoStream = archive.CreateEntry("info.txt").Open();
-			infoStream.Write(Encoding.UTF8.GetBytes(infoTxt));
-			infoStream.Close();
-
-			archive.Dispose();
-
-			await arg.QuickReplyWithAttachments(@return.ToString(),
-				[
-					PSLUtils.ToAttachment(query.ToString(), "Query.txt"),
-					new(stream, $"{id}.pez")
-				]);
-			return;
+			attachments.Add(new(pezStream, $"{id}.pez"));
 		}
+		#endregion
 
-		await arg.QuickReplyWithAttachments(@return.ToString(),
-			[PSLUtils.ToAttachment(query.ToString(), "Query.txt")]);
+		await arg.QuickReplyWithAttachments($"Found {foundAlias.Count} match(es). Assets of best match:", attachments.ToArray());
+	}
+}
+file static class Extension
+{
+	public static async Task CopyToEntry(this Stream stream, ZipArchiveEntry entry)
+	{
+		using Stream entryStream = entry.Open();
+		await stream.CopyToAsync(entryStream);
 	}
 }

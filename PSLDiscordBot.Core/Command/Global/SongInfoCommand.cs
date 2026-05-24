@@ -1,4 +1,5 @@
 ﻿using PhiInfo.Core.Models.Information;
+using PSLDiscordBot.Core.ImageGenerating;
 using System.Text;
 
 namespace PSLDiscordBot.Core.Command.Global;
@@ -6,6 +7,13 @@ namespace PSLDiscordBot.Core.Command.Global;
 [AddToGlobal]
 public class SongInfoCommand : GuestCommandBase
 {
+	public enum IllustrationType
+	{
+		FullRes,
+		Blur,
+		LowRes
+	}
+
 	public SongInfoCommand(IServiceProvider provider) : base(provider)
 	{
 	}
@@ -34,9 +42,11 @@ public class SongInfoCommand : GuestCommandBase
 		StringBuilder query = BuildReturnQueryString(foundAlias, this._phigrosService);
 		// UNDONE: localize those builder based messages
 
-		await arg.QuickReplyWithAttachments($"Found {foundAlias.Count} match(es). " +
-			$"[Illustration]({BuildAssetUrl(foundAlias[0].SongId, "illustration", "png")})",
-			[PSLUtils.ToAttachment(query.ToString(), "Query.txt")]);
+		await arg.QuickReplyWithAttachments($"Found {foundAlias.Count} match(es).",
+			[
+				new(File.OpenRead(GetIllustrationPath(foundAlias[0].SongId, IllustrationType.LowRes)), "preview.png"),
+				PSLUtils.ToAttachment(query.ToString(), "Query.txt")
+			]);
 	}
 
 	public static StringBuilder BuildReturnQueryString(List<SongSearchResult> foundAlias, PhigrosService service)
@@ -51,9 +61,8 @@ public class SongInfoCommand : GuestCommandBase
 			Chart Constant: {string.Join(", ", service.NonMultiLanguageInfos.GetSongInfoById(first.SongId).ChartConstantArray)}
 			Composer: {firstInfo.Composer}
 			Illustrator: {firstInfo.Illustrator}
-			Charters: {firstInfo.Levels[Difficulty.EZ].Charter}, {firstInfo.Levels[Difficulty.HD].Charter}, {firstInfo.Levels[Difficulty.IN].Charter}
+			Charters: {string.Join(", ", firstInfo.Levels.Values.Select(level => level.Charter))}
 			""");
-		if (firstInfo.Levels.TryGetValue(Difficulty.AT, out SongLevel? atLevel)) query.Append($", {atLevel.Charter}");
 
 		if (foundAlias.Count > 1)
 		{
@@ -70,8 +79,16 @@ public class SongInfoCommand : GuestCommandBase
 		}
 		return query;
 	}
-	public static string BuildAssetUrl(string id, string branch, string ext)
-	   => $"https://raw.githubusercontent.com/7aGiven/Phigros_Resource/refs/heads/{branch}/{id[..^2]}.{ext}";
-	public static string BuildChartUrl(string id, Difficulty difficulty)
-		=> $"https://raw.githubusercontent.com/7aGiven/Phigros_Resource/refs/heads/chart/{id}/{difficulty}.json";
+	public static string GetIllustrationPath(string songId, IllustrationType type = IllustrationType.FullRes)
+	{
+		return $"./Assets/Tracks/{songId}/Illustration{(type == IllustrationType.FullRes ? "" : type.ToString())}.png".ToFullPath();
+	}
+	public static string GetChartPath(string songId, Difficulty difficulty)
+	{
+		return $"./Assets/Tracks/{songId}/Chart_{difficulty}.json".ToFullPath();
+	}
+	public static string GetMusicPath(string songId)
+	{
+		return $"./Assets/Tracks/{songId}/music.wav".ToFullPath();
+	}
 }
