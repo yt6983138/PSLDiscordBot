@@ -1,20 +1,11 @@
-﻿using Microsoft.EntityFrameworkCore;
-
-namespace PSLDiscordBot.Core.Models;
-
-[Obsolete]
-[PrimaryKey(nameof(SongId))]
-public class SongAlias
+﻿namespace PSLDiscordBot.Core.Models.SongAlias2;
+public class AliasTableAttribute
 {
-	public string SongId { get; set; }
-	public string[] Alias { get; set; }
+	public string TableId { get; set; }
+	public string? InheritsFrom { get; set; }
+	public string[] OverriddenSongAliases { get; set; }
 
-	public SongAlias(string songId, string[]? alias = null)
-	{
-		this.SongId = songId;
-		this.Alias = alias ?? [];
-	}
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
-	private SongAlias() { }
+	private AliasTableAttribute() { }
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
 }
