@@ -1,9 +1,13 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using FuzzySharp;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using PSLDiscordBot.Core.Models.SongAlias2;
+using PhiInfo.CLI;
+using PhiInfo.Core.Models.Information;
+using PSLDiscordBot.Core.Models.SongAlias;
 using System.Collections.Concurrent;
 using System.Collections.Frozen;
+using System.Collections.Immutable;
 
 namespace PSLDiscordBot.Core.Services;
 
@@ -12,8 +16,11 @@ public enum AliasTableIdType
 	Server,
 	Global
 }
+public record class SongSearchResult(string SongId, IReadOnlyCollection<string> Alias, double Score);
 public class AliasService
 {
+	private record struct InheritedTableInfo(IReadOnlyDictionary<string, IReadOnlyCollection<string>> Alias, AliasTableAttribute? Attribute);
+
 	private readonly ILogger<AliasService> _logger;
 	private readonly IOptions<Config> _config;
 
@@ -59,16 +66,161 @@ public class AliasService
 	}
 
 	public IReadOnlyDictionary<string, IReadOnlyCollection<string>> GetCachedAliases(AliasTableIdType type, ulong id)
+		=> this.GetCachedAliases(GetDynamicTableId(type, id));
+	public IReadOnlyDictionary<string, IReadOnlyCollection<string>> GetCachedAliases(string tableId)
 	{
-		string tableId = GetDynamicTableId(type, id);
 		ConcurrentDictionary<string, ConcurrentBag<string>> tableCache = this._aliasCache.GetOrAdd(tableId, _ =>
 		{
-			using DynamicTableRequester requester = this.GetDynamicTableRequester(type, id);
+			using DynamicTableRequester requester = this.GetDynamicTableRequester(tableId);
 			// should be created now
 			return this._aliasCache[tableId];
 		});
 
 		return tableCache.ToFrozenDictionary(kv => kv.Key, kv => (IReadOnlyCollection<string>)kv.Value);
+	}
+
+	public Dictionary<string, IReadOnlyCollection<string>> GetAliasesMerged(AliasTableIdType type, ulong id)
+	{
+		using StaticTableRequester staticRequester = this.GetStaticTableRequester();
+		AliasTableAttribute? attribute = staticRequester.GetTableAttribute(type, id);
+		IReadOnlyDictionary<string, IReadOnlyCollection<string>> currentTable = this.GetCachedAliases(type, id);
+
+		if (attribute is null)
+		{
+			return new(currentTable);
+		}
+
+		List<InheritedTableInfo> allInheritedTable = [new(currentTable, attribute)];
+		IterateAllInheritedTable(attribute.InheritsFrom);
+		allInheritedTable.Reverse();
+
+		Dictionary<string, IReadOnlyCollection<string>> result = [];
+		foreach (InheritedTableInfo item in allInheritedTable)
+		{
+			List<string> overrides = item.Attribute?.OverriddenSongAliases ?? [];
+			foreach (KeyValuePair<string, IReadOnlyCollection<string>> pair in item.Alias)
+			{
+				if (!result.TryGetValue(pair.Key, out IReadOnlyCollection<string>? existing)
+					|| overrides.Contains(pair.Key))
+				{
+					result[pair.Key] = pair.Value;
+				}
+				else
+				{
+					result[pair.Key] = existing.Union(pair.Value).ToImmutableArray();
+				}
+			}
+		}
+
+		return result;
+
+		void IterateAllInheritedTable(string? tableId)
+		{
+			if (tableId is null) return;
+
+			if (allInheritedTable.Any(x => x.Attribute?.TableId == tableId))
+				throw new InvalidOperationException("Circular inheritance in table detected, aborting");
+
+			AliasTableAttribute? attribute = staticRequester.GetTableAttribute(tableId);
+			IReadOnlyDictionary<string, IReadOnlyCollection<string>> alias = this.GetCachedAliases(tableId);
+
+			allInheritedTable.Add(new(alias, attribute));
+
+			IterateAllInheritedTable(attribute?.InheritsFrom);
+		}
+	}
+
+	/// <summary>
+	/// search for songs in specific alias table and all inherited tables
+	/// </summary>
+	/// <param name="type"></param>
+	/// <param name="id"></param>
+	/// <param name="info"></param>
+	/// <param name="input"></param>
+	/// <param name="threshold"></param>
+	/// <returns></returns>
+	public List<SongSearchResult> SearchSong(
+		AliasTableIdType type,
+		ulong id,
+		NonMultiLanguageInfos info,
+		string input,
+		double threshold = 0.75)
+	{
+		return this.SearchSong(info, this.GetAliasesMerged(type, id), input, threshold);
+	}
+	/// <summary>
+	/// 
+	/// </summary>
+	/// <param name="info"></param>
+	/// <param name="aliases"></param>
+	/// <param name="input"></param>
+	/// <param name="threshold"></param>
+	/// <returns>A list sorted with score (high to low)</returns>
+	public List<SongSearchResult> SearchSong(
+		NonMultiLanguageInfos info,
+		IReadOnlyDictionary<string, IReadOnlyCollection<string>> aliases,
+		string input,
+		double threshold = 0.75)
+	{
+		// TODO?: add different threshold for id/name and alias, not sure if needed
+		// maybe i should just inject phigros service so the caller does not have to pass info manually
+
+		input = input.ToLower();
+
+		List<SongSearchResult> results = [];
+		foreach (SongInfo item in info.Songs)
+		{
+			string id = item.Id;
+			string name = item.Name;
+			IReadOnlyCollection<string> songAliases = aliases.TryGetValue(id, out IReadOnlyCollection<string>? al) ? al : [];
+
+			double idScore = CalculateScore(input, id.ToLower());
+			double nameScore = CalculateScore(input, name.ToLower());
+
+			double bestScore = Math.Max(idScore, nameScore);
+
+			foreach (string alias in songAliases)
+			{
+				double aliasScore = CalculateScore(input, alias.ToLower());
+				if (aliasScore > bestScore) bestScore = aliasScore;
+			}
+			if (bestScore < threshold)
+				continue;
+			results.Add(new(id, songAliases, bestScore));
+		}
+
+		results.Sort((x, y) => y.Score.CompareTo(x.Score));
+		return results;
+
+		static double CalculateScore(string input, string source)
+		{
+			if (input == source) return 1;
+
+			return Fuzz.Ratio(input, source) * 0.01d;
+			//double simpleRatio = Fuzz.Ratio(input, source) * 0.01d;
+			//double partialRatio = Fuzz.PartialRatio(input, source) * 0.01d;
+			//double tokenSortRatio = Fuzz.TokenSortRatio(input, source) * 0.01d;
+			//double tokenSetRatio = Fuzz.TokenSetRatio(input, source) * 0.01d;
+			//double tokenInitialismRatio = Fuzz.TokenInitialismRatio(input, source) * 0.01d;
+			//double tokenAbbreviationRatio = Fuzz.TokenAbbreviationRatio(input, source) * 0.01d;
+
+			//List<double> ratios = [simpleRatio * 0.9d,
+			//	partialRatio * 1d,
+			//	tokenSortRatio * 0.9d,
+			//	tokenSetRatio * 0.8d,
+			//	tokenInitialismRatio * 0.7d,
+			//	tokenAbbreviationRatio * 0.7d];
+			//ratios.Sort();
+			//ratios.Reverse();
+			//return ratios.Take(3).Average();
+
+			//return (simpleRatio * 0.15d) +
+			//	(partialRatio * 0.25d) +
+			//	(tokenSortRatio * 0.05d) +
+			//	(tokenSetRatio * 0.2d) +
+			//	(tokenInitialismRatio * 0.05d) +
+			//	(tokenAbbreviationRatio * 0.3d);
+		}
 	}
 
 	public StaticTableRequester GetStaticTableRequester()
@@ -79,8 +231,10 @@ public class AliasService
 		return requester;
 	}
 	public DynamicTableRequester GetDynamicTableRequester(AliasTableIdType type, ulong id)
+		=> new(this, GetDynamicTableId(type, id));
+	public DynamicTableRequester GetDynamicTableRequester(string tableId)
 	{
-		DynamicTableRequester requester = new(this, type, id);
+		DynamicTableRequester requester = new(this, tableId);
 		TryCreateTables(requester);
 
 		this._aliasCache.AddOrUpdate(requester.TableId,
@@ -107,22 +261,26 @@ public class AliasService
 			optionsBuilder.UseSqlite(this._parent._config.Value.AliasDbConnectionString)
 				.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
 		}
+
+		public AliasTableAttribute? GetTableAttribute(AliasTableIdType type, ulong id)
+			=> this.GetTableAttribute(GetDynamicTableId(type, id));
+		public AliasTableAttribute? GetTableAttribute(string tableId)
+		{
+			return this.TableAttributes.Find(tableId);
+		}
 	}
 	public class DynamicTableRequester : DbContext
 	{
 		private readonly AliasService _parent;
 
-		public AliasTableIdType TableIdType { get; private init; }
-		public ulong TableIdValue { get; private init; }
-		public string TableId => GetDynamicTableId(this.TableIdType, this.TableIdValue);
+		public string TableId { get; private init; }
 
 		public DbSet<SongAliasData> Aliases { get; set; }
 
-		public DynamicTableRequester(AliasService parent, AliasTableIdType type, ulong id)
+		public DynamicTableRequester(AliasService parent, string tableId)
 		{
 			this._parent = parent;
-			this.TableIdType = type;
-			this.TableIdValue = id;
+			this.TableId = tableId;
 		}
 
 		protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -138,7 +296,8 @@ public class AliasService
 		}
 
 		/// <summary>
-		/// the user is supposed to handle the metadata changes themselves, this will also work if the song is new and has no metadata
+		/// the user is supposed to handle the metadata changes themselves, this will also work if the song is new and has no metadata. 
+		/// this method saves changes to both the alias data and metadata automatically
 		/// 
 		/// for removed aliases, the modifiedGuids will point to a new metadata entry with operation set to delete and parent id set to the removed metadata entry
 		/// 

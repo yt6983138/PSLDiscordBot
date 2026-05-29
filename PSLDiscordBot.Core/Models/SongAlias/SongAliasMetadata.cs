@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json;
 
-namespace PSLDiscordBot.Core.Models.SongAlias2;
+namespace PSLDiscordBot.Core.Models.SongAlias;
 
 public enum OperationType
 {

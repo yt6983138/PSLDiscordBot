@@ -1,11 +1,8 @@
-﻿using FuzzySharp;
-using Microsoft.EntityFrameworkCore;
-using PhiInfo.Core.Models.Information;
+﻿using Microsoft.EntityFrameworkCore;
 using System.Collections.Immutable;
 
 namespace PSLDiscordBot.Core.Services;
 
-public record class SongSearchResult(string SongId, ImmutableArray<string> Alias, double Score);
 public sealed class DataBaseService
 {
 	private sealed class LogTracer(Action _onDispose) : IDisposable
@@ -30,9 +27,6 @@ public sealed class DataBaseService
 		this._config = config;
 		this._logger = logger;
 		using DbDataRequester requester = this.NewRequester();
-		requester.ReadAllAliasToParent().GetAwaiter().GetResult();
-		// this is intentionally blocking, since we need the alias data to be loaded before doing anything else
-		// could be optimized by using lazy loading
 	}
 
 
@@ -45,7 +39,6 @@ public sealed class DataBaseService
 
 	public sealed class DbDataRequester : DbContext
 	{
-		public const string StringArrayDelimiter = "\x1F";
 		private static readonly EventId _eventId = new(114, nameof(DbDataRequester));
 
 		private readonly ILogger<DataBaseService> _logger;
@@ -59,7 +52,6 @@ public sealed class DataBaseService
 
 		public DbSet<UserData> UserData { get; set; }
 		public DbSet<MiscInfo> MiscData { get; set; }
-		public DbSet<SongAlias> SongAlias { get; set; }
 		public DbSet<LeaderboardEntry> Leaderboard { get; set; }
 
 		public static long UncheckedConvertToLong(ulong data)
@@ -105,87 +97,6 @@ public sealed class DataBaseService
 		public async Task SetOrReplaceMiscInfo(MiscInfo info)
 		{
 			await this.MiscData.AddOrUpdate(info);
-		}
-		#endregion
-
-		#region Song alias
-		public async Task ReadAllAliasToParent()
-		{
-			this._parent._songAlias = await this.SongAlias.AsNoTracking().ToDictionaryAsync(x => x.SongId, x => x.Alias.ToImmutableArray());
-		}
-		public async Task AddOrReplaceSongAliasAsync(string songId, IEnumerable<string> alias)
-		{
-			this._parent._songAlias[songId] = alias.ToImmutableArray();
-			await this.SongAlias.AddOrUpdate(new SongAlias(songId, alias.ToArray()));
-		}
-
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <param name="phigrosService"></param>
-		/// <param name="input"></param>
-		/// <param name="threshold"></param>
-		/// <param name="limit"></param>
-		/// <returns>A list sorted with score (high to low)</returns>
-		public List<SongSearchResult> SearchSong(PhigrosService phigrosService, string input, double threshold = 0.75)
-		//TODO?: add different threshold for id/name and alias, not sure if needed
-		{
-			input = input.ToLower();
-
-			List<SongSearchResult> results = [];
-			foreach (SongInfo item in phigrosService.NonMultiLanguageInfos.Songs)
-			{
-				string id = item.Id;
-				string name = item.Name;
-				ImmutableArray<string> aliases = this._parent._songAlias.TryGetValue(id, out ImmutableArray<string> al) ? al : [];
-
-				double idScore = CalculateScore(input, id.ToLower());
-				double nameScore = CalculateScore(input, name.ToLower());
-
-				double bestScore = Math.Max(idScore, nameScore);
-
-				foreach (string alias in aliases)
-				{
-					double aliasScore = CalculateScore(input, alias.ToLower());
-					if (aliasScore > bestScore) bestScore = aliasScore;
-				}
-				if (bestScore < threshold)
-					continue;
-				results.Add(new(id, aliases, bestScore));
-			}
-
-			results.Sort((x, y) => y.Score.CompareTo(x.Score));
-			return results;
-
-			static double CalculateScore(string input, string source)
-			{
-				if (input == source) return 1;
-
-				return Fuzz.Ratio(input, source) * 0.01d;
-				//double simpleRatio = Fuzz.Ratio(input, source) * 0.01d;
-				//double partialRatio = Fuzz.PartialRatio(input, source) * 0.01d;
-				//double tokenSortRatio = Fuzz.TokenSortRatio(input, source) * 0.01d;
-				//double tokenSetRatio = Fuzz.TokenSetRatio(input, source) * 0.01d;
-				//double tokenInitialismRatio = Fuzz.TokenInitialismRatio(input, source) * 0.01d;
-				//double tokenAbbreviationRatio = Fuzz.TokenAbbreviationRatio(input, source) * 0.01d;
-
-				//List<double> ratios = [simpleRatio * 0.9d,
-				//	partialRatio * 1d,
-				//	tokenSortRatio * 0.9d,
-				//	tokenSetRatio * 0.8d,
-				//	tokenInitialismRatio * 0.7d,
-				//	tokenAbbreviationRatio * 0.7d];
-				//ratios.Sort();
-				//ratios.Reverse();
-				//return ratios.Take(3).Average();
-
-				//return (simpleRatio * 0.15d) +
-				//	(partialRatio * 0.25d) +
-				//	(tokenSortRatio * 0.05d) +
-				//	(tokenSetRatio * 0.2d) +
-				//	(tokenInitialismRatio * 0.05d) +
-				//	(tokenAbbreviationRatio * 0.3d);
-			}
 		}
 		#endregion
 

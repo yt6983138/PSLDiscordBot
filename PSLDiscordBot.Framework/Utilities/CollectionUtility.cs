@@ -45,12 +45,7 @@ public static class CollectionUtility
 	public static ConcurrentDictionary<TKey, TValue> ToConcurrentDictionary<TKey, TValue>(this IEnumerable<KeyValuePair<TKey, TValue>> source)
 		where TKey : notnull
 	{
-		ConcurrentDictionary<TKey, TValue> dict = new();
-		foreach (KeyValuePair<TKey, TValue> kvp in source)
-		{
-			dict.AddOrUpdate(kvp.Key, kvp.Value, (k, v) => throw new ArgumentException($"Duplicate key: {kvp.Key}"));
-		}
-		return dict;
+		return new(source);
 	}
 	public static ConcurrentDictionary<TKey, TValue> ToConcurrentDictionary<TSource, TKey, TValue>(this IEnumerable<TSource> source, Func<TSource, TKey> keySelector, Func<TSource, TValue> valueSelector)
 		where TKey : notnull
@@ -66,7 +61,6 @@ public static class CollectionUtility
 	}
 	public static ConcurrentBag<T> ToConcurrentBag<T>(this IEnumerable<T> source)
 	{
-		ConcurrentBag<T> bag = [.. source];
-		return bag;
+		return [.. source];
 	}
 }
