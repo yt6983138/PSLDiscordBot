@@ -64,7 +64,7 @@ public class AliasAuditCommand : AliasServerAdminCommandBase
 		string forSong = operationOption.GetOption<string>(OptionForSongName);
 		string alias = operationOption.GetOption<string>(OptionAliasName);
 
-		SongSearchValidateResult result = await AddGlobalAliasCommand.SearchAndValidate(arg, this._aliasService, this._localization, forSong, AliasTableIdType.Server);
+		SongSearchValidateResult result = await AliasModifyGlobalCommand.SearchAndValidate(arg, this._aliasService, this._localization, forSong, AliasTableIdType.Server);
 		if (result.ShouldReturn) return;
 
 		using AliasService.DynamicTableRequester dynamicRequester = this._aliasService.GetDynamicTableRequesterAuto(arg, AliasTableIdType.Server);
