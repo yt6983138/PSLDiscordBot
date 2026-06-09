@@ -64,18 +64,29 @@ public static partial class PSLNormalCommandKey
 	public static partial string GetMoneyReply { get; }
 	#endregion
 
-	#region AddAliasCommand
+	#region AddAliasCommand (AddGlobalAliasCommand)
+	// TODO: move to a new key file
+	[Obsolete]
 	public static partial string AddAliasName { get; }
+	[Obsolete]
 	public static partial string AddAliasDescription { get; }
 
+	[Obsolete]
 	public static partial string AddAliasOptionForSongName { get; }
+	[Obsolete]
 	public static partial string AddAliasOptionForSongDescription { get; }
+	[Obsolete]
 	public static partial string AddAliasOptionAllayToAddName { get; }
+	[Obsolete]
 	public static partial string AddAliasOptionAllayToAddDescription { get; }
 
+	[Obsolete]
 	public static partial string AddAliasNoMatch { get; }
+	[Obsolete]
 	public static partial string AddAliasMultipleMatch { get; }
+	[Obsolete]
 	public static partial string AddAliasAlreadyAdded { get; }
+	[Obsolete]
 	public static partial string AddAliasSuccess { get; }
 	#endregion
 
@@ -132,18 +143,29 @@ public static partial class PSLNormalCommandKey
 	public static partial string MoreRksSongFormat { get; }
 	#endregion
 
-	#region RemoveAliasCommand
+	// see AddAliasCommand for the reason why these keys are kept
+	#region RemoveAliasCommand (RemoveGlobalAliasCommand)
+	[Obsolete]
 	public static partial string RemoveAliasName { get; }
+	[Obsolete]
 	public static partial string RemoveAliasDescription { get; }
 
+	[Obsolete]
 	public static partial string RemoveAliasOptionForSongName { get; }
+	[Obsolete]
 	public static partial string RemoveAliasOptionForSongDescription { get; }
+	[Obsolete]
 	public static partial string RemoveAliasOptionAllayToAddName { get; }
+	[Obsolete]
 	public static partial string RemoveAliasOptionAllayToAddDescription { get; }
 
+	[Obsolete]
 	public static partial string RemoveAliasNoMatch { get; }
+	[Obsolete]
 	public static partial string RemoveAliasMultipleMatch { get; }
+	[Obsolete]
 	public static partial string RemoveAliasAlreadyAdded { get; }
+	[Obsolete]
 	public static partial string RemoveAliasSuccess { get; }
 	#endregion
 
