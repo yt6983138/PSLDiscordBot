@@ -1,5 +1,4 @@
 ﻿using PhiInfo.Core.Models.Information;
-using System.Collections.Immutable;
 using System.IO.Compression;
 using System.Text;
 
@@ -30,7 +29,7 @@ public class DownloadAssetCommand : GuestCommandBase
 
 	public override async Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
 	{
-		List<SongSearchResult> foundAlias = requester.SearchSong(this._phigrosService,
+		List<SongSearchResult> foundAlias = this._aliasService.SearchSong(arg,
 			arg.GetOption<string>(this._localization[PSLCommonOptionKey.SongSearchOptionName]));
 
 		if (foundAlias.Count == 0)
@@ -41,7 +40,7 @@ public class DownloadAssetCommand : GuestCommandBase
 
 		string query = SongInfoCommand.BuildReturnQueryString(foundAlias, this._phigrosService).ToString();
 
-		(string id, ImmutableArray<string> alias, double Score) = foundAlias[0];
+		(string id, IReadOnlyCollection<string>? alias, double Score) = foundAlias[0];
 		SongInfo firstInfo = this._phigrosService.NonMultiLanguageInfos.GetSongInfoById(id);
 
 		Dictionary<Difficulty, string> chartPaths = firstInfo.Levels.Keys.ToDictionary(x => x, x => SongInfoCommand.GetChartPath(id, x));
