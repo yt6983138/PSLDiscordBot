@@ -146,7 +146,8 @@ public class PSLPlugin : IPlugin
 			.AddSingleton<LocalizationService>()
 			.AddSingleton<TemporaryTOSAgreementService>()
 			.AddSingleton<LeaderboardService>()
-			.AddSingleton<LargeImageCoolDownService>();
+			.AddSingleton<LargeImageCoolDownService>()
+			.AddSingleton<AliasService>();
 
 		hostBuilder.Services.AddAssemblyToMvc(this);
 	}
