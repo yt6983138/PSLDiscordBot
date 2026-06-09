@@ -12,6 +12,8 @@ public class AddServerAliasCommand : CommandBase
 	public override OneOf<string, LocalizedString> PSLName => "add-server-alias";
 	public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLNormalCommandKey.AddAliasDescription];
 
+	public override InteractionContextType[] InteractionContextTypes => [InteractionContextType.Guild];
+
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder
 		.AddOption(

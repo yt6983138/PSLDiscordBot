@@ -11,7 +11,7 @@ public abstract class AliasServerAdminCommandBase : CommandBase
 		this._pslPlugin = provider.GetRequiredService<PSLPlugin>();
 	}
 
-	public override InteractionContextType[] InteractionContextTypes => [InteractionContextType.Guild];
+	public sealed override InteractionContextType[] InteractionContextTypes => [InteractionContextType.Guild];
 
 	public override async Task Execute(SocketSlashCommand arg, object executer)
 	{
