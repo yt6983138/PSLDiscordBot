@@ -71,14 +71,14 @@ public class AliasModifyGlobalCommand : CommandBase
 		}
 		else
 		{
-			if (!result.Result.Alias.Contains(alias))
+			SongAliasData originalEntry = dynamicRequester.FindAlias(result.Result.SongId);
+			dynamicRequester.MutateAliases(result.Result.SongId, x => x.Remove(alias), out List<Guid>? guids, out newAlias);
+
+			if (guids.Count < 1) // removed nothing, so the alias must not exist
 			{
 				await arg.QuickReply(this._localization[PSLAliasRelatedKey.Shared.MessageNotExist], result.Result.Alias);
 				return;
 			}
-
-			SongAliasData originalEntry = dynamicRequester.FindAlias(result.Result.SongId);
-			dynamicRequester.MutateAliases(result.Result.SongId, x => x.Remove(alias), out List<Guid>? guids, out newAlias);
 
 			await staticRequester.MutateMetadataExisting(guids[0], x => x.OperatorId = arg.User.Id);
 		}

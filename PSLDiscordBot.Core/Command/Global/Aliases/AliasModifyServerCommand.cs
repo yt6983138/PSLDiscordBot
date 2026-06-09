@@ -59,12 +59,6 @@ public class AliasModifyServerCommand : CommandBase
 		}
 		else
 		{
-			if (!result.Result.Alias.Contains(alias))
-			{
-				await arg.QuickReply(this._localization[PSLAliasRelatedKey.Shared.MessageNotExist], result.Result.Alias);
-				return;
-			}
-
 			// kinda dislike the two step process
 			bool isOwnedByUser = true;
 
@@ -89,7 +83,13 @@ public class AliasModifyServerCommand : CommandBase
 
 			if (!isOwnedByUser)
 			{
-				await arg.QuickReply("Hey you can't remove aliases that you didn't add!");
+				await arg.QuickReply(this._localization[PSLAliasRelatedKey.ModifyServerNotOwner]);
+				return;
+			}
+
+			if (guids.Count < 1) // removed nothing, so the alias must not exist
+			{
+				await arg.QuickReply(this._localization[PSLAliasRelatedKey.Shared.MessageNotExist], result.Result.Alias);
 				return;
 			}
 
