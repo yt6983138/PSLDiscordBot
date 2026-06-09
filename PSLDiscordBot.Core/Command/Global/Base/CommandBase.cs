@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using PSLDiscordBot.Framework.Utilities;
 
 namespace PSLDiscordBot.Core.Command.Global.Base;
 public abstract class CommandBase : BasicCommandBase
@@ -11,6 +10,7 @@ public abstract class CommandBase : BasicCommandBase
 	protected readonly ILogger _logger;
 	protected readonly PhigrosService _phigrosService;
 	protected readonly TemporaryTOSAgreementService _temporaryTOSAgreementService;
+	protected readonly AliasService _aliasService;
 	protected readonly IServiceProvider _serviceProvider;
 	#endregion
 
@@ -24,6 +24,7 @@ public abstract class CommandBase : BasicCommandBase
 		this._localization = provider.GetRequiredService<LocalizationService>();
 		this._phigrosService = provider.GetRequiredService<PhigrosService>();
 		this._temporaryTOSAgreementService = provider.GetRequiredService<TemporaryTOSAgreementService>();
+		this._aliasService = provider.GetRequiredService<AliasService>();
 	}
 
 
