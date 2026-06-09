@@ -19,17 +19,19 @@ public enum AliasTableIdType
 public record class SongSearchResult(string SongId, IReadOnlyCollection<string> Alias, double Score);
 public class AliasService
 {
-	private record struct InheritedTableInfo(IReadOnlyDictionary<string, IReadOnlyCollection<string>> Alias, AliasTableAttribute? Attribute);
+	private record struct InheritedTableInfo(IReadOnlyDictionary<string, IReadOnlyCollection<string>> Alias, AliasTableAttribute Attribute);
 
 	private readonly ILogger<AliasService> _logger;
 	private readonly IOptions<Config> _config;
+	private readonly PhigrosService _phigrosService;
 
-	private ConcurrentDictionary<string, ConcurrentDictionary<string, ConcurrentBag<string>>> _aliasCache = new();
+	private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, ConcurrentBag<string>>> _aliasCache = new();
 
-	public AliasService(ILogger<AliasService> logger, IOptions<Config> config)
+	public AliasService(ILogger<AliasService> logger, IOptions<Config> config, PhigrosService phigrosService)
 	{
 		this._logger = logger;
 		this._config = config;
+		this._phigrosService = phigrosService;
 	}
 
 	private static void TryCreateTables(DbContext context)
@@ -82,13 +84,8 @@ public class AliasService
 	public Dictionary<string, IReadOnlyCollection<string>> GetAliasesMerged(AliasTableIdType type, ulong id)
 	{
 		using StaticTableRequester staticRequester = this.GetStaticTableRequester();
-		AliasTableAttribute? attribute = staticRequester.GetTableAttribute(type, id);
+		AliasTableAttribute attribute = staticRequester.GetTableAttributeOrDefault(type, id);
 		IReadOnlyDictionary<string, IReadOnlyCollection<string>> currentTable = this.GetCachedAliases(type, id);
-
-		if (attribute is null)
-		{
-			return new(currentTable);
-		}
 
 		List<InheritedTableInfo> allInheritedTable = [new(currentTable, attribute)];
 		IterateAllInheritedTable(attribute.InheritsFrom);
@@ -121,7 +118,7 @@ public class AliasService
 			if (allInheritedTable.Any(x => x.Attribute?.TableId == tableId))
 				throw new InvalidOperationException("Circular inheritance in table detected, aborting");
 
-			AliasTableAttribute? attribute = staticRequester.GetTableAttribute(tableId);
+			AliasTableAttribute attribute = staticRequester.GetTableAttributeOrDefault(tableId);
 			IReadOnlyDictionary<string, IReadOnlyCollection<string>> alias = this.GetCachedAliases(tableId);
 
 			allInheritedTable.Add(new(alias, attribute));
@@ -130,6 +127,25 @@ public class AliasService
 		}
 	}
 
+	/// <inheritdoc cref="SearchSong(AliasTableIdType, ulong, string, double)"/>
+	public List<SongSearchResult> SearchSong(IDiscordInteraction interaction, string input, double threshold = 0.75)
+	{
+		if (interaction.GuildId is null)
+		{
+			return this.SearchSong(AliasTableIdType.Global, 0, input, threshold);
+		}
+
+		return this.SearchSong(AliasTableIdType.Server, interaction.GuildId.Value, input, threshold);
+	}
+	/// <inheritdoc cref="SearchSong(AliasTableIdType, ulong, NonMultiLanguageInfos, string, double)"/>
+	public List<SongSearchResult> SearchSong(
+		AliasTableIdType type,
+		ulong id,
+		string input,
+		double threshold = 0.75)
+	{
+		return this.SearchSong(type, id, this._phigrosService.NonMultiLanguageInfos, input, threshold);
+	}
 	/// <summary>
 	/// search for songs in specific alias table and all inherited tables
 	/// </summary>
@@ -230,6 +246,26 @@ public class AliasService
 
 		return requester;
 	}
+
+	public DynamicTableRequester GetGlobalDynamicTableRequester(ulong id = 0)
+		=> this.GetDynamicTableRequester(AliasTableIdType.Global, id);
+	public DynamicTableRequester GetServerDynamicTableRequester(IDiscordInteraction interaction)
+		=> this.GetDynamicTableRequester(
+			AliasTableIdType.Server,
+			interaction.GuildId ?? throw new ArgumentException("The guild id is null.", nameof(interaction)));
+
+	public DynamicTableRequester GetDynamicTableRequesterAuto(IDiscordInteraction interaction, AliasTableIdType desiredType)
+	{
+		if (desiredType == AliasTableIdType.Server)
+		{
+			return this.GetServerDynamicTableRequester(interaction);
+		}
+		else
+		{
+			return this.GetGlobalDynamicTableRequester();
+		}
+	}
+
 	public DynamicTableRequester GetDynamicTableRequester(AliasTableIdType type, ulong id)
 		=> new(this, GetDynamicTableId(type, id));
 	public DynamicTableRequester GetDynamicTableRequester(string tableId)
@@ -262,11 +298,75 @@ public class AliasService
 				.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
 		}
 
+		public static AliasTableAttribute GetDefaultAttribute(string tableId)
+		{
+			// prob not the best way to determine if it's global or server 
+			// hope i remember to change this if i did something to the table id generation
+			bool isGlobal = tableId.StartsWith(nameof(AliasTableIdType.Global));
+			return new(tableId)
+			{
+				InheritsFrom = isGlobal ? null : GetDynamicTableId(AliasTableIdType.Global, 0),
+				OverriddenSongAliases = [],
+				AllowInheritance = isGlobal,
+			};
+		}
+
 		public AliasTableAttribute? GetTableAttribute(AliasTableIdType type, ulong id)
 			=> this.GetTableAttribute(GetDynamicTableId(type, id));
 		public AliasTableAttribute? GetTableAttribute(string tableId)
 		{
 			return this.TableAttributes.Find(tableId);
+		}
+
+		public AliasTableAttribute GetTableAttributeOrDefault(AliasTableIdType type, ulong id)
+			=> this.GetTableAttributeOrDefault(GetDynamicTableId(type, id));
+		public AliasTableAttribute GetTableAttributeOrDefault(string tableId)
+		{
+			return this.GetTableAttribute(tableId) ?? GetDefaultAttribute(tableId);
+		}
+
+		/// <summary>
+		/// note: this saves this requester
+		/// </summary>
+		/// <param name="id"></param>
+		/// <param name="mutator"></param>
+		/// <returns></returns>
+		public async Task<SongAliasMetadata> MutateMetadata(Guid id, Func<SongAliasMetadata?, SongAliasMetadata> mutator)
+		{
+			SongAliasMetadata? data = await this.AliasMetadata.FindAsync(id);
+			SongAliasMetadata mutated = mutator.Invoke(data);
+			this.AliasMetadata.Update(mutated);
+			await this.SaveChangesAsync();
+			return mutated;
+		}
+		public async Task<SongAliasMetadata> MutateMetadataExisting(Guid id, Action<SongAliasMetadata> mutator)
+		{
+			return await this.MutateMetadata(id, data =>
+			{
+				if (data is null)
+					throw new ArgumentException($"No metadata found with id {id}", nameof(id));
+				mutator.Invoke(data);
+				return data;
+			});
+		}
+
+		public SongAliasMetadata? FindMetadataOrNull(Guid id)
+		{
+			return this.AliasMetadata.Find(id);
+		}
+		public SongAliasMetadata FindMetadata(Guid id)
+		{
+			SongAliasMetadata? data = this.AliasMetadata.Find(id)
+				?? throw new ArgumentException($"No metadata found for song id {id}", nameof(id));
+			return data;
+		}
+		public SongAliasMetadata FindRootMetadata(SongAliasMetadata metadata)
+		{
+			while (metadata.ParentId is not null)
+			{
+				metadata = this.FindMetadata(metadata.ParentId.Value);
+			}
+			return metadata;
 		}
 	}
 	public class DynamicTableRequester : DbContext
@@ -301,7 +401,9 @@ public class AliasService
 		/// 
 		/// for removed aliases, the modifiedGuids will point to a new metadata entry with operation set to delete and parent id set to the removed metadata entry
 		/// 
-		/// for added aliases, the modifiedGuids will point to a new metadata entry with operation set to modify and parent id set to null
+		/// for added aliases, the modifiedGuids will point to a new metadata entry with operation set to modify, parent id set to null, and OperationData set to the added alias (string)
+		/// 
+		/// metadata entry will have time set to DateTime.Now, other fields should be handled by the caller
 		/// </summary>
 		/// <param name="songId"></param>
 		/// <param name="mutator"></param>
@@ -352,6 +454,15 @@ public class AliasService
 
 			List<string> newAliases = oldAliases.ToList();
 			mutator.Invoke(newAliases);
+
+			if (newAliases.SequenceEqual(oldAliases))
+			{
+				// special optimization for no change
+				modifiedGuids = [];
+				dataAfterModification = data ?? new(songId, [], []);
+				return;
+			}
+
 			newAliases = newAliases.Distinct().ToList();
 			List<string> additions = newAliases.Except(oldAliases).ToList();
 
@@ -359,11 +470,13 @@ public class AliasService
 			if (data is null)
 			{
 				modifiedGuids = additions.Select(a => Guid.NewGuid()).ToList();
-				foreach (Guid item in modifiedGuids)
+
+				for (int i = 0; i < modifiedGuids.Count; i++)
 				{
-					staticRequester.AliasMetadata.Add(new(item, DateTime.Now)
+					staticRequester.AliasMetadata.Add(new(modifiedGuids[i], DateTime.Now)
 					{
-						OperationType = OperationType.Modify
+						OperationType = OperationType.Modify,
+						OperationData = additions[i]
 					});
 				}
 
@@ -379,12 +492,13 @@ public class AliasService
 			modifiedGuids = additions.Select(a => Guid.NewGuid()).ToList();
 			data.Aliases.AddRange(additions);
 			data.AliasMetadataKeys.AddRange(modifiedGuids);
-			foreach (Guid item in modifiedGuids)
+			for (int i = 0; i < modifiedGuids.Count; i++)
 			{
-				staticRequester.AliasMetadata.Add(new(item, DateTime.Now)
+				staticRequester.AliasMetadata.Add(new(modifiedGuids[i], DateTime.Now)
 				{
 					ParentId = null,
-					OperationType = OperationType.Modify
+					OperationType = OperationType.Modify,
+					OperationData = additions[i]
 				});
 			}
 
@@ -407,6 +521,17 @@ public class AliasService
 			}
 			this.Update(data);
 			dataAfterModification = data;
+		}
+
+		public SongAliasData? FindAliasOrNull(string songId)
+		{
+			return this.Aliases.Find(songId);
+		}
+		public SongAliasData FindAlias(string songId)
+		{
+			SongAliasData? data = this.Aliases.Find(songId)
+				?? throw new ArgumentException($"No alias data found for song id {songId}", nameof(songId));
+			return data;
 		}
 	}
 	private class DynamicModelCacheKeyFactory : IModelCacheKeyFactory
