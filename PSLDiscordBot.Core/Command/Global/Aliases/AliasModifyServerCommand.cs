@@ -42,7 +42,7 @@ public class AliasModifyServerCommand : CommandBase
 		SongSearchValidateResult result = await AliasModifyGlobalCommand.SearchAndValidate(arg, this._aliasService, this._localization, forSong, AliasTableIdType.Global);
 		if (result.ShouldReturn) return;
 
-		using AliasService.DynamicTableRequester dynamicRequester = this._aliasService.GetDynamicTableRequesterAuto(arg, AliasTableIdType.Global);
+		using AliasService.DynamicTableRequester dynamicRequester = this._aliasService.GetDynamicTableRequesterAuto(arg, AliasTableIdType.Server);
 		using AliasService.StaticTableRequester staticRequester = this._aliasService.GetStaticTableRequester();
 
 		SongAliasData newAlias;
