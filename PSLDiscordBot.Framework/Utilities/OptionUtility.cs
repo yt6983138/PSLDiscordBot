@@ -6,11 +6,24 @@ namespace PSLDiscordBot.Framework.Utilities;
 
 public static class OptionUtility
 {
+	private static T AsEnum<T>(this object value)
+	{
+		Type underlyingType = Enum.GetUnderlyingType(typeof(T));
+		return Convert.ChangeType(value, underlyingType).Unbox<T>();
+	}
+
 	#region Interaction Data Option Overloads
 
 	public static T GetOption<T>(this IApplicationCommandInteractionDataOption option, string name)
 	{
-		return option.Options.First(x => x.Name == name).Value.Unbox<T>();
+		object value = option.Options.First(x => x.Name == name).Value;
+		if (typeof(T).IsEnum)
+		{
+			// since discord sends everything as long, unboxing it as an enum (which is likely int) causes an exception
+			return value.AsEnum<T>();
+		}
+
+		return value.Unbox<T>();
 	}
 	public static T GetOption<T>(this IApplicationCommandInteractionDataOption option, LocalizedString name)
 	{
@@ -21,7 +34,12 @@ public static class OptionUtility
 		where T : struct
 	{
 		IApplicationCommandInteractionDataOption? opt = option.Options.FirstOrDefault(x => x.Name == name);
-		return opt is null ? defaultValue : opt.Value.Unbox<T>();
+		if (opt is null) return defaultValue;
+		if (typeof(T).IsEnum)
+		{
+			return opt.Value.AsEnum<T>();
+		}
+		return opt.Value.Unbox<T>();
 	}
 	public static T GetOptionOrDefault<T>(this IApplicationCommandInteractionDataOption option, LocalizedString name, T defaultValue = default)
 		where T : struct
@@ -66,7 +84,14 @@ public static class OptionUtility
 
 	public static T GetOption<T, TOption>(this SocketCommandBaseData<TOption> option, string name) where TOption : IApplicationCommandInteractionDataOption
 	{
-		return option.Options.First(x => x.Name == name).Value.Unbox<T>();
+		object value = option.Options.First(x => x.Name == name).Value;
+		if (typeof(T).IsEnum)
+		{
+			Type underlyingType = Enum.GetUnderlyingType(typeof(T));
+			return Convert.ChangeType(value, underlyingType).Unbox<T>();
+		}
+
+		return value.Unbox<T>();
 	}
 	public static T GetOption<T, TOption>(this SocketCommandBaseData<TOption> option, LocalizedString name) where TOption : IApplicationCommandInteractionDataOption
 	{
@@ -78,7 +103,13 @@ public static class OptionUtility
 		where TOption : IApplicationCommandInteractionDataOption
 	{
 		TOption? opt = option.Options.FirstOrDefault(x => x.Name == name);
-		return opt is null ? defaultValue : opt.Value.Unbox<T>();
+		if (opt is null) return defaultValue;
+		if (typeof(T).IsEnum)
+		{
+			return opt.Value.AsEnum<T>();
+		}
+
+		return opt.Value.Unbox<T>();
 	}
 	public static T GetOptionOrDefault<T, TOption>(this SocketCommandBaseData<TOption> option, LocalizedString name, T defaultValue = default)
 		where T : struct
