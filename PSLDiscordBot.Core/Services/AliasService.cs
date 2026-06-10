@@ -95,10 +95,12 @@ public class AliasService
 		foreach (InheritedTableInfo item in allInheritedTable)
 		{
 			List<string> overrides = item.Attribute?.OverriddenSongAliases ?? [];
+
+			foreach (string key in overrides) result.Remove(key);
+
 			foreach (KeyValuePair<string, IReadOnlyCollection<string>> pair in item.Alias)
 			{
-				if (!result.TryGetValue(pair.Key, out IReadOnlyCollection<string>? existing)
-					|| overrides.Contains(pair.Key))
+				if (!result.TryGetValue(pair.Key, out IReadOnlyCollection<string>? existing))
 				{
 					result[pair.Key] = pair.Value;
 				}
@@ -367,6 +369,11 @@ public class AliasService
 				metadata = this.FindMetadata(metadata.ParentId.Value);
 			}
 			return metadata;
+		}
+
+		public Task AddOrUpdateAttribute(AliasTableAttribute attribute)
+		{
+			return this.TableAttributes.AddOrUpdate(attribute);
 		}
 	}
 	public class DynamicTableRequester : DbContext
