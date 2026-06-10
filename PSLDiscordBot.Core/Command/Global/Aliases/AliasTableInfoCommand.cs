@@ -1,6 +1,8 @@
 ﻿using PSLDiscordBot.Core.Models.SongAlias;
 
 namespace PSLDiscordBot.Core.Command.Global.Aliases;
+
+[AddToGlobal]
 public class AliasTableInfoCommand : AliasServerAdminCommandBase
 {
 	private enum Operation
@@ -102,7 +104,9 @@ public class AliasTableInfoCommand : AliasServerAdminCommandBase
 				tableAttribute.OverriddenSongAliases = valueString.Split(',').Select(x => x.Trim()).Where(x => !string.IsNullOrEmpty(x)).ToList();
 				break;
 		}
-		staticRequester.TableAttributes.Update(tableAttribute);
+		await staticRequester.AddOrUpdateAttribute(tableAttribute);
 		await staticRequester.SaveChangesAsync();
+
+		await arg.QuickReply("Done");
 	}
 }

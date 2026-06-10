@@ -4,6 +4,8 @@ using System.Text;
 using System.Text.Json;
 
 namespace PSLDiscordBot.Core.Command.Global.Aliases;
+
+[AddToGlobal]
 public class AliasAuditCommand : AliasServerAdminCommandBase
 {
 	private enum Operation

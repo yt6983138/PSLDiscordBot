@@ -64,7 +64,7 @@ public class AliasChangeAdminCommand : CommandBase
 			attribute.AdminRoleIds.Remove(role.Id);
 		}
 
-		staticRequester.TableAttributes.Update(attribute);
+		await staticRequester.AddOrUpdateAttribute(attribute);
 		await staticRequester.SaveChangesAsync();
 
 		await arg.QuickReply($"Operation done successfully. Current admin roles: {string.Join(", ", attribute.AdminRoleIds)}");
