@@ -81,17 +81,17 @@ public class AliasAuditCommand : AliasServerAdminCommandBase
 		switch (operation)
 		{
 			case Operation.Info:
-
 				await HandleInfo(aliasData, alias);
-				break;
 
+				break;
 			case Operation.Modify:
 				string newAlias = operationOption.GetOption<string>(OptionNewAliasName);
-
 				await HandleModify(aliasData, alias, newAlias);
+
 				break;
 			case Operation.Remove:
 				await HandleRemove(aliasData, alias);
+
 				break;
 		}
 

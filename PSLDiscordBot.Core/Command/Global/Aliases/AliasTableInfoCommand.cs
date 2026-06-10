@@ -52,10 +52,9 @@ public class AliasTableInfoCommand : AliasServerAdminCommandBase
 		using AliasService.StaticTableRequester staticRequester = this._aliasService.GetStaticTableRequester();
 		AliasTableAttribute tableAttribute = staticRequester.GetTableAttributeOrDefault(AliasTableIdType.Server, arg.GuildId.EnsureNotNull());
 
-		switch (operation)
+		if (operation == Operation.Get)
 		{
-			case Operation.Get:
-				string returnString = $"""
+			string returnString = $"""
 					## Server Alias Table Information:
 					- Table id: {tableAttribute.TableId}
 					- Admin Roles: {(tableAttribute.AdminRoleIds.Count == 0 ? "None" : string.Join(", ", tableAttribute.AdminRoleIds.Select(x => $"<@&{x}>")))}
@@ -64,33 +63,46 @@ public class AliasTableInfoCommand : AliasServerAdminCommandBase
 					- Overridden aliases: {(tableAttribute.OverriddenSongAliases.Count == 0 ? "None" : string.Join(", ", tableAttribute.OverriddenSongAliases))}
 					""";
 
-				await arg.QuickReply(returnString);
+			await arg.QuickReply(returnString);
+			return;
+		}
+
+		Field field = operationOption.GetOption<Field>("field");
+		string valueString = operationOption.GetOption<string>("value");
+		switch (field)
+		{
+			case Field.AllowInheritance:
+				tableAttribute.AllowInheritance = bool.Parse(valueString);
 				break;
-			case Operation.Set:
-				Field field = operationOption.GetOption<Field>("field");
-				string valueString = operationOption.GetOption<string>("value");
-				switch (field)
+			case Field.InheritsFrom:
+				if (string.IsNullOrWhiteSpace(valueString) || valueString == "null")
 				{
-					case Field.AllowInheritance:
-						tableAttribute.AllowInheritance = bool.Parse(valueString);
-						break;
-					case Field.InheritsFrom:
-						if (string.IsNullOrWhiteSpace(valueString) || valueString == "null")
-						{
-							tableAttribute.InheritsFrom = null;
-						}
-						else
-						{
-							tableAttribute.InheritsFrom = valueString;
-						}
-						break;
-					case Field.OverriddenSongAliases:
-						tableAttribute.OverriddenSongAliases = valueString.Split(',').Select(x => x.Trim()).Where(x => !string.IsNullOrEmpty(x)).ToList();
-						break;
+					tableAttribute.InheritsFrom = null;
+					break;
 				}
-				staticRequester.TableAttributes.Update(tableAttribute);
-				await staticRequester.SaveChangesAsync();
+
+				if (staticRequester.GetTableAttribute(valueString) is null)
+				{
+					await arg.QuickReply("The specified table to inherit from does not exist. Please check the table id and try again.");
+					return;
+				}
+
+				tableAttribute.InheritsFrom = valueString;
+				break;
+			case Field.OverriddenSongAliases:
+				List<string> songIds = valueString.Split(',').Select(x => x.Trim()).Where(x => !string.IsNullOrEmpty(x)).ToList();
+
+				string[] nonExistingSongIds = songIds.Where(x => this._phigrosService.NonMultiLanguageInfos.Songs.All(y => y.Id != x)).ToArray();
+				if (nonExistingSongIds.Length > 0)
+				{
+					await arg.QuickReply($"Following song id does not exist: `{string.Join("`, `", nonExistingSongIds)}`");
+					return;
+				}
+
+				tableAttribute.OverriddenSongAliases = valueString.Split(',').Select(x => x.Trim()).Where(x => !string.IsNullOrEmpty(x)).ToList();
 				break;
 		}
+		staticRequester.TableAttributes.Update(tableAttribute);
+		await staticRequester.SaveChangesAsync();
 	}
 }
