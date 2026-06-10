@@ -1,4 +1,8 @@
-﻿namespace PSLDiscordBot.Core.Models.SongAlias;
+﻿using Microsoft.EntityFrameworkCore;
+
+namespace PSLDiscordBot.Core.Models.SongAlias;
+
+[PrimaryKey(nameof(TableId))]
 public class AliasTableAttribute
 {
 	public string TableId { get; set; }
