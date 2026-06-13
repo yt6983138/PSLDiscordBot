@@ -19,7 +19,7 @@ public abstract class AliasServerAdminCommandBase : CommandBase
 		{
 			if (arg.GuildId is null || arg.User is not SocketGuildUser guildUser)
 			{
-				await arg.QuickReply("Oops, something went wrong. This only works in a server. Please contact bot admin about this.");
+				await arg.RespondAsync("Oops, something went wrong. This only works in a server. Please contact bot admin about this.", ephemeral: true);
 				return;
 			}
 
@@ -28,8 +28,7 @@ public abstract class AliasServerAdminCommandBase : CommandBase
 				&& !guildUser.GuildPermissions.Administrator
 				&& guildUser.Id != this._pslPlugin.AdminUser?.Id)
 			{
-				// TODO: localize this, maybe we can reuse the same localization key in AdminCommandBase?
-				await arg.QuickReply("You do not have the required permissions to execute this command.");
+				await arg.RespondAsync(this._localization[PSLCommonKey.AdminCommandBasePermissionDenied].Get(arg.UserLocale), ephemeral: true);
 				return;
 			}
 		}

@@ -47,8 +47,7 @@ public class AliasChangeAdminCommand : CommandBase
 		if (!guildUser.GuildPermissions.Administrator
 			&& guildUser.Id != this._pslPlugin.AdminUser?.Id)
 		{
-			// TODO: use same localization key in AliasServerAdminCommandBase
-			await arg.QuickReply("You do not have the required permissions to execute this command.");
+			await arg.QuickReply(this._localization[PSLCommonKey.AdminCommandBasePermissionDenied]);
 			return;
 		}
 
