@@ -31,6 +31,7 @@ Subcommands:
 	- The value for `AllowInheritance` is a boolean (true/false).
 	- The value for `InheritsFrom` is a string. (eg. `Global_0` for global table, `Server_123` for server with id of `123`)
 		- If the specified table does not exist or the target table does not have inheritance enabled, the command will fail.
+		- Use `null` or empty string to specify no inherited table
 	- The value for `OverriddenSongAliases` is a comma-separated list of song ids. (eg. `Glaciaxion.SunsetRay.0,Realms.HinkikAHimitsu.0`)
 		- Overridden songs will only have their aliases specified in the current table, and will not inherit aliases for those songs from parent tables.
 		- For example, if song `Song.Artist.0` has alias `A` in the global table, and `B` in the server table, then only alias `B` will be active for that song in the server.
