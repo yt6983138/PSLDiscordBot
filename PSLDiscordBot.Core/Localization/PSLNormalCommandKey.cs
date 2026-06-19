@@ -64,21 +64,6 @@ public static partial class PSLNormalCommandKey
 	public static partial string GetMoneyReply { get; }
 	#endregion
 
-	#region AddAliasCommand
-	public static partial string AddAliasName { get; }
-	public static partial string AddAliasDescription { get; }
-
-	public static partial string AddAliasOptionForSongName { get; }
-	public static partial string AddAliasOptionForSongDescription { get; }
-	public static partial string AddAliasOptionAllayToAddName { get; }
-	public static partial string AddAliasOptionAllayToAddDescription { get; }
-
-	public static partial string AddAliasNoMatch { get; }
-	public static partial string AddAliasMultipleMatch { get; }
-	public static partial string AddAliasAlreadyAdded { get; }
-	public static partial string AddAliasSuccess { get; }
-	#endregion
-
 	#region GetScoresCommand
 	public static partial string GetScoresName { get; }
 	public static partial string GetScoresDescription { get; }
@@ -130,21 +115,6 @@ public static partial class PSLNormalCommandKey
 	public static partial string MoreRksRksChangeFormat { get; }
 	public static partial string MoreRksSongTitle { get; }
 	public static partial string MoreRksSongFormat { get; }
-	#endregion
-
-	#region RemoveAliasCommand
-	public static partial string RemoveAliasName { get; }
-	public static partial string RemoveAliasDescription { get; }
-
-	public static partial string RemoveAliasOptionForSongName { get; }
-	public static partial string RemoveAliasOptionForSongDescription { get; }
-	public static partial string RemoveAliasOptionAllayToAddName { get; }
-	public static partial string RemoveAliasOptionAllayToAddDescription { get; }
-
-	public static partial string RemoveAliasNoMatch { get; }
-	public static partial string RemoveAliasMultipleMatch { get; }
-	public static partial string RemoveAliasAlreadyAdded { get; }
-	public static partial string RemoveAliasSuccess { get; }
 	#endregion
 
 	#region SetMemorableScoreCommand

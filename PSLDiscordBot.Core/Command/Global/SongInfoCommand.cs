@@ -30,7 +30,7 @@ public class SongInfoCommand : GuestCommandBase
 
 	public override async Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
 	{
-		List<SongSearchResult> foundAlias = requester.SearchSong(this._phigrosService,
+		List<SongSearchResult> foundAlias = this._aliasService.SearchSong(arg,
 			arg.GetOption<string>(this._localization[PSLCommonOptionKey.SongSearchOptionName]));
 
 		if (foundAlias.Count == 0)

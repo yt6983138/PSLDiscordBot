@@ -26,6 +26,7 @@ public class Config
 	public string AvatarHashMapLocation { get; set; } = "./Assets/Avatar/AvatarInfo.json";
 
 	public string PSLDbConnectionString { get; set; } = "Data Source=./PSL/MainUserData.db";
+	public string AliasDbConnectionString { get; set; } = "Data Source=./PSL/AliasData.db";
 
 	public int CurrentTOSAgreementLevel { get; set; } = 1;
 

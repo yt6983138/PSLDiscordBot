@@ -9,9 +9,14 @@ internal class Program
 		if (string.IsNullOrEmpty(assetsToCopy)) throw new ArgumentException("Must specify asset copy path");
 		if (string.IsNullOrEmpty(infoToCopy)) throw new ArgumentException("Must specify info copy path");
 
-		Console.WriteLine("Copy asset start");
-		CopyFolder(new(Path.Combine(assetsToCopy, "Assets")), Directory.CreateDirectory("./Assets"));
-		Console.WriteLine("Copy asset done");
+		DirectoryInfo assetFolderInfo = new("./Assets");
+		if (assetFolderInfo.Exists)
+		{
+			bool isSymbolic = assetFolderInfo.Attributes.HasFlag(FileAttributes.ReparsePoint);
+			Directory.Delete("./Assets", !isSymbolic);
+		}
+		Directory.CreateSymbolicLink("./Assets", assetsToCopy);
+		Console.WriteLine($"Created symbolic link for Assets from {assetsToCopy}");
 
 		using HttpClient httpClient = new();
 		DirectoryInfo pslDir = Directory.CreateDirectory("./PSL");

@@ -52,7 +52,7 @@ public class SongScoresCommand : CommandBase
 			}
 		}
 
-		List<SongSearchResult> searchResult = requester.SearchSong(this._phigrosService, search);
+		List<SongSearchResult> searchResult = this._aliasService.SearchSong(arg, search);
 		if (searchResult.Count == 0)
 		{
 			await arg.QuickReply(this._localization[PSLCommonMessageKey.SongSearchNoMatch]);

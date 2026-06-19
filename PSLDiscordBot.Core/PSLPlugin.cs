@@ -146,7 +146,8 @@ public class PSLPlugin : IPlugin
 			.AddSingleton<LocalizationService>()
 			.AddSingleton<TemporaryTOSAgreementService>()
 			.AddSingleton<LeaderboardService>()
-			.AddSingleton<LargeImageCoolDownService>();
+			.AddSingleton<LargeImageCoolDownService>()
+			.AddSingleton<AliasService>();
 
 		hostBuilder.Services.AddAssemblyToMvc(this);
 	}
@@ -212,6 +213,17 @@ public class PSLPlugin : IPlugin
 			this._logger.LogCritical(EventIdInitialize, "No system fonts have been found, please install at least one (and Saira)!");
 			throw new InvalidOperationException("No fonts installed");
 		}
+
+#if DEBUG
+		// adds test account to the database to make testing more convenient (no need to run /tos, /link-token etc)
+		using DataBaseService.DbDataRequester database = host.Services.GetRequiredService<DataBaseService>().NewRequester();
+		database.AddOrReplaceUserDataAsync(new(
+		   Secret.AdminId,
+		   Secret.PhigrosToken,
+		   Secret.IsInternational,
+		   100,
+		   true)).Wait();
+#endif
 	}
 
 	void IPlugin.Unload(WebApplication host, bool isSafeUnload)
