@@ -1,108 +1,204 @@
-﻿## Quick Starting Guide
+# Getting Started
 If you are using this for the first time, please follow the steps to set up your account for the bot.
-1. Use `/login` to link your account first, you will see a parameter named `is_international`, this depends on where did you get your game.
-For example, on Apple store or TapTap (China) you would be using non-internaional account (fill `false` for this), on TapTap Global or Google Play, you would be using international account (fill `true`).
- - Alternatively, you can also use `/link-token` if you already have token and can't or don't want to go through the login process. You still need to fill out the `is_international` parameter.
-2. (Optional) Set your score precision using `/set-precision`.
-3. (Optional, this is almost optional in every case) Use `/get-time-index` to find the save you want to check, usually only used if you want to see older save (MAY NOT be supported, for detail see `/get-time-index` usage).
-4. Now, you can get your scores by using `/get-scores [index]` or `/get-photo [index]`. Also `/about-me` for summary view.
 
-## Command usage
-Options in `<example>` are _required_ options, in `[example]` are _optional_ options.
-### /help
-Usage: `/help` <br/>
+1. Run `/tos` command to view and accept our TOS.
+2. Use `/login` to link your account first, you will see a parameter named `is_international`, this depends on where did you get your game. For example, on Apple store or TapTap (China) you would be using non-international account (fill `false` for this), on TapTap Global or Google Play, you would be using international account (fill `true`).
+    - Alternatively, you can also use `/link-token` if you already have token and can't or don't want to go through the login process. You still need to fill out the `is_international` parameter.
+3. (Optional) Set your score precision using `/set-precision`. Setting this makes the bot show score with more digits.
+4. (Optional) Make your public visibility on by running `/set-public-visibility`. Setting this makes your score available publicly on leaderboards and let people view your scores.
+5. Now, you can get your scores by using `/get-scores [index]` or `/get-photo [index]`. Also `/about-me` for summary view.
+
+# Command usage
+Options in angle brackets (`<>`) are _required_ options, and options in square brackets (`[]`) are _optional_ options.
+
+## `/help`
 Prints guide for first time use.
-### /login
-Usage: `/login <is_international>` <br/>
-Example: `/login true` <br/>
-Login with TapTap. Once you do this you no longer need to do `/link-token`. <br/>
-The `is_international` depends on your Phigros version, if you are using international version of Phigros<sup>[1]</sup>, set it to `true`. <br/>
-<sup>[1]</sup>: At this time of this part being written, only `Phigros (Global)` downloaded from taptap.io and version >3.14.1 is international version, otherwise it is China version. <br/>
-### /link-token
-**Notice: You should use `/login` instead! This is obsolete.**<br/>
-Usage: `/link-token <token> <is_international>` <br/>
-Example: `/link-token abcde12345fghij67890klmpq false` <br/>
-Link your token. You must link your token before doing anything (except `/help`). <br/>
-Token is a string which has length of 25, only contains numbers and lowercase alphabets. <br/>
-Warning: people CAN use token to find your personal information, so do NOT leak your token! 
-If you leaked it, logout in Phigros immediately. (Don't worry we don't use your token for personal information) <br/>
-How to find token: <br/>
-[Chinese version](https://potent-cartwheel-e81.notion.site/Phigros-Bot-f154a4b0ea6446c28f62149587cd5f31)
-#### Android - way 1
 
-1. Find .userdata at `Android/data/com.PigeonGames.Phigros/files/`
-(or more precisely, `/storage/emulated/[userid]/Android/data/com.PigeonGames.Phigros/files/.userdata`)
-> Some device may differ, then find folder named `com.PigeonGames.Phigros` and try to find `.userdata` underneath it.
-2. Open the `.userdata` file with any text editors, and find `"sessionToken": "abcdefg"`, the `abcdefg` is your token, save it carefully.
-> For example, the file shows `"sessionToken": "abcdefghij1234567890abcde"`, then your token is `abcdefghij1234567890abcde`.
+## `/login <is_international>`
+Log you into the bot. You must log in before executing commands requiring Phigros account. 
 
-#### Android - way 2
+> Example: `/login true`
 
-Download [the file](http://qxsky.top:886/externalLinksController/chain/getstk.apk?ckey=UbcekU4SrbrP56nuuJsjSG4sR6XVva0QpH6cgRxykQ%2BLVKfVVy1N9ftDKol27wSM) and follow the guide. (May be Chinese)
+Options:
+1. `is_international`: The value depends on your Phigros version, if you are using international version of Phigros<sup>[1]</sup>, set it to `true`.
+Login with TapTap.
 
-#### iOS - way 1
+<sup>[1]</sup>: At this time of this part being written, only `Phigros (Global)` downloaded from taptap.io and version >3.14.1 is international version, otherwise it is China version.
 
-Use [Ai-Si helper](https://m.i4.cn/) to export the backup, find the folder `AppDomain-games.Pigeon.Phigros/Documents` and `.userdata` is inside. You can also find file named `f48523d73831bfbdc9faf74eca5bf2999ca5bf54`, it is the `.userdata` file but with different name, then follow the Android way 1 step.
+## `/link-token <token> <is_international>`
+Log you into the bot using token directly. You must log in before executing commands requiring Phigros account. If you want to find your token, please see [FindToken.md](FindToken.md).
 
-#### iOS - way 2
+> Example: `/link-token abcde12345fghij67890klmpq false`
 
-Summary: Grabbing the request sent from Phigros client to Phigros server (`https://phigrosserver.pigeongames.cn/1.1/classes/_GameSave`), this is faster but I only recommend it for **advanced users**.
+Options:
+1. `token`: A string which has length of 25, only contains numbers and lowercase alphabets. <br/>
+    - Warning: people _can_ use token to find your personal information, so do **not** leak your token! If you leaked it, logout in Phigros immediately.
+2. `is_international`: See `/login` command for more information.
 
-1. Download a proxy app on your device.
-2. Download [HTTP Toolkit](https://httptoolkit.com/) on your computer, and connect your device and your computer to same Wi-Fi. 
-3. Get your computer IP and port which HTTP Toolkit is listening on (default 8000)，you can check it on main page (Proxy Port:8000), then install cert exported from HTTP Toolkit.
-4. Add new proxy, and enter IP and port gotten from above step, and start it.
-5. Start the service, then open Phigros and do sync, grab the request in HTTP Toolkit, then check the header of the request, the value of `x-lc-session` is your token.
+## `/get-time-index`
+It prints out all your save time and index that points to it, 0 is always latest. You must do `/link-token` or `/login` first.
 
-#### iOS - way 3
-Use an Android device temporally and follow the upper part.
-### /get-time-index
-Usage: `/get-time-index` <br/>
-It prints out all your save time and index that points to it, 0 is always latest. You must do `/link-token` or `/login` first. <br/>
-Note: It seems like only a cloud save structure update/change would make a index change. 
-Older save may not be supported due to missing information and different encryption algorithm.
-### /export-scores
-Usage: `/get-all-scores [index]` <br/>
-Example: `/get-all-scores 0` <br/>
-It gives you a CSV attachment that has all your scores. You must do `/link-token` or `/login` first.
-### /get-scores
-Usage: `/get-scores [index] [count]` <br/>
-Example: `/get-scores 0 114514` <br/>
-It gives you a table of your scores, rks, status (with specified length) etc. You must do `/link-token` or `/login` first.
-### /set-precision
-Usage: `/set-precision <number, 16 >= number >= 1>` <br/>
-Example: `/set-precision 5` <br/>
-It sets the precision of score show when doing `/get-scores`. Example:
-number = 1: acc: 99.1 <br/>
-number = 2: acc: 99.12 <br/>
-... <br/>
-You also must do `/link-token` first.
-### /get-token
-Usage: `/get-token` <br/>
-Get your token. You must do `/link-token` or `/login` first.
-### /song-scores
-Usage: `/song-scores <search> [index]` <br/>
-Example: `/song-scores volcanic 0` <br/>
-It searches all your scores, you can input song name, a song alias, or song id to find the song. 
-You must do `/link-token` or `/login` first. <br/>
-### /get-photo
-Usage: `/get-photo [count] [index]` <br/>
-Example: `/get-photo 69 0` <br/>
-Gives you a cool picture about your b19&1phi scores. You must do `/link-token` or `/login` first.
-### /about-me
-Usage: `/about-me [index]` <br/>
-Example: `/about-me 0` <br/>
-Gives you a cool picture about your statistics. You must do `/link-token` or `/login` first.
-### /song-info
-Usage: `/song-info <search>` <br/>
-Example: `/song-info 321` <br/>
-It searches songs in database, you can input song name, a song alias, or song id to find the song. 
-You must do `/link-token` or `/login` first. <br/>
-### /song-scores
-Usage: `/song-scores <search> [index]` <br/>
-Example: `/song-scores 2085 0` <br/>
-It searches songs in database, you can input song name, a song alias, or song id to find the song, and show your score in cool images.
-You must do `/link-token` or `/login` first. <br/>
-### /poke
-Usage: `/poke` <br/>
-Poke me awa
+Note: It seems like only a cloud save structure update/change would make a index change. Older save may not be supported due to missing information and different encryption algorithm.
+
+## `/export-scores [index]`
+It gives you a CSV attachment that has all your scores.
+
+> Example: `/export-scores 0`
+
+Options:
+1. `index`: Save index.
+
+## `/get-scores [index] [count]`
+It gives you a table of your scores, in a TUI-style.
+
+> Example: `/get-scores 0 114514`
+
+Options:
+1. `index`: Save index.
+2. `count`: The number of scores to display.
+
+## `/set-precision <precision>`
+Set precision of value shown on commands that fetch your scores.
+
+> Example: `/set-precision 5`
+
+Options:
+1. `precision`: Precision. Put 1 to get acc like 99.1, 2 to get acc like 99.12, repeat.
+
+## `/get-token`
+Show your token.
+
+## `/tos`
+View the Terms of Service. Do this command twice agrees it.
+
+## `/logout`
+Logs you out of the bot. (Your settings will be wiped too!)
+
+## `/set-public-visibility <visibility>`
+Set whether your scores or statistics is visible to public or not.
+
+> Example: `/set-public-visibility true`
+
+Options:
+1. `visibility`: Whether your data is visible to public or not.
+
+## `/set-show-count-default <count>`
+Set the default show count for `/get-photo`.
+
+> Example: `/set-show-count-default 30`
+
+Options:
+1. `count`: The default count going to be set.
+
+## `/set-memorable-score <score-number> <score-thoughts> [index]`
+Sets your memorable score, shown in `/about-me`.
+
+> Example: `/set-memorable-score 1 "My first Phi!"`
+
+Options:
+1. `score-number`: The score number shown in `/get-scores`, `/get-photo`, aka the Number column.
+2. `score-thoughts`: Your thought about this score, like how you did it etc.
+3. `index`: Save time converted to index, 0 is always latest. Do `/get-time-index` to get other index.
+
+## `/clear-memorable-score`
+Clear the memorable score.
+
+## `/about-me [index]`
+Get info about you in game.
+
+> Example: `/about-me 0`
+
+Options:
+1. `index`: Save time converted to index, 0 is always latest. Do `/get-time-index` to get other index.
+
+## `/get-photo [index] [count] [lower_bound] [show_what_grades] [cc_lower_bound] [cc_higher_bound] [generate_for]`
+Get summary photo of your scores.
+
+> Example: `/get-photo 0 30`
+
+Options:
+1. `index`: Save time converted to index, 0 is always latest. Do `/get-time-index` to get other index.
+2. `count`: Counts to show. (Default: 30, or set through `/set-count-or-default`).
+3. `lower_bound`: The lower bound of the show range. ex. `lower_bound: 69` and `count: 42` show scores from 69 to 110.
+4. `show_what_grades`: Change what grades to show. Default: Show all. Use comma-separated list, ex. `S, Phi, Vu, Fc, False`.
+5. `cc_lower_bound`: Change the lower bound of scores' CC to show. Inclusive.
+6. `cc_higher_bound`: Change the higher bound of scores' CC to show. Inclusive.
+7. `generate_for`: Generate for other user. Users without `/set-public-visibility` on won't be generated.
+
+## `/get-money [index]`
+Get amount of data/money/currency you have in Phigros.
+
+> Example: `/get-money 0`
+
+Options:
+1. `index`: Save time converted to index, 0 is always latest. Do `/get-time-index` to get other index.
+
+## `/more-rks [index] [give_me_at_least] [count]`
+Show you a list of possible chart to push to get more rks.
+
+> Example: `/more-rks 0 0.01`
+
+Options:
+1. `index`: Save time converted to index, 0 is always latest. Do `/get-time-index` to get other index.
+2. `give_me_at_least`: The least rks you wanted to get from each chart. (Default: have Phigros shown +0.01).
+3. `count`: Controls how many charts should be shown. (Default 10).
+
+## `/leaderboard [rank-using] [count]`
+Displays the leaderboard.
+
+> Example: `/leaderboard rank-using rks`
+
+Options:
+1. `rank-using`: Options for ranking criteria (Subcommand Group). If omitted, defaults to RKS. Available subcommands:
+    - `accuracy [difficulty]`: Ranks by average accuracy.
+    - `average-score [difficulty]`: Ranks by average score.
+    - `total-score [difficulty]`: Ranks by total score.
+    - `count [difficulty]`: Ranks by achieved count.
+    - `rks`: Ranks by RKS.
+    - `challenge-rank`: Ranks by challenge rank.
+    
+    Subcommand options:
+    - `difficulty`: Use what difficulty to rank by (choices: `EZ`, `HD`, `IN`, `AT`, `All`).
+2. `count`: Number of entries to display, defaults to 50.
+
+## `/song-info <search>`
+Search info about songs.
+
+> Example: `/song-info "Spasmodic"`
+
+Options:
+1. `search`: Searching strings, you can either put id, put alias, or put the song name.
+
+## `/song-scores <search> [index] [generate_for]`
+Get scores for a specified song(s).
+
+> Example: `/song-scores "Spasmodic" 0`
+
+Options:
+1. `search`: Searching strings, you can either put id, put alias, or put the song name.
+2. `index`: Save time converted to index, 0 is always latest. Do `/get-time-index` to get other index.
+3. `generate_for`: Generate for other user. Users without `/set-public-visibility` on won't be generated.
+
+## `/download-asset <search> [pez_chart_type]`
+Download assets about song.
+
+> Example: `/download-asset "Spasmodic" 2`
+
+Options:
+1. `search`: Searching strings, you can either put id, put alias, or put the song name.
+2. `pez_chart_type`: Select which chart to pack.
+
+## `/ping`
+Check the availability of the core services.
+
+## `/report-problem <message> [attachments]`
+Report a problem to author.
+
+> Example: `/report-problem "The bot crashed when running get-scores"`
+
+Options:
+1. `message`: Describe the issue you met/Tell what was the problem.
+2. `attachments`: The attachment you want to attach (like screenshot/stacktrace), can be used to show the issue.
+
+## Alias-related Commands
+Please visit [AliasSystem.md](AliasSystem.md) for more information.

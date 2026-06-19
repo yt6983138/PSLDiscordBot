@@ -10,7 +10,7 @@ If you are using this for the first time, please follow the steps to set up your
 2. (Optional) Set your score precision using `/set-precision` if you want to see your score more accurately.
 3. Now, you can get your scores by using `/get-scores` or `/get-photo`, if you wanna share your statistics, you can also run `/about-me`.
 
-There's also cool commands like `/song-info`, `/song-scores`, `/poke`, also `/add-alias` etc.
+There's also cool commands like `/song-info`, `/song-scores`, `/poke` etc.
 
 If you see any problem, use `/report-problem` to report it (Devs may contact you for more information)
 ## Command usage
