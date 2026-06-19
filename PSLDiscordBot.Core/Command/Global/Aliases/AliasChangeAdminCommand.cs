@@ -23,6 +23,7 @@ public class AliasChangeAdminCommand : CommandBase
 	public override OneOf<string, LocalizedString> PSLDescription => "[Server super admin command] Add or remove admin role from the server table";
 
 	public override InteractionContextType[] InteractionContextTypes => [InteractionContextType.Guild];
+	public override ApplicationIntegrationType[] IntegrationTypes => [ApplicationIntegrationType.GuildInstall];
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder

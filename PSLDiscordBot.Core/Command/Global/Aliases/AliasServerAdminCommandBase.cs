@@ -12,6 +12,7 @@ public abstract class AliasServerAdminCommandBase : CommandBase
 	}
 
 	public sealed override InteractionContextType[] InteractionContextTypes => [InteractionContextType.Guild];
+	public sealed override ApplicationIntegrationType[] IntegrationTypes => [ApplicationIntegrationType.GuildInstall];
 
 	public override async Task Execute(SocketSlashCommand arg, object executer)
 	{
