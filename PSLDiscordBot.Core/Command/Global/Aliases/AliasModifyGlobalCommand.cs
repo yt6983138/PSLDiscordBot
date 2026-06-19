@@ -71,7 +71,6 @@ public class AliasModifyGlobalCommand : CommandBase
 		}
 		else
 		{
-			SongAliasData originalEntry = dynamicRequester.FindAlias(result.Result.SongId);
 			dynamicRequester.MutateAliases(result.Result.SongId, x => x.Remove(alias), out List<Guid>? guids, out newAlias);
 
 			if (guids.Count < 1) // removed nothing, so the alias must not exist

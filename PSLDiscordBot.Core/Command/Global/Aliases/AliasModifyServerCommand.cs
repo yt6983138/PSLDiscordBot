@@ -13,6 +13,7 @@ public class AliasModifyServerCommand : CommandBase
 	public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLAliasRelatedKey.ModifyServerDescription];
 
 	public override InteractionContextType[] InteractionContextTypes => [InteractionContextType.Guild];
+	public override ApplicationIntegrationType[] IntegrationTypes => [ApplicationIntegrationType.GuildInstall];
 
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder
@@ -62,7 +63,14 @@ public class AliasModifyServerCommand : CommandBase
 			// kinda dislike the two step process
 			bool isOwnedByUser = true;
 
-			SongAliasData originalEntry = dynamicRequester.FindAlias(result.Result.SongId);
+			SongAliasData? originalEntry = dynamicRequester.FindAliasOrNull(result.Result.SongId);
+
+			if (originalEntry is null || !originalEntry.Aliases.Contains(alias))
+			{
+				await arg.QuickReply(this._localization[PSLAliasRelatedKey.Shared.MessageNotExist], originalEntry?.Aliases ?? []);
+				return;
+			}
+
 			dynamicRequester.MutateAliases(result.Result.SongId, x =>
 			{
 				Guid key = originalEntry.AliasMetadataKeys[originalEntry.Aliases.IndexOf(alias)];
@@ -84,12 +92,6 @@ public class AliasModifyServerCommand : CommandBase
 			if (!isOwnedByUser)
 			{
 				await arg.QuickReply(this._localization[PSLAliasRelatedKey.ModifyServerNotOwner]);
-				return;
-			}
-
-			if (guids.Count < 1) // removed nothing, so the alias must not exist
-			{
-				await arg.QuickReply(this._localization[PSLAliasRelatedKey.Shared.MessageNotExist], result.Result.Alias);
 				return;
 			}
 

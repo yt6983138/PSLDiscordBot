@@ -71,12 +71,18 @@ public class AliasAuditCommand : AliasServerAdminCommandBase
 
 		using AliasService.DynamicTableRequester dynamicRequester = this._aliasService.GetDynamicTableRequesterAuto(arg, AliasTableIdType.Server);
 		using AliasService.StaticTableRequester staticRequester = this._aliasService.GetStaticTableRequester();
-		SongAliasData aliasData = dynamicRequester.FindAlias(result.Result.SongId);
+		SongAliasData? aliasData = dynamicRequester.FindAliasOrNull(result.Result.SongId);
+
+		if (aliasData is null)
+		{
+			await arg.QuickReply("Specified song does not have alias in this server yet.");
+			return;
+		}
 
 		int index = aliasData.Aliases.IndexOf(alias);
 		if (index == -1)
 		{
-			await arg.QuickReply("Alias not found for the specified song.");
+			await arg.QuickReply("Alias not found for the specified song in current server.");
 			return;
 		}
 
@@ -135,7 +141,7 @@ public class AliasAuditCommand : AliasServerAdminCommandBase
 		{
 			if (!aliasData.Aliases.Contains(oldAlias))
 			{
-				await arg.QuickReply("Alias not found for the specified song.");
+				await arg.QuickReply("Alias not found for the specified song in current server.");
 				return;
 			}
 
@@ -164,7 +170,7 @@ public class AliasAuditCommand : AliasServerAdminCommandBase
 		{
 			if (!aliasData.Aliases.Contains(alias))
 			{
-				await arg.QuickReply("Alias not found for the specified song.");
+				await arg.QuickReply("Alias not found for the specified song in current server.");
 				return;
 			}
 

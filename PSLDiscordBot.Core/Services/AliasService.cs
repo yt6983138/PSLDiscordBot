@@ -245,6 +245,12 @@ public class AliasService
 	{
 		StaticTableRequester requester = new(this);
 		TryCreateTables(requester);
+		if (requester.GetTableAttribute(AliasTableIdType.Global, 0) is null)
+		{
+			// this makes sure the global table attribute always exists, so we don't have to worry about it doesn't exist when doing inheritance
+			requester.Add(StaticTableRequester.GetDefaultAttribute(GetDynamicTableId(AliasTableIdType.Global, 0)));
+			requester.SaveChanges();
+		}
 
 		return requester;
 	}
@@ -269,7 +275,7 @@ public class AliasService
 	}
 
 	public DynamicTableRequester GetDynamicTableRequester(AliasTableIdType type, ulong id)
-		=> new(this, GetDynamicTableId(type, id));
+		=> this.GetDynamicTableRequester(GetDynamicTableId(type, id));
 	public DynamicTableRequester GetDynamicTableRequester(string tableId)
 	{
 		DynamicTableRequester requester = new(this, tableId);

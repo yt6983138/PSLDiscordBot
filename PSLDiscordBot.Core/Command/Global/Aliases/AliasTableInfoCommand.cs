@@ -83,9 +83,10 @@ public class AliasTableInfoCommand : AliasServerAdminCommandBase
 					break;
 				}
 
-				if (staticRequester.GetTableAttribute(valueString) is null)
+				AliasTableAttribute targetTableAttribute = staticRequester.GetTableAttributeOrDefault(valueString);
+				if (!targetTableAttribute.AllowInheritance)
 				{
-					await arg.QuickReply("The specified table to inherit from does not exist. Please check the table id and try again.");
+					await arg.QuickReply("The specified table to inherit from does not exist or does not allow inheritance. Please check the table id and try again.");
 					return;
 				}
 

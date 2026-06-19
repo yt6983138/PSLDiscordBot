@@ -80,7 +80,7 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 
 			[AliasShared.OptionOperationName] = LocalizedString.CreateDefault("operation"),
 			[AliasShared.OptionOperationDescription] = LocalizedString.CreateDefault("The operation to perform on the alias."),
-			[AliasShared.MessageAlreadyAdded] = LocalizedString.CreateDefault("Sorry, this alias has already been added! Alias that already exists: \n" +
+			[AliasShared.MessageAlreadyAdded] = LocalizedString.CreateDefault("Sorry, this alias has already been added, either as global or inherited. Alias that already exists: \n" +
 				"```\n{0:list:{}|\\n}\n```"),
 			[AliasShared.MessageSuccess] = LocalizedString.CreateDefault("Operation done successfully! The song `{0}` now has the following alias: \n" +
 				"```\n{1:list:{}|\\n}\n```"),
@@ -91,7 +91,7 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 			[AliasShared.MessageNoMatch] = LocalizedString.CreateDefault("Sorry, the song you're looking for seems does not exist."),
 			[AliasShared.MessageMultipleMatch] = LocalizedString.CreateDefault("There's multiple match for your 'for' input: \n```\n{0:list:{SongId}|\\n}\n```\n" +
 				"Please re-do this command with the correct 'for' parameter."),
-			[AliasShared.MessageNotExist] = LocalizedString.CreateDefault("Sorry, this alias does not exist! Alias that already exists: \n" +
+			[AliasShared.MessageNotExist] = LocalizedString.CreateDefault("Sorry, this alias does not exist! The alias you are looking for might be global or inherited. Alias that already exists in current server: \n" +
 				"```\n{0:list:{}|\\n}\n```"),
 
 			[SongScoresSongNotPlayed] = LocalizedString.CreateDefault("Sorry, you seems haven't played the songs you have been searching for."),
