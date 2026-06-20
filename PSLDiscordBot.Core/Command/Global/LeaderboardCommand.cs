@@ -58,8 +58,7 @@ public class LeaderboardCommand : CommandBase
 
 	public override bool IsEphemeral => false;
 
-	public override SlashCommandBuilder CompleteBuilder =>
-		this.BasicBuilder
+	public override SlashCommandBuilder CompleteBuilder => this.BasicBuilder
 		.AddOptions(CreateRankUsingOption(this._localization, new SlashCommandOptionBuilder()
 			.WithName(this._localization[PSLNormalCommandKey.LeaderboardOptionCountName])
 			.WithDescription(this._localization[PSLNormalCommandKey.LeaderboardOptionCountDescription])

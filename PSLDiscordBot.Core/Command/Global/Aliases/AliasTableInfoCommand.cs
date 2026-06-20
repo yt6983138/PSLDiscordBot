@@ -24,8 +24,7 @@ public class AliasTableInfoCommand : AliasServerAdminCommandBase
 	public override OneOf<string, LocalizedString> PSLName => "alias-table-info";
 	public override OneOf<string, LocalizedString> PSLDescription => "[Server admin command] Get or set information about the alias table";
 
-	public override SlashCommandBuilder CompleteBuilder
-		=> this.BasicBuilder
+	public override SlashCommandBuilder CompleteBuilder => this.BasicBuilder
 		.AddOption(new SlashCommandOptionBuilder()
 			.WithName(nameof(Operation.Get).ToLower())
 			.WithDescription("Get information about table in current server")

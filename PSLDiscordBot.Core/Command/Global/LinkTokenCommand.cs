@@ -12,19 +12,15 @@ public class LinkTokenCommand : GuestCommandBase
 
 	public override bool RequireTOSAcceptance => true;
 
-	public override SlashCommandBuilder CompleteBuilder =>
-		this.BasicBuilder.AddOption(
+	public override SlashCommandBuilder CompleteBuilder => this.BasicBuilder
+		.AddOption(
 			this._localization[PSLGuestCommandKey.LinkTokenOptionTokenName],
 			ApplicationCommandOptionType.String,
 			this._localization[PSLGuestCommandKey.LinkTokenOptionTokenDescription],
 			isRequired: true,
 			maxLength: 25,
 			minLength: 25)
-		.AddOption(
-			this._localization[PSLGuestCommandKey.LoginOptionIsInternationalName],
-			ApplicationCommandOptionType.Boolean,
-			this._localization[PSLGuestCommandKey.LoginOptionIsInternationalDescription],
-			isRequired: true);
+		.AddIsInternationalOption(this._localization);
 
 	public override async Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
 	{
@@ -40,7 +36,7 @@ public class LinkTokenCommand : GuestCommandBase
 		UserData tmp = new(
 			userId,
 			token,
-			arg.GetOption<bool>(this._localization[PSLGuestCommandKey.LoginOptionIsInternationalName]),
+			arg.GetIsInternationalOption(this._localization),
 			this._config.Value.CurrentTOSAgreementLevel,
 			false);
 		SaveContext? fetched = await this._phigrosService.TryHandleAndFetchContext(tmp.SaveCache, arg, 0, false);

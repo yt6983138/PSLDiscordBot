@@ -14,12 +14,8 @@ public class DownloadAssetCommand : GuestCommandBase
 	public override OneOf<string, LocalizedString> PSLName => this._localization[PSLGuestCommandKey.DownloadAssetName];
 	public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLGuestCommandKey.DownloadAssetDescription];
 
-	public override SlashCommandBuilder CompleteBuilder =>
-		this.BasicBuilder.AddOption(
-			this._localization[PSLCommonOptionKey.SongSearchOptionName],
-			ApplicationCommandOptionType.String,
-			this._localization[PSLCommonOptionKey.SongSearchOptionDescription],
-			isRequired: true)
+	public override SlashCommandBuilder CompleteBuilder => this.BasicBuilder
+		.AddSongSearchOption(this._localization)
 		.AddOption(
 			this._localization[PSLGuestCommandKey.DownloadAssetOptionDownloadPEZName],
 			ApplicationCommandOptionType.Integer,
@@ -29,8 +25,7 @@ public class DownloadAssetCommand : GuestCommandBase
 
 	public override async Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
 	{
-		List<SongSearchResult> foundAlias = this._aliasService.SearchSong(arg,
-			arg.GetOption<string>(this._localization[PSLCommonOptionKey.SongSearchOptionName]));
+		List<SongSearchResult> foundAlias = this._aliasService.SearchSong(arg, arg.GetSongSearchOption(this._localization));
 
 		if (foundAlias.Count == 0)
 		{

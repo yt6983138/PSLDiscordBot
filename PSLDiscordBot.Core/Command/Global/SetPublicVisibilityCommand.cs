@@ -10,8 +10,7 @@ public class SetPublicVisibilityCommand : CommandBase
 	public override OneOf<string, LocalizedString> PSLName => this._localization[PSLNormalCommandKey.SetPublicVisibilityName];
 	public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLNormalCommandKey.SetPublicVisibilityDescription];
 
-	public override SlashCommandBuilder CompleteBuilder =>
-		this.BasicBuilder
+	public override SlashCommandBuilder CompleteBuilder => this.BasicBuilder
 		.AddOption(
 			this._localization[PSLNormalCommandKey.SetPublicVisibilityOptionVisibilityName],
 			ApplicationCommandOptionType.Boolean,

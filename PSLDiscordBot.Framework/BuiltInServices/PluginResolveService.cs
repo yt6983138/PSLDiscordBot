@@ -39,21 +39,17 @@ internal class PluginResolveService : IPluginResolveService
 				x.Where(a => !a.Name.StartsWith("__"))
 				.Where(a => a.Extension.Equals(".dll", StringComparison.CurrentCultureIgnoreCase))
 				.OrderBy(a => a.Name))
-			.Select(x =>
-				x.Select(a => Assembly.LoadFrom(a.FullName))
-				.ToArray())
-			.MergeArrays()
+			.SelectMany(x =>
+				x.Select(a => Assembly.LoadFrom(a.FullName)))
 			.Distinct();
 
 		IEnumerable<IPlugin> pluginsFromRoot = asmsAtRootOfPluginFolder
-			.Select(x => x.GetTypes())
-			.MergeArrays()
+			.SelectMany(x => x.GetTypes())
 			.Where(x => x.IsAssignableTo(typeof(IPlugin)))
 			.Select(x => (IPlugin)Activator.CreateInstance(x)!);
 
 		IEnumerable<IPlugin> pluginsFromSubFolders = asmsUnderAllSubFolder
-			.Select(x => x.GetTypes())
-			.MergeArrays()
+			.SelectMany(x => x.GetTypes())
 			.Where(x => x.IsAssignableTo(typeof(IPlugin)))
 			.Select(x => (IPlugin)Activator.CreateInstance(x)!);
 

@@ -12,15 +12,14 @@ public class SetPrecisionCommand : CommandBase
 	public override OneOf<string, LocalizedString> PSLName => this._localization[PSLNormalCommandKey.SetPrecisionName];
 	public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLNormalCommandKey.SetPrecisionDescription];
 
-	public override SlashCommandBuilder CompleteBuilder =>
-		this.BasicBuilder.AddOption(
+	public override SlashCommandBuilder CompleteBuilder => this.BasicBuilder
+		.AddOption(
 			this._localization[PSLNormalCommandKey.SetPrecisionOptionPrecisionName],
 			ApplicationCommandOptionType.Integer,
 			this._localization[PSLNormalCommandKey.SetPrecisionOptionPrecisionDescription],
 			isRequired: true,
 			maxValue: 1077,
-			minValue: 1
-		);
+			minValue: 1);
 
 	public override async Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
 	{

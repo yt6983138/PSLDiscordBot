@@ -19,14 +19,8 @@ public class MoreRksCommand : CommandBase
 	public override OneOf<string, LocalizedString> PSLName => this._localization[PSLNormalCommandKey.MoreRksName];
 	public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLNormalCommandKey.MoreRksDescription];
 
-	public override SlashCommandBuilder CompleteBuilder =>
-		this.BasicBuilder
-		.AddOption(
-			this._localization[PSLCommonOptionKey.IndexOptionName],
-			ApplicationCommandOptionType.Integer,
-			this._localization[PSLCommonOptionKey.IndexOptionDescription],
-			isRequired: false,
-			minValue: 0)
+	public override SlashCommandBuilder CompleteBuilder => this.BasicBuilder
+		.AddIndexOption(this._localization)
 		.AddOption(
 			this._localization[PSLNormalCommandKey.MoreRksOptionGetAtLeastName],
 			ApplicationCommandOptionType.Number,

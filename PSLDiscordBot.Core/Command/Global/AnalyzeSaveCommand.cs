@@ -14,8 +14,7 @@ public class AnalyzeSaveCommand : AdminCommandBase
 	public override OneOf<string, LocalizedString> PSLName => "analyze-save";
 	public override OneOf<string, LocalizedString> PSLDescription => "[Admin command] Analyze someone's save.";
 
-	public override SlashCommandBuilder CompleteBuilder =>
-		this.BasicBuilder
+	public override SlashCommandBuilder CompleteBuilder => this.BasicBuilder
 		.AddOption(
 			"token",
 			ApplicationCommandOptionType.String,

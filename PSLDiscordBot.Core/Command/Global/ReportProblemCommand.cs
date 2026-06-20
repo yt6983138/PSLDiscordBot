@@ -3,21 +3,18 @@
 [AddToGlobal]
 public class ReportProblemCommand : GuestCommandBase
 {
-	private readonly PSLPlugin _pslPlugin;
 	private readonly BugReportHandlerService _bugReportHandlerService;
 
-	public ReportProblemCommand(IServiceProvider provider, PSLPlugin pslPlugin, BugReportHandlerService bugReportHandlerService)
+	public ReportProblemCommand(IServiceProvider provider, BugReportHandlerService bugReportHandlerService)
 		: base(provider)
 	{
-		this._pslPlugin = pslPlugin;
 		this._bugReportHandlerService = bugReportHandlerService;
 	}
 
 	public override OneOf<string, LocalizedString> PSLName => this._localization[PSLGuestCommandKey.ReportProblemName];
 	public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLGuestCommandKey.ReportProblemDescription];
 
-	public override SlashCommandBuilder CompleteBuilder =>
-		this.BasicBuilder
+	public override SlashCommandBuilder CompleteBuilder => this.BasicBuilder
 		.AddOption(
 			this._localization[PSLGuestCommandKey.ReportProblemOptionMessageName],
 			ApplicationCommandOptionType.String,

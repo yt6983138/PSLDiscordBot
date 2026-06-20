@@ -21,17 +21,13 @@ public class SongInfoCommand : GuestCommandBase
 	public override OneOf<string, LocalizedString> PSLName => this._localization[PSLGuestCommandKey.SongInfoName];
 	public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLGuestCommandKey.SongInfoDescription];
 
-	public override SlashCommandBuilder CompleteBuilder =>
-		this.BasicBuilder.AddOption(
-			this._localization[PSLCommonOptionKey.SongSearchOptionName],
-			ApplicationCommandOptionType.String,
-			this._localization[PSLCommonOptionKey.SongSearchOptionDescription],
-			isRequired: true);
+	public override SlashCommandBuilder CompleteBuilder => this.BasicBuilder
+		.AddSongSearchOption(this._localization);
 
 	public override async Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
 	{
 		List<SongSearchResult> foundAlias = this._aliasService.SearchSong(arg,
-			arg.GetOption<string>(this._localization[PSLCommonOptionKey.SongSearchOptionName]));
+			arg.GetSongSearchOption(this._localization));
 
 		if (foundAlias.Count == 0)
 		{

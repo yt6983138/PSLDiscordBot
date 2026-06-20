@@ -10,8 +10,7 @@ public class GetTokenForCommand : AdminCommandBase
 	public override OneOf<string, LocalizedString> PSLName => "get-token-for";
 	public override OneOf<string, LocalizedString> PSLDescription => "[Admin command] Get token for user.";
 
-	public override SlashCommandBuilder CompleteBuilder =>
-		this.BasicBuilder
+	public override SlashCommandBuilder CompleteBuilder => this.BasicBuilder
 		.AddOption("user", ApplicationCommandOptionType.User, "The user id/name.", isRequired: true);
 
 	public override async Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)

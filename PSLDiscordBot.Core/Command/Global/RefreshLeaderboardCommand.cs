@@ -13,8 +13,7 @@ public class RefreshLeaderboardCommand : AdminCommandBase
 	public override OneOf<string, LocalizedString> PSLName => "refresh-leaderboard";
 	public override OneOf<string, LocalizedString> PSLDescription => "[Admin command] Refreshes the leaderboard cache.";
 
-	public override SlashCommandBuilder CompleteBuilder =>
-		this.BasicBuilder;
+	public override SlashCommandBuilder CompleteBuilder => this.BasicBuilder;
 
 	public override async Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
 	{

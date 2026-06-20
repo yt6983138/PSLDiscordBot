@@ -32,27 +32,26 @@ public class AliasAuditCommand : AliasServerAdminCommandBase
 	public override OneOf<string, LocalizedString> PSLDescription => "[Server admin command] Audit alias table";
 
 	// maybe i should make this also work on global table to save me from reading database on my own?
-	public override SlashCommandBuilder CompleteBuilder =>
-		this.BasicBuilder
-			.AddOption(new SlashCommandOptionBuilder()
-				.WithName(nameof(Operation.Info).ToLower())
-				.WithDescription("Get info about an alias")
-				.WithType(ApplicationCommandOptionType.SubCommand)
-				.AddOption(OptionForSongName, ApplicationCommandOptionType.String, "Song to operate", isRequired: true)
-				.AddOption(OptionAliasName, ApplicationCommandOptionType.String, "Alias string to get info for", isRequired: true))
-			.AddOption(new SlashCommandOptionBuilder()
-				.WithName(nameof(Operation.Modify).ToLower())
-				.WithDescription("Modify an alias")
-				.WithType(ApplicationCommandOptionType.SubCommand)
-				.AddOption(OptionForSongName, ApplicationCommandOptionType.String, "Song to operate", isRequired: true)
-				.AddOption(OptionAliasName, ApplicationCommandOptionType.String, "Alias string to modify", isRequired: true)
-				.AddOption(OptionNewAliasName, ApplicationCommandOptionType.String, "The new alias string", isRequired: true))
-			.AddOption(new SlashCommandOptionBuilder()
-				.WithName(nameof(Operation.Remove).ToLower())
-				.WithDescription("Remove an alias")
-				.WithType(ApplicationCommandOptionType.SubCommand)
-				.AddOption(OptionForSongName, ApplicationCommandOptionType.String, "Song to operate", isRequired: true)
-				.AddOption(OptionAliasName, ApplicationCommandOptionType.String, "Alias string to remove", isRequired: true));
+	public override SlashCommandBuilder CompleteBuilder => this.BasicBuilder
+		.AddOption(new SlashCommandOptionBuilder()
+			.WithName(nameof(Operation.Info).ToLower())
+			.WithDescription("Get info about an alias")
+			.WithType(ApplicationCommandOptionType.SubCommand)
+			.AddOption(OptionForSongName, ApplicationCommandOptionType.String, "Song to operate", isRequired: true)
+			.AddOption(OptionAliasName, ApplicationCommandOptionType.String, "Alias string to get info for", isRequired: true))
+		.AddOption(new SlashCommandOptionBuilder()
+			.WithName(nameof(Operation.Modify).ToLower())
+			.WithDescription("Modify an alias")
+			.WithType(ApplicationCommandOptionType.SubCommand)
+			.AddOption(OptionForSongName, ApplicationCommandOptionType.String, "Song to operate", isRequired: true)
+			.AddOption(OptionAliasName, ApplicationCommandOptionType.String, "Alias string to modify", isRequired: true)
+			.AddOption(OptionNewAliasName, ApplicationCommandOptionType.String, "The new alias string", isRequired: true))
+		.AddOption(new SlashCommandOptionBuilder()
+			.WithName(nameof(Operation.Remove).ToLower())
+			.WithDescription("Remove an alias")
+			.WithType(ApplicationCommandOptionType.SubCommand)
+			.AddOption(OptionForSongName, ApplicationCommandOptionType.String, "Song to operate", isRequired: true)
+			.AddOption(OptionAliasName, ApplicationCommandOptionType.String, "Alias string to remove", isRequired: true));
 
 	public override async Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
 	{

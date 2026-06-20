@@ -128,12 +128,10 @@ internal class CommandResolveService : ICommandResolveService, IPrivilegedComman
 			IEnumerable<UserCommandProperties> userCommands = this.GetAllUserCommands().Select(x => HandleBuild(x.Name, () => x.CompleteBuilder.Build()));
 
 			await this._discordClientService.SocketClient.BulkOverwriteGlobalApplicationCommandsAsync(
-				new List<IEnumerable<ApplicationCommandProperties>>() {
-					globalCommands,
-					//GuildCommands.GetServices<BasicCommandBase>().Select(x => x.CompleteBuilder.Build()),
-					messageCommands,
-					userCommands
-				}.MergeIEnumerables().ToArray());
+				globalCommands.Cast<ApplicationCommandProperties>()
+					.Concat(messageCommands)
+					.Concat(userCommands)
+					.ToArray());
 		};
 	}
 
@@ -180,24 +178,21 @@ internal class CommandResolveService : ICommandResolveService, IPrivilegedComman
 	{
 		return AppDomain.CurrentDomain
 			.GetAssemblies()
-			.Select(x => x.GetTypes())
-			.MergeArrays()
+			.SelectMany(x => x.GetTypes())
 			.Where(t => t.IsSubclassOf(typeof(BasicCommandBase)));
 	}
 	public IEnumerable<Type> FindBasicUserCommandBaseTypes()
 	{
 		return AppDomain.CurrentDomain
 			.GetAssemblies()
-			.Select(x => x.GetTypes())
-			.MergeArrays()
+			.SelectMany(x => x.GetTypes())
 			.Where(t => t.IsSubclassOf(typeof(BasicUserCommandBase)));
 	}
 	public IEnumerable<Type> FindBasicMessageCommandBaseTypes()
 	{
 		return AppDomain.CurrentDomain
 			.GetAssemblies()
-			.Select(x => x.GetTypes())
-			.MergeArrays()
+			.SelectMany(x => x.GetTypes())
 			.Where(t => t.IsSubclassOf(typeof(BasicMessageCommandBase)));
 	}
 	#endregion

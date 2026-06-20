@@ -17,21 +17,15 @@ public class GetScoresCommand : CommandBase
 	public override OneOf<string, LocalizedString> PSLName => this._localization[PSLNormalCommandKey.GetScoresName];
 	public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLNormalCommandKey.GetScoresDescription];
 
-	public override SlashCommandBuilder CompleteBuilder =>
-		this.BasicBuilder.AddOption(
-			this._localization[PSLCommonOptionKey.IndexOptionName],
-			ApplicationCommandOptionType.Integer,
-			this._localization[PSLCommonOptionKey.IndexOptionDescription],
-			isRequired: false,
-			minValue: 0)
+	public override SlashCommandBuilder CompleteBuilder => this.BasicBuilder
+		.AddIndexOption(this._localization)
 		.AddOption(
 			this._localization[PSLNormalCommandKey.GetScoresOptionCountName],
 			ApplicationCommandOptionType.Integer,
 			this._localization[PSLNormalCommandKey.GetScoresOptionCountDescription],
 			isRequired: false,
 			minValue: 1,
-			maxValue: 114514
-		);
+			maxValue: 114514);
 
 	public override async Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
 	{

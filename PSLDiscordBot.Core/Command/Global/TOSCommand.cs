@@ -10,8 +10,7 @@ public class TOSCommand : GuestCommandBase
 	public override OneOf<string, LocalizedString> PSLName => this._localization[PSLGuestCommandKey.TOSName];
 	public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLGuestCommandKey.TOSDescription];
 
-	public override SlashCommandBuilder CompleteBuilder =>
-		this.BasicBuilder;
+	public override SlashCommandBuilder CompleteBuilder => this.BasicBuilder;
 
 	public override async Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
 	{

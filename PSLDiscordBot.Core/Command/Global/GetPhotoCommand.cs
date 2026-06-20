@@ -34,51 +34,42 @@ public class GetPhotoCommand : CommandBase
 	public override OneOf<string, LocalizedString> PSLName => this._localization[PSLNormalCommandKey.GetPhotoName];
 	public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLNormalCommandKey.GetPhotoDescription];
 
-	public override SlashCommandBuilder CompleteBuilder =>
-		this.BasicBuilder.AddOption(
-				this._localization[PSLCommonOptionKey.IndexOptionName],
-				ApplicationCommandOptionType.Integer,
-				this._localization[PSLCommonOptionKey.IndexOptionDescription],
-				isRequired: false,
-				minValue: 0)
-			.AddOption(
-				this._localization[PSLNormalCommandKey.GetPhotoOptionCountName],
-				ApplicationCommandOptionType.Integer,
-				this._localization[PSLNormalCommandKey.GetPhotoOptionCountDescription],
-				false,
-				minValue: 0,
-				maxValue: int.MaxValue)
-			.AddOption(
-				this._localization[PSLNormalCommandKey.GetPhotoOptionLowerBoundName],
-				ApplicationCommandOptionType.Integer,
-				this._localization[PSLNormalCommandKey.GetPhotoOptionLowerBoundDescription],
-				isRequired: false,
-				minValue: 0,
-				maxValue: int.MaxValue)
-			.AddOption(
-				this._localization[PSLNormalCommandKey.GetPhotoOptionGradesToShowName],
-				ApplicationCommandOptionType.String,
-				this._localization[PSLNormalCommandKey.GetPhotoOptionGradesToShowDescription],
-				isRequired: false)
-			.AddOption(
-				this._localization[PSLNormalCommandKey.GetPhotoOptionCCFilterLowerBoundName],
-				ApplicationCommandOptionType.Number,
-				this._localization[PSLNormalCommandKey.GetPhotoOptionCCFilterLowerBoundDescription],
-				isRequired: false,
-				minValue: 0,
-				maxValue: 20)
-			.AddOption(
-				this._localization[PSLNormalCommandKey.GetPhotoOptionCCFilterHigherBoundName],
-				ApplicationCommandOptionType.Number,
-				this._localization[PSLNormalCommandKey.GetPhotoOptionCCFilterHigherBoundDescription],
-				isRequired: false,
-				minValue: 0,
-				maxValue: 20)
-			.AddOption(
-				this._localization[PSLCommonOptionKey.GenerateForOptionName],
-				ApplicationCommandOptionType.User,
-				this._localization[PSLCommonOptionKey.GenerateForOptionDescription],
-				isRequired: false);
+	public override SlashCommandBuilder CompleteBuilder => this.BasicBuilder
+		.AddIndexOption(this._localization)
+		.AddOption(
+			this._localization[PSLNormalCommandKey.GetPhotoOptionCountName],
+			ApplicationCommandOptionType.Integer,
+			this._localization[PSLNormalCommandKey.GetPhotoOptionCountDescription],
+			false,
+			minValue: 0,
+			maxValue: int.MaxValue)
+		.AddOption(
+			this._localization[PSLNormalCommandKey.GetPhotoOptionLowerBoundName],
+			ApplicationCommandOptionType.Integer,
+			this._localization[PSLNormalCommandKey.GetPhotoOptionLowerBoundDescription],
+			isRequired: false,
+			minValue: 0,
+			maxValue: int.MaxValue)
+		.AddOption(
+			this._localization[PSLNormalCommandKey.GetPhotoOptionGradesToShowName],
+			ApplicationCommandOptionType.String,
+			this._localization[PSLNormalCommandKey.GetPhotoOptionGradesToShowDescription],
+			isRequired: false)
+		.AddOption(
+			this._localization[PSLNormalCommandKey.GetPhotoOptionCCFilterLowerBoundName],
+			ApplicationCommandOptionType.Number,
+			this._localization[PSLNormalCommandKey.GetPhotoOptionCCFilterLowerBoundDescription],
+			isRequired: false,
+			minValue: 0,
+			maxValue: 20)
+		.AddOption(
+			this._localization[PSLNormalCommandKey.GetPhotoOptionCCFilterHigherBoundName],
+			ApplicationCommandOptionType.Number,
+			this._localization[PSLNormalCommandKey.GetPhotoOptionCCFilterHigherBoundDescription],
+			isRequired: false,
+			minValue: 0,
+			maxValue: 20)
+		.AddGenerateForOption(this._localization);
 
 	public override async Task Callback(SocketSlashCommand arg,
 		UserData data,
@@ -92,7 +83,7 @@ public class GetPhotoCommand : CommandBase
 		double ccLowerBound = arg.GetOptionOrDefault<double>(this._localization[PSLNormalCommandKey.GetPhotoOptionCCFilterLowerBoundName]);
 		double ccHigherBound = arg.GetOptionOrDefault<double>(this._localization[PSLNormalCommandKey.GetPhotoOptionCCFilterHigherBoundName], int.MaxValue);
 		string? showingGrades = arg.GetOptionOrDefault<string>(this._localization[PSLNormalCommandKey.GetPhotoOptionGradesToShowName]);
-		IUser? generateFor = arg.GetOptionOrDefault<IUser>(this._localization[PSLCommonOptionKey.GenerateForOptionName]);
+		IUser? generateFor = arg.GetGenerateForOption(this._localization);
 
 		UserData? generateForUserData = null;
 		if (generateFor is not null)
@@ -124,9 +115,9 @@ public class GetPhotoCommand : CommandBase
 		bool usePng = count > this._config.Value.GetPhotoUsePngWhenLargerThan;
 		bool shouldUseCoolDown = count > this._config.Value.GetPhotoCoolDownWhenLargerThan;
 
-		if (usePng && !arg.GuildId
-			.HasValueAnd(i => this._discordClientService.SocketClient.GetGuild(i)
-				.IsNotNullAnd(a => a.PremiumSubscriptionCount >= 7)))
+		SocketGuild? guild = arg.GuildId.HasValue ? this._discordClientService.SocketClient.GetGuild(arg.GuildId.Value) : null;
+		int premiumCount = guild?.PremiumSubscriptionCount ?? 0;
+		if (usePng && premiumCount < 7) // 7 enables large file upload (i think 50mb?)
 		{
 			await arg.QuickReply(this._localization[PSLNormalCommandKey.GetPhotoImageTooBig],
 				this._config.Value.GetPhotoUsePngWhenLargerThan);

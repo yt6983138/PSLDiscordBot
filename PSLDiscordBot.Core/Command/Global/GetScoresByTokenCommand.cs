@@ -10,35 +10,31 @@ public class GetScoresByTokenCommand : AdminCommandBase
 	public override OneOf<string, LocalizedString> PSLName => "get-scores-by-token";
 	public override OneOf<string, LocalizedString> PSLDescription => "[Admin command] Get scores using token.";
 
-	public override SlashCommandBuilder CompleteBuilder =>
-		this.BasicBuilder.AddOption(
+	public override SlashCommandBuilder CompleteBuilder => this.BasicBuilder
+		.AddOption(
 			"token",
 			ApplicationCommandOptionType.String,
 			"Token.",
 			isRequired: true,
-			minValue: 0
-		)
+			minValue: 0)
 		.AddOption(
 			"index",
 			ApplicationCommandOptionType.Integer,
 			"Save time converted to index, 0 is always latest. Do /get-time-index to get other index.",
 			isRequired: true,
-			minValue: 0
-		)
+			minValue: 0)
 		.AddOption(
 			"count",
 			ApplicationCommandOptionType.Integer,
 			"The count to show.",
 			isRequired: false,
 			minValue: 1,
-			maxValue: 114514
-		)
+			maxValue: 114514)
 		.AddOption(
 			"is_international",
 			ApplicationCommandOptionType.Boolean,
 			"International mode",
-			isRequired: true
-		);
+			isRequired: true);
 
 	public override async Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
 	{

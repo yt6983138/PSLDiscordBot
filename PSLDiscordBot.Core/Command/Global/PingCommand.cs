@@ -23,8 +23,7 @@ public class PingCommand : GuestCommandBase
 
 	public override bool IsEphemeral => false;
 
-	public override SlashCommandBuilder CompleteBuilder =>
-		this.BasicBuilder;
+	public override SlashCommandBuilder CompleteBuilder => this.BasicBuilder;
 
 	public override async Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
 	{

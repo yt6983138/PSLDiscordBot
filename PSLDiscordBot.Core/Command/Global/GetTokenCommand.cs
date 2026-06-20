@@ -10,8 +10,7 @@ public class GetTokenCommand : CommandBase
 	public override OneOf<string, LocalizedString> PSLName => this._localization[PSLNormalCommandKey.GetTokenName];
 	public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLNormalCommandKey.GetTokenDescription];
 
-	public override SlashCommandBuilder CompleteBuilder =>
-		this.BasicBuilder;
+	public override SlashCommandBuilder CompleteBuilder => this.BasicBuilder;
 
 	public override async Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
 	{

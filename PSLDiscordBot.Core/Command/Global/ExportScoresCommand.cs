@@ -13,13 +13,8 @@ public class ExportScoresCommand : CommandBase
 	public override OneOf<string, LocalizedString> PSLName => this._localization[PSLNormalCommandKey.ExportScoresName];
 	public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLNormalCommandKey.ExportScoresDescription];
 
-	public override SlashCommandBuilder CompleteBuilder =>
-		this.BasicBuilder.AddOption(
-			this._localization[PSLCommonOptionKey.IndexOptionName],
-			ApplicationCommandOptionType.Integer,
-			this._localization[PSLCommonOptionKey.IndexOptionDescription],
-			isRequired: false,
-			minValue: 0);
+	public override SlashCommandBuilder CompleteBuilder => this.BasicBuilder
+		.AddIndexOption(this._localization);
 
 	public override async Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
 	{

@@ -26,30 +26,16 @@ public class AliasModifyGlobalCommand : CommandBase
 	public override OneOf<string, LocalizedString> PSLName => this._localization[PSLAliasRelatedKey.ModifyGlobalName];
 	public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLAliasRelatedKey.ModifyGlobalDescription];
 
-	public override SlashCommandBuilder CompleteBuilder =>
-		this.BasicBuilder
-		.AddOption(
-			this._localization[PSLAliasRelatedKey.Shared.OptionOperationName],
-			ApplicationCommandOptionType.Integer,
-			this._localization[PSLAliasRelatedKey.Shared.OptionOperationDescription],
-			isRequired: true,
-			choices: BuilderUtility.CreateChoicesFromEnum<AliasModifyOperation>())
-		.AddOption(
-			this._localization[PSLAliasRelatedKey.Shared.OptionForSongName],
-			ApplicationCommandOptionType.String,
-			this._localization[PSLAliasRelatedKey.Shared.OptionForSongDescription],
-			isRequired: true)
-		.AddOption(
-			this._localization[PSLAliasRelatedKey.Shared.OptionAliasToOperateName],
-			ApplicationCommandOptionType.String,
-			this._localization[PSLAliasRelatedKey.Shared.OptionAliasToOperateDescription],
-			isRequired: true);
+	public override SlashCommandBuilder CompleteBuilder => this.BasicBuilder
+		.AddAliasOperationOption(this._localization)
+		.AddAliasForSongOption(this._localization)
+		.AddAliasToOperateOption(this._localization);
 
 	public override async Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
 	{
-		AliasModifyOperation operation = arg.GetOption<AliasModifyOperation>(this._localization[PSLAliasRelatedKey.Shared.OptionOperationName]);
-		string forSong = arg.GetOption<string>(this._localization[PSLAliasRelatedKey.Shared.OptionForSongName]);
-		string alias = arg.GetOption<string>(this._localization[PSLAliasRelatedKey.Shared.OptionAliasToOperateName]);
+		AliasModifyOperation operation = arg.GetAliasOperationOption(this._localization);
+		string forSong = arg.GetAliasForSongOption(this._localization);
+		string alias = arg.GetAliasToOperateOption(this._localization);
 
 		SongSearchValidateResult result = await SearchAndValidate(arg, this._aliasService, this._localization, forSong, AliasTableIdType.Global);
 		if (result.ShouldReturn) return;

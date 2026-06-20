@@ -12,8 +12,7 @@ public class HelpCommand : GuestCommandBase
 	public override OneOf<string, LocalizedString> PSLName => this._localization[PSLGuestCommandKey.HelpName];
 	public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLGuestCommandKey.HelpDescription];
 
-	public override SlashCommandBuilder CompleteBuilder =>
-		this.BasicBuilder;
+	public override SlashCommandBuilder CompleteBuilder => this.BasicBuilder;
 
 	public override async Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
 	{

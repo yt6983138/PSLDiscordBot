@@ -45,16 +45,12 @@ public class LoginCommand : GuestCommandBase
 
 	public override bool RequireTOSAcceptance => true;
 
-	public override SlashCommandBuilder CompleteBuilder =>
-		this.BasicBuilder
-		.AddOption(this._localization[PSLGuestCommandKey.LoginOptionIsInternationalName],
-			ApplicationCommandOptionType.Boolean,
-			this._localization[PSLGuestCommandKey.LoginOptionIsInternationalDescription],
-			isRequired: true);
+	public override SlashCommandBuilder CompleteBuilder => this.BasicBuilder
+		.AddIsInternationalOption(this._localization);
 
 	public override async Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
 	{
-		bool chinaMode = !arg.GetOptionOrDefault(this._localization[PSLGuestCommandKey.LoginOptionIsInternationalName], false);
+		bool chinaMode = !arg.GetIsInternationalOption(this._localization);
 
 		CompleteQRCodeData qrCode = await TapTapHelper.RequestLoginQrCode(useChinaEndpoint: chinaMode);
 		DateTime stopAt = DateTime.Now + new TimeSpan(0, 0, qrCode.ExpiresInSeconds - 15);

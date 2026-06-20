@@ -25,8 +25,7 @@ public class AliasChangeAdminCommand : CommandBase
 	public override InteractionContextType[] InteractionContextTypes => [InteractionContextType.Guild];
 	public override ApplicationIntegrationType[] IntegrationTypes => [ApplicationIntegrationType.GuildInstall];
 
-	public override SlashCommandBuilder CompleteBuilder =>
-		this.BasicBuilder
+	public override SlashCommandBuilder CompleteBuilder => this.BasicBuilder
 		.AddOption(
 			"target",
 			ApplicationCommandOptionType.Role,

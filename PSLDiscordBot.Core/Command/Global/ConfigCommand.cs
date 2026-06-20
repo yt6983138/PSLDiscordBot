@@ -26,8 +26,7 @@ public class ConfigCommand : AdminCommandBase
 	public override OneOf<string, LocalizedString> PSLName => "config";
 	public override OneOf<string, LocalizedString> PSLDescription => "[Admin command] Config the application.";
 
-	public override SlashCommandBuilder CompleteBuilder =>
-		this.BasicBuilder
+	public override SlashCommandBuilder CompleteBuilder => this.BasicBuilder
 		.AddOption(
 			"property_or_action",
 			ApplicationCommandOptionType.String,
