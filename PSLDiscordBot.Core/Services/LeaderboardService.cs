@@ -76,10 +76,8 @@ public class LeaderboardService
 		this._logger.LogDebug("Analyzing leaderboard cache for user {id}", userId);
 		try
 		{
-			// maybe we should make save async apis accept cancellation token?
-			// TODO: think ^
-			PlayerInfo playerInfo = await save.GetPlayerInfoAsync();
-			SaveContext context = await save.GetSaveContextAsync(0);
+			PlayerInfo playerInfo = await save.GetPlayerInfoAsync(ct);
+			SaveContext context = await save.GetSaveContextAsync(0, ct: ct);
 
 			GameRecord gameRecord = context.ReadGameRecord();
 			GameProgress gameProgress = context.ReadGameProgress();
