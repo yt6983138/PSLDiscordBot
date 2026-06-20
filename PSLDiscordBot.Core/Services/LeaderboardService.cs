@@ -14,8 +14,6 @@ public class LeaderboardService
 	private readonly IDiscordClientService _discordClient;
 	private readonly PhigrosService _phigrosService;
 
-	private readonly Timer? _refreshTimer;
-
 	public LeaderboardService(
 		ILogger<LeaderboardService> logger,
 		DataBaseService dataBase,
