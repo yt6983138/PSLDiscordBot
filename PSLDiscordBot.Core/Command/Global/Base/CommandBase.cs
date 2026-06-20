@@ -38,10 +38,21 @@ public abstract class CommandBase : BasicCommandBase
 
 	public virtual bool RequireTOSAcceptance => true;
 
-	protected override SlashCommandBuilder BasicBuilder =>
-		base.BasicBuilder
-			.DoIf(this.PSLName.IsValue2, (x) => x.WithNameLocalizations(this.PSLName.Value2))
-			.DoIf(this.PSLDescription.IsValue2, (x) => x.WithDescriptionLocalizations(this.PSLDescription.Value2));
+	protected override SlashCommandBuilder BasicBuilder
+	{
+		get
+		{
+			if (this.PSLName.IsValue2)
+			{
+				this.BasicBuilder.WithNameLocalizations(this.PSLName.Value2);
+			}
+			if (this.PSLDescription.IsValue2)
+			{
+				this.BasicBuilder.WithDescriptionLocalizations(this.PSLDescription.Value2);
+			}
+			return base.BasicBuilder;
+		}
+	}
 
 	public abstract Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer);
 	public override async Task Execute(SocketSlashCommand arg, object executer)
