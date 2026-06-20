@@ -87,7 +87,7 @@ public abstract class FileManagementServiceBase<T>
 		{
 			stream = info.OpenRead();
 			byte[] buffer = new byte[stream.Length];
-			stream.Read(buffer);
+			stream.ReadExactly(buffer);
 
 			data = JsonConvert.DeserializeObject<TFile>(Encoding.UTF8.GetString(buffer), settings)!;
 			return data is not null;
