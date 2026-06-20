@@ -11,7 +11,6 @@ using PSLDiscordBot.Core.ImageGenerating;
 using PSLDiscordBot.Framework.BuiltInServices;
 using PSLDiscordBot.Framework.MiscEventArgs;
 using PSLDiscordBot.Framework.ServiceBase;
-using SixLabors.Fonts;
 using SmartFormat;
 using System.Net.WebSockets;
 
@@ -206,12 +205,6 @@ public class PSLPlugin : IPlugin
 				}
 			}
 			localization.Save();
-		}
-
-		if (!SystemFonts.Collection.Families.Any())
-		{
-			this._logger.LogCritical(EventIdInitialize, "No system fonts have been found, please install at least one (and Saira)!");
-			throw new InvalidOperationException("No fonts installed");
 		}
 
 #if DEBUG
