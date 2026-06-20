@@ -85,24 +85,12 @@ public class AliasAuditCommand : AliasServerAdminCommandBase
 			return;
 		}
 
-		switch (operation)
-		{
-			case Operation.Info:
-				await HandleInfo(aliasData, alias);
+		await RouteSubCommand(arg.Data,
+			new(nameof(Operation.Info).ToLower(), HandleInfo),
+			new(nameof(Operation.Modify).ToLower(), HandleModify),
+			new(nameof(Operation.Remove).ToLower(), HandleRemove));
 
-				break;
-			case Operation.Modify:
-				string newAlias = operationOption.GetOption<string>(OptionNewAliasName);
-				await HandleModify(aliasData, alias, newAlias);
-
-				break;
-			case Operation.Remove:
-				await HandleRemove(aliasData, alias);
-
-				break;
-		}
-
-		async Task HandleInfo(SongAliasData aliasData, string alias)
+		async Task HandleInfo(SocketSlashCommandDataOption option)
 		{
 			Guid? currentMetadataKey = aliasData.AliasMetadataKeys[index];
 			List<SongAliasMetadata> metadataChain = [];
@@ -136,9 +124,11 @@ public class AliasAuditCommand : AliasServerAdminCommandBase
 			await arg.QuickReplyWithAttachments("Info:", PSLUtils.ToAttachment(sb.ToString(), "alias_info.md"));
 		}
 
-		async Task HandleModify(SongAliasData aliasData, string oldAlias, string newAlias)
+		async Task HandleModify(SocketSlashCommandDataOption option)
 		{
-			if (!aliasData.Aliases.Contains(oldAlias))
+			string newAlias = option.GetOption<string>(OptionNewAliasName);
+
+			if (!aliasData.Aliases.Contains(alias))
 			{
 				await arg.QuickReply("Alias not found for the specified song in current server.");
 				return;
@@ -146,7 +136,7 @@ public class AliasAuditCommand : AliasServerAdminCommandBase
 
 			dynamicRequester.MutateAliases(aliasData.SongId, x =>
 			{
-				x.Remove(oldAlias);
+				x.Remove(alias);
 				x.Add(newAlias);
 			}, out List<Guid>? guids, out SongAliasData? newAliasData);
 
@@ -165,7 +155,7 @@ public class AliasAuditCommand : AliasServerAdminCommandBase
 			await arg.QuickReply("Done.");
 		}
 
-		async Task HandleRemove(SongAliasData aliasData, string alias)
+		async Task HandleRemove(SocketSlashCommandDataOption option)
 		{
 			if (!aliasData.Aliases.Contains(alias))
 			{

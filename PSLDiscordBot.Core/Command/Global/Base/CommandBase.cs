@@ -3,6 +3,11 @@
 namespace PSLDiscordBot.Core.Command.Global.Base;
 public abstract class CommandBase : BasicCommandBase
 {
+	public delegate Task Router<T>(SocketSlashCommandDataOption option, T? context);
+	public delegate Task Router(SocketSlashCommandDataOption option);
+	public record struct RouteInfo(OneOf<string, LocalizedString> Name, Router Router);
+	public record struct RouteInfo<T>(OneOf<string, LocalizedString> Name, Router<T> Router);
+
 	#region Injection
 	protected readonly IOptions<Config> _config;
 	protected readonly DataBaseService _dataBaseService;
@@ -94,5 +99,77 @@ public abstract class CommandBase : BasicCommandBase
 
 		await command.QuickReply(this._localization[PSLCommonKey.AdminCommandBasePermissionDenied][command.UserLocale]);
 		return false;
+	}
+
+	private static bool StringEqualsStringOrLocalized(string str, OneOf<string, LocalizedString> target)
+	{
+		if (target.IsValue2)
+			return str == target.Value2.Default;
+
+		return str == target.Value1;
+	}
+
+	public static RouteInfo RouteToSubcommand(OneOf<string, LocalizedString> groupName, params IEnumerable<RouteInfo> routes)
+	{
+		return new(groupName, option => RouteSubCommand(option, routes));
+	}
+	public static RouteInfo<T> RouteToSubcommand<T>(OneOf<string, LocalizedString> groupName, T? context = default, params IEnumerable<RouteInfo<T>> routes)
+	{
+		return new(groupName, (option, ctx) => RouteSubCommand(option, ctx, routes));
+	}
+
+	public static async Task RouteSubCommandGroup(SocketSlashCommandData command, params IEnumerable<RouteInfo> routes)
+	{
+		foreach (RouteInfo item in routes)
+		{
+			SocketSlashCommandDataOption? optionMatching = command.Options.FirstOrDefault(x => StringEqualsStringOrLocalized(x.Name, item.Name));
+			if (optionMatching is null) continue;
+
+			if (optionMatching.Type != ApplicationCommandOptionType.SubCommandGroup)
+				throw new ArgumentException($"Option {optionMatching.Name} is not a subcommand group");
+
+			await item.Router.Invoke(optionMatching);
+		}
+	}
+	public static Task RouteSubCommandGroup<T>(SocketSlashCommandData command, T? context = default, params IEnumerable<RouteInfo<T>> routes)
+	{
+		return RouteSubCommandGroup(command, routes.Select(x => new RouteInfo(x.Name, y => x.Router.Invoke(y, context))));
+	}
+
+	public static async Task RouteSubCommand(SocketSlashCommandData command, params IEnumerable<RouteInfo> routes)
+	{
+		foreach (RouteInfo item in routes)
+		{
+			SocketSlashCommandDataOption? optionMatching = command.Options.FirstOrDefault(x => StringEqualsStringOrLocalized(x.Name, item.Name));
+			if (optionMatching is null) continue;
+
+			if (optionMatching.Type != ApplicationCommandOptionType.SubCommand)
+				throw new ArgumentException($"Option {optionMatching.Name} is not a subcommand");
+
+			await item.Router.Invoke(optionMatching);
+		}
+	}
+	public static Task RouteSubCommand<T>(SocketSlashCommandData command, T? context = default, params IEnumerable<RouteInfo<T>> routes)
+	{
+		return RouteSubCommand(command, routes.Select(x => new RouteInfo(x.Name, y => x.Router.Invoke(y, context))));
+	}
+
+	// its quite annoying that SocketSlashCommandData and SocketSlashCommandDataOption have the almost same structure but no common interface or base class
+	public static async Task RouteSubCommand(SocketSlashCommandDataOption option, params IEnumerable<RouteInfo> routes)
+	{
+		foreach (RouteInfo item in routes)
+		{
+			SocketSlashCommandDataOption? optionMatching = option.Options.FirstOrDefault(x => StringEqualsStringOrLocalized(x.Name, item.Name));
+			if (optionMatching is null) continue;
+
+			if (optionMatching.Type != ApplicationCommandOptionType.SubCommand)
+				throw new ArgumentException($"Option {optionMatching.Name} is not a subcommand");
+
+			await item.Router.Invoke(optionMatching);
+		}
+	}
+	public static Task RouteSubCommand<T>(SocketSlashCommandDataOption option, T? context = default, params IEnumerable<RouteInfo<T>> routes)
+	{
+		return RouteSubCommand(option, routes.Select(x => new RouteInfo(x.Name, y => x.Router.Invoke(y, context))));
 	}
 }
