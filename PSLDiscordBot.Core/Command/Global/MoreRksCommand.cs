@@ -141,7 +141,7 @@ public class MoreRksCommand : CommandBase
 
 	private static TargetRksScorePair BuildPair(CompleteScore score, double giveLeastRks, double leastRksInBests)
 	{
-		return new TargetRksScorePair(  // TODO: Fix formula (i left this ages ago but i forgot how was the formula broken)
+		return new TargetRksScorePair(
 				Math.Max(score.Rks + giveLeastRks, leastRksInBests + giveLeastRks),
 				CalculateTargetAcc(score, Math.Max(score.Rks + giveLeastRks, leastRksInBests + giveLeastRks)),
 				score);

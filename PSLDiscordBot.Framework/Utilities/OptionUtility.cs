@@ -156,7 +156,6 @@ public static class OptionUtility
 	#endregion
 
 	#region SocketSlashCommand Convenience Overloads
-	// TODO: add obsolete attributes to them, no longer recommended (im lazy to maintain another overload wrapper)
 
 	public static T GetOption<T>(this SocketSlashCommand socketSlashCommand, string name)
 	{
