@@ -14,7 +14,8 @@ public class LeaderboardCommand : CommandBase
 		TotalScore,
 		Count,
 		RKS,
-		ChallengeRank
+		ChallengeRank,
+		Money
 	}
 
 	public const Difficulty DifficultyAll = (Difficulty)(-2000);
@@ -94,6 +95,9 @@ public class LeaderboardCommand : CommandBase
 			case ByWhat.ChallengeRank:
 				titles.Insert(1, this._localization[PSLNormalCommandKey.LeaderboardChallengeRankTitle][arg.UserLocale]);
 				break;
+			case ByWhat.Money:
+				titles.Insert(1, this._localization[PSLNormalCommandKey.LeaderboardMoneyTitle][arg.UserLocale]);
+				break;
 			case ByWhat.Accuracy:
 				titles.Insert(1, this._localization[PSLNormalCommandKey.LeaderboardAccuracyTitle].GetFormatted(arg.UserLocale, difficultyString));
 				break;
@@ -147,6 +151,9 @@ public class LeaderboardCommand : CommandBase
 		{
 			ByWhat.RKS
 				=> userEntry.AnalyzedData.RKS.ToString(data.ShowFormat),
+
+			ByWhat.Money
+				=> userEntry.AnalyzedData.Money.ToString(),
 
 			ByWhat.ChallengeRank
 				=> this._localization[PSLNormalCommandKey.LeaderboardChallengeFormat]
@@ -203,6 +210,11 @@ public class LeaderboardCommand : CommandBase
 		{
 			entries.Sort((x, y) => GetChallengeRankWeight(y.AnalyzedData.ChallengeRank).CompareTo(GetChallengeRankWeight(x.AnalyzedData.ChallengeRank)));
 			result = entries.ToDictionary(x => x.UserId, x => (object)x.AnalyzedData.ChallengeRank);
+		}
+		else if (byWhat == ByWhat.Money)
+		{
+			entries.Sort((x, y) => y.AnalyzedData.Money.CompareTo(x.AnalyzedData.Money));
+			result = entries.ToDictionary(x => x.UserId, x => (object)x.AnalyzedData.Money);
 		}
 		else if (byWhat == ByWhat.Accuracy)
 		{
@@ -305,7 +317,7 @@ public class LeaderboardCommand : CommandBase
 			otherLastOptions = null;
 			return false;
 		}
-		if (byWhat == ByWhat.RKS || byWhat == ByWhat.ChallengeRank)
+		if (byWhat == ByWhat.RKS || byWhat == ByWhat.ChallengeRank || byWhat == ByWhat.Money)
 		{
 			difficulty = null;
 			otherLastOptions = option.Options.First();
@@ -336,7 +348,7 @@ public class LeaderboardCommand : CommandBase
 			.WithType(ApplicationCommandOptionType.SubCommandGroup)
 			.WithRequired(false)
 			.AddOptions(Enum.GetValues<ByWhat>()
-				.SkipLast(2) // add rks and challenge at last
+				.SkipLast(3) // add rks, challenge, and money at last
 				.Select(byWhat => new SlashCommandOptionBuilder()
 					.WithName(ByWhatNames[byWhat])
 					.WithDescription(localization[PSLNormalCommandKey.LeaderboardOptionRankUsingSubcommandDescription]
@@ -364,7 +376,7 @@ public class LeaderboardCommand : CommandBase
 					.AddOptions(additionalOptionsAtLast))
 				.ToArray())
 			.AddOptions(Enum.GetValues<ByWhat>()
-				.TakeLast(2)
+				.TakeLast(3)
 				.Select(byWhat => new SlashCommandOptionBuilder()
 					.WithName(ByWhatNames[byWhat])
 					.WithDescription(localization[PSLNormalCommandKey.LeaderboardOptionRankUsingSubcommandDescription]

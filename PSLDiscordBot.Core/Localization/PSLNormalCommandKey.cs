@@ -177,6 +177,7 @@ public static partial class PSLNormalCommandKey
 	public static partial string LeaderboardAverageScoreTitle { get; }
 	public static partial string LeaderboardTotalScoreTitle { get; }
 	public static partial string LeaderboardCountTitle { get; }
+	public static partial string LeaderboardMoneyTitle { get; }
 
 	public static partial string LeaderboardRowRankFormat { get; }
 	public static partial string LeaderboardChallengeFormat { get; }

@@ -264,6 +264,7 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 			[LeaderboardAverageScoreTitle] = LocalizedString.CreateDefault("Average Score ({0})"),
 			[LeaderboardTotalScoreTitle] = LocalizedString.CreateDefault("Total Score ({0})"),
 			[LeaderboardCountTitle] = LocalizedString.CreateDefault("Achieved Count ({0})"),
+			[LeaderboardMoneyTitle] = LocalizedString.CreateDefault("Money"),
 			[LeaderboardRowRankFormat] = LocalizedString.CreateDefault("#{0:calc(+1)}"),
 			[LeaderboardChallengeFormat] = LocalizedString.CreateDefault("{0.Rank} {0.Level}"),
 			[LeaderboardReply] = LocalizedString.CreateDefault("You are at rank {0:calc(+1)}, with statistic of {1}:"),

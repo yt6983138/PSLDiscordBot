@@ -21,7 +21,7 @@
 		<PackageReference Include="SharpZipLib" Version="1.4.2" />
 		<PackageReference Include="yt6983138.HtmlToImage.NET" Version="1.0.0" />
 		<PackageReference Include="yt6983138.PhiInfo.CLI.Library" Version="2.0.4" />
-		<PackageReference Include="PhigrosLibraryCSharp" Version="4.4.0" />
+		<PackageReference Include="PhigrosLibraryCSharp" Version="4.4.1" />
 		<PackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="3.3.4">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

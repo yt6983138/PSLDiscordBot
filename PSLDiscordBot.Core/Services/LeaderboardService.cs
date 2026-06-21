@@ -129,6 +129,7 @@ public class LeaderboardService
 				AnalyzedData = new()
 				{
 					RKS = rks,
+					Money = gameProgress.Money,
 					AchievedCounts = achievedCounts,
 					AverageAccuracies = averageAccuracies,
 					AverageScores = averageScores,
