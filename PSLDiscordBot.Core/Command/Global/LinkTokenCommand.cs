@@ -39,13 +39,11 @@ public class LinkTokenCommand : GuestCommandBase
 			arg.GetIsInternationalOption(this._localization),
 			this._config.Value.CurrentTOSAgreementLevel,
 			false);
-		SaveContext? fetched = await this._phigrosService.TryHandleAndFetchContext(tmp.SaveCache, arg, 0, false);
 
+		// the fetching process will reply if theres some sort of error, i forgot about this when i was migrating this to new pattern
+		SaveContext? fetched = await this._phigrosService.TryHandleAndFetchContext(tmp.SaveCache, arg, 0, false);
 		if (fetched is null)
-		{
-			await arg.QuickReply(this._localization[PSLGuestCommandKey.LinkTokenInvalidToken]);
 			return;
-		}
 
 		if (data is not null)
 		{
