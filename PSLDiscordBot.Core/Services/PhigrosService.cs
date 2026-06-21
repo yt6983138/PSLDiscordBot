@@ -20,6 +20,20 @@ public class PhigrosService
 	// using Localization.Language intentionally since i already make sure enum names in PhiInfo.Core.Models.Language 
 	// are the same as Localization.Language
 	public Dictionary<Language, MultiLanguageInfos> MultiLanguageInfos { get; set; } = [];
+	public MultiLanguageInfos DefaultMultiLanguageInfo
+	{
+		get
+		{
+			if (this.MultiLanguageInfos.TryGetValue(Language.SimplifiedChinese, out MultiLanguageInfos? info))
+				return info; // chinese because it's the most complete one
+			if (this.MultiLanguageInfos.TryGetValue(Language.EnglishUS, out info))
+				return info;
+
+			return this.MultiLanguageInfos.Values.FirstOrDefault() ??
+				throw new InvalidOperationException("No multi-language info is loaded");
+		}
+	}
+
 	/// <summary>
 	/// checked using <see cref="string.StartsWith(string)"/>.
 	/// 

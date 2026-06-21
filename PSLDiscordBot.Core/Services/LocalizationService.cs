@@ -1,4 +1,4 @@
-﻿using PSLDiscordBot.Framework.ServiceBase;
+using PSLDiscordBot.Framework.ServiceBase;
 using static PSLDiscordBot.Core.Localization.PSLAliasRelatedKey;
 using static PSLDiscordBot.Core.Localization.PSLCommonKey;
 using static PSLDiscordBot.Core.Localization.PSLCommonMessageKey;
@@ -269,6 +269,38 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 			[LeaderboardChallengeFormat] = LocalizedString.CreateDefault("{0.Rank} {0.Level}"),
 			[LeaderboardReply] = LocalizedString.CreateDefault("You are at rank {0:calc(+1)}, with statistic of {1}:"),
 			[LeaderboardFailedToAnalyze] = LocalizedString.CreateDefault("Failed to calculate your rank on leaderboard! Please do `/get-scores` to check if your save is good."),
+
+			[CollectionName] = LocalizedString.CreateDefault("collection"),
+			[CollectionDescription] = LocalizedString.CreateDefault("Get collection info"),
+
+			[CollectionGroupListName] = LocalizedString.CreateDefault("list"),
+			[CollectionGroupListDescription] = LocalizedString.CreateDefault("List items"),
+			[CollectionGroupReadName] = LocalizedString.CreateDefault("read"),
+			[CollectionGroupReadDescription] = LocalizedString.CreateDefault("Read items"),
+
+			[CollectionSubCommandListChaptersName] = LocalizedString.CreateDefault("chapters"),
+			[CollectionSubCommandListChaptersDescription] = LocalizedString.CreateDefault("List all chapters"),
+			[CollectionSubCommandListFilesName] = LocalizedString.CreateDefault("files"),
+			[CollectionSubCommandListFilesDescription] = LocalizedString.CreateDefault("List all files of a chapter"),
+			[CollectionSubCommandListTipsName] = LocalizedString.CreateDefault("tips"),
+			[CollectionSubCommandListTipsDescription] = LocalizedString.CreateDefault("List all tips"),
+
+			[CollectionSubCommandReadChapterName] = LocalizedString.CreateDefault("chapter"),
+			[CollectionSubCommandReadChapterDescription] = LocalizedString.CreateDefault("Chapter info"),
+			[CollectionSubCommandReadItemName] = LocalizedString.CreateDefault("item"),
+			[CollectionSubCommandReadItemDescription] = LocalizedString.CreateDefault("Read item"),
+			[CollectionSubCommandReadRandomTipName] = LocalizedString.CreateDefault("random-tip"),
+			[CollectionSubCommandReadRandomTipDescription] = LocalizedString.CreateDefault("Read a random tip"),
+
+			[CollectionOptionChapterName] = LocalizedString.CreateDefault("chapter"),
+			[CollectionOptionChapterListDescription] = LocalizedString.CreateDefault("Chapter to list of"),
+			[CollectionOptionChapterReadDescription] = LocalizedString.CreateDefault("Chapter to read info"),
+			[CollectionOptionSearchName] = LocalizedString.CreateDefault("search"),
+			[CollectionOptionSearchDescription] = LocalizedString.CreateDefault("Item to search for"),
+			[CollectionOptionLanguageName] = LocalizedString.CreateDefault("language"),
+			[CollectionOptionLanguageDescription] = LocalizedString.CreateDefault("Language of the collection info (default: auto-detect by discord locale)"),
+
+			[CollectionNoMatchingItemFound] = LocalizedString.CreateDefault("No matching item found."),
 
 			// [] = LocalizedString.CreateDefault(""),
 		});
