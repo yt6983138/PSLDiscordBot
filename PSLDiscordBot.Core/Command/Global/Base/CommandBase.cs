@@ -49,11 +49,11 @@ public abstract class CommandBase : BasicCommandBase
 		{
 			if (this.PSLName.IsValue2)
 			{
-				this.BasicBuilder.WithNameLocalizations(this.PSLName.Value2);
+				base.BasicBuilder.WithNameLocalizations(this.PSLName.Value2);
 			}
 			if (this.PSLDescription.IsValue2)
 			{
-				this.BasicBuilder.WithDescriptionLocalizations(this.PSLDescription.Value2);
+				base.BasicBuilder.WithDescriptionLocalizations(this.PSLDescription.Value2);
 			}
 			return base.BasicBuilder;
 		}
