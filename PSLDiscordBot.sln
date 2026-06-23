@@ -31,8 +31,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documentation", "Documentat
 		usage.md = usage.md
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AssemblyFixer", "AssemblyFixer\AssemblyFixer.csproj", "{FDF2B8BA-9DCA-43FD-BB1C-144232ECCB77}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -55,10 +53,6 @@ Global
 		{3D202097-D25F-4D20-A63E-4B6575FC8795}.Debug|Any CPU.Build.0 = Release|Any CPU
 		{3D202097-D25F-4D20-A63E-4B6575FC8795}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3D202097-D25F-4D20-A63E-4B6575FC8795}.Release|Any CPU.Build.0 = Release|Any CPU
-		{FDF2B8BA-9DCA-43FD-BB1C-144232ECCB77}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{FDF2B8BA-9DCA-43FD-BB1C-144232ECCB77}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{FDF2B8BA-9DCA-43FD-BB1C-144232ECCB77}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{FDF2B8BA-9DCA-43FD-BB1C-144232ECCB77}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

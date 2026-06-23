@@ -1,7 +1,7 @@
 ﻿using HtmlToImage.NET;
 using Newtonsoft.Json;
-using PSLDiscordBot.Framework.Utilities;
 using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats;
 using SixLabors.ImageSharp.Formats.Png;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
@@ -417,7 +417,7 @@ public partial class ImageGenerator
 			await bigImage.SaveAsPngAsync(stream,
 				new()
 				{
-					TransparentColorMode = PngTransparentColorMode.Clear,
+					TransparentColorMode = TransparentColorMode.Clear,
 					ColorType = PngColorType.Rgb,
 					BitDepth = PngBitDepth.Bit8
 				},
