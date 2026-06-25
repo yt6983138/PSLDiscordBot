@@ -3,6 +3,8 @@
 
 This is **P**higros **S**core **L**ookup Discord bot (we call it PSLDiscordBot), it is a utility Discord bot featuring nice score image generation for Phigros players and multiple Phigros related utilities.
 
+[Click me to install this bot](https://discord.com/oauth2/authorize?client_id=1203937359113101312)
+
 Here are some showcasing:
 - `/get-photo`, huge thanks to discord user Foxtrot for rework!
 <br/><img src="https://github.com/user-attachments/assets/03a8c9d4-cca7-4398-85ec-3e9d6e138ff3" width="40%" />
