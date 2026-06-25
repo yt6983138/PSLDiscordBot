@@ -89,13 +89,16 @@ public class CollectionCommand : CommandBase
 			Folder? instance = collection.FirstOrDefault(x => x.AddressableCoverPath == addressablePath);
 			if (instance is null) continue;
 
-			if (string.IsNullOrWhiteSpace(instance.Subtitle))
-				result[item.Key] = instance.Title;
-			else
-				result[item.Key] = $"{instance.Title} - {instance.Subtitle}";
+			result[item.Key] = FormatTitleAndSubTitle(instance.Title, instance.Subtitle);
 		}
 
 		return LocalizedString.Create(result);
+	}
+	private static string FormatTitleAndSubTitle(string title, string? subtitle)
+	{
+		if (string.IsNullOrWhiteSpace(subtitle))
+			return title;
+		return $"{title} - {subtitle}";
 	}
 
 	public override Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
@@ -117,10 +120,11 @@ public class CollectionCommand : CommandBase
 		Language language = option.GetLanguageOption(this._phigrosService, this._localization, context.Command);
 		List<Folder> collection = this._phigrosService.MultiLanguageInfos[language].Collections.EnsureNotNull();
 
-		ColumnTextBuilder builder = new("Title", "Subtitle", "File Count");
+		ColumnTextBuilder builder = new("File Count", "Title");
 		foreach (Folder item in collection)
 		{
-			builder.WithRow(item.Title, item.Subtitle, item.Files.Where(x => !string.IsNullOrEmpty(x.Content)).Count().ToString());
+			string count = item.Files.Where(x => !string.IsNullOrEmpty(x.Content)).Count().ToString();
+			builder.WithRow(count, FormatTitleAndSubTitle(item.Title, item.Subtitle));
 		}
 
 		await context.Command.QuickReplyWithAttachments(" ", PSLUtils.ToAttachment(builder.Build().ToString(), "Chapters.txt"));
@@ -132,17 +136,17 @@ public class CollectionCommand : CommandBase
 		Folder chapter = collection.First(x => x.AddressableCoverPath == option.GetOption<string>(this._localization[PSLNormalCommandKey.CollectionOptionChapterName]));
 
 		int actualCount = 0;
-		ColumnTextBuilder builder = new("Name", "Date", "Category", "Supervisor", "Key");
+		ColumnTextBuilder builder = new("Date", "Category", "Supervisor", "Key", "Name");
 		foreach (FileItem item in chapter.Files)
 		{
 			if (string.IsNullOrEmpty(item.Content)) continue;
 
-			builder.WithRow(item.Name, item.Date, item.Category, item.Supervisor, item.Key);
+			builder.WithRow(item.Date, item.Category, item.Supervisor, item.Key, item.Name);
 			actualCount++;
 		}
 
 		string reply = $"""
-			## {chapter.Title} {(string.IsNullOrWhiteSpace(chapter.Subtitle) ? "" : $"- {chapter.Subtitle}")}
+			## {FormatTitleAndSubTitle(chapter.Title, chapter.Subtitle)}
 			- Total Files: {actualCount}
 			""";
 
@@ -163,7 +167,7 @@ public class CollectionCommand : CommandBase
 		Folder chapter = collection.First(x => x.AddressableCoverPath == option.GetOption<string>(this._localization[PSLNormalCommandKey.CollectionOptionChapterName]));
 
 		await context.Command.QuickReply($"""
-			## {chapter.Title} {(string.IsNullOrWhiteSpace(chapter.Subtitle) ? "" : $"- {chapter.Subtitle}")}
+			## {FormatTitleAndSubTitle(chapter.Title, chapter.Subtitle)}
 			- Internal game cover path: `{chapter.AddressableCoverPath}`
 			- Total Files: {chapter.Files.Where(x => !string.IsNullOrEmpty(x.Content)).Count()}
 			""");
