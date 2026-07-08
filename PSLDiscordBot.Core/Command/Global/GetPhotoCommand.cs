@@ -115,9 +115,7 @@ public class GetPhotoCommand : CommandBase
 		bool usePng = count > this._config.Value.GetPhotoUsePngWhenLargerThan;
 		bool shouldUseCoolDown = count > this._config.Value.GetPhotoCoolDownWhenLargerThan;
 
-		SocketGuild? guild = arg.GuildId.HasValue ? this._discordClientService.SocketClient.GetGuild(arg.GuildId.Value) : null;
-		int premiumCount = guild?.PremiumSubscriptionCount ?? 0;
-		if (usePng && premiumCount < 7) // 7 enables large file upload (i think 50mb?)
+		if (usePng && !this._discordClientService.CanUploadLargeFile(arg, out _)) // 7 enables large file upload (i think 50mb?)
 		{
 			await arg.QuickReply(this._localization[PSLNormalCommandKey.GetPhotoImageTooBig],
 				this._config.Value.GetPhotoUsePngWhenLargerThan);

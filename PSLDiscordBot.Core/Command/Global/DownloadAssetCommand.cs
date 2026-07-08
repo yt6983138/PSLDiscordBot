@@ -1,4 +1,5 @@
 ﻿using PhiInfo.Core.Models.Information;
+using PSLDiscordBot.Framework.BuiltInServices;
 using System.IO.Compression;
 using System.Text;
 
@@ -7,8 +8,11 @@ namespace PSLDiscordBot.Core.Command.Global;
 [AddToGlobal]
 public class DownloadAssetCommand : GuestCommandBase
 {
-	public DownloadAssetCommand(IServiceProvider provider) : base(provider)
+	private readonly IDiscordClientService _discordClientService;
+
+	public DownloadAssetCommand(IServiceProvider provider, IDiscordClientService discordClientService) : base(provider)
 	{
+		this._discordClientService = discordClientService;
 	}
 
 	public override OneOf<string, LocalizedString> PSLName => this._localization[PSLGuestCommandKey.DownloadAssetName];
@@ -112,6 +116,13 @@ public class DownloadAssetCommand : GuestCommandBase
 			attachments.Add(new(pezStream, $"{id}.pez"));
 		}
 		#endregion
+
+		// TODO: localize those messages
+		if (attachments.Any(x => x.NeedLargeFileUpload()) && !this._discordClientService.CanUploadLargeFile(arg, out _))
+		{
+			await arg.QuickReply("Sorry, one or more of the files are too large to upload. Please use this in servers that have tier 2 boost.");
+			return;
+		}
 
 		await arg.QuickReplyWithAttachments($"Found {foundAlias.Count} match(es). Assets of best match:", attachments.ToArray());
 	}
