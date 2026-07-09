@@ -103,10 +103,11 @@ public class ChromiumPoolService
 		first.Occupied = true;
 		return new(first, TabFinalizer);
 	}
-	public void RestartChromium()
+	public async Task RestartChromium(TimeSpan delay)
 	{
-		using ScopedSemaphoreSlim.Scope _ = this._lock.EnterScope();
+		using ScopedSemaphoreSlim.Scope _ = await this._lock.EnterScopeAsync();
 		this.Chromium.Dispose();
+		await Task.Delay(delay);
 		this.SetupChromium();
 	}
 

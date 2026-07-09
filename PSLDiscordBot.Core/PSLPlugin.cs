@@ -29,7 +29,6 @@ public class PSLPlugin : IPlugin
 	private Program _program = null!;
 	private IDiscordClientService _discordClientService = null!;
 	private ICommandResolveService _commandResolveService = null!;
-	private int _imageGeneratorFaultCount = 0;
 
 	public IUser? AdminUser { get; set; }
 	public IDMChannel? AdminDM { get; set; }
@@ -361,18 +360,6 @@ public class PSLPlugin : IPlugin
 	private async Task OnException(Exception exception, SocketCommandBase? interaction = null)
 	{
 		this._logger.LogError(EventId, exception, "Exception received");
-		if (exception.StackTrace is not null
-			&& exception.StackTrace.Contains(typeof(ImageGenerator).FullName!))
-		{
-			this._imageGeneratorFaultCount++;
-			if (this._imageGeneratorFaultCount >= 3)
-			{
-				this._logger.LogWarning(EventId, exception, "Image generator multiple times, restarting Chromium...");
-				ChromiumPoolService chromiumPool = this._program.App.Services.GetRequiredService<ChromiumPoolService>();
-				chromiumPool.RestartChromium();
-				this._imageGeneratorFaultCount = 0;
-			}
-		}
 		if (this.AdminDM is not null)
 		{
 			try

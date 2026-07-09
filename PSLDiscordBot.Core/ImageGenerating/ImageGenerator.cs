@@ -51,6 +51,10 @@ public partial class ImageGenerator
 	private readonly AvatarHashMapService _avatarMapService;
 	private readonly ChromiumPoolService _chromiumPoolService;
 
+	private readonly ScopedSemaphoreSlim _canRunSignal = new(1, 1);
+
+	private int _faultCount = 0;
+
 	public IReadOnlyDictionary<string, object> SongDifficultyCount { get; }
 
 	private static EventId EventId { get; } = new(114512, "ImageGenerator");
@@ -71,10 +75,22 @@ public partial class ImageGenerator
 		};
 	}
 
+	// TODO: fix typo here
 	public static void RedactSensetiveInfo(TextMap_Anonymous textMap, ImageMap_Anonymous imageMap)
 	{
 		textMap.User.Data = textMap.User.Data.ShallowCopy();
 		textMap.User.Data.Token = "<redacted>";
+	}
+
+	/// <summary>
+	/// this method will temporarily block the image generator from running, and restart the underlying chromium process
+	/// </summary>
+	/// <param name="ct"></param>
+	/// <returns></returns>
+	public async Task RestartUnderlyingChromium(TimeSpan delay)
+	{
+		using ScopedSemaphoreSlim.Scope _ = await this._canRunSignal.EnterScopeAsync();
+		await this._chromiumPoolService.RestartChromium(delay);
 	}
 
 	public (TextMap_Anonymous, ImageMap_Anonymous) CreateMaps(
@@ -278,6 +294,47 @@ public partial class ImageGenerator
 		HtmlConverter.Tab.PhotoType photoType,
 		byte quality,
 		CancellationToken cancellationToken = default)
+	{
+		try
+		{
+			using ScopedSemaphoreSlim.Scope _ = await this._canRunSignal.EnterScopeAsync(cancellationToken);
+			return await this.MakePhotoInternal(injectionParams, basicHtmlImageInfo, photoType, quality, cancellationToken);
+		}
+		catch (Exception ex)
+		{
+			// do not respect the cancellation token here
+			using ScopedSemaphoreSlim.Scope _ = await this._canRunSignal.EnterScopeAsync(CancellationToken.None);
+
+			this._faultCount++;
+			this._logger.LogError(EventId, ex, "Image generator fault count: {count}", this._faultCount);
+
+			if (this._faultCount >= 3)
+			{
+				this._logger.LogWarning(EventId, "Image generator crashed multiple times, restarting Chromium...");
+				await this._chromiumPoolService.RestartChromium(TimeSpan.FromSeconds(10));
+				this._faultCount = 0;
+			}
+
+			throw;
+		}
+	}
+	/// <summary>
+	/// this is reserved for <see cref="MakePhoto(Dictionary{string, object}, BasicHtmlImageInfo, HtmlConverter.Tab.PhotoType, byte, CancellationToken)"/>
+	/// to call (maybe i should make this an local function instead?)
+	/// </summary>
+	/// <param name="injectionParams"></param>
+	/// <param name="basicHtmlImageInfo"></param>
+	/// <param name="photoType"></param>
+	/// <param name="quality"></param>
+	/// <param name="cancellationToken"></param>
+	/// <returns></returns>
+	/// <exception cref="InvalidDataException"></exception>
+	private async Task<MemoryStream> MakePhotoInternal(
+		Dictionary<string, object> injectionParams,
+		BasicHtmlImageInfo basicHtmlImageInfo,
+		HtmlConverter.Tab.PhotoType photoType,
+		byte quality,
+		CancellationToken cancellationToken)
 	{
 		using ChromiumPoolService.TabUsageBlock t = this._chromiumPoolService.GetFreeTab();
 		HtmlConverter.Tab tab = t.Tab;
