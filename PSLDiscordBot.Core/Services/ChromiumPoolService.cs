@@ -37,7 +37,8 @@ public class ChromiumPoolService
 	private readonly ushort _port;
 	private readonly bool _debug;
 	private readonly bool _showChromiumOutput;
-	private readonly object _lock = new();
+
+	private readonly ScopedSemaphoreSlim _lock = new(1, 1);
 
 	public IReadOnlyCollection<TabInfoPair> ChromiumTabPairs => this._chromiumTabPairs;
 	public HtmlConverter Chromium { get; private set; } = null!;
@@ -90,27 +91,23 @@ public class ChromiumPoolService
 
 	public TabUsageBlock GetFreeTab()
 	{
-		lock (this._lock)
+		using ScopedSemaphoreSlim.Scope _ = this._lock.EnterScope();
+		TabInfoPair? first = this.ChromiumTabPairs.FirstOrDefault(x => x.Occupied == false);
+		if (first is null)
 		{
-			TabInfoPair? first = this.ChromiumTabPairs.FirstOrDefault(x => x.Occupied == false);
-			if (first is null)
-			{
-				TabInfoPair info = new(this.Chromium.NewTab(), true);
-				this._chromiumTabPairs.Enqueue(info);
-				return new(info, TabFinalizer);
-			}
-
-			first.Occupied = true;
-			return new(first, TabFinalizer);
+			TabInfoPair info = new(this.Chromium.NewTab(), true);
+			this._chromiumTabPairs.Enqueue(info);
+			return new(info, TabFinalizer);
 		}
+
+		first.Occupied = true;
+		return new(first, TabFinalizer);
 	}
 	public void RestartChromium()
 	{
-		lock (this._lock)
-		{
-			this.Chromium.Dispose();
-			this.SetupChromium();
-		}
+		using ScopedSemaphoreSlim.Scope _ = this._lock.EnterScope();
+		this.Chromium.Dispose();
+		this.SetupChromium();
 	}
 
 	private static async void TabFinalizer(TabInfoPair pair)
