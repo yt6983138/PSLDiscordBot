@@ -48,7 +48,7 @@ public class LeaderboardService
 				return;
 			}
 
-			await this.RefreshForUser(userData.SaveCache, userData.UserId, userData.IsInternational);
+			await this.RefreshForUser(userData.SaveCache, userData.UserId, userData.IsInternational, e.Interaction.User);
 		}
 		catch (Exception ex)
 		{
@@ -63,15 +63,15 @@ public class LeaderboardService
 		return await requester.Leaderboard.ToListAsync();
 	}
 
-	public Task<LeaderboardEntry?> TryAnalyzeUser(UserData user, CancellationToken ct = default)
+	public Task<LeaderboardEntry?> TryAnalyzeUser(UserData user, IUser? discordUser = null, CancellationToken ct = default)
 	{
-		return this.TryAnalyzeUser(user.SaveCache, user.UserId, user.IsInternational, ct);
+		return this.TryAnalyzeUser(user.SaveCache, user.UserId, user.IsInternational, discordUser, ct);
 	}
-	public Task<LeaderboardEntry?> TryAnalyzeUser(ulong userId, string token, bool isInternational, CancellationToken ct = default)
+	public Task<LeaderboardEntry?> TryAnalyzeUser(ulong userId, string token, bool isInternational, IUser? discordUser = null, CancellationToken ct = default)
 	{
-		return this.TryAnalyzeUser(new(token, isInternational), userId, isInternational, ct);
+		return this.TryAnalyzeUser(new(token, isInternational), userId, isInternational, discordUser, ct);
 	}
-	public async Task<LeaderboardEntry?> TryAnalyzeUser(Save save, ulong userId, bool isInternational, CancellationToken ct = default)
+	public async Task<LeaderboardEntry?> TryAnalyzeUser(Save save, ulong userId, bool isInternational, IUser? discordUser = null, CancellationToken ct = default)
 	{
 		this._logger.LogDebug("Analyzing leaderboard cache for user {id}", userId);
 		try
@@ -114,7 +114,7 @@ public class LeaderboardService
 			}
 
 			// why are they not using nullables bruh
-			IUser? discordUser = await this._discordClient.SocketClient.GetUserAsync(userId);
+			discordUser ??= await this._discordClient.SocketClient.GetUserAsync(userId);
 			if (discordUser is null)
 				this._logger.LogWarning("Failed to fetch user {id} while analyzing leaderboard cache", userId);
 
@@ -145,9 +145,9 @@ public class LeaderboardService
 		return null;
 	}
 
-	public async Task RefreshForUser(Save save, ulong userId, bool isInternational, CancellationToken ct = default)
+	public async Task RefreshForUser(Save save, ulong userId, bool isInternational, IUser? discordUser = null, CancellationToken ct = default)
 	{
-		LeaderboardEntry? entry = await this.TryAnalyzeUser(save, userId, isInternational, ct);
+		LeaderboardEntry? entry = await this.TryAnalyzeUser(save, userId, isInternational, discordUser, ct);
 
 		if (entry is null)
 			throw new InvalidOperationException("Failed to analyze user data, cannot refresh leaderboard cache for user");
@@ -185,7 +185,7 @@ public class LeaderboardService
 			i++;
 
 			await Task.Delay(this._config.Value.LeaderboardRefreshEachIntervalMilliseconds, ct);
-			LeaderboardEntry? entry = await this.TryAnalyzeUser(item.UserId, item.Token, item.IsInternational, ct);
+			LeaderboardEntry? entry = await this.TryAnalyzeUser(item.UserId, item.Token, item.IsInternational, null, ct);
 			if (entry is not null)
 			{
 				entries.Add(entry);
