@@ -12,7 +12,7 @@ public class LeaderboardEntry
 	public required DateTime CachedAt { get; set; }
 	public string? DiscordDisplayName { get; set; }
 
-	public required short GameVersion { get; set; }
+	public required int GameVersion { get; set; }
 	public required bool IsInternational { get; set; }
 
 	[NotMapped]
