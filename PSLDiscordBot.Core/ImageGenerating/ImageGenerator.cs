@@ -354,11 +354,11 @@ public partial class ImageGenerator
 		byte quality,
 		CancellationToken cancellationToken)
 	{
-		using ChromiumPoolService.TabUsageBlock t = await service.GetFreeTabAsync();
-		IPage tab = t.Tab;
-		ICDPSession cdp = tab.Client;
+		using ChromiumPoolService.TabUsageBlock t = await service.GetFreePageAsync();
+		IPage page = t.Page;
+		ICDPSession cdp = page.Client;
 
-		await tab.SetViewportAsync(basicHtmlImageInfo.GetViewPortOptions());
+		await page.SetViewportAsync(basicHtmlImageInfo.GetViewPortOptions());
 
 		await cdp.LogEnable();
 		await cdp.LogClear();
@@ -385,12 +385,12 @@ public partial class ImageGenerator
 		int height = basicHtmlImageInfo.InitialHeight;
 		if (basicHtmlImageInfo.DynamicSize)
 		{
-			width = (int)await tab.EvaluateExpressionAsync<double>("window.pslToWidth");
-			height = (int)await tab.EvaluateExpressionAsync<double>("window.pslToHeight");
+			width = (int)await page.EvaluateExpressionAsync<double>("window.pslToWidth");
+			height = (int)await page.EvaluateExpressionAsync<double>("window.pslToHeight");
 
 			if (!(basicHtmlImageInfo.UseXScrollWhenTooBig || basicHtmlImageInfo.UseYScrollWhenTooBig))
 			{
-				await tab.SetViewportAsync(width, height, basicHtmlImageInfo.DeviceScaleFactor);
+				await page.SetViewportAsync(width, height, basicHtmlImageInfo.DeviceScaleFactor);
 			}
 		}
 
@@ -400,8 +400,8 @@ public partial class ImageGenerator
 		int blockSize = basicHtmlImageInfo.MaxSizePerBlock;
 		if (height < blockSize && width < blockSize)
 		{
-			await tab.SetViewportAsync(width, height, basicHtmlImageInfo.DeviceScaleFactor);
-			return await tab.ScreenshotLowMemory(screenshotOptions);
+			await page.SetViewportAsync(width, height, basicHtmlImageInfo.DeviceScaleFactor);
+			return await page.ScreenshotLowMemory(screenshotOptions);
 		}
 
 		using Image<Rgba32> bigImage = new(width, height);
@@ -418,7 +418,7 @@ public partial class ImageGenerator
 
 				if (basicHtmlImageInfo.UseXScrollWhenTooBig || basicHtmlImageInfo.UseYScrollWhenTooBig)
 				{
-					await tab.SetViewportAsync(clipWidth, clipHeight, basicHtmlImageInfo.DeviceScaleFactor);
+					await page.SetViewportAsync(clipWidth, clipHeight, basicHtmlImageInfo.DeviceScaleFactor);
 					await cdp.RuntimeEvaluate(
 						$"window.scrollTo({(basicHtmlImageInfo.UseXScrollWhenTooBig ? vpX : 0)}, " +
 						$"{(basicHtmlImageInfo.UseYScrollWhenTooBig ? vpY : 0)});");
@@ -432,7 +432,7 @@ public partial class ImageGenerator
 					Height = clipHeight
 				};
 
-				using Stream raw = await tab.ScreenshotLowMemory(screenshotOptions);
+				using Stream raw = await page.ScreenshotLowMemory(screenshotOptions);
 				using Image rawImage = await Image.LoadAsync(raw, cancellationToken);
 
 				bigImage.Mutate(c => c.DrawImage(rawImage, new Point(vpX, vpY), 1));

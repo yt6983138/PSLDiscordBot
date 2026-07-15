@@ -17,11 +17,11 @@ public class ChromiumPoolService
 	{
 		private readonly ConcurrentStack<TabUsageBlock> _stack = stack;
 
-		public IPage Tab { get; } = page;
+		public IPage Page { get; } = page;
 
 		public async Task DestroyAsync()
 		{
-			await this.Tab.DisposeAsync();
+			await this.Page.DisposeAsync();
 		}
 		public async void Dispose()
 		{
@@ -29,7 +29,7 @@ public class ChromiumPoolService
 			try
 			{
 				// for saving resources only, don't care about the result
-				await this.Tab.Client.PageNavigate("about:blank");
+				await this.Page.Client.PageNavigate("about:blank");
 			}
 			catch { }
 		}
@@ -127,7 +127,7 @@ public class ChromiumPoolService
 		}
 	}
 
-	public ValueTask<TabUsageBlock> GetFreeTabAsync()
+	public ValueTask<TabUsageBlock> GetFreePageAsync()
 	{
 		using ScopedSemaphoreSlim.Scope _ = this._restartLock.EnterScope();
 		return GetCore();
