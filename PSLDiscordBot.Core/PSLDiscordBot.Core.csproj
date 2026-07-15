@@ -21,7 +21,6 @@
 		<PackageReference Include="NLog.Web.AspNetCore" Version="6.1.3" />
 		<PackageReference Include="PuppeteerSharp" Version="25.3.3" />
 		<PackageReference Include="SharpZipLib" Version="1.4.2" />
-		<PackageReference Include="yt6983138.HtmlToImage.NET" Version="1.0.0" />
 		<PackageReference Include="yt6983138.PhiInfo.CLI.Library" Version="3.0.0" />
 		<PackageReference Include="PhigrosLibraryCSharp" Version="5.0.0" />
 		<PackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="3.3.4">
