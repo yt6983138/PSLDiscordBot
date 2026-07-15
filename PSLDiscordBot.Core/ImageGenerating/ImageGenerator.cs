@@ -396,18 +396,18 @@ public partial class ImageGenerator
 
 			if (!(basicHtmlImageInfo.UseXScrollWhenTooBig || basicHtmlImageInfo.UseYScrollWhenTooBig))
 			{
-				await tab.SetViewportAsync(width, height);
+				await tab.SetViewportAsync(width, height, basicHtmlImageInfo.DeviceScaleFactor);
 			}
 		}
 
-		ScreenshotOptions screenshotOptions = new() { Type = photoType };
+		ScreenshotOptions screenshotOptions = new() { Type = photoType, CaptureBeyondViewport = false };
 		if (photoType != ScreenshotType.Png) screenshotOptions.Quality = quality;
 
 		int blockSize = basicHtmlImageInfo.MaxSizePerBlock;
 		if (height < blockSize && width < blockSize)
 		{
-			await tab.SetViewportAsync(width, height);
-			return await tab.ScreenshotLowMemory(screenshotOptions); // UNDONE: fix layout with this call
+			await tab.SetViewportAsync(width, height, basicHtmlImageInfo.DeviceScaleFactor);
+			return await tab.ScreenshotLowMemory(screenshotOptions);
 		}
 
 		using Image<Rgba32> bigImage = new(width, height);
@@ -424,7 +424,7 @@ public partial class ImageGenerator
 
 				if (basicHtmlImageInfo.UseXScrollWhenTooBig || basicHtmlImageInfo.UseYScrollWhenTooBig)
 				{
-					await tab.SetViewportAsync(clipWidth, clipHeight);
+					await tab.SetViewportAsync(clipWidth, clipHeight, basicHtmlImageInfo.DeviceScaleFactor);
 					await cdp.RuntimeEvaluate(
 						$"window.scrollTo({(basicHtmlImageInfo.UseXScrollWhenTooBig ? vpX : 0)}, " +
 						$"{(basicHtmlImageInfo.UseYScrollWhenTooBig ? vpY : 0)});");

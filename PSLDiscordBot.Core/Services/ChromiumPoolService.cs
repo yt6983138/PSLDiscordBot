@@ -146,14 +146,14 @@ public class ChromiumPoolService
 	{
 		this.ActiveBrowser = await Puppeteer.LaunchAsync(this.LaunchOption,
 #if DEBUG
-			null
+			this._loggerFactory
 #else
 			null // prevent excessive logging
 #endif
 			);
 		this.ActiveContext = await this.ActiveBrowser.CreateBrowserContextAsync();
 		this._tabStack = new();
-		await this.AddPagesToPoolAsync(this._config.Value.DefaultChromiumTabCacheCount); // todo?: make this configurable
+		await this.AddPagesToPoolAsync(this._config.Value.DefaultChromiumTabCacheCount);
 	}
 	public async Task RestartChromiumAsync(TimeSpan delay)
 	{

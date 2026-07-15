@@ -7,7 +7,7 @@ public static class CDPUtils
 {
 	extension(IPage self)
 	{
-		public async Task SetViewportAsync(int width, int height, double deviceScaleFactor = 1)
+		public async Task SetViewportAsync(int width, int height, double deviceScaleFactor)
 		{
 			await self.SetViewportAsync(new()
 			{
