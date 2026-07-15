@@ -1,11 +1,12 @@
-﻿using HtmlToImage.NET;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
+using PuppeteerSharp;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats;
 using SixLabors.ImageSharp.Formats.Png;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using Image = SixLabors.ImageSharp.Image;
+using Point = SixLabors.ImageSharp.Point;
 
 /*** websocket dont blow up pls
  * 
@@ -49,22 +50,24 @@ public partial class ImageGenerator
 	private readonly PhigrosService _phigrosDataService;
 	private readonly ILogger<ImageGenerator> _logger;
 	private readonly AvatarHashMapService _avatarMapService;
-	private readonly ChromiumPoolService _chromiumPoolService;
+	private readonly AsyncReaderWriterLock _runLock = new();
+	private readonly IOptions<Config> _config;
+	private readonly ILoggerFactory _loggerFactory;
 
-	private readonly ScopedSemaphoreSlim _canRunSignal = new(1, 1);
-
+	private ChromiumPoolService? _chromiumPoolService;
 	private int _faultCount = 0;
 
 	public IReadOnlyDictionary<string, object> SongDifficultyCount { get; }
 
 	private static EventId EventId { get; } = new(114512, "ImageGenerator");
 
-	public ImageGenerator(ILogger<ImageGenerator> logger, PhigrosService phigrosData, AvatarHashMapService avatarHashMap, ChromiumPoolService chromiumPool)
+	public ImageGenerator(ILoggerFactory loggerFactory, PhigrosService phigrosData, AvatarHashMapService avatarHashMap, IOptions<Config> config)
 	{
-		this._logger = logger;
+		this._logger = loggerFactory.CreateLogger<ImageGenerator>();
 		this._phigrosDataService = phigrosData;
 		this._avatarMapService = avatarHashMap;
-		this._chromiumPoolService = chromiumPool;
+		this._config = config;
+		this._loggerFactory = loggerFactory;
 		this.SongDifficultyCount = new Dictionary<string, object>()
 		{
 			{ "TotalSongEZCount", this._phigrosDataService.NonMultiLanguageInfos.Songs.Count(x => x.Levels.ContainsKey(Difficulty.EZ)) },
@@ -82,6 +85,18 @@ public partial class ImageGenerator
 		textMap.User.Data.Token = "<redacted>";
 	}
 
+	private async ValueTask<ChromiumPoolService> GetChromiumPoolServiceAsync()
+	{
+		if (this._chromiumPoolService is not null)
+			return this._chromiumPoolService;
+
+		using IDisposable _ = await this._runLock.WriterLockAsync();
+		if (this._chromiumPoolService is not null)
+			return this._chromiumPoolService;
+
+		this._chromiumPoolService = await ChromiumPoolService.CreateAsync(this._loggerFactory, this._config);
+		return this._chromiumPoolService;
+	}
 	/// <summary>
 	/// this method will temporarily block the image generator from running, and restart the underlying chromium process
 	/// </summary>
@@ -89,8 +104,9 @@ public partial class ImageGenerator
 	/// <returns></returns>
 	public async Task RestartUnderlyingChromium(TimeSpan delay)
 	{
-		using ScopedSemaphoreSlim.Scope _ = await this._canRunSignal.EnterScopeAsync();
-		await this._chromiumPoolService.RestartChromium(delay);
+		ChromiumPoolService service = await this.GetChromiumPoolServiceAsync();
+		using IDisposable _ = await this._runLock.WriterLockAsync();
+		await service.RestartChromiumAsync(delay);
 	}
 
 	public (TextMap_Anonymous, ImageMap_Anonymous) CreateMaps(
@@ -189,7 +205,7 @@ public partial class ImageGenerator
 
 		#region Image map
 
-		string avatarPath = "./Assets/Avatar/".ToFullPath();
+		string avatarPath = "./Assets/Avatar/".AsFullPath();
 		string avatarId = gameUserInfo.AvatarId;
 		if (string.IsNullOrWhiteSpace(avatarId)) avatarId = "Introduction";
 		if (!this._avatarMapService.Data.TryGetValue(avatarId, out string? hash))
@@ -202,7 +218,7 @@ public partial class ImageGenerator
 			avatarPath += $"{hash}.png";
 		}
 
-		string formattedBgPath = "./Assets/Tracks/".ToFullPath();
+		string formattedBgPath = "./Assets/Tracks/".AsFullPath();
 		string cutBgId = string.IsNullOrWhiteSpace(gameUserInfo.BackgroundId) ? "" : gameUserInfo.BackgroundId[..^1];
 		(string backgroundId, string _) = this._phigrosDataService.NonMultiLanguageInfos.Songs
 			.Select(x => (x.Id, x.Name))
@@ -226,8 +242,8 @@ public partial class ImageGenerator
 #pragma warning disable IDE0008
 		var userImageMap = new PSLDiscordBot.Core.ImageGenerating.UserImageMap_Anonymous()
 		{
-			Avatar = avatarPath.ToFullPath(),
-			BackgroundBasePath = formattedBgPath.ToFullPath()
+			Avatar = avatarPath.AsFullPath(),
+			BackgroundBasePath = formattedBgPath.AsFullPath()
 		};
 		var imageMap = new PSLDiscordBot.Core.ImageGenerating.ImageMap_Anonymous()
 		{
@@ -252,8 +268,8 @@ public partial class ImageGenerator
 		Dictionary<string, object> thingsToSet = new()
 		{
 			{ "CURRENT_DIRECTORY", Environment.CurrentDirectory },
-			{ "PSL_FILES", "./PSL/".ToFullPath() },
-			{ "ASSET_FOLDER", "./Assets/".ToFullPath() },
+			{ "PSL_FILES", "./PSL/".AsFullPath() },
+			{ "ASSET_FOLDER", "./Assets/".AsFullPath() },
 			{ "INFO_IMAGE_PATHS", image },
 			{ "PLAYER_DATA", map },
 			{ "INFO", infoObject }
@@ -262,12 +278,12 @@ public partial class ImageGenerator
 	}
 
 	// for compatibility rn
-	public Task<MemoryStream> MakePhoto(
+	public Task<Stream> MakePhoto(
 		UserData userData,
 		SaveContext context,
 		PlayerInfo playerInfo,
 		BasicHtmlImageInfo basicHtmlImageInfo,
-		HtmlConverter.Tab.PhotoType photoType,
+		ScreenshotType photoType,
 		byte quality,
 		object? extraArguments = null,
 		CancellationToken cancellationToken = default)
@@ -276,11 +292,11 @@ public partial class ImageGenerator
 		return this.MakePhoto(map, image, basicHtmlImageInfo, photoType, quality, cancellationToken);
 	}
 
-	public Task<MemoryStream> MakePhoto(
+	public Task<Stream> MakePhoto(
 		TextMap_Anonymous textMap,
 		ImageMap_Anonymous imageMap,
 		BasicHtmlImageInfo basicHtmlImageInfo,
-		HtmlConverter.Tab.PhotoType photoType,
+		ScreenshotType photoType,
 		byte quality,
 		CancellationToken cancellationToken = default)
 	{
@@ -288,22 +304,23 @@ public partial class ImageGenerator
 
 		return this.MakePhoto(thingsToSet, basicHtmlImageInfo, photoType, quality, cancellationToken);
 	}
-	public async Task<MemoryStream> MakePhoto(
+	public async Task<Stream> MakePhoto(
 		Dictionary<string, object> injectionParams,
 		BasicHtmlImageInfo basicHtmlImageInfo,
-		HtmlConverter.Tab.PhotoType photoType,
+		ScreenshotType photoType,
 		byte quality,
 		CancellationToken cancellationToken = default)
 	{
+		ChromiumPoolService service = await this.GetChromiumPoolServiceAsync();
 		try
 		{
-			using ScopedSemaphoreSlim.Scope _ = await this._canRunSignal.EnterScopeAsync(cancellationToken);
-			return await this.MakePhotoInternal(injectionParams, basicHtmlImageInfo, photoType, quality, cancellationToken);
+			using IDisposable _ = await this._runLock.ReaderLockAsync(cancellationToken);
+			Stream result = await this.MakePhotoInternal(service, injectionParams, basicHtmlImageInfo, photoType, quality, cancellationToken);
+			return result;
 		}
 		catch (Exception ex)
 		{
-			// do not respect the cancellation token here
-			using ScopedSemaphoreSlim.Scope _ = await this._canRunSignal.EnterScopeAsync(CancellationToken.None);
+			using IDisposable _ = await this._runLock.WriterLockAsync(CancellationToken.None);
 
 			this._faultCount++;
 			this._logger.LogError(EventId, ex, "Image generator fault count: {count}", this._faultCount);
@@ -311,15 +328,16 @@ public partial class ImageGenerator
 			if (this._faultCount >= 3)
 			{
 				this._logger.LogWarning(EventId, "Image generator crashed multiple times, restarting Chromium...");
-				await this._chromiumPoolService.RestartChromium(TimeSpan.FromSeconds(10));
+				await service.RestartChromiumAsync(TimeSpan.FromSeconds(5));
 				this._faultCount = 0;
 			}
 
 			throw;
 		}
 	}
+
 	/// <summary>
-	/// this is reserved for <see cref="MakePhoto(Dictionary{string, object}, BasicHtmlImageInfo, HtmlConverter.Tab.PhotoType, byte, CancellationToken)"/>
+	/// this is reserved for <see cref="MakePhoto(Dictionary{string, object}, BasicHtmlImageInfo, ScreenshotType, byte, CancellationToken)"/>
 	/// to call (maybe i should make this an local function instead?)
 	/// </summary>
 	/// <param name="injectionParams"></param>
@@ -329,48 +347,41 @@ public partial class ImageGenerator
 	/// <param name="cancellationToken"></param>
 	/// <returns></returns>
 	/// <exception cref="InvalidDataException"></exception>
-	private async Task<MemoryStream> MakePhotoInternal(
+	private async Task<Stream> MakePhotoInternal(
+		ChromiumPoolService service,
 		Dictionary<string, object> injectionParams,
 		BasicHtmlImageInfo basicHtmlImageInfo,
-		HtmlConverter.Tab.PhotoType photoType,
+		ScreenshotType photoType,
 		byte quality,
 		CancellationToken cancellationToken)
 	{
-		using ChromiumPoolService.TabUsageBlock t = this._chromiumPoolService.GetFreeTab();
-		HtmlConverter.Tab tab = t.Tab;
+		using ChromiumPoolService.TabUsageBlock t = await service.GetFreeTabAsync();
+		IPage tab = t.Tab;
+		ICDPSession cdp = tab.Client;
 
-		await tab.SetViewPortSize(basicHtmlImageInfo.InitialWidth,
-			basicHtmlImageInfo.InitialHeight,
-			basicHtmlImageInfo.DeviceScaleFactor,
-			false,
-			cancellationToken);
+		await tab.SetViewportAsync(basicHtmlImageInfo.GetViewPortOptions());
 
-		await tab.SendCommand("Log.enable", cancellationToken: cancellationToken);
-		await tab.SendCommand("Log.clear", cancellationToken: cancellationToken);
-		await tab.SendCommand("Debugger.enable", cancellationToken: cancellationToken);
-		await tab.NavigateTo("file:///" + basicHtmlImageInfo.HtmlPath.ToFullPath(),
-			async () =>
-			{
-				while (tab.Queue.FirstOrDefault(x => (string)x["method"]! == "Debugger.paused") is null)
-					await tab.ReadOneMessage(cancellationToken);
-				string str = string.Join(';',
-					injectionParams.Select(x => $"window.{x.Key}={JsonConvert.SerializeObject(x.Value)}"));
-				await tab.EvaluateJavaScript(str, cancellationToken);
-				await tab.SendCommand("Debugger.resume", cancellationToken: cancellationToken);
-			},
-			cancellationToken);
+		await cdp.LogEnable();
+		await cdp.LogClear();
+		await cdp.DebuggerEnable();
+		Task debuggerPauseTask = cdp.RunUntilDebugger();
 
-		this._logger.LogDebug(EventId, tab.CdpInfo.ToString());
+		// we dont care about on load event etc, and we have a debugger statement in the js bind so gotoasync fucks up
+		await cdp.PageNavigate("file:///" + basicHtmlImageInfo.HtmlPath.AsFullPath());
+		await debuggerPauseTask;
+
+		string injectionScript = string.Join(';',
+			injectionParams.Select(x => $"window.{x.Key}={JsonConvert.SerializeObject(x.Value)}"));
+		await cdp.RuntimeEvaluate(injectionScript);
+		await cdp.DebuggerResume();
+
+		//this._logger.LogDebug(EventId, tab.); // TODO: get the url of the tab for remote layout debugging
 		//this._logger.LogDebug(EventId, "localhost:{port}{url}", this._chromiumPoolService.Chromium.CdpPort, tab.CdpInfo.DevToolsFrontendUrl);
 
-		bool ready = false;
+		bool ready = false; // TODO: make this a debugger pause
 		do
 		{
-			System.Text.Json.Nodes.JsonNode readyJson =
-				await tab.EvaluateJavaScript("window.pslReady", cancellationToken);
-			if ((string)readyJson["result"]!["type"]! != "boolean")
-				throw new InvalidDataException("Ready is invalid type.");
-			ready = (bool)readyJson["result"]!["value"]!;
+			ready = await tab.EvaluateExpressionAsync<bool>("window.pslReady");
 
 			await Task.Delay(50, cancellationToken);
 		}
@@ -380,37 +391,23 @@ public partial class ImageGenerator
 		int height = basicHtmlImageInfo.InitialHeight;
 		if (basicHtmlImageInfo.DynamicSize)
 		{
-			System.Text.Json.Nodes.JsonNode widthJson =
-				await tab.EvaluateJavaScript("window.pslToWidth", cancellationToken);
-			System.Text.Json.Nodes.JsonNode heightJson =
-				await tab.EvaluateJavaScript("window.pslToHeight", cancellationToken);
-
-			if ((string)widthJson["result"]!["type"]! == "number")
-				width = (int)(double)widthJson["result"]!["value"]!;
-			else
-				this._logger.LogWarning(EventId, "Incorrect type for dynamic width!");
-
-			if ((string)heightJson["result"]!["type"]! == "number")
-				height = (int)(double)heightJson["result"]!["value"]!;
-			else
-				this._logger.LogWarning(EventId, "Incorrect type for dynamic height!");
+			width = (int)await tab.EvaluateExpressionAsync<double>("window.pslToWidth");
+			height = (int)await tab.EvaluateExpressionAsync<double>("window.pslToHeight");
 
 			if (!(basicHtmlImageInfo.UseXScrollWhenTooBig || basicHtmlImageInfo.UseYScrollWhenTooBig))
 			{
-				await tab.SetViewPortSize(width,
-					height,
-					basicHtmlImageInfo.DeviceScaleFactor,
-					false,
-					cancellationToken);
+				await tab.SetViewportAsync(width, height);
 			}
 		}
 
-		int blockSize = basicHtmlImageInfo.MaxSizePerBlock;
+		ScreenshotOptions screenshotOptions = new() { Type = photoType };
+		if (photoType != ScreenshotType.Png) screenshotOptions.Quality = quality;
 
+		int blockSize = basicHtmlImageInfo.MaxSizePerBlock;
 		if (height < blockSize && width < blockSize)
 		{
-			await tab.SetViewPortSize(width, height, basicHtmlImageInfo.DeviceScaleFactor, false, cancellationToken);
-			return await tab.TakePhotoOfCurrentPage(photoType, quality, ct: cancellationToken);
+			await tab.SetViewportAsync(width, height);
+			return await tab.ScreenshotLowMemory(screenshotOptions); // UNDONE: fix layout with this call
 		}
 
 		using Image<Rgba32> bigImage = new(width, height);
@@ -427,27 +424,21 @@ public partial class ImageGenerator
 
 				if (basicHtmlImageInfo.UseXScrollWhenTooBig || basicHtmlImageInfo.UseYScrollWhenTooBig)
 				{
-					await tab.SetViewPortSize(clipWidth,
-						clipHeight,
-						basicHtmlImageInfo.DeviceScaleFactor,
-						false,
-						cancellationToken);
-					await tab.EvaluateJavaScript(
+					await tab.SetViewportAsync(clipWidth, clipHeight);
+					await cdp.RuntimeEvaluate(
 						$"window.scrollTo({(basicHtmlImageInfo.UseXScrollWhenTooBig ? vpX : 0)}, " +
-						$"{(basicHtmlImageInfo.UseYScrollWhenTooBig ? vpY : 0)});",
-						cancellationToken);
+						$"{(basicHtmlImageInfo.UseYScrollWhenTooBig ? vpY : 0)});");
 				}
 
-				HtmlConverter.Tab.ViewPort clip = new(
-					/*basicHtmlImageInfo.UseXScrollWhenTooBig ? 0 : */vpX,
-					/*basicHtmlImageInfo.UseYScrollWhenTooBig ? 0 : */
-					vpY,
-					clipWidth,
-					clipHeight,
-					1);
+				screenshotOptions.Clip = new()
+				{
+					X = /*basicHtmlImageInfo.UseXScrollWhenTooBig ? 0 : */vpX,
+					Y = /*basicHtmlImageInfo.UseYScrollWhenTooBig ? 0 : */vpY,
+					Width = clipWidth,
+					Height = clipHeight
+				};
 
-				using MemoryStream raw = await tab.TakePhotoOfCurrentPage(photoType, quality, clip, cancellationToken);
-
+				using Stream raw = await tab.ScreenshotLowMemory(screenshotOptions);
 				using Image rawImage = await Image.LoadAsync(raw, cancellationToken);
 
 				bigImage.Mutate(c => c.DrawImage(rawImage, new Point(vpX, vpY), 1));
@@ -455,11 +446,11 @@ public partial class ImageGenerator
 		}
 
 		MemoryStream stream = new();
-		if (photoType == HtmlConverter.Tab.PhotoType.Webp)
+		if (photoType == ScreenshotType.Webp)
 		{
 			await bigImage.SaveAsWebpAsync(stream, cancellationToken);
 		}
-		else if (photoType == HtmlConverter.Tab.PhotoType.Jpeg)
+		else if (photoType == ScreenshotType.Jpeg)
 		{
 			await bigImage.SaveAsJpegAsync(
 				stream,
@@ -483,4 +474,9 @@ public partial class ImageGenerator
 
 		return stream;
 	}
+}
+
+file static class Extension
+{
+	public static string AsFullPath(this string str) => Path.GetFullPath(str); // tbh this is a bad idea but i don't want to change existing code
 }

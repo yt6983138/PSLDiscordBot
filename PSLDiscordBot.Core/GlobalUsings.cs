@@ -15,3 +15,6 @@ global using PSLDiscordBot.Framework;
 global using PSLDiscordBot.Framework.CommandBase;
 global using PSLDiscordBot.Framework.Localization;
 global using PSLDiscordBot.Framework.Utilities;
+
+// they put a bunch of other async stuff in the library, and importing them create a bunch of conflicts with new bcl
+global using AsyncReaderWriterLock = Nito.AsyncEx.AsyncReaderWriterLock;

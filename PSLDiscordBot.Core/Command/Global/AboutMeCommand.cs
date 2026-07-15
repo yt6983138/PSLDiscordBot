@@ -68,7 +68,7 @@ public class AboutMeCommand : CommandBase
 
 		if (generateForUserData is not null) ImageGenerator.RedactSensetiveInfo(maps.Item1, maps.Item2);
 
-		MemoryStream image = await this._imageGenerator.MakePhoto(
+		Stream image = await this._imageGenerator.MakePhoto(
 			maps.Item1,
 			maps.Item2,
 			this._config.Value.AboutMeRenderInfo,
