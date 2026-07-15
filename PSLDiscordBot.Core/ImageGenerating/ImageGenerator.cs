@@ -362,8 +362,8 @@ public partial class ImageGenerator
 
 		await cdp.LogEnable();
 		await cdp.LogClear();
-		await cdp.DebuggerEnable();
-		Task debuggerPauseTask = cdp.RunUntilDebugger();
+		await cdp.DebuggerEnable(); // the debugger here works like an interrupt or syscall
+		Task debuggerPauseTask = cdp.RunUntilDebugger(cancellationToken);
 
 		// we dont care about on load event etc, and we have a debugger statement in the js bind so gotoasync fucks up
 		await cdp.PageNavigate("file:///" + basicHtmlImageInfo.HtmlPath.AsFullPath());
@@ -377,14 +377,9 @@ public partial class ImageGenerator
 		//this._logger.LogDebug(EventId, tab.); // TODO: get the url of the tab for remote layout debugging
 		//this._logger.LogDebug(EventId, "localhost:{port}{url}", this._chromiumPoolService.Chromium.CdpPort, tab.CdpInfo.DevToolsFrontendUrl);
 
-		bool ready = false; // TODO: make this a debugger pause
-		do
-		{
-			ready = await tab.EvaluateExpressionAsync<bool>("window.pslReady");
-
-			await Task.Delay(50, cancellationToken);
-		}
-		while (!ready);
+		await cdp.RunUntilDebugger(cancellationToken); // waiting for SetReady
+		await cdp.DebuggerResume();
+		await cdp.PageDisable(); // tell cdp to shut up, for some reason without this call no screenshot will work
 
 		int width = basicHtmlImageInfo.InitialWidth;
 		int height = basicHtmlImageInfo.InitialHeight;
