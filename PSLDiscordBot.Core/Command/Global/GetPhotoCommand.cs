@@ -159,7 +159,7 @@ public class GetPhotoCommand : CommandBase
 					GeneratingForOther = generateForUserData is not null,
 				});
 
-			if (generateForUserData is not null) ImageGenerator.RedactSensetiveInfo(textMap, imageMap);
+			if (generateForUserData is not null) ImageGenerator.RedactSensitiveInfo(textMap, imageMap);
 
 			image = await this._imageGenerator.MakePhoto(
 				textMap,

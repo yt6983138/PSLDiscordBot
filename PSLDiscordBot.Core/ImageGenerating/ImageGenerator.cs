@@ -78,8 +78,7 @@ public partial class ImageGenerator
 		};
 	}
 
-	// TODO: fix typo here
-	public static void RedactSensetiveInfo(TextMap_Anonymous textMap, ImageMap_Anonymous imageMap)
+	public static void RedactSensitiveInfo(TextMap_Anonymous textMap, ImageMap_Anonymous imageMap)
 	{
 		textMap.User.Data = textMap.User.Data.ShallowCopy();
 		textMap.User.Data.Token = "<redacted>";
