@@ -127,10 +127,10 @@ public class ChromiumPoolService
 		}
 	}
 
-	public ValueTask<TabUsageBlock> GetFreePageAsync()
+	public async Task<TabUsageBlock> GetFreePageAsync()
 	{
-		using ScopedSemaphoreSlim.Scope _ = this._restartLock.EnterScope();
-		return GetCore();
+		using ScopedSemaphoreSlim.Scope _ = await this._restartLock.EnterScopeAsync();
+		return await GetCore();
 
 		async ValueTask<TabUsageBlock> GetCore()
 		{
@@ -157,7 +157,7 @@ public class ChromiumPoolService
 	}
 	public async Task RestartChromiumAsync(TimeSpan delay)
 	{
-		using ScopedSemaphoreSlim.Scope _ = this._restartLock.EnterScope();
+		using ScopedSemaphoreSlim.Scope _ = await this._restartLock.EnterScopeAsync();
 
 		await Try(this.ActiveContext.DisposeAsync);
 		await Try(this.ActiveBrowser.DisposeAsync);
