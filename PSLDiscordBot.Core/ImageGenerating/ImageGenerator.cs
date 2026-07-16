@@ -372,12 +372,15 @@ public partial class ImageGenerator
 		string injectionScript = string.Join(';',
 			injectionParams.Select(x => $"window.{x.Key}={JsonConvert.SerializeObject(x.Value)}"));
 		await cdp.RuntimeEvaluate(injectionScript);
+
+		Task setReadyDebuggerTask = cdp.RunUntilDebugger(cancellationToken); // waiting for SetReady
+
 		await cdp.DebuggerResume();
 
 		//this._logger.LogDebug(EventId, tab.); // TODO: get the url of the tab for remote layout debugging
 		//this._logger.LogDebug(EventId, "localhost:{port}{url}", this._chromiumPoolService.Chromium.CdpPort, tab.CdpInfo.DevToolsFrontendUrl);
 
-		await cdp.RunUntilDebugger(cancellationToken); // waiting for SetReady
+		await setReadyDebuggerTask;
 		await cdp.DebuggerResume();
 		await cdp.PageDisable(); // tell cdp to shut up, for some reason without this call no screenshot will work
 
