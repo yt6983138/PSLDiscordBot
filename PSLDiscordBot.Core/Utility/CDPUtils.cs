@@ -69,14 +69,12 @@ public static class CDPUtils
 			void UnregisterEvent()
 			{
 				self.MessageReceived -= OnEvent;
+				tcs.SetCanceled(ct);
 			}
 			void OnEvent(object? sender, MessageEventArgs e)
 			{
 				if (ct.IsCancellationRequested)
-				{
-					tcs.SetCanceled(ct);
 					return;
-				}
 
 				if (e.MessageID != "Debugger.paused")
 					return;
