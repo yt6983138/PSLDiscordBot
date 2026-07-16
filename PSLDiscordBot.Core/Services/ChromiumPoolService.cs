@@ -115,15 +115,15 @@ public class ChromiumPoolService
 		}
 		else
 		{
-			SendLog(LogLevel.Information);
+			SendLog(LogLevel.Debug);
 		}
 
 		void SendLog(LogLevel level)
 		{
 			if (e.Message.StackTrace is not null)
-				this._logger.Log(level, "{msg} at {location}\n{stack}", e.Message.Text, e.Message.Location, string.Join("\n", e.Message.StackTrace));
+				this._logger.Log(level, _pageConsoleEventId, "{msg} at {location}\n{stack}", e.Message.Text, e.Message.Location, string.Join("\n", e.Message.StackTrace));
 			else
-				this._logger.Log(level, "{msg} at {location}", e.Message.Text, e.Message.Location);
+				this._logger.Log(level, _pageConsoleEventId, "{msg} at {location}", e.Message.Text, e.Message.Location);
 		}
 	}
 
