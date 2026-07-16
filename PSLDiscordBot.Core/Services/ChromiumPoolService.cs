@@ -94,8 +94,17 @@ public class ChromiumPoolService
 			ConcurrentStack<TabUsageBlock> stack = this._tabStack; // force compiler to capture stack
 			IPage page = await this.ActiveContext.NewPageAsync();
 			page.Console += this.Page_Console;
+			page.Client.MessageReceived += this.Client_MessageReceived;
 			stack.Push(new(stack, page));
 		});
+	}
+
+	private void Client_MessageReceived(object? sender, MessageEventArgs e)
+	{
+		if (e.MessageID == "Runtime.exceptionThrown")
+		{
+			this._logger.LogError(_pageConsoleEventId, "Runtime exception thrown: {data}", e.MessageData);
+		}
 	}
 
 	private void Page_Console(object? sender, ConsoleEventArgs e)
