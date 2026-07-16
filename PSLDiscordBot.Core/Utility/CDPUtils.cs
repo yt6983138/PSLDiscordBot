@@ -69,7 +69,7 @@ public static class CDPUtils
 			void UnregisterEvent()
 			{
 				self.MessageReceived -= OnEvent;
-				tcs.SetCanceled(ct);
+				tcs.TrySetCanceled(ct);
 			}
 			void OnEvent(object? sender, MessageEventArgs e)
 			{
@@ -80,7 +80,7 @@ public static class CDPUtils
 					return;
 
 				self.MessageReceived -= OnEvent;
-				tcs.SetResult();
+				tcs.TrySetResult();
 			}
 		}
 		public async Task PageNavigate(string url)
