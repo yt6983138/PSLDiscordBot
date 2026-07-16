@@ -13,7 +13,7 @@ public class ChromiumPoolService
 	/// </summary>
 	/// <param name="parent"></param>
 	/// <param name="page"></param>
-	public sealed class TabUsageBlock(ConcurrentStack<TabUsageBlock> stack, IPage page) : IDisposable
+	public sealed class TabUsageBlock(ConcurrentStack<TabUsageBlock> stack, IPage page) : IAsyncDisposable
 	{
 		private readonly ConcurrentStack<TabUsageBlock> _stack = stack;
 
@@ -23,15 +23,10 @@ public class ChromiumPoolService
 		{
 			await this.Page.DisposeAsync();
 		}
-		public async void Dispose()
+		public async ValueTask DisposeAsync()
 		{
 			this._stack.Push(this);
-			try
-			{
-				// for saving resources only, don't care about the result
-				await this.Page.Client.PageNavigate("about:blank");
-			}
-			catch { }
+			await this.Page.Client.PageNavigate("about:blank");
 		}
 	}
 

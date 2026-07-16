@@ -354,7 +354,7 @@ public partial class ImageGenerator
 		byte quality,
 		CancellationToken cancellationToken)
 	{
-		using ChromiumPoolService.TabUsageBlock t = await service.GetFreePageAsync();
+		await using ChromiumPoolService.TabUsageBlock t = await service.GetFreePageAsync();
 		IPage page = t.Page;
 		ICDPSession cdp = page.Client;
 
