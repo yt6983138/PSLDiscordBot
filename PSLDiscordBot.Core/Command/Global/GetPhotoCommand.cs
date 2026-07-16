@@ -1,6 +1,6 @@
 ﻿using PSLDiscordBot.Core.ImageGenerating;
 using PSLDiscordBot.Framework.BuiltInServices;
-using static HtmlToImage.NET.HtmlConverter.Tab;
+using PuppeteerSharp;
 
 namespace PSLDiscordBot.Core.Command.Global;
 
@@ -139,7 +139,7 @@ public class GetPhotoCommand : CommandBase
 
 		await arg.QuickReply(this._localization[PSLNormalCommandKey.GetPhotoGenerating]);
 
-		MemoryStream image;
+		Stream image;
 		TextMap_Anonymous textMap;
 		try
 		{
@@ -159,13 +159,13 @@ public class GetPhotoCommand : CommandBase
 					GeneratingForOther = generateForUserData is not null,
 				});
 
-			if (generateForUserData is not null) ImageGenerator.RedactSensetiveInfo(textMap, imageMap);
+			if (generateForUserData is not null) ImageGenerator.RedactSensitiveInfo(textMap, imageMap);
 
 			image = await this._imageGenerator.MakePhoto(
 				textMap,
 				imageMap,
 				this._config.Value.GetPhotoRenderInfo,
-				usePng ? PhotoType.Png : this._config.Value.DefaultRenderImageType,
+				usePng ? ScreenshotType.Png : this._config.Value.DefaultRenderImageType,
 				this._config.Value.RenderQuality,
 				cancellationToken: cts.Token);
 		}

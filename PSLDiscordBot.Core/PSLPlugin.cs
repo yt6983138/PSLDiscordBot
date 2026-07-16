@@ -136,7 +136,7 @@ public class PSLPlugin : IPlugin
 
 		hostBuilder.Services.AddSingleton(this)
 			.AddSingleton<DataBaseService>()
-			.AddSingleton<ChromiumPoolService>()
+			//.AddSingleton<ChromiumPoolService>()
 			.AddSingleton<PhigrosService>()
 			.AddSingleton<AvatarHashMapService>()
 			.AddSingleton<ImageGenerator>()

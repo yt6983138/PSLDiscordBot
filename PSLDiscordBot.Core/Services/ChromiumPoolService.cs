@@ -1,127 +1,174 @@
-﻿using HtmlToImage.NET;
+﻿using PuppeteerSharp;
 using System.Collections.Concurrent;
 
 namespace PSLDiscordBot.Core.Services;
 
+/// <summary>
+/// this service is not injected to the di container, you must obtain it through image generator
+/// </summary>
 public class ChromiumPoolService
 {
-	public record class TabInfoPair(HtmlConverter.Tab Tab, bool Occupied)
+	/// <summary>
+	/// warning: disposing this class multiple times will cause issues
+	/// </summary>
+	/// <param name="parent"></param>
+	/// <param name="page"></param>
+	public sealed class TabUsageBlock(ConcurrentStack<TabUsageBlock> stack, IPage page) : IAsyncDisposable
 	{
-		public bool Occupied { get; internal set; } = Occupied;
-	}
+		private readonly ConcurrentStack<TabUsageBlock> _stack = stack;
 
-	public sealed class TabUsageBlock(TabInfoPair tab, Action<TabInfoPair> onDispose) : IDisposable
-	{
-		private readonly TabInfoPair _tab = tab;
-		private readonly Action<TabInfoPair> _onDispose = onDispose;
-		private bool _disposed;
+		public IPage Page { get; } = page;
 
-		public HtmlConverter.Tab Tab => this._tab.Tab;
-
-		~TabUsageBlock()
+		public async Task DestroyAsync()
 		{
-			this.Dispose();
+			await this.Page.DisposeAsync();
 		}
-		public void Dispose()
+		public async ValueTask DisposeAsync()
 		{
-			if (this._disposed) return;
-			GC.SuppressFinalize(this);
-			this._onDispose.Invoke(this._tab);
-			this._disposed = true;
+			this._stack.Push(this);
+			await this.Page.Client.PageNavigate("about:blank");
 		}
 	}
 
-	private readonly ConcurrentQueue<TabInfoPair> _chromiumTabPairs = new();
-	private readonly string _chromiumPath;
-	private readonly int _defaultTabCount;
-	private readonly ushort _port;
-	private readonly bool _debug;
-	private readonly bool _showChromiumOutput;
+	private static readonly EventId _pageConsoleEventId = new(114512_1, "PageConsole");
 
-	private readonly ScopedSemaphoreSlim _lock = new(1, 1);
+	public LaunchOptions LaunchOption { get; set; }
+	public IBrowser ActiveBrowser { get; private set; } = null!;
+	public IBrowserContext ActiveContext { get; private set; } = null!;
 
-	public IReadOnlyCollection<TabInfoPair> ChromiumTabPairs => this._chromiumTabPairs;
-	public HtmlConverter Chromium { get; private set; } = null!;
+	private readonly ScopedSemaphoreSlim _restartLock = new(1, 1);
+	private readonly ILogger<ChromiumPoolService> _logger;
+	private readonly ILoggerFactory _loggerFactory;
+	private readonly IOptions<Config> _config;
 
-	private ChromiumPoolService(string chromiumPath,
-		int defaultTabCount,
-		ushort port,
-		bool debug = false,
-		bool showChromiumOutput = false)
+	// tends to use stack so the unused tabs can be suspended by chrome
+	private ConcurrentStack<TabUsageBlock> _tabStack = new();
+
+	/// <summary>
+	/// you must immediately call SetupAsync after creating this class
+	/// </summary>
+	/// <param name="playwright"></param>
+	private ChromiumPoolService(ILoggerFactory loggerFactory, IOptions<Config> config)
 	{
-		this._chromiumPath = chromiumPath;
-		this._defaultTabCount = defaultTabCount;
-		this._port = port;
-		this._debug = debug;
-		this._showChromiumOutput = showChromiumOutput;
+		this._logger = loggerFactory.CreateLogger<ChromiumPoolService>();
+		this._config = config;
+		this._loggerFactory = loggerFactory;
 
-		this.SetupChromium();
-	}
-	public ChromiumPoolService(IOptions<Config> config)
-		: this(config.Value.ChromiumLocation,
-			config.Value.DefaultChromiumTabCacheCount,
-			config.Value.ChromiumPort,
+		this.LaunchOption = new()
+		{
 #if DEBUG
-			true,
-			true
-#else
-			false,
-			false
+			//Headless = false,
 #endif
-			)
-	{ }
-
-	private void SetupChromium()
-	{
-		this.Chromium = new(this._chromiumPath,
-			this._port,
-			debug: this._debug,
-			showChromiumOutput: this._showChromiumOutput,
-			extraArgs:
-			[
+			Args = [
 				"--allow-file-access-from-files",
 				"--no-sandbox",
 				"--no-first-run",
 				"--no-default-browser-check",
 				"--disable-extensions",
 				"--disable-backing-store-limit"
-			]);
-		Parallel.For(0, this._defaultTabCount, _ => this._chromiumTabPairs.Enqueue(new(this.Chromium.NewTab(), false)));
+			],
+			Browser = SupportedBrowser.Chromium,
+			DefaultViewport = new()
+			{
+				Width = 1920,
+				Height = 1080
+			},
+			ExecutablePath = this._config.Value.ChromiumLocation,
+			Pipe = true,
+			Timeout = (int)config.Value.RenderTimeout.TotalMilliseconds,
+			ProtocolTimeout = (int)config.Value.RenderTimeout.TotalMilliseconds // unfortunately they cant support cancellation tokens
+		};
 	}
 
-	public TabUsageBlock GetFreeTab()
+	public static async Task<ChromiumPoolService> CreateAsync(ILoggerFactory loggerFactory, IOptions<Config> config)
 	{
-		using ScopedSemaphoreSlim.Scope _ = this._lock.EnterScope();
-		TabInfoPair? first = this.ChromiumTabPairs.FirstOrDefault(x => x.Occupied == false);
-		if (first is null)
+		ChromiumPoolService service = new(loggerFactory, config);
+		await service.SetupAsync(); // i hate 2 step initialization but can't come up with a better way
+		return service;
+	}
+
+	public async Task AddPagesToPoolAsync(int count)
+	{
+		await Parallel.ForAsync(0, count, async (_, _2) =>
 		{
-			TabInfoPair info = new(this.Chromium.NewTab(), true);
-			this._chromiumTabPairs.Enqueue(info);
-			return new(info, TabFinalizer);
+			ConcurrentStack<TabUsageBlock> stack = this._tabStack; // force compiler to capture stack
+			IPage page = await this.ActiveContext.NewPageAsync();
+			page.Console += this.Page_Console;
+			stack.Push(new(stack, page));
+		});
+	}
+
+	private void Page_Console(object? sender, ConsoleEventArgs e)
+	{
+		if (e.Message.Type == ConsoleType.Error)
+		{
+			SendLog(LogLevel.Error);
+		}
+		else if (e.Message.Type == ConsoleType.Warning)
+		{
+			SendLog(LogLevel.Warning);
+		}
+		else
+		{
+			SendLog(LogLevel.Debug);
 		}
 
-		first.Occupied = true;
-		return new(first, TabFinalizer);
+		void SendLog(LogLevel level)
+		{
+			if (e.Message.StackTrace is not null)
+				this._logger.Log(level, _pageConsoleEventId, "{msg} at {location}\n{stack}", e.Message.Text, e.Message.Location, string.Join("\n", e.Message.StackTrace));
+			else
+				this._logger.Log(level, _pageConsoleEventId, "{msg} at {location}", e.Message.Text, e.Message.Location);
+		}
 	}
-	public async Task RestartChromium(TimeSpan delay)
+
+	public async Task<TabUsageBlock> GetFreePageAsync()
 	{
-		using ScopedSemaphoreSlim.Scope _ = await this._lock.EnterScopeAsync();
-		this.Chromium.Dispose();
+		using ScopedSemaphoreSlim.Scope _ = await this._restartLock.EnterScopeAsync();
+		return await GetCore();
+
+		async ValueTask<TabUsageBlock> GetCore()
+		{
+			if (this._tabStack.TryPop(out TabUsageBlock? tab))
+				return tab;
+
+			await this.AddPagesToPoolAsync(1);
+			return await GetCore();
+		}
+	}
+
+	public async Task SetupAsync()
+	{
+		this.ActiveBrowser = await Puppeteer.LaunchAsync(this.LaunchOption,
+#if DEBUG
+			this._loggerFactory
+#else
+			null // prevent excessive logging
+#endif
+			);
+		this.ActiveContext = await this.ActiveBrowser.CreateBrowserContextAsync();
+		this._tabStack = new();
+		await this.AddPagesToPoolAsync(this._config.Value.DefaultChromiumTabCacheCount);
+	}
+	public async Task RestartChromiumAsync(TimeSpan delay)
+	{
+		using ScopedSemaphoreSlim.Scope _ = await this._restartLock.EnterScopeAsync();
+
+		await Try(this.ActiveContext.DisposeAsync);
+		await Try(this.ActiveBrowser.DisposeAsync);
 		await Task.Delay(delay);
-		this.SetupChromium();
-	}
+		await this.SetupAsync();
 
-	private static async void TabFinalizer(TabInfoPair pair)
-	{
-		try
+		async Task Try(Func<ValueTask> action)
 		{
-			await pair.Tab.NavigateTo("about:blank");
+			try
+			{
+				await action.Invoke();
+			}
+			catch (Exception ex)
+			{
+				this._logger.LogWarning(ex, "Failed to dispose something in RestartChromium");
+			}
 		}
-		catch
-		{
-			// ignore errors since we just want it to use less resources, and if it fails to do that
-			// it doesn't matter that much
-		}
-		pair.Occupied = false;
 	}
 }

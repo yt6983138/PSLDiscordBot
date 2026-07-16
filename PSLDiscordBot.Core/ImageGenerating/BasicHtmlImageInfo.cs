@@ -1,4 +1,6 @@
-﻿namespace PSLDiscordBot.Core.ImageGenerating;
+﻿using PuppeteerSharp;
+
+namespace PSLDiscordBot.Core.ImageGenerating;
 public class BasicHtmlImageInfo
 {
 	public int InitialWidth { get; set; }
@@ -10,4 +12,14 @@ public class BasicHtmlImageInfo
 	public bool UseYScrollWhenTooBig { get; set; } = true;
 	public int MaxSizePerBlock { get; set; } = 4096;
 	// i might add more shit here
+
+	public ViewPortOptions GetViewPortOptions()
+	{
+		return new ViewPortOptions
+		{
+			Width = this.InitialWidth,
+			Height = this.InitialHeight,
+			DeviceScaleFactor = this.DeviceScaleFactor,
+		};
+	}
 }

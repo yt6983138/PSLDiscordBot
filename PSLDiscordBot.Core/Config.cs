@@ -1,5 +1,5 @@
-﻿using HtmlToImage.NET;
-using PSLDiscordBot.Core.ImageGenerating;
+﻿using PSLDiscordBot.Core.ImageGenerating;
+using PuppeteerSharp;
 
 namespace PSLDiscordBot.Core;
 
@@ -55,7 +55,7 @@ public class Config
 	public int GetPhotoUsePngWhenLargerThan { get; set; } = 69;
 
 	public byte RenderQuality { get; set; } = 75;
-	public HtmlConverter.Tab.PhotoType DefaultRenderImageType { get; set; } = HtmlConverter.Tab.PhotoType.Jpeg;
+	public ScreenshotType DefaultRenderImageType { get; set; } = ScreenshotType.Jpeg;
 
 	public BasicHtmlImageInfo GetPhotoRenderInfo { get; set; } = new()
 	{

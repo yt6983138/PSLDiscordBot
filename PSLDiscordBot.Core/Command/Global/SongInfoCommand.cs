@@ -1,5 +1,4 @@
 ﻿using PhiInfo.Core.Models.Information;
-using PSLDiscordBot.Core.ImageGenerating;
 using System.Text;
 
 namespace PSLDiscordBot.Core.Command.Global;
@@ -87,4 +86,11 @@ public class SongInfoCommand : GuestCommandBase
 	{
 		return $"./Assets/Tracks/{songId}/music.wav".ToFullPath();
 	}
+}
+
+file static class Extension
+{
+	// prob not a good idea to have this as an extension method
+	public static string ToFullPath(this string path)
+		=> Path.GetFullPath(path);
 }
