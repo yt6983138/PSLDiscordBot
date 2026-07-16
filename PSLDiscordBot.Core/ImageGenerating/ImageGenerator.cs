@@ -466,6 +466,8 @@ public partial class ImageGenerator
 				cancellationToken);
 		}
 
+		stream.Seek(0, SeekOrigin.Begin);
+
 		return stream;
 	}
 }
