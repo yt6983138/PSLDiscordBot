@@ -1,5 +1,4 @@
 ﻿using PuppeteerSharp;
-using System.Globalization;
 using System.Text.Json;
 
 namespace PSLDiscordBot.Core.Utility;
@@ -20,7 +19,7 @@ public static class CDPUtils
 		{
 			var screenMessage = new
 			{
-				Format = (options.Type ?? ScreenshotType.Png).ToString().ToLower(CultureInfo.CurrentCulture),
+				Format = (options.Type ?? ScreenshotType.Png).ToString().ToLowerInvariant(),
 				options.CaptureBeyondViewport,
 				options.FromSurface,
 				options.OptimizeForSpeed,
