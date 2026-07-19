@@ -360,6 +360,11 @@ public class PSLPlugin : IPlugin
 	private async Task OnException(Exception exception, SocketCommandBase? interaction = null)
 	{
 		this._logger.LogError(EventId, exception, "Exception received");
+		if (exception is DebugArgumentNullException debugEx && !string.IsNullOrEmpty(debugEx.AdditionalMessage))
+		{
+			this._logger.LogError(EventId, "Additional message from Phigros null checks: {msg}", debugEx.AdditionalMessage);
+		}
+
 		if (this.AdminDM is not null)
 		{
 			try
@@ -378,9 +383,12 @@ public class PSLPlugin : IPlugin
 				interactionMessage += interaction is SocketSlashCommand sc
 					? $" with option(s) `{string.Join(", ", sc.Data.Options.Select(x => $"{i++}_{x.Name}({x.Type}): {x.Value}"))}`"
 					: "";
+
+				string exceptionString = exception is DebugArgumentNullException debugEx2 ? debugEx2.ToStringDetailed() : exception.ToString();
+
 				await Task.WhenAll(
 					this.AdminDM.SendMessageAsync(interactionMessage),
-					this.AdminDM.SendFileAsync(PSLUtils.ToStream(exception.ToString()), "StackTrace.txt"));
+					this.AdminDM.SendFileAsync(PSLUtils.ToStream(exceptionString), "StackTrace.txt"));
 			}
 			catch (Exception ex)
 			{
