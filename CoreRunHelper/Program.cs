@@ -1,8 +1,8 @@
 ﻿namespace CoreRunHelper;
 
-internal class Program
+public class Program
 {
-	private static async Task Main(string[] args)
+	public static async Task Main(string[] args)
 	{
 		string? assetsToCopy = Environment.GetEnvironmentVariable("ASSETS_COPY_PATH");
 		string? infoToCopy = Environment.GetEnvironmentVariable("INFO_COPY_PATH");
@@ -56,6 +56,14 @@ internal class Program
 		{
 			DirectoryInfo destSub = dest.CreateSubdirectory(item.Name);
 			CopyFolder(item, destSub);
+		}
+	}
+	public static void TryDeleteFolder(DirectoryInfo info)
+	{
+		if (info.Exists)
+		{
+			bool isSymbolic = info.Attributes.HasFlag(FileAttributes.ReparsePoint);
+			info.Delete(!isSymbolic);
 		}
 	}
 }
