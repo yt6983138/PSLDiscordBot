@@ -18,7 +18,7 @@ public class SetPrecisionCommand : CommandBase
 			ApplicationCommandOptionType.Integer,
 			this._localization[PSLNormalCommandKey.SetPrecisionOptionPrecisionDescription],
 			isRequired: true,
-			maxValue: 1077,
+			maxValue: 100,
 			minValue: 1);
 
 	public override async Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
