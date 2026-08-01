@@ -53,7 +53,7 @@ public static class WebUtility
 		services.AddAssemblyToMvc<T>();
 	}
 
-	public static bool SwaggerRequireInTypeAssembly<TType>(string docName, ApiDescription apiDesc)
+	public static bool OpenAPIRequireInTypeAssembly<TType>(ApiDescription apiDesc)
 	{
 		System.Reflection.Assembly targetAssembly = typeof(TType).Assembly;
 		ControllerActionDescriptor? controllerAction = apiDesc.ActionDescriptor as ControllerActionDescriptor;

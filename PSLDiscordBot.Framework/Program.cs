@@ -1,6 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc.ApiExplorer;
-using PSLDiscordBot.Framework.BuiltInServices;
-using Swashbuckle.AspNetCore.SwaggerGen;
+﻿using PSLDiscordBot.Framework.BuiltInServices;
 using System.Collections.Concurrent;
 using System.Reflection;
 
@@ -51,17 +49,6 @@ public class Program
 	public IServiceCollection AllServices => this._builder.Services;
 	public WebApplication App { get; private set; } = null!;
 
-	/// <summary>
-	/// Note: plugins that needed to use swagger must call app.UseSwagger() and app.UseSwaggerUI() themselves in their plugin's Setup method.
-	/// if no plugin adds any filter and configurator, swagger will not be added.
-	/// </summary>
-	public List<Func<string, ApiDescription, bool>> SwaggerGenFilter { get; } = [];
-	/// <summary>
-	/// Ran before adding doc inclusion predicate, can be used to add custom configuration to swagger gen options.
-	/// if no plugin adds any filter and configurator, swagger will not be added.
-	/// </summary>
-	public event EventHandler<SwaggerGenOptions>? SwaggerConfigurators;
-
 	public static Task Main(string[] args) => new Program().MainAsync(args);
 
 	public async Task MainAsync(string[] args)
@@ -95,9 +82,6 @@ public class Program
 
 		this._pluginResolveService.LoadAllPlugins();
 		this._pluginResolveService.LoadAll(this._builder);
-
-		if (this.SwaggerGenFilter.Count != 0 || (SwaggerConfigurators?.GetInvocationList()?.Length > 0))
-			this.ConfigureSwagger(this._builder);
 
 		this._commandResolveService.LoadEverything();
 
@@ -212,22 +196,5 @@ public class Program
 	public void AddArgReceiver(ArgParseInfo info)
 	{
 		this._argParseInfos.Add(info);
-	}
-
-#pragma warning disable RS0030 // Do not use banned APIs
-#if DEBUG
-	public
-#else
-	private
-#endif
-		void ConfigureSwagger(WebApplicationBuilder builder)
-	{
-		builder.Services.AddEndpointsApiExplorer();
-		builder.Services.AddSwaggerGen(config =>
-		{
-			this.SwaggerConfigurators?.Invoke(this, config);
-			config.DocInclusionPredicate((docName, apiDesc) => this.SwaggerGenFilter.Any(x => x.Invoke(docName, apiDesc)));
-		});
-#pragma warning restore RS0030 // Do not use banned APIs
 	}
 }
