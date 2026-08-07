@@ -57,7 +57,13 @@ public class SongScoresCommand : CommandBase
 				searchResult.Any(y => y.SongId == x.Score.Id))
 			.ToList();
 
-		if (scoresToShow.Count == 0)
+		// we just discovered a bug in the original code, if the user has not played the best search result song, 
+		// and the bot has multiple matches for the search, the javascript rendering script will throw an error,
+		// because it only uses the best search result
+
+		// not sure if it's the best way, since this bug should also exist before (but never triggered), so
+		// i guess it's fine to just completely block off
+		if (scoresToShow.Count == 0 || scoresToShow[0].Score.Id != searchResult[0].SongId)
 		{
 			await arg.QuickReply(this._localization[PSLNormalCommandKey.SongScoresSongNotPlayed]);
 			return;
