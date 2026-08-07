@@ -63,7 +63,7 @@ public class SongScoresCommand : CommandBase
 
 		// not sure if it's the best way, since this bug should also exist before (but never triggered), so
 		// i guess it's fine to just completely block off
-		if (scoresToShow.Count == 0 || scoresToShow[0].Score.Id != searchResult[0].SongId)
+		if (scoresToShow.Count == 0 || scoresToShow.All(x => x.Score.Id != searchResult[0].SongId))
 		{
 			await arg.QuickReply(this._localization[PSLNormalCommandKey.SongScoresSongNotPlayed]);
 			return;
