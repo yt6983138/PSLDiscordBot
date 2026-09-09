@@ -194,7 +194,10 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 			[GetPhotoOptionCCFilterLowerBoundDescription] = LocalizedString.CreateDefault("Change the lower bound of scores' CC to show. Inclusive."),
 			[GetPhotoOptionCCFilterHigherBoundName] = LocalizedString.CreateDefault("cc_higher_bound"),
 			[GetPhotoOptionCCFilterHigherBoundDescription] = LocalizedString.CreateDefault("Change the higher bound of scores' CC to show. Inclusive."),
+			[GetPhotoOptionDifficultiesToShowName] = LocalizedString.CreateDefault("show_what_difficulties"),
+			[GetPhotoOptionDifficultiesToShowDescription] = LocalizedString.CreateDefault("Change what difficulties to show. Default: Show all. Use comma-separated list, ex. EZ, IN, Legacy."),
 			[GetPhotoFailedParsingGrades] = LocalizedString.CreateDefault("Failed to parse showing grades. Valid values: {0}"),
+			[GetPhotoFailedParsingDifficulty] = LocalizedString.CreateDefault("Failed to parse showing difficulties. Valid values: {0}"),
 			[GetPhotoImageTooBig] = LocalizedString.CreateDefault("Sorry, the channel you are requesting this from does not allow me to send images larger than 10mb :(\n" +
 				"Please either use count lower or equal to {0} or find other servers with boost."),
 			[GetPhotoStillInCoolDown] = LocalizedString.CreateDefault("Sorry, due to memory issues there is a cooldown when count is larger than {0}, {1} remain."),

@@ -27,6 +27,21 @@ public class GetPhotoCommand : CommandBase
 		{ "v", ScoreStatus.Vu },
 		{ "f", ScoreStatus.False },
 	};
+	public static Dictionary<string, Difficulty> DifficultyAliases { get; set; } = new()
+	{
+		{ "e", Difficulty.EZ },
+		{ "easy", Difficulty.EZ },
+		{ "h", Difficulty.HD },
+		{ "hd", Difficulty.HD },
+		{ "i", Difficulty.IN },
+		{ "in", Difficulty.IN },
+		{ "a", Difficulty.AT },
+		{ "at", Difficulty.AT },
+		{ "l", Difficulty.Legacy },
+		{ "le", Difficulty.Legacy },
+		{ "lg", Difficulty.Legacy },
+		{ "lgc", Difficulty.Legacy },
+	};
 
 	public override bool IsEphemeral => false;
 	public override bool RunOnDifferentThread => true;
@@ -69,6 +84,11 @@ public class GetPhotoCommand : CommandBase
 			isRequired: false,
 			minValue: 0,
 			maxValue: 20)
+		.AddOption(
+			this._localization[PSLNormalCommandKey.GetPhotoOptionDifficultiesToShowName],
+			ApplicationCommandOptionType.String,
+			this._localization[PSLNormalCommandKey.GetPhotoOptionDifficultiesToShowDescription],
+			isRequired: false)
 		.AddGenerateForOption(this._localization);
 
 	public override async Task Callback(SocketSlashCommand arg,
@@ -83,6 +103,7 @@ public class GetPhotoCommand : CommandBase
 		double ccLowerBound = arg.GetOptionOrDefault<double>(this._localization[PSLNormalCommandKey.GetPhotoOptionCCFilterLowerBoundName]);
 		double ccHigherBound = arg.GetOptionOrDefault<double>(this._localization[PSLNormalCommandKey.GetPhotoOptionCCFilterHigherBoundName], int.MaxValue);
 		string? showingGrades = arg.GetOptionOrDefault<string>(this._localization[PSLNormalCommandKey.GetPhotoOptionGradesToShowName]);
+		string? difficultiesToShow = arg.GetOptionOrDefault<string>(this._localization[PSLNormalCommandKey.GetPhotoOptionDifficultiesToShowName]);
 		IUser? generateFor = arg.GetGenerateForOption(this._localization);
 
 		UserData? generateForUserData = null;
@@ -111,6 +132,22 @@ public class GetPhotoCommand : CommandBase
 			showingGradesParsed = parsed.Select(x => x!.Value).ToArray();
 		}
 		showingGradesParsed ??= Enum.GetValues<ScoreStatus>();
+
+		Difficulty[]? difficultiesToShowParsed = null;
+		if (!string.IsNullOrWhiteSpace(difficultiesToShow))
+		{
+			IEnumerable<Difficulty?> parsed = difficultiesToShow
+				.Split(',')
+				.Select(ParseDifficulty);
+			if (!parsed.Any() || parsed.Any(x => !x.HasValue))
+			{
+				await arg.QuickReply(this._localization[PSLNormalCommandKey.GetPhotoFailedParsingDifficulty],
+					string.Join(", ", Enum.GetValues<Difficulty>().SkipLast(1).Select(x => x.ToString()))); // skip sp
+				return;
+			}
+			difficultiesToShowParsed = parsed.Select(x => x!.Value).ToArray();
+		}
+		difficultiesToShowParsed ??= Enum.GetValues<Difficulty>();
 
 		bool usePng = count > this._config.Value.GetPhotoUsePngWhenLargerThan;
 		bool shouldUseCoolDown = count > this._config.Value.GetPhotoCoolDownWhenLargerThan;
@@ -157,6 +194,7 @@ public class GetPhotoCommand : CommandBase
 					CCLowerBound = ccLowerBound,
 					CCHigherBound = ccHigherBound,
 					GeneratingForOther = generateForUserData is not null,
+					AllowedDifficulties = difficultiesToShowParsed
 				});
 
 			if (generateForUserData is not null) ImageGenerator.RedactSensitiveInfo(textMap, imageMap);
@@ -202,7 +240,13 @@ public class GetPhotoCommand : CommandBase
 		str = str.Trim().ToLower();
 		if (ScoreStatusAlias.TryGetValue(str, out ScoreStatus scoreStatus)) return scoreStatus;
 
-		str = str.ToPascalCase();
-		return Enum.TryParse(str, out ScoreStatus stat) ? stat : null;
+		return Enum.TryParse(str, true, out ScoreStatus stat) ? stat : null;
+	}
+	public static Difficulty? ParseDifficulty(string str)
+	{
+		str = str.Trim().ToLower();
+		if (DifficultyAliases.TryGetValue(str, out Difficulty diff)) return diff;
+
+		return Enum.TryParse(str, true, out Difficulty difficulty) ? difficulty : null;
 	}
 }

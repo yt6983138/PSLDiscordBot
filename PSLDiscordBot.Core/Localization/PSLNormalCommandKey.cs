@@ -88,8 +88,11 @@ public static partial class PSLNormalCommandKey
 	public static partial string GetPhotoOptionCCFilterLowerBoundDescription { get; }
 	public static partial string GetPhotoOptionCCFilterHigherBoundName { get; }
 	public static partial string GetPhotoOptionCCFilterHigherBoundDescription { get; }
+	public static partial string GetPhotoOptionDifficultiesToShowName { get; }
+	public static partial string GetPhotoOptionDifficultiesToShowDescription { get; }
 
 	public static partial string GetPhotoFailedParsingGrades { get; }
+	public static partial string GetPhotoFailedParsingDifficulty { get; }
 	public static partial string GetPhotoImageTooBig { get; }
 	public static partial string GetPhotoStillInCoolDown { get; }
 	public static partial string GetPhotoGenerating { get; }
