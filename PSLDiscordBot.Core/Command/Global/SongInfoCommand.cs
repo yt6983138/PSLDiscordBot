@@ -17,6 +17,8 @@ public class SongInfoCommand : GuestCommandBase
 	{
 	}
 
+	public override bool IsEphemeral => false;
+
 	public override OneOf<string, LocalizedString> PSLName => this._localization[PSLGuestCommandKey.SongInfoName];
 	public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLGuestCommandKey.SongInfoDescription];
 
