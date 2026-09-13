@@ -7,7 +7,6 @@ using PhiInfo.Core.Models.Information;
 using PSLDiscordBot.Core.Models.SongAlias;
 using System.Collections.Concurrent;
 using System.Collections.Frozen;
-using System.Collections.Immutable;
 
 namespace PSLDiscordBot.Core.Services;
 
@@ -78,18 +77,24 @@ public class AliasService
 			return this._aliasCache[tableId];
 		});
 
-		return tableCache.ToFrozenDictionary(kv => kv.Key, kv => (IReadOnlyCollection<string>)kv.Value);
+		return tableCache.ToFrozenDictionary(x => x.Key, x => (IReadOnlyCollection<string>)x.Value);
 	}
 
-	public Dictionary<string, IReadOnlyCollection<string>> GetAliasesMerged(AliasTableIdType type, ulong id)
+	public IReadOnlyDictionary<string, IReadOnlyCollection<string>> GetAliasesMerged(AliasTableIdType type, ulong id)
 	{
-		using StaticTableRequester staticRequester = this.GetStaticTableRequester();
+		using StaticTableRequester requester = this.GetStaticTableRequester();
+		return this.GetAliasesMerged(type, id, requester);
+	}
+	public IReadOnlyDictionary<string, IReadOnlyCollection<string>> GetAliasesMerged(AliasTableIdType type, ulong id, StaticTableRequester staticRequester)
+	{
 		AliasTableAttribute attribute = staticRequester.GetTableAttributeOrDefault(type, id);
 		IReadOnlyDictionary<string, IReadOnlyCollection<string>> currentTable = this.GetCachedAliases(type, id);
 
 		List<InheritedTableInfo> allInheritedTable = [new(currentTable, attribute)];
 		IterateAllInheritedTable(attribute.InheritsFrom);
 		allInheritedTable.Reverse();
+
+		if (allInheritedTable.Count == 1) return currentTable;
 
 		Dictionary<string, IReadOnlyCollection<string>> result = [];
 		foreach (InheritedTableInfo item in allInheritedTable)
@@ -106,7 +111,7 @@ public class AliasService
 				}
 				else
 				{
-					result[pair.Key] = existing.Union(pair.Value).ToImmutableArray();
+					result[pair.Key] = existing.Union(pair.Value).ToArray();
 				}
 			}
 		}
@@ -162,9 +167,13 @@ public class AliasService
 		ulong id,
 		NonMultiLanguageInfos info,
 		string input,
-		double threshold = 0.75)
+		double threshold = 0.75,
+		StaticTableRequester? requester = null)
 	{
-		return this.SearchSong(info, this.GetAliasesMerged(type, id), input, threshold);
+		IReadOnlyDictionary<string, IReadOnlyCollection<string>> alias = requester is null
+			? this.GetAliasesMerged(type, id)
+			: this.GetAliasesMerged(type, id, requester);
+		return this.SearchSong(info, alias, input, threshold);
 	}
 	/// <summary>
 	/// 
@@ -183,7 +192,7 @@ public class AliasService
 		// TODO?: add different threshold for id/name and alias, not sure if needed
 		// maybe i should just inject phigros service so the caller does not have to pass info manually
 
-		input = input.ToLower();
+		input = input.ToLowerInvariant();
 
 		List<SongSearchResult> results = [];
 		foreach (SongInfo item in info.Songs)
@@ -192,14 +201,14 @@ public class AliasService
 			string name = item.Name;
 			IReadOnlyCollection<string> songAliases = aliases.TryGetValue(id, out IReadOnlyCollection<string>? al) ? al : [];
 
-			double idScore = CalculateScore(input, id.ToLower());
-			double nameScore = CalculateScore(input, name.ToLower());
+			double idScore = CalculateScore(input, id);
+			double nameScore = CalculateScore(input, name);
 
 			double bestScore = Math.Max(idScore, nameScore);
 
 			foreach (string alias in songAliases)
 			{
-				double aliasScore = CalculateScore(input, alias.ToLower());
+				double aliasScore = CalculateScore(input, alias);
 				if (aliasScore > bestScore) bestScore = aliasScore;
 			}
 			if (bestScore < threshold)
@@ -213,8 +222,10 @@ public class AliasService
 		static double CalculateScore(string input, string source)
 		{
 			if (input == source) return 1;
+			// if the input is less than half the length of the source, it's probably not a match
+			if (input.Length < source.Length >> 1) return 0;
 
-			return Fuzz.Ratio(input, source) * 0.01d;
+			return Levenshtein.GetRatio(input, source.ToLowerInvariant());
 			//double simpleRatio = Fuzz.Ratio(input, source) * 0.01d;
 			//double partialRatio = Fuzz.PartialRatio(input, source) * 0.01d;
 			//double tokenSortRatio = Fuzz.TokenSortRatio(input, source) * 0.01d;
