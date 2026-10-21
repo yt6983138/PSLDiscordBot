@@ -8,6 +8,8 @@ namespace PSLDiscordBot.Core.Command.Global;
 [AddToGlobal]
 public class DownloadAssetCommand : GuestCommandBase
 {
+	private const Difficulty UndefinedDifficulty = unchecked((Difficulty)(-1));
+
 	private readonly IDiscordClientService _discordClientService;
 
 	public DownloadAssetCommand(IServiceProvider provider, IDiscordClientService discordClientService) : base(provider)
@@ -18,6 +20,7 @@ public class DownloadAssetCommand : GuestCommandBase
 	public override OneOf<string, LocalizedString> PSLName => this._localization[PSLGuestCommandKey.DownloadAssetName];
 	public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLGuestCommandKey.DownloadAssetDescription];
 
+	// TODO: add a difficulty option like song info command
 	public override SlashCommandBuilder CompleteBuilder => this.BasicBuilder
 		.AddSongSearchOption(this._localization)
 		.AddOption(
@@ -31,6 +34,9 @@ public class DownloadAssetCommand : GuestCommandBase
 	{
 		List<SongSearchResult> foundAlias = this._aliasService.SearchSong(arg, arg.GetSongSearchOption(this._localization));
 
+		int rawDiff = arg.GetIntegerOptionAsInt32OrDefault(this._localization[PSLGuestCommandKey.DownloadAssetOptionDownloadPEZName], -1);
+		Difficulty parsedDiff = (Difficulty)rawDiff;
+
 		if (foundAlias.Count == 0)
 		{
 			await arg.QuickReply(this._localization[PSLCommonMessageKey.SongSearchNoMatch]);
@@ -39,16 +45,16 @@ public class DownloadAssetCommand : GuestCommandBase
 
 		string query = SongInfoCommand.BuildReturnQueryString(foundAlias, this._phigrosService).ToString();
 
-		(string id, IReadOnlyCollection<string>? alias, double Score) = foundAlias[0];
-		SongInfo firstInfo = this._phigrosService.NonMultiLanguageInfos.GetSongInfoById(id);
+		(SongInfo? firstInfo, IReadOnlyCollection<string>? alias, double Score) = foundAlias[0];
+		string id = firstInfo.Id;
 
-		Dictionary<Difficulty, string> chartPaths = firstInfo.Levels.Keys.ToDictionary(x => x, x => SongInfoCommand.GetChartPath(id, x));
-		Dictionary<SongInfoCommand.IllustrationType, string> illustrationPaths = Enum.GetValues<SongInfoCommand.IllustrationType>()
-			.ToDictionary(x => x, type => SongInfoCommand.GetIllustrationPath(id, type));
-		string musicPath = SongInfoCommand.GetMusicPath(id);
+		Dictionary<Difficulty, string> chartPaths = firstInfo.Levels.Keys.ToDictionary(x => x, firstInfo.GetChartPath);
+		Dictionary<IllustrationType, string> illustrationPaths = Enum.GetValues<IllustrationType>()
+			.ToDictionary(x => x, type => firstInfo.GetIllustrationPath(parsedDiff == UndefinedDifficulty ? Difficulty.EZ : parsedDiff, type));
+		string musicPath = firstInfo.GetMusicPath(parsedDiff == UndefinedDifficulty ? Difficulty.EZ : parsedDiff);
 
 		List<FileAttachment> attachments = [
-			new FileAttachment(File.OpenRead(illustrationPaths[SongInfoCommand.IllustrationType.LowRes]), "preview.png"),
+			new FileAttachment(File.OpenRead(illustrationPaths[IllustrationType.LowRes]), "preview.png"),
 			PSLUtils.ToAttachment(query, "Query.txt")
 		];
 
@@ -56,20 +62,11 @@ public class DownloadAssetCommand : GuestCommandBase
 		MemoryStream zipStream = new();
 		using (ZipArchive zipArchive = new(zipStream, ZipArchiveMode.Create, true))
 		{
-			foreach (KeyValuePair<Difficulty, string> item in chartPaths)
+			foreach (string file in Directory.GetFiles(firstInfo.BasePath))
 			{
-				using FileStream chartStream = File.OpenRead(item.Value);
-				await chartStream.CopyToEntry(zipArchive.CreateEntry($"Chart_{item.Key}.json"));
+				using FileStream stream = File.OpenRead(file);
+				await stream.CopyToEntry(zipArchive.CreateEntry(Path.GetFileName(file)));
 			}
-			foreach (KeyValuePair<SongInfoCommand.IllustrationType, string> item in illustrationPaths)
-			{
-				using FileStream illustrationStream = File.OpenRead(item.Value);
-				bool isFullRes = item.Key == SongInfoCommand.IllustrationType.FullRes;
-				await illustrationStream.CopyToEntry(zipArchive.CreateEntry($"Illustration{(isFullRes ? "" : item.Key.ToString())}.png"));
-			}
-
-			using FileStream musicStream = File.OpenRead(musicPath);
-			await musicStream.CopyToEntry(zipArchive.CreateEntry("music.wav"));
 
 			using Stream infoStream = zipArchive.CreateEntry("info.txt").Open();
 			infoStream.Write(Encoding.UTF8.GetBytes(query));
@@ -78,8 +75,6 @@ public class DownloadAssetCommand : GuestCommandBase
 		#endregion
 
 		#region PEZ generation
-		int rawDiff = arg.GetIntegerOptionAsInt32OrDefault("pez_chart_type", -1);
-		Difficulty parsedDiff = (Difficulty)rawDiff;
 		if (firstInfo.Levels.TryGetValue(parsedDiff, out SongLevel? level))
 		{
 			MemoryStream pezStream = new();
@@ -88,7 +83,7 @@ public class DownloadAssetCommand : GuestCommandBase
 			using Stream chart = File.OpenRead(chartPaths[parsedDiff]);
 			await chart.CopyToEntry(pezArchive.CreateEntry($"Chart_{parsedDiff}.json"));
 
-			using Stream illustration = File.OpenRead(illustrationPaths[SongInfoCommand.IllustrationType.FullRes]);
+			using Stream illustration = File.OpenRead(illustrationPaths[IllustrationType.FullRes]);
 			await illustration.CopyToEntry(pezArchive.CreateEntry("Illustration.png"));
 
 			using Stream music = File.OpenRead(musicPath);

@@ -22,7 +22,8 @@
 		<PackageReference Include="PuppeteerSharp" Version="25.3.3" />
 		<PackageReference Include="SharpZipLib" Version="1.4.2" />
 		<PackageReference Include="SQLitePCLRaw.lib.e_sqlite3" Version="2.1.12" />
-		<PackageReference Include="yt6983138.PhiInfo.CLI.Library" Version="4.0.0" />
+		<PackageReference Include="yt6983138.PhiInfo.CLI.Library" Version="4.1.0" />
+		<PackageReference Include="yt6983138.PhiInfo.Core" Version="3.1.2" />
 		<PackageReference Include="PhigrosLibraryCSharp" Version="5.1.0" />
 		<PackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="3.3.4">
 			<PrivateAssets>all</PrivateAssets>

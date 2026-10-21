@@ -15,7 +15,13 @@ public enum AliasTableIdType
 	Server,
 	Global
 }
-public record class SongSearchResult(string SongId, IReadOnlyCollection<string> Alias, double Score);
+public record class SongSearchResult(SongInfo Info, IReadOnlyCollection<string> Alias, double Score)
+{
+	/// <summary>
+	/// compatibility only, TODO: remove this in next refactor
+	/// </summary>
+	public string SongId => this.Info.Id;
+}
 public class AliasService
 {
 	private record struct InheritedTableInfo(IReadOnlyDictionary<string, IReadOnlyCollection<string>> Alias, AliasTableAttribute Attribute);
@@ -213,7 +219,7 @@ public class AliasService
 			}
 			if (bestScore < threshold)
 				continue;
-			results.Add(new(id, songAliases, bestScore));
+			results.Add(new(item, songAliases, bestScore));
 		}
 
 		results.Sort((x, y) => y.Score.CompareTo(x.Score));

@@ -6,13 +6,6 @@ namespace PSLDiscordBot.Core.Command.Global;
 [AddToGlobal]
 public class SongInfoCommand : GuestCommandBase
 {
-	public enum IllustrationType
-	{
-		FullRes,
-		Blur,
-		LowRes
-	}
-
 	public SongInfoCommand(IServiceProvider provider) : base(provider)
 	{
 	}
@@ -22,6 +15,7 @@ public class SongInfoCommand : GuestCommandBase
 	public override OneOf<string, LocalizedString> PSLName => this._localization[PSLGuestCommandKey.SongInfoName];
 	public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLGuestCommandKey.SongInfoDescription];
 
+	// TODO: add an option to specify the difficulty to get the illustration for
 	public override SlashCommandBuilder CompleteBuilder => this.BasicBuilder
 		.AddSongSearchOption(this._localization);
 
@@ -41,7 +35,7 @@ public class SongInfoCommand : GuestCommandBase
 
 		await arg.QuickReplyWithAttachments($"Found {foundAlias.Count} match(es).",
 			[
-				new(File.OpenRead(GetIllustrationPath(foundAlias[0].SongId, IllustrationType.LowRes)), "preview.png"),
+				new(File.OpenRead(foundAlias[0].Info.GetIllustrationPath(Difficulty.EZ, IllustrationType.LowRes)), "preview.png"),
 				PSLUtils.ToAttachment(query.ToString(), "Query.txt")
 			]);
 	}
@@ -51,6 +45,7 @@ public class SongInfoCommand : GuestCommandBase
 		SongSearchResult first = foundAlias[0];
 		SongInfo firstInfo = service.NonMultiLanguageInfos.GetSongInfoById(first.SongId);
 
+		// TODO: add different illustration/music info
 		StringBuilder query = new($"""
 			Id: {first.SongId}
 			Name: {firstInfo.Name}
@@ -76,23 +71,4 @@ public class SongInfoCommand : GuestCommandBase
 		}
 		return query;
 	}
-	public static string GetIllustrationPath(string songId, IllustrationType type = IllustrationType.FullRes)
-	{
-		return $"./Assets/Tracks/{songId}/Illustration{(type == IllustrationType.FullRes ? "" : type.ToString())}.png".ToFullPath();
-	}
-	public static string GetChartPath(string songId, Difficulty difficulty)
-	{
-		return $"./Assets/Tracks/{songId}/Chart_{difficulty}.json".ToFullPath();
-	}
-	public static string GetMusicPath(string songId)
-	{
-		return $"./Assets/Tracks/{songId}/music.wav".ToFullPath();
-	}
-}
-
-file static class Extension
-{
-	// prob not a good idea to have this as an extension method
-	public static string ToFullPath(this string path)
-		=> Path.GetFullPath(path);
 }
