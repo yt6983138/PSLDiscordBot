@@ -1,7 +1,8 @@
 ﻿using PuppeteerSharp;
 
 namespace PSLDiscordBot.Core.ImageGenerating;
-public class BasicHtmlImageInfo
+
+public record class BasicHtmlImageInfo
 {
 	public int InitialWidth { get; set; }
 	public int InitialHeight { get; set; }
