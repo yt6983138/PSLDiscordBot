@@ -8,6 +8,7 @@ using static PSLDiscordBot.Core.Localization.PSLNormalCommandKey;
 using AliasShared = PSLDiscordBot.Core.Localization.PSLAliasRelatedKey.Shared;
 
 namespace PSLDiscordBot.Core.Services;
+
 public class LocalizationService : FileManagementServiceBase<LocalizationManager>
 {
 	private readonly IOptions<Config> _config;
@@ -67,6 +68,8 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 			[SongSearchNoMatch] = LocalizedString.CreateDefault("Sorry, nothing matched your query."),
 			[OperationDone] = LocalizedString.CreateDefault("The operation has done successfully."),
 			[CommandUnavailable] = LocalizedString.CreateDefault("Sorry, this command is currently not available."),
+			[ComponentInteractionUnavailable] = LocalizedString.CreateDefault("These controls are no longer available or have expired. Please run the command again."),
+			[ComponentInteractionError] = LocalizedString.CreateDefault("Something went wrong while handling these controls. Please run the command again. If the problem continues, use `/report-problem`."),
 			[ImageGenerated] = LocalizedString.CreateDefault("Generated!"),
 			[ImageGeneratedForOther] = LocalizedString.CreateDefault("Generated for `{0.User.GlobalName}`, aka `{0.Data.UserInfo.NickName}`"),
 			[GenerateForNoPermission] = LocalizedString.CreateDefault("Sorry, the user you specified does not exist or does not have `/set-public-visibility` turned on."),

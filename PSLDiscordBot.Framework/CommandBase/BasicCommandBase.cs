@@ -3,6 +3,7 @@ using Discord.WebSocket;
 using PSLDiscordBot.Analyzer;
 
 namespace PSLDiscordBot.Framework.CommandBase;
+
 public abstract class BasicCommandBase
 {
 	private protected static int EventIdCount;
@@ -38,4 +39,9 @@ public abstract class BasicCommandBase
 		this.EventId = new(0_11451400 + EventIdCount++, this.GetType().Name);
 	}
 	public abstract Task Execute(SocketSlashCommand arg, object executer);
+
+	public virtual Task HandleInteraction(SocketInteraction arg, object executer)
+	{
+		return Task.FromException(new NotSupportedException("This command does not handle message components."));
+	}
 }
