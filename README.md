@@ -16,6 +16,14 @@ Here are some showcasing:
 # Getting Started
 Please visit [help.md](Documentation/help.md) for more information. If you have more questions, please use our [support Discord server](https://discord.gg/b6a4RjEnEC).
 
-# [Contributors](https://github.com/yt6983138/PSLDiscordBot/blob/master/Contributor.md)
-# [Developing](Documentation/Developing.md)
 # [Help me pay server cost](https://afdian.com/a/psl_bot)
+
+# [Contributors](https://github.com/yt6983138/PSLDiscordBot/blob/master/Contributor.md)
+# Contributing and AI-Usage Disclosure
+[Developing guide](Documentation/Developing.md)
+
+Since 2026/10/23, this repo now accepts AI-assisted contributions. Before this date, all code and documentation was manually written by human contributors. 
+
+If you are contributing to this repo, please review the [AI-Assisted Contributions Policy](AI_POLICY.md) before contributing.
+
+
