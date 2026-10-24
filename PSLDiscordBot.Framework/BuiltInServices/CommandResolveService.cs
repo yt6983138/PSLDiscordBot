@@ -13,6 +13,7 @@ internal class CommandResolveService : ICommandResolveService, IPrivilegedComman
 	private readonly Program _program;
 	private readonly WebApplicationBuilder _applicationBuilder;
 	private IDiscordClientService? _discordClientService;
+	private ILogger<CommandResolveService>? _logger;
 
 	private readonly ConcurrentDictionary<AsyncEventHandler<SlashCommandEventArgs>, object?> _beforeSlashCommandExecutes = new();
 	private readonly ConcurrentDictionary<AsyncEventHandler<BasicCommandExceptionEventArgs<BasicCommandBase>>, object?> _onSlashCommandError = new();
@@ -22,6 +23,9 @@ internal class CommandResolveService : ICommandResolveService, IPrivilegedComman
 
 	private readonly ConcurrentDictionary<AsyncEventHandler<UserCommandEventArgs>, object?> _beforeUserCommandExecutes = new();
 	private readonly ConcurrentDictionary<AsyncEventHandler<BasicCommandExceptionEventArgs<BasicUserCommandBase>>, object?> _onUserCommandError = new();
+
+	private readonly ConcurrentDictionary<AsyncEventHandler<ComponentInteractionEventArgs>, object?> _beforeComponentInteractionExecutes = new();
+	private readonly ConcurrentDictionary<AsyncEventHandler<ComponentInteractionExceptionEventArgs>, object?> _onComponentInteractionError = new();
 
 	public event AsyncEventHandler<SlashCommandEventArgs> BeforeSlashCommandExecutes
 	{
@@ -55,6 +59,16 @@ internal class CommandResolveService : ICommandResolveService, IPrivilegedComman
 		add => this._onUserCommandError.AddOrUpdate(value, (object?)null, (_, _) => null);
 		remove => this._onUserCommandError.TryRemove(value, out _);
 	}
+	public event AsyncEventHandler<ComponentInteractionEventArgs> BeforeComponentInteractionExecutes
+	{
+		add => this._beforeComponentInteractionExecutes.AddOrUpdate(value, (object?)null, (_, _) => null);
+		remove => this._beforeComponentInteractionExecutes.TryRemove(value, out _);
+	}
+	public event AsyncEventHandler<ComponentInteractionExceptionEventArgs> OnComponentInteractionError
+	{
+		add => this._onComponentInteractionError.AddOrUpdate(value, (object?)null, (_, _) => null);
+		remove => this._onComponentInteractionError.TryRemove(value, out _);
+	}
 
 	public event EventHandler<EventHandlerError>? OnEventHandlerError;
 
@@ -62,6 +76,12 @@ internal class CommandResolveService : ICommandResolveService, IPrivilegedComman
 	public List<Type> GuildCommands { get; set; } = [];
 	public List<Type> MessageCommands { get; set; } = [];
 	public List<Type> UserCommands { get; set; } = [];
+
+
+	/// <summary>
+	/// only key used
+	/// </summary>
+	public ConcurrentDictionary<ComponentRoutingUtility.NoncePacker, byte> InteractionUsedNonces { get; } = new();
 
 	public CommandResolveService(Program program, WebApplicationBuilder applicationBuilder)
 	{
@@ -96,6 +116,16 @@ internal class CommandResolveService : ICommandResolveService, IPrivilegedComman
 		}
 	}
 
+	/// <summary>
+	/// true if used, false otherwise
+	/// </summary>
+	/// <param name="nonce"></param>
+	/// <returns></returns>
+	public bool EnsureNonceNotUsed(ComponentRoutingUtility.NoncePacker nonce)
+	{
+		return !this.InteractionUsedNonces.TryAdd(nonce, 0);
+	}
+
 	void IPrivilegedCommandResolveService.LoadEverything()
 	{
 		IEnumerable<Type> commandsGlobal = this.GetAllGlobalCommandsTypes();
@@ -115,9 +145,13 @@ internal class CommandResolveService : ICommandResolveService, IPrivilegedComman
 	void IPrivilegedCommandResolveService.SetupEverything(IDiscordClientService discordClientService)
 	{
 		this._discordClientService = discordClientService;
+		this._logger = this._program.App.Services.GetRequiredService<ILogger<CommandResolveService>>();
 		this._discordClientService.SocketClient.SlashCommandExecuted += this.SocketClient_SlashCommandExecuted;
 		this._discordClientService.SocketClient.UserCommandExecuted += this.SocketClient_UserCommandExecuted;
 		this._discordClientService.SocketClient.MessageCommandExecuted += this.SocketClient_MessageCommandExecuted;
+		this._discordClientService.SocketClient.ButtonExecuted += this.SocketClient_ComponentExecuted;
+		this._discordClientService.SocketClient.SelectMenuExecuted += this.SocketClient_ComponentExecuted;
+		this._program.BeforeMainExiting += this.Program_BeforeMainExiting;
 
 		this._discordClientService.SocketClient.Ready += async () =>
 		{
@@ -305,6 +339,79 @@ internal class CommandResolveService : ICommandResolveService, IPrivilegedComman
 				await this.InvokeAll(this._onMessageCommandError, new(e, command, task, arg));
 			});
 		return;
+	}
+	private async Task SocketClient_ComponentExecuted(SocketMessageComponent arg)
+	{
+		ComponentInteractionInvalidReason invalidReason = ComponentRoutingUtility.Parse(
+			arg.Data.CustomId,
+			out nint commandTypeKey,
+			out ComponentRoutingUtility.NoncePacker nonce,
+			out byte[]? payload);
+		BasicCommandBase? command = null;
+		if (invalidReason == ComponentInteractionInvalidReason.None)
+		{
+			Type? commandType = this.GlobalCommands.ToArray()
+				.FirstOrDefault(type => type.TypeHandle.Value == commandTypeKey);
+
+			if (this.EnsureNonceNotUsed(nonce))
+			{
+				invalidReason = ComponentInteractionInvalidReason.UsedNonce;
+			}
+			else if (commandType is null || !commandType.IsAssignableTo(typeof(BasicCommandBase)))
+			{
+				invalidReason = ComponentInteractionInvalidReason.CommandNotFound;
+			}
+			else if (!ComponentRoutingUtility.SupportsComponents(commandType))
+			{
+				invalidReason = ComponentInteractionInvalidReason.CommandNotSupported;
+			}
+			else
+			{
+				command = this._program.App.Services.GetKeyedService<BasicCommandBase>(commandType);
+				if (command is null)
+					invalidReason = ComponentInteractionInvalidReason.CommandNotFound;
+			}
+		}
+
+		ComponentInteractionEventArgs eventArgs = new(arg, command, invalidReason, payload);
+		await this.InvokeAll(this._beforeComponentInteractionExecutes, eventArgs);
+
+		if (eventArgs.Canceled) return;
+		if (!eventArgs.IsValid)
+		{
+			this._logger?.LogWarning(
+				"Rejected framework component route with reason {reason}, component type {componentType}, user {userId}, guild {guildId}, message {messageId}",
+				eventArgs.InvalidReason,
+				arg.Data.Type,
+				arg.User.Id,
+				arg.GuildId,
+				arg.Message.Id);
+			return;
+		}
+
+		BasicCommandBase resolvedCommand = command!;
+		Task task = resolvedCommand.RunOnDifferentThread
+			? Task.Run(() => resolvedCommand.HandleInteraction(arg, this))
+			: resolvedCommand.HandleInteraction(arg, this);
+		this._program.RunningTasks.AddOrUpdate(task, (object?)null, (_, _2) => null);
+
+		_ = Utils.RunWithTaskOnEnd(
+			task,
+			() => this._program.RunningTasks.TryRemove(task, out _),
+			async (e) =>
+			{
+				await this.InvokeAll(this._onComponentInteractionError, new(e, arg, resolvedCommand));
+			});
+		return;
+	}
+	private void Program_BeforeMainExiting(object? sender, EventArgs e)
+	{
+		this._program.BeforeMainExiting -= this.Program_BeforeMainExiting;
+		if (this._discordClientService is null)
+			return;
+
+		this._discordClientService.SocketClient.ButtonExecuted -= this.SocketClient_ComponentExecuted;
+		this._discordClientService.SocketClient.SelectMenuExecuted -= this.SocketClient_ComponentExecuted;
 	}
 	#endregion
 }

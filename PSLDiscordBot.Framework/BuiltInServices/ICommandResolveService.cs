@@ -11,6 +11,8 @@ public interface ICommandResolveService
 	event AsyncEventHandler<BasicCommandExceptionEventArgs<BasicMessageCommandBase>> OnMessageCommandError;
 	event AsyncEventHandler<UserCommandEventArgs> BeforeUserCommandExecutes;
 	event AsyncEventHandler<BasicCommandExceptionEventArgs<BasicUserCommandBase>> OnUserCommandError;
+	event AsyncEventHandler<ComponentInteractionEventArgs> BeforeComponentInteractionExecutes;
+	event AsyncEventHandler<ComponentInteractionExceptionEventArgs> OnComponentInteractionError;
 
 	event EventHandler<EventHandlerError>? OnEventHandlerError;
 

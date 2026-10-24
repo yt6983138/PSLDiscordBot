@@ -31,6 +31,81 @@ public static class BuilderUtility
 		return choice;
 	}
 
+	public static ButtonBuilder WithLabel(
+		this ButtonBuilder builder,
+		LocalizedString label,
+		IDiscordInteraction interaction,
+		params object?[] format)
+	{
+		return builder.WithLabel(label.GetFormatted(
+			LocalizationHelper.FromCodeOrDefault(interaction.UserLocale),
+			format));
+	}
+	public static ButtonBuilder WithLabel(
+		this ButtonBuilder builder,
+		LocalizedString label,
+		Language locale,
+		params object?[] format)
+	{
+		return builder.WithLabel(label.GetFormatted(locale, format));
+	}
+
+	public static SelectMenuBuilder WithPlaceholder(
+		this SelectMenuBuilder builder,
+		LocalizedString placeholder,
+		IDiscordInteraction interaction,
+		params object?[] format)
+	{
+		return builder.WithPlaceholder(placeholder.GetFormatted(
+			LocalizationHelper.FromCodeOrDefault(interaction.UserLocale),
+			format));
+	}
+	public static SelectMenuBuilder WithPlaceholder(
+		this SelectMenuBuilder builder,
+		LocalizedString placeholder,
+		Language locale,
+		params object?[] format)
+	{
+		return builder.WithPlaceholder(placeholder.GetFormatted(locale, format));
+	}
+
+	public static SelectMenuOptionBuilder WithLabel(
+		this SelectMenuOptionBuilder builder,
+		LocalizedString label,
+		IDiscordInteraction interaction,
+		params object?[] format)
+	{
+		return builder.WithLabel(label.GetFormatted(
+			LocalizationHelper.FromCodeOrDefault(interaction.UserLocale),
+			format));
+	}
+	public static SelectMenuOptionBuilder WithLabel(
+		this SelectMenuOptionBuilder builder,
+		LocalizedString label,
+		Language locale,
+		params object?[] format)
+	{
+		return builder.WithLabel(label.GetFormatted(locale, format));
+	}
+	public static SelectMenuOptionBuilder WithDescription(
+		this SelectMenuOptionBuilder builder,
+		LocalizedString description,
+		IDiscordInteraction interaction,
+		params object?[] format)
+	{
+		return builder.WithDescription(description.GetFormatted(
+			LocalizationHelper.FromCodeOrDefault(interaction.UserLocale),
+			format));
+	}
+	public static SelectMenuOptionBuilder WithDescription(
+		this SelectMenuOptionBuilder builder,
+		LocalizedString description,
+		Language locale,
+		params object?[] format)
+	{
+		return builder.WithDescription(description.GetFormatted(locale, format));
+	}
+
 	public static SlashCommandOptionBuilder WithName(this SlashCommandOptionBuilder builder, LocalizedString name)
 	{
 		return builder.WithName(name.Default).WithNameLocalizations(name);

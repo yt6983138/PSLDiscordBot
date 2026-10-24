@@ -29,6 +29,7 @@ public class PSLPlugin : IPlugin
 	private Program _program = null!;
 	private IDiscordClientService _discordClientService = null!;
 	private ICommandResolveService _commandResolveService = null!;
+	private LocalizationService _localizationService = null!;
 
 	public IUser? AdminUser { get; set; }
 	public IDMChannel? AdminDM { get; set; }
@@ -169,7 +170,7 @@ public class PSLPlugin : IPlugin
 		this._commandResolveService = host.Services.GetRequiredService<ICommandResolveService>();
 		this._logger = host.Services.GetRequiredService<ILogger<PSLPlugin>>();
 		this._configService = host.Services.GetRequiredService<IWritableOptions<Config>>();
-		LocalizationService localization = host.Services.GetRequiredService<LocalizationService>();
+		this._localizationService = host.Services.GetRequiredService<LocalizationService>();
 		BugReportHandlerService bugHandler = host.Services.GetRequiredService<BugReportHandlerService>();
 		host.Services.GetRequiredService<IMvcConfigurationService>().StaticFileOptions.ServeUnknownFileTypes = true;
 
@@ -180,6 +181,8 @@ public class PSLPlugin : IPlugin
 
 		this._commandResolveService.BeforeSlashCommandExecutes += this.Program_BeforeSlashCommandExecutes;
 		this._commandResolveService.OnSlashCommandError += this.CommandResolveService_OnSlashCommandError;
+		this._commandResolveService.BeforeComponentInteractionExecutes += this.Program_BeforeComponentInteractionExecutes;
+		this._commandResolveService.OnComponentInteractionError += this.CommandResolveService_OnComponentInteractionError;
 
 		bugHandler.OnReportReceived += this.BugHandler_OnReportReceived;
 
@@ -195,15 +198,15 @@ public class PSLPlugin : IPlugin
 		if (this._program.ProgramArguments.Contains("--addNonExistentLocalizations"))
 		{
 			this._logger.LogInformation(EventIdInitialize, "Adding non-existent localizations...");
-			IReadOnlyDictionary<string, LocalizedString> newer = localization.Generate().LocalizedStrings;
+			IReadOnlyDictionary<string, LocalizedString> newer = this._localizationService.Generate().LocalizedStrings;
 			foreach ((string key, LocalizedString value) in newer)
 			{
-				if (!localization.Data.LocalizedStrings.ContainsKey(key))
+				if (!this._localizationService.Data.LocalizedStrings.ContainsKey(key))
 				{
-					localization.Data[key] = value.CloneAsNew();
+					this._localizationService.Data[key] = value.CloneAsNew();
 				}
 			}
-			localization.Save();
+			this._localizationService.Save();
 		}
 
 #if DEBUG
@@ -221,6 +224,11 @@ public class PSLPlugin : IPlugin
 	void IPlugin.Unload(WebApplication host, bool isSafeUnload)
 	{
 		this._logger.LogInformation(EventIdApp, "Service shutting down...");
+		if (this._commandResolveService is not null)
+		{
+			this._commandResolveService.BeforeComponentInteractionExecutes -= this.Program_BeforeComponentInteractionExecutes;
+			this._commandResolveService.OnComponentInteractionError -= this.CommandResolveService_OnComponentInteractionError;
+		}
 
 		if (isSafeUnload)
 			File.Delete(SafeLockLocation);
@@ -261,6 +269,27 @@ public class PSLPlugin : IPlugin
 			string.Join(",", e.SocketSlashCommand.Data.Options.Select(x => $"{i++}_{x.Name}({x.Type}): {x.Value}")));
 		return Task.CompletedTask;
 	}
+	private async Task Program_BeforeComponentInteractionExecutes(object? sender, ComponentInteractionEventArgs e)
+	{
+		if (e.IsValid) return;
+
+		e.Canceled = true;
+		string message = this.GetLocalizedComponentMessage(
+			PSLCommonMessageKey.ComponentInteractionUnavailable,
+			e.Interaction.UserLocale,
+			"These controls are no longer available or have expired. Please run the command again.");
+		try
+		{
+			await RespondToComponentAsync(e.Interaction, message);
+		}
+		catch (Exception ex)
+		{
+			this._logger.LogWarning(EventId, ex,
+				"Failed to send unavailable component response to {name} ({id})",
+				e.Interaction.User.GlobalName,
+				e.Interaction.User.Id);
+		}
+	}
 	private async Task CommandResolveService_OnSlashCommandError(object? sender,
 		BasicCommandExceptionEventArgs<BasicCommandBase> e)
 	{
@@ -282,6 +311,63 @@ public class PSLPlugin : IPlugin
 		{
 			this._logger.LogError(EventId, ex, "Failed to handle slash command error");
 		}
+	}
+	private async Task CommandResolveService_OnComponentInteractionError(object? sender,
+		ComponentInteractionExceptionEventArgs e)
+	{
+		string message = this.GetLocalizedComponentMessage(
+			PSLCommonMessageKey.ComponentInteractionError,
+			e.Interaction.UserLocale,
+			"Something went wrong while handling these controls. Please run the command again. " +
+			"If the problem continues, use `/report-problem`.");
+		try
+		{
+			await RespondToComponentAsync(e.Interaction, message);
+		}
+		catch (Exception ex)
+		{
+			this._logger.LogWarning(EventId, ex,
+				"Failed to send component error response to {name} ({id})",
+				e.Interaction.User.GlobalName,
+				e.Interaction.User.Id);
+		}
+
+		string commandName = e.Command?.Name ?? "<unresolved>";
+		ulong? guildId = e.Interaction.GuildId;
+		ulong? channelId = e.Interaction.Channel?.Id;
+		await this.OnException(e.Exception, interactionDescription:
+			$"<@{e.Interaction.User.Id}> used controls for command `{commandName}` " +
+			$"in server {guildId?.ToString() ?? "null"} in channel {channelId?.ToString() ?? "null"}");
+	}
+
+	private string GetLocalizedComponentMessage(string key, string userLocale, string fallback)
+	{
+		if (this._localizationService.Data.LocalizedStrings.TryGetValue(key, out LocalizedString? localized)
+			&& localized.LocalizedStrings.Count > 0)
+		{
+			Language language = LocalizationHelper.TryFromCode(userLocale, out Language parsed)
+				? parsed
+				: Language.EnglishUS;
+			if (localized.TryGetValue(language, out string? message)
+				&& !string.Equals(message, key, StringComparison.Ordinal))
+			{
+				return message;
+			}
+		}
+
+		return fallback;
+	}
+	private static async Task RespondToComponentAsync(
+		SocketMessageComponent interaction,
+		string message)
+	{
+		if (interaction.HasResponded)
+		{
+			await interaction.FollowupAsync(message, ephemeral: true);
+			return;
+		}
+
+		await interaction.RespondAsync(message, ephemeral: true);
 	}
 
 	private async Task Client_Ready()
@@ -357,7 +443,10 @@ public class PSLPlugin : IPlugin
 		}
 	}
 
-	private async Task OnException(Exception exception, SocketCommandBase? interaction = null)
+	private async Task OnException(
+		Exception exception,
+		SocketCommandBase? interaction = null,
+		string? interactionDescription = null)
 	{
 		this._logger.LogError(EventId, exception, "Exception received");
 		if (exception is DebugArgumentNullException debugEx && !string.IsNullOrEmpty(debugEx.AdditionalMessage))
@@ -374,11 +463,11 @@ public class PSLPlugin : IPlugin
 				ulong? channelId = interaction?.Channel.Id;
 				RestGuildChannel? channel = guild is not null && channelId is not null ? await guild.GetChannelAsync(channelId.Value)
 					: null;
-				string interactionMessage = interaction is null
+				string interactionMessage = interactionDescription ?? (interaction is null
 					? ""
 					: $"<@{interaction.User.Id}> sent command `{interaction.CommandName}`" +
 					$"in server {(guildId is null ? "null" : guild)} ({guildId}) " +
-					$"in channel {(channel is null ? "null" : channel.Name)} ({channelId})";
+					$"in channel {(channel is null ? "null" : channel.Name)} ({channelId})");
 				int i = 0;
 				interactionMessage += interaction is SocketSlashCommand sc
 					? $" with option(s) `{string.Join(", ", sc.Data.Options.Select(x => $"{i++}_{x.Name}({x.Type}): {x.Value}"))}`"
