@@ -77,6 +77,12 @@ internal class CommandResolveService : ICommandResolveService, IPrivilegedComman
 	public List<Type> MessageCommands { get; set; } = [];
 	public List<Type> UserCommands { get; set; } = [];
 
+
+	/// <summary>
+	/// only key used
+	/// </summary>
+	public ConcurrentDictionary<ComponentRoutingUtility.NoncePacker, byte> InteractionUsedNonces { get; } = new();
+
 	public CommandResolveService(Program program, WebApplicationBuilder applicationBuilder)
 	{
 		this._program = program;
@@ -109,16 +115,15 @@ internal class CommandResolveService : ICommandResolveService, IPrivilegedComman
 			}
 		}
 	}
-	private void ReportEventHandlerError(Type eventArgsType, Exception exception)
+
+	/// <summary>
+	/// true if used, false otherwise
+	/// </summary>
+	/// <param name="nonce"></param>
+	/// <returns></returns>
+	public bool EnsureNonceNotUsed(ComponentRoutingUtility.NoncePacker nonce)
 	{
-		try
-		{
-			this.OnEventHandlerError?.Invoke(this, new(eventArgsType, exception));
-		}
-		catch (Exception ex)
-		{
-			this._logger?.LogError(ex, "A command event-error handler failed");
-		}
+		return !this.InteractionUsedNonces.TryAdd(nonce, 0);
 	}
 
 	void IPrivilegedCommandResolveService.LoadEverything()
@@ -340,13 +345,19 @@ internal class CommandResolveService : ICommandResolveService, IPrivilegedComman
 		ComponentInteractionInvalidReason invalidReason = ComponentRoutingUtility.Parse(
 			arg.Data.CustomId,
 			out nint commandTypeKey,
-			out string? payload);
+			out ComponentRoutingUtility.NoncePacker nonce,
+			out byte[]? payload);
 		BasicCommandBase? command = null;
 		if (invalidReason == ComponentInteractionInvalidReason.None)
 		{
 			Type? commandType = this.GlobalCommands.ToArray()
 				.FirstOrDefault(type => type.TypeHandle.Value == commandTypeKey);
-			if (commandType is null || !commandType.IsAssignableTo(typeof(BasicCommandBase)))
+
+			if (this.EnsureNonceNotUsed(nonce))
+			{
+				invalidReason = ComponentInteractionInvalidReason.UsedNonce;
+			}
+			else if (commandType is null || !commandType.IsAssignableTo(typeof(BasicCommandBase)))
 			{
 				invalidReason = ComponentInteractionInvalidReason.CommandNotFound;
 			}

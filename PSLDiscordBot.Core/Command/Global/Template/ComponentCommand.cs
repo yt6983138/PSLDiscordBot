@@ -18,7 +18,7 @@ public class ExampleComponentCommand : GuestCommandBase
 			.WithActionRow([new ButtonBuilder()
 				.WithLabel(LocalizedString.CreateDefault("hi"), arg)
 				.WithStyle(ButtonStyle.Secondary)
-				.WithCustomId(this.CreateComponentId("hi-id"))])
+				.WithCustomId(this.CreateComponentId([0x01]))])
 			.Build();
 
 		return arg.QuickReply(message => message.Components = controls, LocalizedString.CreateDefault("yo"));
@@ -29,8 +29,8 @@ public class ExampleComponentCommand : GuestCommandBase
 		if (arg is not SocketMessageComponent component)
 			return;
 
-		string payload = component.GetComponentPayload();
-		// if (payload == your string) do work...
+		byte[] payload = component.GetComponentPayload();
+		// if (payload == your bytes) do work...
 
 		await component.QuickReply(message => message.Components = new ComponentBuilder().Build(), LocalizedString.CreateDefault("you clicked button :sob:"));
 	}

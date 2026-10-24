@@ -3,7 +3,7 @@
 [AddToGlobal]
 public class LoginCommand : GuestCommandBase
 {
-	private class QRCodeDataModel : CompleteQRCodeData
+	public class QRCodeDataModel : CompleteQRCodeData
 	{
 		public QRCodeDataModel(CompleteQRCodeData code, bool isInternational)
 		{
@@ -18,7 +18,7 @@ public class LoginCommand : GuestCommandBase
 		public string EncodedUrl => Uri.EscapeDataString(this.Url);
 		public bool IsInternational { get; set; }
 	}
-	private class CallbackLoginModel : CallbackLoginData
+	public class CallbackLoginModel : CallbackLoginData
 	{
 		public CallbackLoginModel(CallbackLoginData data, bool isInternational)
 		{
@@ -55,7 +55,18 @@ public class LoginCommand : GuestCommandBase
 		CompleteQRCodeData qrCode = await TapTapHelper.RequestLoginQrCode(useChinaEndpoint: chinaMode);
 		DateTime stopAt = DateTime.Now + new TimeSpan(0, 0, qrCode.ExpiresInSeconds - 15);
 		await arg.QuickReply(this._localization[PSLGuestCommandKey.LoginBegin], new QRCodeDataModel(qrCode, !chinaMode));
-		await this.ListenQrCodeChange(arg, qrCode, chinaMode, stopAt, requester);
+		string? token = await ListenQrCodeChange(qrCode, chinaMode, stopAt);
+
+		if (token is null)
+		{
+			await arg.QuickReply(this._localization[PSLGuestCommandKey.LoginTimedOut]);
+			return;
+		}
+
+		UserData userData = new(arg.User.Id, token, !chinaMode, this._config.Value.CurrentTOSAgreementLevel, false);
+		_ = await userData.SaveCache.GetPlayerInfoAsync();
+		await requester.AddOrReplaceUserDataAsync(userData);
+		await arg.QuickReply(this._localization[PSLGuestCommandKey.LoginComplete]);
 
 		/*
 		CallbackLoginData callbackData = this._phigrosService.GenerateCallbackLoginRequest(arg.User.Id, chinaMode, async result =>
@@ -73,12 +84,10 @@ public class LoginCommand : GuestCommandBase
 		*/
 	}
 
-	public async Task ListenQrCodeChange(
-		SocketSlashCommand command,
+	public static async Task<string?> ListenQrCodeChange(
 		CompleteQRCodeData data,
 		bool chinaMode,
-		DateTime whenToStop,
-		DataBaseService.DbDataRequester requester)
+		DateTime whenToStop)
 	{
 		const int Delay = 3000;
 		while (DateTime.Now < whenToStop)
@@ -88,14 +97,10 @@ public class LoginCommand : GuestCommandBase
 			{
 				TapTapProfileData profile = await TapTapHelper.GetProfile(result.Data, useChinaEndpoint: chinaMode);
 				string token = await LCHelper.LoginAndGetToken(new(profile.Data, result.Data), chinaMode);
-				UserData userData = new(command.User.Id, token, !chinaMode, this._config.Value.CurrentTOSAgreementLevel, false);
-				_ = await userData.SaveCache.GetPlayerInfoAsync();
-				await requester.AddOrReplaceUserDataAsync(userData);
-				await command.QuickReply(this._localization[PSLGuestCommandKey.LoginComplete]);
-				return;
+				return token;
 			}
 			await Task.Delay(Delay);
 		}
-		await command.QuickReply(this._localization[PSLGuestCommandKey.LoginTimedOut]);
+		return null;
 	}
 }

@@ -4,7 +4,7 @@ public enum ComponentInteractionInvalidReason
 {
 	None,
 	MalformedId,
-	UnsupportedVersion,
+	UsedNonce,
 	ExpiredProcess,
 	CommandNotFound,
 	CommandNotSupported

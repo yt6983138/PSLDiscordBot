@@ -9,11 +9,11 @@ public sealed class ComponentInteractionEventArgs
 	public BasicCommandBase? Command { get; }
 	public bool IsValid => this.InvalidReason == ComponentInteractionInvalidReason.None && this.Command is not null;
 	public ComponentInteractionInvalidReason InvalidReason { get; }
-	public string? Payload { get; }
+	public byte[]? Payload { get; }
 	public bool Canceled { get; set; }
 
 	internal ComponentInteractionEventArgs(SocketMessageComponent interaction, BasicCommandBase? command,
-		ComponentInteractionInvalidReason invalidReason, string? payload)
+		ComponentInteractionInvalidReason invalidReason, byte[]? payload)
 	{
 		this.Interaction = interaction;
 		this.Command = command;

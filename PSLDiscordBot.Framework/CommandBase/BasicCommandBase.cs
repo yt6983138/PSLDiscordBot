@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using PSLDiscordBot.Analyzer;
+using PSLDiscordBot.Framework.Utilities;
 
 namespace PSLDiscordBot.Framework.CommandBase;
 
@@ -38,6 +39,12 @@ public abstract class BasicCommandBase
 	{
 		this.EventId = new(0_11451400 + EventIdCount++, this.GetType().Name);
 	}
+
+	protected string CreateComponentId(ReadOnlySpan<byte> payload)
+	{
+		return ComponentRoutingUtility.CreateComponentId(this.GetType(), payload);
+	}
+
 	public abstract Task Execute(SocketSlashCommand arg, object executer);
 
 	public virtual Task HandleInteraction(SocketInteraction arg, object executer)
