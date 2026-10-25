@@ -70,6 +70,7 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 			[CommandUnavailable] = LocalizedString.CreateDefault("Sorry, this command is currently not available."),
 			[ComponentInteractionUnavailable] = LocalizedString.CreateDefault("These controls are no longer available or have expired. Please run the command again."),
 			[ComponentInteractionError] = LocalizedString.CreateDefault("Something went wrong while handling these controls. Please run the command again. If the problem continues, use `/report-problem`."),
+			[SlashCommandError] = LocalizedString.CreateDefault("This exception has been caught by global handler. Use `/report-problem` to report. Exception:"),
 			[ImageGenerated] = LocalizedString.CreateDefault("Generated!"),
 			[ImageGeneratedForOther] = LocalizedString.CreateDefault("Generated for `{0.User.GlobalName}`, aka `{0.Data.UserInfo.NickName}`"),
 			[GenerateForNoPermission] = LocalizedString.CreateDefault("Sorry, the user you specified does not exist or does not have `/set-public-visibility` turned on."),

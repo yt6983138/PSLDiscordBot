@@ -274,13 +274,11 @@ public class PSLPlugin : IPlugin
 		if (e.IsValid) return;
 
 		e.Canceled = true;
-		string message = this.GetLocalizedComponentMessage(
-			PSLCommonMessageKey.ComponentInteractionUnavailable,
-			e.Interaction.UserLocale,
-			"These controls are no longer available or have expired. Please run the command again.");
+		string message = this._localizationService[PSLCommonMessageKey.ComponentInteractionUnavailable]
+			.GetFormatted(e.Interaction.UserLocale, e);
 		try
 		{
-			await RespondToComponentAsync(e.Interaction, message);
+			await RespondToComponentAsync(e.Interaction, message, null);
 		}
 		catch (Exception ex)
 		{
@@ -297,13 +295,13 @@ public class PSLPlugin : IPlugin
 		{
 			RestInteractionMessage original = await e.Arg.GetOriginalResponseAsync();
 			await this.OnException(e.Exception, e.Arg);
-			string formmated = $"This exception has been caught by global handler. " +
-				$"Use `/report-problem` to report. Exception:";
+			string message = this._localizationService[PSLCommonMessageKey.SlashCommandError]
+				.GetFormatted(e.Arg.UserLocale, e.Exception);
 
 			if (original is not null
 				&& (!e.Arg.HasResponded || original.Flags.GetValueOrDefault().HasFlag(MessageFlags.Loading)))
 			{
-				await e.Arg.QuickReplyWithAttachments(formmated,
+				await e.Arg.QuickReplyWithAttachments(message,
 					PSLUtils.ToAttachment(e.Exception.ToString(), "StackTrace.txt"));
 			}
 		}
@@ -315,14 +313,11 @@ public class PSLPlugin : IPlugin
 	private async Task CommandResolveService_OnComponentInteractionError(object? sender,
 		ComponentInteractionExceptionEventArgs e)
 	{
-		string message = this.GetLocalizedComponentMessage(
-			PSLCommonMessageKey.ComponentInteractionError,
-			e.Interaction.UserLocale,
-			"Something went wrong while handling these controls. Please run the command again. " +
-			"If the problem continues, use `/report-problem`.");
+		string message = this._localizationService[PSLCommonMessageKey.ComponentInteractionError]
+			.GetFormatted(e.Interaction.UserLocale, e.Exception); ;
 		try
 		{
-			await RespondToComponentAsync(e.Interaction, message);
+			await RespondToComponentAsync(e.Interaction, message, e.Exception);
 		}
 		catch (Exception ex)
 		{
@@ -340,34 +335,28 @@ public class PSLPlugin : IPlugin
 			$"in server {guildId?.ToString() ?? "null"} in channel {channelId?.ToString() ?? "null"}");
 	}
 
-	private string GetLocalizedComponentMessage(string key, string userLocale, string fallback)
-	{
-		if (this._localizationService.Data.LocalizedStrings.TryGetValue(key, out LocalizedString? localized)
-			&& localized.LocalizedStrings.Count > 0)
-		{
-			Language language = LocalizationHelper.TryFromCode(userLocale, out Language parsed)
-				? parsed
-				: Language.EnglishUS;
-			if (localized.TryGetValue(language, out string? message)
-				&& !string.Equals(message, key, StringComparison.Ordinal))
-			{
-				return message;
-			}
-		}
-
-		return fallback;
-	}
 	private static async Task RespondToComponentAsync(
 		SocketMessageComponent interaction,
-		string message)
+		string message,
+		Exception? ex)
 	{
+		// TODO: future refactor plan? why do we need followup/respond check here, why not just quickreply?
+		// jesus christ i regret using gpt to write code
+
+		FileAttachment? stacktrace = ex is null ? null : PSLUtils.ToAttachment(ex.ToString(), "StackTrace.txt");
 		if (interaction.HasResponded)
 		{
-			await interaction.FollowupAsync(message, ephemeral: true);
+			if (stacktrace is not null)
+				await interaction.FollowupWithFileAsync(stacktrace.Value, text: message, ephemeral: true);
+			else
+				await interaction.FollowupAsync(text: message, ephemeral: true);
 			return;
 		}
 
-		await interaction.RespondAsync(message, ephemeral: true);
+		if (stacktrace is not null)
+			await interaction.RespondWithFileAsync(stacktrace.Value, text: message, ephemeral: true);
+		else
+			await interaction.RespondAsync(text: message, ephemeral: true);
 	}
 
 	private async Task Client_Ready()
