@@ -7,8 +7,11 @@ namespace PSLDiscordBot.Core.Command.Global;
 [AddToGlobal]
 public class MoreRksCommand : CommandBase
 {
-	public MoreRksCommand(IServiceProvider provider) : base(provider)
+	private readonly SaveService _saveService;
+
+	public MoreRksCommand(IServiceProvider provider, SaveService saveService) : base(provider)
 	{
+		this._saveService = saveService;
 	}
 
 	private record struct TargetRksScorePair(double TargetRks, double TargetAcc, CompleteScore Score)
@@ -42,7 +45,7 @@ public class MoreRksCommand : CommandBase
 		double giveLeastRks = arg.GetOptionOrDefault(this._localization[PSLNormalCommandKey.MoreRksOptionGetAtLeastName], -1d);
 		int index = arg.GetIndexOption(this._localization);
 
-		SaveContext? context = await this._phigrosService.TryHandleAndFetchContext(data.SaveCache, arg, index);
+		ISaveContext? context = await this._saveService.TryHandleAndFetchAsync(data, arg, index);
 		if (context is null) return;
 		GameRecord save = context.ReadGameRecord();
 		this._phigrosService.GetCompleteScores(save, out List<CompleteScore>? scores, out double rks);

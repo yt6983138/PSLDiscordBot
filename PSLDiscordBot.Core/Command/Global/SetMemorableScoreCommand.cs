@@ -3,8 +3,11 @@
 [AddToGlobal]
 public class SetMemorableScoreCommand : CommandBase
 {
-	public SetMemorableScoreCommand(IServiceProvider provider) : base(provider)
+	private readonly SaveService _saveService;
+
+	public SetMemorableScoreCommand(IServiceProvider provider, SaveService saveService) : base(provider)
 	{
+		this._saveService = saveService;
 	}
 
 	public override OneOf<string, LocalizedString> PSLName => this._localization[PSLNormalCommandKey.SetMemorableScoreName];
@@ -30,7 +33,7 @@ public class SetMemorableScoreCommand : CommandBase
 		int number = arg.GetIntegerOptionAsInt32(this._localization[PSLNormalCommandKey.SetMemorableScoreOptionScoreNumberName]) - 1;
 		string thoughts = arg.GetOption<string>(this._localization[PSLNormalCommandKey.SetMemorableScoreOptionScoreThoughtsName]);
 
-		SaveContext? context = await this._phigrosService.TryHandleAndFetchContext(data.SaveCache, arg, index);
+		ISaveContext? context = await this._saveService.TryHandleAndFetchAsync(data, arg, index);
 		if (context is null) return;
 		GameRecord save = context.ReadGameRecord();
 
@@ -42,7 +45,7 @@ public class SetMemorableScoreCommand : CommandBase
 		}
 
 		CompleteScore score = scores[number];
-		if (score.Equals(default))
+		if (score == CompleteScore.Default)
 		{
 			await arg.QuickReply(this._localization[PSLNormalCommandKey.SetMemorableNoValidScore]);
 			return;

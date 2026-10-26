@@ -25,6 +25,12 @@ public class GetTokenForCommand : AdminCommandBase
 			return;
 		}
 
+		if (result.Token is null)
+		{
+			await arg.QuickReply($"User `{user.Id}` has no cloud binding (local-only account), so there is no token.");
+			return;
+		}
+
 		await arg.QuickReply($"The user's token is ||`{result.Token}`||, is international: {result.IsInternational}");
 	}
 }

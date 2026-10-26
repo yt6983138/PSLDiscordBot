@@ -3,8 +3,11 @@
 [AddToGlobal]
 public class LinkTokenCommand : GuestCommandBase
 {
-	public LinkTokenCommand(IServiceProvider provider) : base(provider)
+	private readonly SaveService _saveService;
+
+	public LinkTokenCommand(IServiceProvider provider, SaveService saveService) : base(provider)
 	{
+		this._saveService = saveService;
 	}
 
 	public override OneOf<string, LocalizedString> PSLName => this._localization[PSLGuestCommandKey.LinkTokenName];
@@ -41,7 +44,8 @@ public class LinkTokenCommand : GuestCommandBase
 			false);
 
 		// the fetching process will reply if theres some sort of error, i forgot about this when i was migrating this to new pattern
-		SaveContext? fetched = await this._phigrosService.TryHandleAndFetchContext(tmp.SaveCache, arg, 0, false);
+		// the temporary token is not the user's active binding yet, so it must not enter the cloud-fetched leaderboard hook
+		SaveContext? fetched = await this._saveService.TryHandleCloudAsync(tmp.SaveCache, arg, 0, false, raiseFetchedHook: false);
 		if (fetched is null)
 			return;
 
@@ -53,6 +57,6 @@ public class LinkTokenCommand : GuestCommandBase
 		{
 			await arg.QuickReply(this._localization[PSLGuestCommandKey.LinkTokenSuccess]);
 		}
-		await requester.AddOrReplaceUserDataAsync(tmp);
+		await this._saveService.ActivateCloudAsync(tmp);
 	}
 }

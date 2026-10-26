@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 
 namespace PSLDiscordBot.Core.Command.Global;
 
@@ -16,6 +16,13 @@ public class GetTimeIndexCommand : CommandBase
 
 	public override async Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
 	{
+		// save indexes are cloud-only; local collections have none and must not touch the cloud client
+		if (data.IsLocal)
+		{
+			await arg.QuickReply(this._localization[PSLCommonKey.SaveHandlerOnWrongAccountMode]);
+			return;
+		}
+
 		List<SaveInfo> saves = (await data.SaveCache.GetSaveInfoFromCloudAsync()).Results;
 
 		StringBuilder sb = new("```\n");

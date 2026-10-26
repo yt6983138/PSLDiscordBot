@@ -11,6 +11,7 @@ internal static class PSLLocalizationKey
 	internal const string CommandNamespace = $"{Prefix}.{nameof(Command)}.";
 	internal const string GlobalNormalCommandNamespace = $"{GlobalCommandNamespace}.Normal.";
 	internal const string GlobalGuestCommandNamespace = $"{GlobalCommandNamespace}.Guest.";
+	internal const string GlobalLocalCommandNamespace = $"{GlobalCommandNamespace}.Local.";
 	internal const string AliasNamespace = $"{GlobalCommandNamespace}.Alias.";
 	internal const string AliasSharedNamespace = $"{AliasNamespace}Shared.";
 }

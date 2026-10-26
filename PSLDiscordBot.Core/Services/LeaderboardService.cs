@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using PSLDiscordBot.Framework.BuiltInServices;
 
 namespace PSLDiscordBot.Core.Services;
@@ -19,7 +19,8 @@ public class LeaderboardService
 		DataBaseService dataBase,
 		IOptions<Config> config,
 		IDiscordClientService discordClient,
-		PhigrosService phigrosService)
+		PhigrosService phigrosService,
+		SaveService saveService)
 	{
 		this._logger = logger;
 		this._dataBase = dataBase;
@@ -28,6 +29,25 @@ public class LeaderboardService
 		this._phigrosService = phigrosService;
 
 		this._phigrosService.OnSaveContextFetched += this.PhigrosService_OnSaveContextFetched;
+		saveService.OnCloudRankingInvalidated += this.SaveService_OnCloudRankingInvalidated;
+	}
+
+	/// <summary>
+	/// Removes a stale cloud entry after a committed local activation or deletion. Runs under the leaderboard lock so it
+	/// cannot interleave with a publish that re-checked eligibility before the commit.
+	/// </summary>
+	private async void SaveService_OnCloudRankingInvalidated(object? sender, ulong userId)
+	{
+		try
+		{
+			using ScopedSemaphoreSlim.Scope _ = await this._fullLeaderboardOperationLock.EnterScopeAsync();
+			using DataBaseService.DbDataRequester requester = this._dataBase.NewRequester();
+			await requester.RemoveLeaderboardEntryAsync(userId);
+		}
+		catch (Exception ex)
+		{
+			this._logger.LogError(ex, "Failed to remove leaderboard entry for user {id} after account change", userId);
+		}
 	}
 
 	private async void PhigrosService_OnSaveContextFetched(object? sender, SaveContextFetchEventArg e)
@@ -40,6 +60,12 @@ public class LeaderboardService
 			if (userData is null)
 			{
 				this._logger.LogWarning("User {id} not found in database when trying to refresh leaderboard cache after save context fetched", e.Interaction.User.Id);
+				return;
+			}
+
+			// local accounts and users without a cloud binding must never be ranked from cloud data
+			if (userData.IsLocal || !userData.HasCloudBinding)
+			{
 				return;
 			}
 
@@ -60,11 +86,17 @@ public class LeaderboardService
 	{
 		using ScopedSemaphoreSlim.Scope _ = await this._fullLeaderboardOperationLock.EnterScopeAsync();
 		using DataBaseService.DbDataRequester requester = this._dataBase.NewRequester();
-		return await requester.Leaderboard.ToListAsync();
+		// filter at read time too, so leftovers from an interrupted removal are never published
+		return await requester.Leaderboard
+			.Where(x => requester.UserData.Any(u => u.UserId == x.UserId && (u.AccountMode & AccountMode.Local) == 0 && u.Token != null))
+			.ToListAsync();
 	}
 
 	public Task<LeaderboardEntry?> TryAnalyzeUser(UserData user, IUser? discordUser = null, CancellationToken ct = default)
 	{
+		if (user.IsLocal || !user.HasCloudBinding)
+			return Task.FromResult<LeaderboardEntry?>(null);
+
 		return this.TryAnalyzeUser(user.SaveCache, user.UserId, user.IsInternational, discordUser, ct);
 	}
 	public Task<LeaderboardEntry?> TryAnalyzeUser(ulong userId, string token, bool isInternational, IUser? discordUser = null, CancellationToken ct = default)
@@ -154,6 +186,10 @@ public class LeaderboardService
 
 		using ScopedSemaphoreSlim.Scope _ = await this._fullLeaderboardOperationLock.EnterScopeAsync(ct);
 		using DataBaseService.DbDataRequester requester = this._dataBase.NewRequester();
+		// the user may have switched to local mode while the analysis ran
+		if (!await requester.UserData.AnyAsync(x => x.UserId == userId && (x.AccountMode & AccountMode.Local) == 0 && x.Token != null, ct))
+			return;
+
 		await requester.Leaderboard.AddOrUpdate(entry);
 		await requester.SaveChangesAsync(ct);
 	}
@@ -167,7 +203,8 @@ public class LeaderboardService
 		{
 			users = await requester.UserData
 				.Where(x => x.PublicVisibility && x.TOSAgreementLevel >= this._config.Value.CurrentTOSAgreementLevel)
-				.Select(x => new PartialUserData(x.UserId, x.Token, x.IsInternational))
+				.Where(x => (x.AccountMode & AccountMode.Local) == 0 && x.Token != null)
+				.Select(x => new PartialUserData(x.UserId, x.Token!, x.IsInternational))
 				.ToListAsync(ct);
 		}
 
@@ -195,6 +232,13 @@ public class LeaderboardService
 		using ScopedSemaphoreSlim.Scope _ = await this._fullLeaderboardOperationLock.EnterScopeAsync(ct);
 		using (DataBaseService.DbDataRequester requester2 = this._dataBase.NewRequester())
 		{
+			// users who switched to local mode during the refresh must not be published from stale cloud analysis
+			HashSet<ulong> cloudUserIds = (await requester2.UserData
+				.Where(x => (x.AccountMode & AccountMode.Local) == 0 && x.Token != null)
+				.Select(x => x.UserId)
+				.ToListAsync(ct)).ToHashSet();
+			entries.RemoveAll(x => !cloudUserIds.Contains(x.UserId));
+
 			await requester2.Leaderboard.ExecuteDeleteAsync(ct);
 			await requester2.Leaderboard.AddRangeAsync(entries, ct);
 			await requester2.SaveChangesAsync(ct);

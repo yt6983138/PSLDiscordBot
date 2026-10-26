@@ -34,8 +34,11 @@ public class LoginCommand : GuestCommandBase
 		public string EncodedBeginUrl => Uri.EscapeDataString(this.BeginUrl);
 	}
 
-	public LoginCommand(IServiceProvider provider) : base(provider)
+	private readonly SaveService _saveService;
+
+	public LoginCommand(IServiceProvider provider, SaveService saveService) : base(provider)
 	{
+		this._saveService = saveService;
 	}
 
 	public override bool RunOnDifferentThread => true;
@@ -65,7 +68,7 @@ public class LoginCommand : GuestCommandBase
 
 		UserData userData = new(arg.User.Id, token, !chinaMode, this._config.Value.CurrentTOSAgreementLevel, false);
 		_ = await userData.SaveCache.GetPlayerInfoAsync();
-		await requester.AddOrReplaceUserDataAsync(userData);
+		await this._saveService.ActivateCloudAsync(userData);
 		await arg.QuickReply(this._localization[PSLGuestCommandKey.LoginComplete]);
 
 		/*

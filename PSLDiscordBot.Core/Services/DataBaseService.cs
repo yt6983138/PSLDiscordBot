@@ -53,9 +53,8 @@ public sealed class DataBaseService
 		public DbSet<UserData> UserData { get; set; }
 		public DbSet<MiscInfo> MiscData { get; set; }
 		public DbSet<LeaderboardEntry> Leaderboard { get; set; }
+		public DbSet<LocalSaveEntity> LocalSaves { get; set; }
 
-		public static long UncheckedConvertToLong(ulong data)
-			=> unchecked((long)data);
 		public static ulong UncheckedConvertToULong(long data)
 			=> unchecked((ulong)data);
 
@@ -72,6 +71,17 @@ public sealed class DataBaseService
 		{
 			optionsBuilder.UseSqlite(this._config.Value.PSLDbConnectionString)
 				.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
+		}
+
+		protected override void OnModelCreating(ModelBuilder modelBuilder)
+		{
+			modelBuilder.Entity<LocalSaveEntity>(entity =>
+			{
+				entity.Property(x => x.CreatedAtUtc)
+					.HasConversion(x => x, x => DateTime.SpecifyKind(x, DateTimeKind.Utc));
+				entity.Property(x => x.ModifiedAtUtc)
+					.HasConversion(x => x, x => DateTime.SpecifyKind(x, DateTimeKind.Utc));
+			});
 		}
 
 		#region Token/show format operation
@@ -97,6 +107,33 @@ public sealed class DataBaseService
 		public async Task SetOrReplaceMiscInfo(MiscInfo info)
 		{
 			await this.MiscData.AddOrUpdate(info);
+		}
+		#endregion
+
+		#region Local save operation
+		public Task<LocalSaveEntity?> GetLocalSaveAsync(ulong userId)
+		{
+			return this.LocalSaves.FirstOrDefaultAsync(x => x.UserId == userId);
+		}
+		public Task<bool> HasLocalSaveAsync(ulong userId)
+		{
+			return this.LocalSaves.AnyAsync(x => x.UserId == userId);
+		}
+		/// <summary>
+		/// Tracks the whole row for upsert (last write wins); it is written on the next SaveChanges.
+		/// The entity's CreatedAtUtc is written as-is, so callers must pass the existing creation date.
+		/// </summary>
+		public async Task<LocalSaveEntity> UpsertLocalSaveAsync(LocalSaveEntity localSave)
+		{
+			await this.LocalSaves.AddOrUpdate(localSave);
+			return localSave;
+		}
+		/// <summary>
+		/// Immediately deletes the local row in the current transaction, returning zero when absent.
+		/// </summary>
+		public Task<int> DeleteLocalSaveAsync(ulong userId)
+		{
+			return this.LocalSaves.Where(x => x.UserId == userId).ExecuteDeleteAsync();
 		}
 		#endregion
 

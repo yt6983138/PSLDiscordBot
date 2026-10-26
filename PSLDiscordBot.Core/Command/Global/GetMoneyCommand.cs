@@ -3,8 +3,11 @@
 [AddToGlobal]
 public class GetMoneyCommand : CommandBase
 {
-	public GetMoneyCommand(IServiceProvider provider) : base(provider)
+	private readonly SaveService _saveService;
+
+	public GetMoneyCommand(IServiceProvider provider, SaveService saveService) : base(provider)
 	{
+		this._saveService = saveService;
 	}
 
 	public override bool IsEphemeral => false;
@@ -19,7 +22,7 @@ public class GetMoneyCommand : CommandBase
 	{
 		int index = arg.GetIndexOption(this._localization);
 
-		SaveContext? context = await this._phigrosService.TryHandleAndFetchContext(data.SaveCache, arg, index);
+		ISaveContext? context = await this._saveService.TryHandleAndFetchAsync(data, arg, index);
 		if (context is null) return;
 		GameProgress progress = context.ReadGameProgress();
 

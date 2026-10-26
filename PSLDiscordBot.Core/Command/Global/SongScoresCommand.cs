@@ -6,10 +6,12 @@ namespace PSLDiscordBot.Core.Command.Global;
 public class SongScoresCommand : CommandBase
 {
 	private readonly ImageGenerator _imageGenerator;
+	private readonly SaveService _saveService;
 
-	public SongScoresCommand(IServiceProvider provider, ImageGenerator imageGenerator) : base(provider)
+	public SongScoresCommand(IServiceProvider provider, ImageGenerator imageGenerator, SaveService saveService) : base(provider)
 	{
 		this._imageGenerator = imageGenerator;
+		this._saveService = saveService;
 	}
 
 	public override bool IsEphemeral => false;
@@ -46,10 +48,10 @@ public class SongScoresCommand : CommandBase
 			return;
 		}
 
-		SaveContext? context = await this._phigrosService.TryHandleAndFetchContext((generateForUserData ?? data).SaveCache, arg, index);
+		ISaveContext? context = await this._saveService.TryHandleAndFetchAsync(generateForUserData ?? data, arg, index);
 		if (context is null) return;
 		GameRecord save = context.ReadGameRecord();
-		PlayerInfo outerUserInfo = await (generateForUserData ?? data).SaveCache.GetPlayerInfoAsync();
+		PlayerInfo outerUserInfo = await this._saveService.GetPlayerInfoAsync(generateForUserData ?? data, context);
 
 		this._phigrosService.GetCompleteScores(save, out List<CompleteScore> _, out List<CompleteScore>? scoresToShow, out double rks);
 		scoresToShow = scoresToShow

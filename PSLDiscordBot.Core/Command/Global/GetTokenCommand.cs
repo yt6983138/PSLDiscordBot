@@ -14,6 +14,12 @@ public class GetTokenCommand : CommandBase
 
 	public override async Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
 	{
+		if (data.Token is null)
+		{
+			await arg.QuickReply(this._localization[PSLNormalCommandKey.GetTokenNoCloudBinding]);
+			return;
+		}
+
 		await arg.QuickReply(this._localization[PSLNormalCommandKey.GetTokenReply], data.Token);
 	}
 }

@@ -15,6 +15,8 @@ public static partial class PSLCommonKey
 	public static partial string SaveHandlerOnOutOfRange { get; }
 	public static partial string SaveHandlerOnOtherException { get; }
 	public static partial string SaveHandlerOnNoSaves { get; }
+	public static partial string SaveHandlerOnWrongAccountMode { get; }
+	public static partial string SaveHandlerOnLocalSaveMissing { get; }
 	public static partial string SaveHandlerOnPhiLibUriException { get; }
 	public static partial string SaveHandlerOnPhiLibJsonException { get; }
 	public static partial string SaveHandlerOnHttpClientTimeout { get; }

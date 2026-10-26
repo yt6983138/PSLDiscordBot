@@ -8,8 +8,11 @@ namespace PSLDiscordBot.Core.Command.Global;
 [AddToGlobal]
 public class GetScoresCommand : CommandBase
 {
-	public GetScoresCommand(IServiceProvider provider) : base(provider)
+	private readonly SaveService _saveService;
+
+	public GetScoresCommand(IServiceProvider provider, SaveService saveService) : base(provider)
 	{
+		this._saveService = saveService;
 	}
 
 	public override bool IsEphemeral => false;
@@ -30,7 +33,7 @@ public class GetScoresCommand : CommandBase
 	public override async Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
 	{
 		int index = arg.GetIndexOption(this._localization);
-		SaveContext? context = await this._phigrosService.TryHandleAndFetchContext(data.SaveCache, arg, index);
+		ISaveContext? context = await this._saveService.TryHandleAndFetchAsync(data, arg, index);
 		if (context is null) return;
 		GameRecord save = context.ReadGameRecord();
 

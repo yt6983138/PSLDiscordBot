@@ -48,6 +48,7 @@ public static partial class PSLNormalCommandKey
 	public static partial string GetTokenDescription { get; }
 
 	public static partial string GetTokenReply { get; }
+	public static partial string GetTokenNoCloudBinding { get; }
 	#endregion
 
 	#region ExportScoresCommand
@@ -144,6 +145,9 @@ public static partial class PSLNormalCommandKey
 	public static partial string LogoutDescription { get; }
 
 	public static partial string LogoutSuccessful { get; }
+	public static partial string LogoutLocalDataWarning { get; }
+	public static partial string LogoutConfirmButton { get; }
+	public static partial string LogoutStateChanged { get; }
 	#endregion
 
 	#region SetPublicVisibilityCommand

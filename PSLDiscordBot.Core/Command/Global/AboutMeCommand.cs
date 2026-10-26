@@ -6,10 +6,12 @@ namespace PSLDiscordBot.Core.Command.Global;
 public class AboutMeCommand : CommandBase
 {
 	private readonly ImageGenerator _imageGenerator;
+	private readonly SaveService _saveService;
 
-	public AboutMeCommand(IServiceProvider provider, ImageGenerator imageGenerator) : base(provider)
+	public AboutMeCommand(IServiceProvider provider, ImageGenerator imageGenerator, SaveService saveService) : base(provider)
 	{
 		this._imageGenerator = imageGenerator;
+		this._saveService = saveService;
 	}
 
 	public override bool IsEphemeral => false;
@@ -44,9 +46,9 @@ public class AboutMeCommand : CommandBase
 			}
 		}
 
-		SaveContext? context = await this._phigrosService.TryHandleAndFetchContext((generateForUserData ?? data).SaveCache, arg, index);
+		ISaveContext? context = await this._saveService.TryHandleAndFetchAsync(generateForUserData ?? data, arg, index);
 		if (context is null) return;
-		PlayerInfo outerUserInfo = await (generateForUserData ?? data).SaveCache.GetPlayerInfoAsync();
+		PlayerInfo outerUserInfo = await this._saveService.GetPlayerInfoAsync(generateForUserData ?? data, context);
 
 		MiscInfo? miscInfo;
 		if (generateForUserData is null)

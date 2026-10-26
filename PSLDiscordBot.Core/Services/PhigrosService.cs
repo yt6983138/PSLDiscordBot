@@ -6,12 +6,11 @@ using System.Text.Json;
 namespace PSLDiscordBot.Core.Services;
 
 public record class CallbackLoginRequest(CallbackLoginData Data, Func<TapTapTokenData, Task> Callback, bool UseChinaEndpoint);
-public record class SaveContextFetchEventArg(Save Save, SaveContext Context, IDiscordInteraction Interaction);
+public record class SaveContextFetchEventArg(Save Save, ISaveContext Context, IDiscordInteraction Interaction);
 public class PhigrosService
 {
-	private readonly ILogger<PhigrosService> _logger;
 	private readonly Config _config;
-	private readonly LocalizationService _localization;
+	private readonly SaveService _saveService;
 
 	private readonly Dictionary<ulong, CallbackLoginRequest> _callbackLoginRequests = [];
 	public IReadOnlyDictionary<ulong, CallbackLoginRequest> CallbackLoginRequests => this._callbackLoginRequests;
@@ -45,17 +44,18 @@ public class PhigrosService
 	public IReadOnlyDictionary<string, string> NameMap { get; }
 	public IReadOnlyDictionary<ChartConstantKey, float> ChartConstantMap { get; }
 
+	[Obsolete("should use SaveService.OnSaveContextFetched instead")]
 	public event EventHandler<SaveContextFetchEventArg>? OnSaveContextFetched;
 
-	public PhigrosService(IOptions<Config> config, ILogger<PhigrosService> logger, LocalizationService localization)
+	public PhigrosService(IOptions<Config> config, SaveService saveService)
 	{
-		this._logger = logger;
 		this._config = config.Value;
+		this._saveService = saveService;
 
 		(this.NonMultiLanguageInfos, this.MultiLanguageInfos) =
 			LoadData(this._config.NonMultiLanguageInfoLocation, this._config.MultiLanguageInfoLocationFormat);
 
-		this._localization = localization;
+		this._saveService.OnSaveContextFetched += (sender, e) => this.OnSaveContextFetched?.Invoke(this, e);
 
 		static bool IsSpecialScore(PhigrosService self, string id)
 		{
@@ -180,63 +180,6 @@ public class PhigrosService
 		}
 	}
 
-	public async Task<SaveContext?> TryHandleAndFetchContext(Save save, SocketSlashCommand command, int index = 0, bool autoThrow = true)
-	{
-		LocalizedString onOutOfRange = this._localization[PSLCommonKey.SaveHandlerOnOutOfRange];
-		LocalizedString onOtherException = this._localization[PSLCommonKey.SaveHandlerOnOtherException];
-		LocalizedString onNoSaves = this._localization[PSLCommonKey.SaveHandlerOnNoSaves];
-		LocalizedString onPhiLibUriException = this._localization[PSLCommonKey.SaveHandlerOnPhiLibUriException];
-		LocalizedString onPhiLibJsonException = this._localization[PSLCommonKey.SaveHandlerOnPhiLibJsonException];
-		LocalizedString onHttpClientTimeout = this._localization[PSLCommonKey.SaveHandlerOnHttpClientTimeout];
-
-		try
-		{
-			List<SaveInfo> rawSaves = (await save.GetSaveInfoFromCloudAsync()).Results;
-
-			if (rawSaves.Count == 0)
-			{
-				await command.QuickReply(onNoSaves);
-				return null;
-			}
-			SaveContext ctx = await save.GetSaveContextAsync(index);
-			try
-			{
-				this.OnSaveContextFetched?.Invoke(this, new SaveContextFetchEventArg(save, ctx, command));
-			}
-			catch (Exception ex)
-			{
-				this._logger.LogError(ex, "An error occurred while invoking OnSaveContextFetched event");
-			}
-			return ctx;
-		}
-		catch (MaxValueArgumentOutOfRangeException ex) when (ex.ActualValue is int && ex.MaxValue is int)
-		{
-			await command.QuickReply(onOutOfRange, ex.MaxValue, ex.ActualValue);
-		}
-		catch (TaskCanceledException ex)
-		{
-			await command.QuickReply(onHttpClientTimeout, ex.Message);
-		}
-		catch (TimeoutException ex)
-		{
-			await command.QuickReply(onHttpClientTimeout, ex.Message);
-		}
-		catch (InvalidOperationException ex) when (ex.Message.Contains("invalid request URI was provided"))
-		{
-			await command.QuickReply(onPhiLibUriException, ex.Message);
-		}
-		catch (JsonException ex)
-		{
-			await command.QuickReply(onPhiLibJsonException, ex.Message);
-		}
-		catch (Exception ex)
-		{
-			await command.QuickReply(onOtherException, ex.Message);
-			if (autoThrow)
-				throw;
-		}
-		return null;
-	}
 	public void GetCompleteScores(GameRecord record, out List<CompleteScore> phis, out List<CompleteScore> others, out double rks)
 	{
 		(List<CompleteScore> Phis, List<CompleteScore> OtherScores, double Rks) = record.GetSortedListForRks(
@@ -246,7 +189,8 @@ public class PhigrosService
 		rks = Rks;
 	}
 	/// <summary>
-	/// phi 3 is padded using <see cref="CompleteScore.Default"/> to make sure the returned list always has at least 3 items.
+	/// phi 3 is padded using <see cref="CompleteScore.Default"/> by the library to make sure the returned list always has exactly 3 phi slots
+	/// before the real scores. Padding is not applied again here. Placeholders are presentation-only and are not real charts.
 	/// this is done for compatibility reasons and make code easier to write (same to <see cref="GameRecord.GetSortedListForRksMerged(IReadOnlyDictionary{ChartConstantKey, float}, IReadOnlyDictionary{string, string})"/>)
 	/// </summary>
 	/// <param name="record"></param>
@@ -254,24 +198,6 @@ public class PhigrosService
 	/// <param name="rks"></param>
 	public void GetCompleteScores(GameRecord record, out List<CompleteScore> scores, out double rks)
 	{
-		(List<CompleteScore> Phis, List<CompleteScore> OtherScores, double Rks) = record.GetSortedListForRks(
-			this.ChartConstantMap, this.NameMap);
-		scores = OtherScores;
-		scores.InsertRange(0, Phis);
-		rks = Rks;
-	}
-
-	private static void GetGameSave_ExceptionHandler(string message, Exception? ex, object? extraArgs)
-	{
-		if (ex is not KeyNotFoundException knfex || extraArgs is not string str)
-			goto Throw;
-		if (str == "テリトリーバトル.ツユ")
-			return;
-
-		Throw:
-		if (ex is null)
-			throw new Exception(message, ex);
-
-		throw ex;
+		(scores, rks) = record.GetSortedListForRksMerged(this.ChartConstantMap, this.NameMap);
 	}
 }

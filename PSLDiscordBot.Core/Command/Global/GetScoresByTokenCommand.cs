@@ -3,8 +3,11 @@
 [AddToGlobal]
 public class GetScoresByTokenCommand : AdminCommandBase
 {
-	public GetScoresByTokenCommand(IServiceProvider provider) : base(provider)
+	private readonly SaveService _saveService;
+
+	public GetScoresByTokenCommand(IServiceProvider provider, SaveService saveService) : base(provider)
 	{
+		this._saveService = saveService;
 	}
 
 	public override OneOf<string, LocalizedString> PSLName => "get-scores-by-token";
@@ -43,7 +46,8 @@ public class GetScoresByTokenCommand : AdminCommandBase
 		bool isInternational = arg.GetOption<bool>("is_international");
 		UserData userData = new(userId, token, isInternational, 0, false);
 
-		SaveContext? context = await this._phigrosService.TryHandleAndFetchContext(userData.SaveCache, arg, arg.GetIntegerOptionAsInt32("index"));
+		// explicit token read: not the registered account, so it must not raise the cloud-fetched (leaderboard) hook
+		SaveContext? context = await this._saveService.TryHandleCloudAsync(userData.SaveCache, arg, arg.GetIntegerOptionAsInt32("index"), raiseFetchedHook: false);
 		if (context is null) return;
 		GameRecord save = context.ReadGameRecord();
 
