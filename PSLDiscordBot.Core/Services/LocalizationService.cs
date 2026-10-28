@@ -311,7 +311,7 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 			[LocalScorePickSongPlaceholder] = LocalizedString.CreateDefault("Select a song"),
 			[LocalScoreSaved] = LocalizedString.CreateDefault("Score saved."),
 			[LocalScoreRemoved] = LocalizedString.CreateDefault("Score removed."),
-			[LocalScoreNoChange] = LocalizedString.CreateDefault("Nothing changed: no record was added, removed, or modified."),
+			[LocalScoreNoChange] = LocalizedString.CreateDefault("Nothing changed: no record was added, removed, or modified. Perhaps the score you want to modify does not exist or your input is same to the score?"),
 			[LocalScoreDraftExpired] = LocalizedString.CreateDefault("This selection has expired, was already used, or belongs to another user. Run the command again."),
 			[LocalSubCommandProfileName] = LocalizedString.CreateDefault("profile"),
 			[LocalSubCommandProfileDescription] = LocalizedString.CreateDefault("Update local profile fields; omitted fields are kept"),
