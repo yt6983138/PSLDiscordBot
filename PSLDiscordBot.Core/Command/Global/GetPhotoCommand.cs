@@ -10,38 +10,16 @@ public class GetPhotoCommand : CommandBase
 	private readonly ImageGenerator _imageGenerator;
 	private readonly IDiscordClientService _discordClientService;
 	private readonly LargeImageCoolDownService _coolDownService;
+	private readonly SaveService _saveService;
 
-	public GetPhotoCommand(IServiceProvider provider, IDiscordClientService discordClientService, ImageGenerator imageGenerator, LargeImageCoolDownService coolDownService)
+	public GetPhotoCommand(IServiceProvider provider, IDiscordClientService discordClientService, ImageGenerator imageGenerator, LargeImageCoolDownService coolDownService, SaveService saveService)
 		: base(provider)
 	{
 		this._imageGenerator = imageGenerator;
 		this._discordClientService = discordClientService;
 		this._coolDownService = coolDownService;
+		this._saveService = saveService;
 	}
-
-	public static Dictionary<string, ScoreStatus> ScoreStatusAlias { get; set; } = new()
-	{
-		{ "p", ScoreStatus.Phi },
-		{ "ph", ScoreStatus.Phi },
-		{ "φ", ScoreStatus.Phi },
-		{ "v", ScoreStatus.Vu },
-		{ "f", ScoreStatus.False },
-	};
-	public static Dictionary<string, Difficulty> DifficultyAliases { get; set; } = new()
-	{
-		{ "e", Difficulty.EZ },
-		{ "easy", Difficulty.EZ },
-		{ "h", Difficulty.HD },
-		{ "hd", Difficulty.HD },
-		{ "i", Difficulty.IN },
-		{ "in", Difficulty.IN },
-		{ "a", Difficulty.AT },
-		{ "at", Difficulty.AT },
-		{ "l", Difficulty.Legacy },
-		{ "le", Difficulty.Legacy },
-		{ "lg", Difficulty.Legacy },
-		{ "lgc", Difficulty.Legacy },
-	};
 
 	public override bool IsEphemeral => false;
 	public override bool RunOnDifferentThread => true;
@@ -122,7 +100,7 @@ public class GetPhotoCommand : CommandBase
 		{
 			IEnumerable<ScoreStatus?> parsed = showingGrades
 				.Split(',')
-				.Select(ParseScoreStatus);
+				.Select(PhigrosUtility.ParseScoreStatusWithAlias);
 			if (!parsed.Any() || parsed.Any(x => !x.HasValue))
 			{
 				await arg.QuickReply(this._localization[PSLNormalCommandKey.GetPhotoFailedParsingGrades],
@@ -138,7 +116,7 @@ public class GetPhotoCommand : CommandBase
 		{
 			IEnumerable<Difficulty?> parsed = difficultiesToShow
 				.Split(',')
-				.Select(ParseDifficulty);
+				.Select(PhigrosUtility.ParseDifficultyWithAlias);
 			if (!parsed.Any() || parsed.Any(x => !x.HasValue))
 			{
 				await arg.QuickReply(this._localization[PSLNormalCommandKey.GetPhotoFailedParsingDifficulty],
@@ -170,9 +148,9 @@ public class GetPhotoCommand : CommandBase
 			this._coolDownService.Set(arg.User.Id);
 		}
 
-		SaveContext? context = await this._phigrosService.TryHandleAndFetchContext((generateForUserData ?? data).SaveCache, arg, index);
+		ISaveContext? context = await this._saveService.TryHandleAndFetchAsync(generateForUserData ?? data, arg, index);
 		if (context is null) return;
-		PlayerInfo playerInfo = await (generateForUserData ?? data).SaveCache.GetPlayerInfoAsync();
+		PlayerInfo playerInfo = await this._saveService.GetPlayerInfoAsync(generateForUserData ?? data, context);
 
 		await arg.QuickReply(this._localization[PSLNormalCommandKey.GetPhotoGenerating]);
 
@@ -233,20 +211,5 @@ public class GetPhotoCommand : CommandBase
 		await arg.QuickReplyWithAttachments([new(image, "Score.jpg")],
 			this._localization[generateForUserData is not null ? PSLCommonMessageKey.ImageGeneratedForOther : PSLCommonMessageKey.ImageGenerated],
 			new GeneratedForLocalizationModel(generateFor ?? arg.User, textMap));
-	}
-
-	public static ScoreStatus? ParseScoreStatus(string str)
-	{
-		str = str.Trim().ToLower();
-		if (ScoreStatusAlias.TryGetValue(str, out ScoreStatus scoreStatus)) return scoreStatus;
-
-		return Enum.TryParse(str, true, out ScoreStatus stat) ? stat : null;
-	}
-	public static Difficulty? ParseDifficulty(string str)
-	{
-		str = str.Trim().ToLower();
-		if (DifficultyAliases.TryGetValue(str, out Difficulty diff)) return diff;
-
-		return Enum.TryParse(str, true, out Difficulty difficulty) ? difficulty : null;
 	}
 }

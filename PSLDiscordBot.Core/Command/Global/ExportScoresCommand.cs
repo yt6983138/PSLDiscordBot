@@ -1,13 +1,17 @@
 ﻿using CsvHelper;
 using PhiInfo.Core.Models.Information;
+using System.Globalization;
 
 namespace PSLDiscordBot.Core.Command.Global;
 
 [AddToGlobal]
 public class ExportScoresCommand : CommandBase
 {
-	public ExportScoresCommand(IServiceProvider provider) : base(provider)
+	private readonly SaveService _saveService;
+
+	public ExportScoresCommand(IServiceProvider provider, SaveService saveService) : base(provider)
 	{
+		this._saveService = saveService;
 	}
 
 	public override OneOf<string, LocalizedString> PSLName => this._localization[PSLNormalCommandKey.ExportScoresName];
@@ -19,7 +23,7 @@ public class ExportScoresCommand : CommandBase
 	public override async Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
 	{
 		int index = arg.GetIndexOption(this._localization);
-		SaveContext? context = await this._phigrosService.TryHandleAndFetchContext(data.SaveCache, arg, index);
+		ISaveContext? context = await this._saveService.TryHandleAndFetchAsync(data, arg, index);
 		if (context is null) return;
 		GameRecord save = context.ReadGameRecord();
 
@@ -52,10 +56,10 @@ public class ExportScoresCommand : CommandBase
 				scores[i].Score.Id,
 				realName,
 				scores[i].Score.Difficulty.ToString(),
-				scores[i].ChartConstant.ToString(),
-				scores[i].Score.ToString(),
-				scores[i].Score.Accuracy.ToString(),
-				scores[i].Rks.ToString(),
+				scores[i].ChartConstant.ToString(CultureInfo.InvariantCulture),
+				scores[i].Score.Score.ToString(CultureInfo.InvariantCulture),
+				scores[i].Score.Accuracy.ToString(CultureInfo.InvariantCulture),
+				scores[i].Rks.ToString(CultureInfo.InvariantCulture),
 				scores[i].Score.Status.ToString()
 			);
 			builder.NextRecord();

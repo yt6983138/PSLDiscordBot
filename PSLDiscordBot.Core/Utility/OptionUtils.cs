@@ -2,6 +2,7 @@
 using System.Diagnostics.CodeAnalysis;
 
 namespace PSLDiscordBot.Core.Utility;
+
 public static class OptionUtils
 {
 	public static SlashCommandBuilder AddIndexOption(this SlashCommandBuilder self, LocalizationService localization, bool required = false)
@@ -45,6 +46,7 @@ public static class OptionUtils
 		return self.GetOptionOrDefault<IUser>(localization[PSLCommonOptionKey.GenerateForOptionName]) ?? @default;
 	}
 
+	[Obsolete(UserData.InternationalObsoleteMessage)]
 	public static SlashCommandBuilder AddIsInternationalOption(this SlashCommandBuilder self, LocalizationService localization, bool required = true)
 	{
 		return self.AddOption( // why isn't this PSLCommonOptionKey at first place
@@ -53,6 +55,7 @@ public static class OptionUtils
 			localization[PSLGuestCommandKey.LoginOptionIsInternationalDescription],
 			isRequired: required);
 	}
+	[Obsolete(UserData.InternationalObsoleteMessage)]
 	public static bool GetIsInternationalOption(this SocketSlashCommand self, LocalizationService localization, bool @default = false)
 	{
 		return self.GetOptionOrDefault(localization[PSLGuestCommandKey.LoginOptionIsInternationalName], @default);

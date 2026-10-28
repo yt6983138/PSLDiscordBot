@@ -7,8 +7,11 @@ namespace PSLDiscordBot.Core.Command.Global;
 [AddToGlobal]
 public class AnalyzeSaveCommand : AdminCommandBase
 {
-	public AnalyzeSaveCommand(IServiceProvider provider) : base(provider)
+	private readonly SaveService _saveService;
+
+	public AnalyzeSaveCommand(IServiceProvider provider, SaveService saveService) : base(provider)
 	{
+		this._saveService = saveService;
 	}
 
 	public override OneOf<string, LocalizedString> PSLName => "analyze-save";
@@ -39,7 +42,8 @@ public class AnalyzeSaveCommand : AdminCommandBase
 		UserData userData = new(userId, token, isInternational, 0, false);
 		int index = arg.GetIntegerOptionAsInt32OrDefault("index");
 
-		SaveContext? context = await this._phigrosService.TryHandleAndFetchContext(userData.SaveCache, arg, index);
+		// explicit token read: not the registered account, so it must not raise the cloud-fetched (leaderboard) hook
+		SaveContext? context = await this._saveService.TryHandleCloudAsync(userData.SaveCache, arg, index, raiseFetchedHook: false);
 		if (context is null) return;
 		Summary summary = context.ReadSummary();
 		GameProgress progress = context.ReadGameProgress();

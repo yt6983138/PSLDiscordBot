@@ -110,7 +110,7 @@ public partial class ImageGenerator
 
 	public (TextMap_Anonymous, ImageMap_Anonymous) CreateMaps(
 		UserData userData,
-		SaveContext context,
+		ISaveContext context,
 		PlayerInfo playerInfo,
 		object? extraArguments = null)
 	{
@@ -152,8 +152,8 @@ public partial class ImageGenerator
 			ExtraArguments = extraArguments!,
 			GameSettings = settings,
 
-			SaveCreationDate = context.OriginalCloudObject.CreatedAt,
-			SaveModificationDate = context.OriginalCloudObject.ModifiedAt.Time,
+			SaveCreationDate = context.CreationTimeUTC,
+			SaveModificationDate = context.ModificationTimeUTC,
 		};
 #pragma warning restore IDE0008 // Use explicit type
 		textMap.User.PlayStatistics.MergeWith(this.SongDifficultyCount);
@@ -274,21 +274,6 @@ public partial class ImageGenerator
 			{ "INFO", infoObject }
 		};
 		return thingsToSet;
-	}
-
-	// for compatibility rn
-	public Task<Stream> MakePhoto(
-		UserData userData,
-		SaveContext context,
-		PlayerInfo playerInfo,
-		BasicHtmlImageInfo basicHtmlImageInfo,
-		ScreenshotType photoType,
-		byte quality,
-		object? extraArguments = null,
-		CancellationToken cancellationToken = default)
-	{
-		(TextMap_Anonymous map, ImageMap_Anonymous image) = this.CreateMaps(userData, context, playerInfo, extraArguments);
-		return this.MakePhoto(map, image, basicHtmlImageInfo, photoType, quality, cancellationToken);
 	}
 
 	public Task<Stream> MakePhoto(

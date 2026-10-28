@@ -1,4 +1,4 @@
-﻿using Discord.Net;
+using Discord.Net;
 using Discord.Rest;
 using Microsoft.AspNetCore.Builder;
 #if !DEBUG
@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using NLog.Web;
 using PSLDiscordBot.Core.ImageGenerating;
+using PSLDiscordBot.Core.Models.LocalImport;
 using PSLDiscordBot.Framework.BuiltInServices;
 using PSLDiscordBot.Framework.MiscEventArgs;
 using PSLDiscordBot.Framework.ServiceBase;
@@ -138,6 +139,8 @@ public class PSLPlugin : IPlugin
 		hostBuilder.Services.AddSingleton(this)
 			.AddSingleton<DataBaseService>()
 			//.AddSingleton<ChromiumPoolService>()
+			.AddSingleton<LocalSaveStore>()
+			.AddSingleton<SaveService>()
 			.AddSingleton<PhigrosService>()
 			.AddSingleton<AvatarHashMapService>()
 			.AddSingleton<ImageGenerator>()
@@ -146,7 +149,10 @@ public class PSLPlugin : IPlugin
 			.AddSingleton<TemporaryTOSAgreementService>()
 			.AddSingleton<LeaderboardService>()
 			.AddSingleton<LargeImageCoolDownService>()
-			.AddSingleton<AliasService>();
+			.AddSingleton<AliasService>()
+			.AddSingleton<LocalWorkflowStore<LocalScoreDraft>>()
+			.AddSingleton<LocalWorkflowStore<StagedLocalImport>>()
+			.AddSingleton<LocalImportService>();
 
 		hostBuilder.Services.AddAssemblyToMvc(this);
 	}
@@ -210,7 +216,7 @@ public class PSLPlugin : IPlugin
 		}
 
 #if DEBUG
-		// adds test account to the database to make testing more convenient (no need to run /tos, /link-token etc)
+		// adds test account to the database to make testing more convenient (no need to run /tos, /account register token etc)
 		using DataBaseService.DbDataRequester database = host.Services.GetRequiredService<DataBaseService>().NewRequester();
 		database.AddOrReplaceUserDataAsync(new(
 		   Secret.AdminId,
