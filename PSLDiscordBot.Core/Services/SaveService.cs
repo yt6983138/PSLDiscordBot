@@ -197,6 +197,24 @@ public class SaveService
 	}
 
 	/// <summary>
+	/// Creates the default local collection for <paramref name="userId"/> only when none exists. Changes no <see cref="UserData"/>
+	/// field and raises no event. Runs in one explicit transaction.
+	/// </summary>
+	public async Task EnsureLocalSaveAsync(ulong userId, string initialNickname)
+	{
+		using DataBaseService.DbDataRequester requester = this._dataBaseService.NewRequester(saveAutomatically: false);
+		await using IDbContextTransaction transaction = await requester.Database.BeginTransactionAsync();
+
+		if (!await requester.HasLocalSaveAsync(userId))
+		{
+			await requester.UpsertLocalSaveAsync(CreateDefaultLocalSaveEntity(userId, initialNickname));
+		}
+
+		await requester.SaveChangesAsync();
+		await transaction.CommitAsync();
+	}
+
+	/// <summary>
 	/// Switches an existing user back to cloud mode without fetching. The retained binding and local data are kept.
 	/// </summary>
 	/// <returns>False when the user has no retained cloud binding; nothing changes.</returns>

@@ -13,7 +13,7 @@ public partial class LocalCommand
 		Unavailable,
 	}
 
-	private async Task HandleScoreSet(SocketSlashCommand arg, UserData? data, SocketSlashCommandDataOption option)
+	private async Task HandleScoreSet(SocketSlashCommand arg, UserData data, SocketSlashCommandDataOption option)
 	{
 		string search = option.GetOptionOrDefault<string>(this._localization[PSLCommonOptionKey.SongSearchOptionName]) ?? "";
 		Difficulty difficulty = (Difficulty)option.GetIntegerOptionAsInt32OrDefault(this._localization[PSLLocalCommandKey.LocalScoreDifficultyOptionName]);
@@ -54,7 +54,7 @@ public partial class LocalCommand
 		await this.BeginScoreEditAsync(arg, localData, search, new(difficulty, false, (int)score, (float)accuracy, isFc, []));
 	}
 
-	private async Task HandleScoreRemove(SocketSlashCommand arg, UserData? data, SocketSlashCommandDataOption option)
+	private async Task HandleScoreRemove(SocketSlashCommand arg, UserData data, SocketSlashCommandDataOption option)
 	{
 		string search = option.GetOptionOrDefault<string>(this._localization[PSLCommonOptionKey.SongSearchOptionName]) ?? "";
 		Difficulty difficulty = (Difficulty)option.GetIntegerOptionAsInt32OrDefault(this._localization[PSLLocalCommandKey.LocalScoreDifficultyOptionName]);
@@ -206,13 +206,8 @@ public partial class LocalCommand
 	/// <summary>
 	/// Returns the caller's account when it is a registered local account; otherwise replies and returns null.
 	/// </summary>
-	public async Task<UserData?> GetLocalUserOrReplyAsync(IDiscordInteraction arg, UserData? data)
+	private async Task<UserData?> GetLocalUserOrReplyAsync(IDiscordInteraction arg, UserData data)
 	{
-		if (data is null)
-		{
-			await arg.QuickReply(this._localization[PSLCommonKey.CommandBaseNotRegistered]);
-			return null;
-		}
 		if (!data.IsLocal)
 		{
 			await arg.QuickReply(this._localization[PSLCommonKey.SaveHandlerOnWrongAccountMode]);

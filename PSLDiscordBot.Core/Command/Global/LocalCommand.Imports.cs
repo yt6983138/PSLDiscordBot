@@ -61,59 +61,51 @@ public partial class LocalCommand
 		}
 	}
 
-	private async Task HandleImportCsv(SocketSlashCommand arg, UserData? data, SocketSlashCommandDataOption option)
+	private async Task HandleImportCsv(SocketSlashCommand arg, UserData data, SocketSlashCommandDataOption option)
 	{
-		UserData? localData = await this.GetRegisteredUserOrReplyAsync(arg, data);
-		if (localData is null) return;
-
 		LocalImportMode mode = (LocalImportMode)option.GetIntegerOptionAsInt32OrDefault(this._localization[PSLLocalCommandKey.LocalImportModeOptionName]);
 		ParsedLocalImport? parsed = await this.HandleCommonImports(arg, option, this._importService.ParseCSV);
 		if (parsed is null) return;
 
-		await this.HandleLocalImportAsync(arg, localData, parsed, mode);
+		await this.HandleLocalImportAsync(arg, data, parsed, mode);
 	}
 
 	/// <summary>
 	/// Android PlayerPrefs import entry point. Local mode is required first. See: <see cref="HandleImportCsv"/>
 	/// </summary>
-	private async Task HandleImportAndroid(SocketSlashCommand arg, UserData? data, SocketSlashCommandDataOption option)
+	private async Task HandleImportAndroid(SocketSlashCommand arg, UserData data, SocketSlashCommandDataOption option)
 	{
-		UserData? localData = await this.GetRegisteredUserOrReplyAsync(arg, data);
-		if (localData is null) return;
-
 		LocalImportMode mode = (LocalImportMode)option.GetIntegerOptionAsInt32OrDefault(this._localization[PSLLocalCommandKey.LocalImportModeOptionName]);
 		ParsedLocalImport? parsed = await this.HandleCommonImports(arg, option, this._importService.ParseAndroidPlayerPref);
 		if (parsed is null) return;
 
-		await this.HandleLocalImportAsync(arg, localData, parsed, mode);
+		await this.HandleLocalImportAsync(arg, data, parsed, mode);
 	}
 
 	/// <summary>
 	/// Imports the retained cloud binding's save into the active local collection. Local mode is required; the binding is
 	/// read without changing modes or leaderboard state, and the result goes through the common preparation/confirmation.
 	/// </summary>
-	private async Task HandleImportCloud(SocketSlashCommand arg, UserData? data, SocketSlashCommandDataOption option)
+	private async Task HandleImportCloud(SocketSlashCommand arg, UserData data, SocketSlashCommandDataOption option)
 	{
-		UserData? localData = await this.GetRegisteredUserOrReplyAsync(arg, data);
-		if (localData is null) return;
-		if (!localData.HasCloudBinding)
+		if (!data.HasCloudBinding)
 		{
 			await arg.QuickReply(this._localization[PSLLocalCommandKey.LocalImportCloudNoBinding]);
 			return;
 		}
 
 		LocalImportMode mode = (LocalImportMode)option.GetIntegerOptionAsInt32OrDefault(this._localization[PSLLocalCommandKey.LocalImportModeOptionName]);
-		SaveContext? save = await this._saveService.TryHandleCloudAsync(localData.SaveCache, arg, raiseFetchedHook: false);
+		SaveContext? save = await this._saveService.TryHandleCloudAsync(data.SaveCache, arg, raiseFetchedHook: false);
 		if (save is null) return;
 
 		ParsedLocalImport parsed = new(
 			[],
 			save.ReadGameRecord(),
-			await localData.SaveCache.GetPlayerInfoAsync(),
+			await data.SaveCache.GetPlayerInfoAsync(),
 			save.ReadGameUserInfo(),
 			save.ReadGameProgress());
 
-		await this.HandleLocalImportAsync(arg, localData, parsed, mode);
+		await this.HandleLocalImportAsync(arg, data, parsed, mode);
 	}
 
 	/// <summary>
@@ -124,6 +116,8 @@ public partial class LocalCommand
 	{
 		UserData? localData = await this.GetRegisteredUserOrReplyAsync(arg, data);
 		if (localData is null) return;
+
+		await this._saveService.EnsureLocalSaveAsync(localData.UserId, AccountCommand.GetInitialNickname(arg.User));
 
 		LocalSaveData save;
 		try

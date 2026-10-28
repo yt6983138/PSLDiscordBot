@@ -31,33 +31,14 @@ public static partial class PSLGuestCommandKey
 	public static partial string PingPingDone { get; }
 	#endregion
 
-	#region LinkTokenCommand
-	public static partial string LinkTokenName { get; }
-	public static partial string LinkTokenDescription { get; }
-
-	public static partial string LinkTokenOptionTokenName { get; }
-	public static partial string LinkTokenOptionTokenDescription { get; }
-
-	public static partial string LinkTokenInvalidToken { get; }
-	public static partial string LinkTokenSuccess { get; }
-	public static partial string LinkTokenSuccessButOverwritten { get; }
-	#endregion
-
 	#region HelpCommand
 	public static partial string HelpName { get; }
 	public static partial string HelpDescription { get; }
 	#endregion
 
-	#region LoginCommand
-	public static partial string LoginName { get; }
-	public static partial string LoginDescription { get; }
-
+	#region IsInternational option (OptionUtils)
 	public static partial string LoginOptionIsInternationalName { get; }
 	public static partial string LoginOptionIsInternationalDescription { get; }
-
-	public static partial string LoginBegin { get; }
-	public static partial string LoginComplete { get; }
-	public static partial string LoginTimedOut { get; }
 	#endregion
 
 	#region DownloadAssetCommand

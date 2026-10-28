@@ -2,7 +2,7 @@ namespace PSLDiscordBot.Core.Command.Global;
 
 public partial class LocalCommand
 {
-	private async Task HandleProfile(SocketSlashCommand arg, UserData? data, SocketSlashCommandDataOption option)
+	private async Task HandleProfile(SocketSlashCommand arg, UserData data, SocketSlashCommandDataOption option)
 	{
 		string? nickname = option.GetOptionOrDefault<string>(this._localization[PSLLocalCommandKey.LocalProfileNicknameOptionName]);
 		string? intro = option.GetOptionOrDefault<string>(this._localization[PSLLocalCommandKey.LocalProfileIntroOptionName]);
@@ -55,7 +55,7 @@ public partial class LocalCommand
 		await arg.QuickReply(this.GetLocalEditReply(outcome, PSLLocalCommandKey.LocalProfileSaved));
 	}
 
-	private async Task HandleChallenge(SocketSlashCommand arg, UserData? data, SocketSlashCommandDataOption option)
+	private async Task HandleChallenge(SocketSlashCommand arg, UserData data, SocketSlashCommandDataOption option)
 	{
 		ChallengeRank color = (ChallengeRank)option.GetIntegerOptionAsInt32OrDefault(this._localization[PSLLocalCommandKey.LocalChallengeColorOptionName]);
 		long level = option.GetOptionOrDefault<long>(this._localization[PSLLocalCommandKey.LocalChallengeLevelOptionName], -1);
@@ -78,7 +78,7 @@ public partial class LocalCommand
 		await arg.QuickReply(this.GetLocalEditReply(outcome, PSLLocalCommandKey.LocalChallengeSaved));
 	}
 
-	private async Task HandleCurrency(SocketSlashCommand arg, UserData? data, SocketSlashCommandDataOption option)
+	private async Task HandleCurrency(SocketSlashCommand arg, UserData data, SocketSlashCommandDataOption option)
 	{
 		// -1 marks an omitted unit; Discord enforces the minimum of 0 for supplied values
 		long kib = option.GetOptionOrDefault<long>(this._localization[PSLLocalCommandKey.LocalCurrencyKibOptionName], -1);

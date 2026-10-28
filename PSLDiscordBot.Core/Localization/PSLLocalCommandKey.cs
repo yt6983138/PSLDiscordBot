@@ -8,16 +8,6 @@ public static partial class PSLLocalCommandKey
 	public static partial string LocalName { get; }
 	public static partial string LocalDescription { get; }
 
-	public static partial string LocalSubCommandStartName { get; }
-	public static partial string LocalSubCommandStartDescription { get; }
-	public static partial string LocalSubCommandUseCloudName { get; }
-	public static partial string LocalSubCommandUseCloudDescription { get; }
-
-	public static partial string LocalStartSuccess { get; }
-	public static partial string LocalUseCloudSuccess { get; }
-	public static partial string LocalUseCloudAlreadyCloud { get; }
-	public static partial string LocalUseCloudNoBinding { get; }
-
 	public static partial string LocalScoreGroupName { get; }
 	public static partial string LocalScoreGroupDescription { get; }
 	public static partial string LocalScoreSetName { get; }

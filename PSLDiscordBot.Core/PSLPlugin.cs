@@ -216,7 +216,7 @@ public class PSLPlugin : IPlugin
 		}
 
 #if DEBUG
-		// adds test account to the database to make testing more convenient (no need to run /tos, /link-token etc)
+		// adds test account to the database to make testing more convenient (no need to run /tos, /account register token etc)
 		using DataBaseService.DbDataRequester database = host.Services.GetRequiredService<DataBaseService>().NewRequester();
 		database.AddOrReplaceUserDataAsync(new(
 		   Secret.AdminId,

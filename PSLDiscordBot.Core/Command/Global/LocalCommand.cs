@@ -3,7 +3,7 @@ using PSLDiscordBot.Core.Models.LocalImport;
 namespace PSLDiscordBot.Core.Command.Global;
 
 [AddToGlobal]
-public partial class LocalCommand : GuestCommandBase
+public partial class LocalCommand : CommandBase
 {
 	private readonly SaveService _saveService;
 	private readonly LocalWorkflowStore<LocalScoreDraft> _workflowStore;
@@ -23,15 +23,7 @@ public partial class LocalCommand : GuestCommandBase
 	public override OneOf<string, LocalizedString> PSLName => this._localization[PSLLocalCommandKey.LocalName];
 	public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLLocalCommandKey.LocalDescription];
 
-	public override bool RequireTOSAcceptance => true;
-
 	public override SlashCommandBuilder CompleteBuilder => this.BasicBuilder
-		.AddSubCommand(
-			this._localization[PSLLocalCommandKey.LocalSubCommandStartName],
-			this._localization[PSLLocalCommandKey.LocalSubCommandStartDescription])
-		.AddSubCommand(
-			this._localization[PSLLocalCommandKey.LocalSubCommandUseCloudName],
-			this._localization[PSLLocalCommandKey.LocalSubCommandUseCloudDescription])
 		.AddOption(new SlashCommandOptionBuilder()
 			.WithName(this._localization[PSLLocalCommandKey.LocalSubCommandProfileName])
 			.WithDescription(this._localization[PSLLocalCommandKey.LocalSubCommandProfileDescription])
@@ -211,12 +203,10 @@ public partial class LocalCommand : GuestCommandBase
 					isRequired: true,
 					choices: BuilderUtility.CreateChoicesFromEnum<LocalImportMode>())));
 
-	public override async Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
+	public override async Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
 	{
 		// subcommands and subcommand groups must go through their own routers; each skips options it does not match
 		await RouteSubCommand(arg.Data,
-			new(this._localization[PSLLocalCommandKey.LocalSubCommandStartName], _ => this.HandleStart(arg)),
-			new(this._localization[PSLLocalCommandKey.LocalSubCommandUseCloudName], _ => this.HandleUseCloud(arg, data)),
 			new(this._localization[PSLLocalCommandKey.LocalSubCommandProfileName], option => this.HandleProfile(arg, data, option)),
 			new(this._localization[PSLLocalCommandKey.LocalSubCommandChallengeName], option => this.HandleChallenge(arg, data, option)),
 			new(this._localization[PSLLocalCommandKey.LocalSubCommandCurrencyName], option => this.HandleCurrency(arg, data, option)));
@@ -228,34 +218,5 @@ public partial class LocalCommand : GuestCommandBase
 				new RouteInfo(this._localization[PSLLocalCommandKey.LocalImportCsvName], option => this.HandleImportCsv(arg, data, option)),
 				new RouteInfo(this._localization[PSLLocalCommandKey.LocalImportCloudName], option => this.HandleImportCloud(arg, data, option)),
 				new RouteInfo(this._localization[PSLLocalCommandKey.LocalImportAndroidName], option => this.HandleImportAndroid(arg, data, option)))]);
-	}
-
-	private async Task HandleStart(SocketSlashCommand arg)
-	{
-		string nickname = arg.User is SocketGuildUser guildUser
-			? guildUser.DisplayName
-			: arg.User.GlobalName ?? arg.User.Username;
-		await this._saveService.StartLocalAsync(arg.User.Id, this._config.Value.CurrentTOSAgreementLevel, nickname);
-		await arg.QuickReply(this._localization[PSLLocalCommandKey.LocalStartSuccess]);
-	}
-
-	private async Task HandleUseCloud(SocketSlashCommand arg, UserData? data)
-	{
-		if (data is null)
-		{
-			await arg.QuickReply(this._localization[PSLCommonKey.CommandBaseNotRegistered]);
-			return;
-		}
-		if (!data.IsLocal)
-		{
-			await arg.QuickReply(this._localization[PSLLocalCommandKey.LocalUseCloudAlreadyCloud]);
-			return;
-		}
-		if (!await this._saveService.UseCloudAsync(arg.User.Id))
-		{
-			await arg.QuickReply(this._localization[PSLLocalCommandKey.LocalUseCloudNoBinding]);
-			return;
-		}
-		await arg.QuickReply(this._localization[PSLLocalCommandKey.LocalUseCloudSuccess]);
 	}
 }

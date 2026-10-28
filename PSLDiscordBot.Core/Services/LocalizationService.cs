@@ -1,4 +1,5 @@
 using PSLDiscordBot.Framework.ServiceBase;
+using static PSLDiscordBot.Core.Localization.PSLAccountCommandKey;
 using static PSLDiscordBot.Core.Localization.PSLAliasRelatedKey;
 using static PSLDiscordBot.Core.Localization.PSLCommonKey;
 using static PSLDiscordBot.Core.Localization.PSLCommonMessageKey;
@@ -31,7 +32,7 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 		return new(new Dictionary<string, LocalizedString>()
 		{
 			[AdminCommandBasePermissionDenied] = LocalizedString.CreateDefault("Permission denied."),
-			[CommandBaseNotRegistered] = LocalizedString.CreateDefault("You haven't logged in/linked token. Please use /login or /link-token first."),
+			[CommandBaseNotRegistered] = LocalizedString.CreateDefault("You haven't logged in/linked token. Please use /account register qrcode or /account register token first (or /account register local to use local mode)."),
 			[CommandBaseTOSNotAgreed] = LocalizedString.CreateDefault("You have not agreed to the Terms of Service. Please read and agree to the TOS using `/tos` command in order to use commands."),
 
 			[SaveHandlerOnOutOfRange] = LocalizedString.CreateDefault("Error: Expected index less than {0}, more or equal to 0. You entered {1}."),
@@ -136,23 +137,10 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 			[AboutMeName] = LocalizedString.CreateDefault("about-me"),
 			[AboutMeDescription] = LocalizedString.CreateDefault("Get info about you in game."),
 
-			[LinkTokenName] = LocalizedString.CreateDefault("link-token"),
-			[LinkTokenDescription] = LocalizedString.CreateDefault("Link account by token."),
-			[LinkTokenOptionTokenName] = LocalizedString.CreateDefault("token"),
-			[LinkTokenOptionTokenDescription] = LocalizedString.CreateDefault("Your Phigros token."),
-			[LinkTokenInvalidToken] = LocalizedString.CreateDefault("Invalid token!"),
-			[LinkTokenSuccess] = LocalizedString.CreateDefault("Linked successfully!"),
-			[LinkTokenSuccessButOverwritten] = LocalizedString.CreateDefault("You have already registered, but still linked successfully!"),
-
 			[GetTimeIndexName] = LocalizedString.CreateDefault("get-time-index"),
 			[GetTimeIndexDescription] = LocalizedString.CreateDefault("Get save indexes, used to fetch older saves in various commands."),
 			[GetTimeIndexIndexTitle] = LocalizedString.CreateDefault("Index"),
 			[GetTimeIndexDateTitle] = LocalizedString.CreateDefault("Date"),
-
-			[GetTokenName] = LocalizedString.CreateDefault("get-token"),
-			[GetTokenDescription] = LocalizedString.CreateDefault("Show your token."),
-			[GetTokenReply] = LocalizedString.CreateDefault("Your token: {0:substr(0,5)}||{0:substr(5)}|| (Click to reveal, DO NOT show it to other people.)"),
-			[GetTokenNoCloudBinding] = LocalizedString.CreateDefault("You have no cloud binding, so there is no token to show. Use /login or /link-token to add one."),
 
 			[ExportScoresName] = LocalizedString.CreateDefault("export-scores"),
 			[ExportScoresDescription] = LocalizedString.CreateDefault("Export all your scores as a CSV file."),
@@ -165,18 +153,8 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 			[HelpName] = LocalizedString.CreateDefault("help"),
 			[HelpDescription] = LocalizedString.CreateDefault("Show help manuals."),
 
-			[LoginName] = LocalizedString.CreateDefault("login"),
-			[LoginDescription] = LocalizedString.CreateDefault("Log in using TapTap."),
 			[LoginOptionIsInternationalName] = LocalizedString.CreateDefault("is_international"),
 			[LoginOptionIsInternationalDescription] = LocalizedString.CreateDefault("Whether to use international server or not."),
-			[LoginBegin] = LocalizedString.CreateDefault("Please login using this url: {BeginUrl}\n" +
-				"Make sure to login with the exact credentials you used in Phigros.\n" +
-				"The page _may_ stuck at loading after you click 'grant', " +
-				"don't worry about it just close the page and the login process will continue anyway, " +
-				"after you do it this message should show that you logged in successfully. " +
-				"[Qr code for convenience](https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={EncodedBeginUrl})"),
-			[LoginComplete] = LocalizedString.CreateDefault("Logged in successfully, all commands are now accessible!"),
-			[LoginTimedOut] = LocalizedString.CreateDefault("The login has been canceled due to timeout."),
 
 			[DownloadAssetName] = LocalizedString.CreateDefault("download-asset"),
 			[DownloadAssetDescription] = LocalizedString.CreateDefault("Download assets about song."),
@@ -241,16 +219,9 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 			[ClearMemorableScoreDescription] = LocalizedString.CreateDefault("Clear the memorable score."),
 			[ClearMemorableScoreSuccess] = LocalizedString.CreateDefault("Your memorable score has been cleared!"),
 
-			[LogoutName] = LocalizedString.CreateDefault("logout"),
-			[LogoutDescription] = LocalizedString.CreateDefault("Logs you out of the bot. (Your settings will be wiped too!)"),
-			[LogoutSuccessful] = LocalizedString.CreateDefault("Logged you out successfully."),
-			[LogoutLocalDataWarning] = LocalizedString.CreateDefault("Warning: logging out permanently deletes your local save data, including any dormant local data, your settings, and your leaderboard entry. Press Confirm to continue."),
-			[LogoutConfirmButton] = LocalizedString.CreateDefault("Confirm"),
-			[LogoutStateChanged] = LocalizedString.CreateDefault("Your account changed since the logout warning was shown, so nothing was deleted. Please run /logout again."),
-
 			[TOSName] = LocalizedString.CreateDefault("tos"),
 			[TOSDescription] = LocalizedString.CreateDefault("View the Terms of Service. Do this command twice agrees it."),
-			[TOSAgreed] = LocalizedString.CreateDefault("You have agreed to the Terms of Service{0:cond:|, please do /login or /link-token in 15 mins to start using the bot}. Thank you for your cooperation."),
+			[TOSAgreed] = LocalizedString.CreateDefault("You have agreed to the Terms of Service{0:cond:|, please do /account register qrcode, /account register token or /account register local in 15 mins to start using the bot}. Thank you for your cooperation."),
 			[TOSContent] = LocalizedString.CreateDefault("Please view it [here](https://github.com/yt6983138/PSLDiscordBot/blob/master/Documentation/TermsOfServiceV2.md), once you are done, please do this command again in 15 mins to agree TOS."),
 
 			[SetPublicVisibilityName] = LocalizedString.CreateDefault("set-public-visibility"),
@@ -317,14 +288,6 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 
 			[LocalName] = LocalizedString.CreateDefault("local"),
 			[LocalDescription] = LocalizedString.CreateDefault("Manage the local score collection"),
-			[LocalSubCommandStartName] = LocalizedString.CreateDefault("start"),
-			[LocalSubCommandStartDescription] = LocalizedString.CreateDefault("Start or resume your local collection (keeps your cloud binding)"),
-			[LocalSubCommandUseCloudName] = LocalizedString.CreateDefault("use-cloud"),
-			[LocalSubCommandUseCloudDescription] = LocalizedString.CreateDefault("Switch back to cloud mode using your retained cloud binding"),
-			[LocalStartSuccess] = LocalizedString.CreateDefault("Local mode is active. Ordinary commands now read your local collection. Use /local use-cloud to switch back."),
-			[LocalUseCloudSuccess] = LocalizedString.CreateDefault("Cloud mode is active. Your local collection was kept."),
-			[LocalUseCloudAlreadyCloud] = LocalizedString.CreateDefault("You are already using cloud mode."),
-			[LocalUseCloudNoBinding] = LocalizedString.CreateDefault("You have no cloud binding to switch back to. Use /login or /link-token first."),
 			[LocalScoreGroupName] = LocalizedString.CreateDefault("score"),
 			[LocalScoreGroupDescription] = LocalizedString.CreateDefault("Set or remove a chart record in your local collection"),
 			[LocalScoreSetName] = LocalizedString.CreateDefault("set"),
@@ -403,9 +366,57 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 			[LocalImportFileDownloadFailed] = LocalizedString.CreateDefault("The CSV file could not be downloaded. Please try again."),
 			[LocalImportCloudName] = LocalizedString.CreateDefault("cloud"),
 			[LocalImportCloudDescription] = LocalizedString.CreateDefault("Import your retained cloud save into the local collection"),
-			[LocalImportCloudNoBinding] = LocalizedString.CreateDefault("You have no cloud binding to import from. Use /login or /link-token first."),
+			[LocalImportCloudNoBinding] = LocalizedString.CreateDefault("You have no cloud binding to import from. Use /account register qrcode or /account register token first."),
 			[LocalImportAndroidName] = LocalizedString.CreateDefault("android"),
-			[LocalImportAndroidDescription] = LocalizedString.CreateDefault("Import an Android PlayerPrefs XML save file")
+			[LocalImportAndroidDescription] = LocalizedString.CreateDefault("Import an Android PlayerPrefs XML save file"),
+
+			[AccountName] = LocalizedString.CreateDefault("account"),
+			[AccountDescription] = LocalizedString.CreateDefault("Manage your account"),
+			[AccountRegisterGroupName] = LocalizedString.CreateDefault("register"),
+			[AccountRegisterGroupDescription] = LocalizedString.CreateDefault("Register an account"),
+			[AccountRegisterQrCodeName] = LocalizedString.CreateDefault("qrcode"),
+			[AccountRegisterQrCodeDescription] = LocalizedString.CreateDefault("Register or relink using TapTap."),
+			[AccountRegisterTokenName] = LocalizedString.CreateDefault("token"),
+			[AccountRegisterTokenDescription] = LocalizedString.CreateDefault("Register or relink by token."),
+			[AccountRegisterTokenOptionTokenName] = LocalizedString.CreateDefault("token"),
+			[AccountRegisterTokenOptionTokenDescription] = LocalizedString.CreateDefault("Your Phigros token."),
+			[AccountRegisterLocalName] = LocalizedString.CreateDefault("local"),
+			[AccountRegisterLocalDescription] = LocalizedString.CreateDefault("Register with a local score collection, no Phigros account needed"),
+			[AccountSwitchGroupName] = LocalizedString.CreateDefault("switch"),
+			[AccountSwitchGroupDescription] = LocalizedString.CreateDefault("Switch between cloud and local mode"),
+			[AccountSwitchCloudName] = LocalizedString.CreateDefault("cloud"),
+			[AccountSwitchCloudDescription] = LocalizedString.CreateDefault("Switch back to cloud mode using your retained cloud binding"),
+			[AccountSwitchLocalName] = LocalizedString.CreateDefault("local"),
+			[AccountSwitchLocalDescription] = LocalizedString.CreateDefault("Switch to local mode, starting or resuming your local collection (keeps your cloud binding)"),
+			[AccountDeleteName] = LocalizedString.CreateDefault("delete"),
+			[AccountDeleteDescription] = LocalizedString.CreateDefault("Permanently delete your account and data."),
+			[AccountStatusName] = LocalizedString.CreateDefault("status"),
+			[AccountStatusDescription] = LocalizedString.CreateDefault("Show your account status and token."),
+
+			[AccountRegisterQrCodeBegin] = LocalizedString.CreateDefault("Please login using this url: {BeginUrl}\n" +
+				"Make sure to login with the exact credentials you used in Phigros.\n" +
+				"The page _may_ stuck at loading after you click 'grant', " +
+				"don't worry about it just close the page and the login process will continue anyway, " +
+				"after you do it this message should show that you logged in successfully. " +
+				"[Qr code for convenience](https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={EncodedBeginUrl})"),
+			[AccountRegisterQrCodeTimedOut] = LocalizedString.CreateDefault("The login has been canceled due to timeout."),
+			[AccountRegisterTokenInvalid] = LocalizedString.CreateDefault("Invalid token!"),
+			[AccountRegisterCloudSuccess] = LocalizedString.CreateDefault("Registered successfully, all commands are now accessible!"),
+			[AccountRegisterCloudOverwritten] = LocalizedString.CreateDefault("You have already registered, but still linked successfully!"),
+			[AccountRegisterLocalAlreadyRegistered] = LocalizedString.CreateDefault("You have already registered. Use /account switch local to switch to local mode."),
+			[AccountLocalModeActive] = LocalizedString.CreateDefault("Local mode is active. Ordinary commands now read your local collection. Use /account switch cloud to switch back."),
+			[AccountSwitchLocalAlreadyLocal] = LocalizedString.CreateDefault("You are already using local mode."),
+			[AccountSwitchCloudSuccess] = LocalizedString.CreateDefault("Cloud mode is active. Your local collection was kept."),
+			[AccountSwitchCloudAlreadyCloud] = LocalizedString.CreateDefault("You are already using cloud mode."),
+			[AccountSwitchCloudNoBinding] = LocalizedString.CreateDefault("You have no cloud binding to switch back to. Use /account register qrcode or /account register token first."),
+			[AccountDeleteWarning] = LocalizedString.CreateDefault("Warning: this permanently deletes your account, including your settings, your leaderboard entry, and any local save data (including dormant local data). Press Confirm to continue."),
+			[AccountDeleteConfirmButton] = LocalizedString.CreateDefault("Confirm"),
+			[AccountDeleteSuccess] = LocalizedString.CreateDefault("Your account has been deleted."),
+			[AccountStatusReply] = LocalizedString.CreateDefault("Active mode: {IsLocal:cond:local|cloud}\n" +
+				"Cloud binding: {HasCloudBinding:cond:present|none}\n" +
+				"Local collection: {HasLocalCollection:cond:present|none}\n" +
+				"International server: {IsInternational:cond:yes|no}\n" +
+				"{HasCloudBinding:cond:Your token: {Token:substr(0,5)}{Token:substr(5):||{}||} (Click to reveal, DO NOT show it to other people.)|}"),
 
 			// [] = LocalizedString.CreateDefault(""),
 		});

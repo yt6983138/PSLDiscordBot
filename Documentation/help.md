@@ -4,9 +4,10 @@ This is a **P**higros **S**core **L**ookup Discord bot (aka PSLDiscordBot), you 
 Note: Requires cloud save (aka TapTap, both international and China accounts are supported!)
 ## How to use this?
 If you are using this for the first time, please follow the steps to set up your account for the bot.
-1. Use `/login` to link your account first, you will see a parameter named `is_international`, this depends on where did you get your game. 
+1. Use `/account register qrcode` to link your account first, you will see a parameter named `is_international`, this depends on where did you get your game. 
 1. For example, on Apple store or TapTap (China) you would be using non-internaional account (fill `false` for this), on TapTap Global or Google Play, you would be using international account (fill `true`).
- - Alternatively, you can also use `/link-token` if you already have token and can't or don't want to go through the login process. You still need to fill out the `is_international` parameter.
+ - Alternatively, you can also use `/account register token` if you already have token and can't or don't want to go through the login process. You still need to fill out the `is_international` parameter.
+ - If you don't want to link a cloud save, use `/account register local` to use the bot's local score system instead.
 2. (Optional) Set your score precision using `/set-precision` if you want to see your score more accurately.
 3. Now, you can get your scores by using `/get-scores` or `/get-photo`, if you wanna share your statistics, you can also run `/about-me`.
 
