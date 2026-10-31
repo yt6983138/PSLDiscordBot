@@ -1,0 +1,15 @@
+<Project>
+
+	<PropertyGroup>
+		<Nullable>enable</Nullable>
+		<!-- The bot only runs in English; skip NuGet satellite assemblies (cs, zh-Hant, ...). -->
+		<SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+	</PropertyGroup>
+
+	<!-- The Analyzer targets netstandard2.0 and keeps its own language settings. -->
+	<PropertyGroup Condition="'$(MSBuildProjectName)' != 'PSLDiscordBot.Analyzer'">
+		<ImplicitUsings>enable</ImplicitUsings>
+		<LangVersion>preview</LangVersion>
+	</PropertyGroup>
+
+</Project>
