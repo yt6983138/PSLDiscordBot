@@ -222,7 +222,7 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 			[TOSName] = LocalizedString.CreateDefault("tos"),
 			[TOSDescription] = LocalizedString.CreateDefault("View the Terms of Service."),
 			[TOSAgreed] = LocalizedString.CreateDefault("You have consented to the Terms of Service{0:cond:|, please do /account register qrcode, /account register token or /account register local in 15 mins to start using the bot}. Thank you for your cooperation."),
-			[TOSContent] = LocalizedString.CreateDefault("Please view it [here](https://github.com/yt6983138/PSLDiscordBot/blob/master/Documentation/TermsOfServiceV2.md), once you are done, please click `I consent` button to consent to the Terms of Service."),
+			[TOSContent] = LocalizedString.CreateDefault("Please view it [here](https://github.com/yt6983138/PSLDiscordBot/blob/master/Documentation/TermsOfServiceV3.md), once you are done, please click `I consent` button to consent to the Terms of Service."),
 			[TOSAgreeButtonLabel] = LocalizedString.CreateDefault("I consent"),
 
 			[SetPublicVisibilityName] = LocalizedString.CreateDefault("set-public-visibility"),
