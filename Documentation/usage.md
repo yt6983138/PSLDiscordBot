@@ -1,7 +1,7 @@
 # Getting Started
 If you are using this for the first time, please follow the steps to set up your account for the bot.
 
-1. Run `/tos` command to view and accept our TOS.
+1. Run `/tos` command to view our TOS, then press the button to accept it.
 2. Use `/account register qrcode` to link your account first, you will see a parameter named `is_international`, this depends on where did you get your game. For example, on Apple store or TapTap (China) you would be using non-international account (fill `false` for this), on TapTap Global or Google Play, you would be using international account (fill `true`).
     - Alternatively, you can also use `/account register token` if you already have token and can't or don't want to go through the login process. You still need to fill out the `is_international` parameter.
     - If you don't want to link a cloud save, use `/account register local` to use the bot's local score system instead.
@@ -78,7 +78,7 @@ Options:
 1. `precision`: Precision. Put 1 to get acc like 99.1, 2 to get acc like 99.12, repeat.
 
 ## `/tos`
-View the Terms of Service. Do this command twice agrees it.
+View the Terms of Service. Press the green button below it to agree.
 
 ## `/account delete`
 Deletes your account from the bot (including any local save data). You will be asked to confirm with a button first. (Your settings will be wiped too!)

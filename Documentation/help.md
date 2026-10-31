@@ -1,21 +1,25 @@
-﻿## What is this?
-This is a **P**higros **S**core **L**ookup Discord bot (aka PSLDiscordBot), you can get your scores by using `/get-photo`, `/get-scores` or `/export-scores` etc.
+## What is this?
+This is **P**higros **S**core **L**ookup Discord bot (aka PSLDiscordBot). You can get your scores by using `/get-photo`, `/get-scores`, `/export-scores` etc.
 
-Note: Requires cloud save (aka TapTap, both international and China accounts are supported!)
+Note: Requires a TapTap cloud save, or use the bot's local score system instead.
 ## How to use this?
-If you are using this for the first time, please follow the steps to set up your account for the bot.
-1. Use `/account register qrcode` to link your account first, you will see a parameter named `is_international`, this depends on where did you get your game. 
-1. For example, on Apple store or TapTap (China) you would be using non-internaional account (fill `false` for this), on TapTap Global or Google Play, you would be using international account (fill `true`).
- - Alternatively, you can also use `/account register token` if you already have token and can't or don't want to go through the login process. You still need to fill out the `is_international` parameter.
- - If you don't want to link a cloud save, use `/account register local` to use the bot's local score system instead.
-2. (Optional) Set your score precision using `/set-precision` if you want to see your score more accurately.
-3. Now, you can get your scores by using `/get-scores` or `/get-photo`, if you wanna share your statistics, you can also run `/about-me`.
+First time here? Follow these steps:
+1. Use `/tos`, read it and press the button to agree. You can't register before that.
+2. Pick one way to register:
+ - `/account register qrcode`: link your cloud save with a QR code.
+ - `/account register token`: link your cloud save with a token, if you already have one and don't want to go through the login process.
+ - `/account register local`: no cloud save? Use the local score system.
+3. (Optional) Use `/set-precision` if you want to see your scores more accurately.
+4. Now you can use `/get-scores` or `/get-photo`. Wanna share your stats? Run `/about-me`.
+5. (Optional) Run `/set-public-visibility true` to show up on `/leaderboard` and let others view your scores with the `generate_for` option of `/get-photo` and `/song-scores`. It's off by default.
 
-There's also cool commands like `/song-info`, `/song-scores`, `/poke` etc.
+Local score system: manage your own scores with `/local score` family, `/local profile`, `/local challenge` and `/local currency`, or import them with `/local import` family. Use `/account switch` family to change between local and cloud mode.
 
-If you see any problem, use `/report-problem` to report it (Devs may contact you for more information)
+There are also cool commands like `/song-info`, `/song-scores`, `/poke` etc.
+
+If you see any problem, use `/report-problem` to report it (Devs may contact you for more information).
 ## Command usage
-Please check the [github address](https://github.com/yt6983138/PSLDiscordBot/blob/master/Documentation/usage.md), Recommend read them all before using. (I can't fit everything in a message with maximum length of 2000 :sob:)
+Please check the [github address](https://github.com/yt6983138/PSLDiscordBot/blob/master/Documentation/usage.md), I recommend reading all of it before using.
 
-ToS: https://github.com/yt6983138/PSLDiscordBot/blob/master/Documentation/TermsOfServiceV2.md <br/>
+ToS: https://github.com/yt6983138/PSLDiscordBot/blob/master/Documentation/TermsOfServiceV3.md <br/>
 Privacy Policy: https://github.com/yt6983138/PSLDiscordBot/blob/master/Documentation/PrivacyPolicy.md
