@@ -2,21 +2,14 @@
 
 public class TemporaryTOSAgreementService
 {
-	public record struct TOSAgreementRecord(bool Agreed, bool Read);
+	public GenericMemoryCache<ulong, bool> Cache { get; } = [];
 
-	public GenericMemoryCache<ulong, TOSAgreementRecord> Cache { get; } = [];
-
-	public void Set(ulong userId, TOSAgreementRecord record)
+	public void Set(ulong userId, bool agreed)
 	{
-		this.Cache.Set(userId, record, DateTime.Now.AddMinutes(15));
-	}
-	public TOSAgreementRecord Get(ulong userId)
-	{
-		this.Cache.TryGetValue(userId, out TOSAgreementRecord record);
-		return record;
+		this.Cache.Set(userId, agreed, DateTime.Now.AddMinutes(15));
 	}
 	public bool HasAgreed(ulong userId)
 	{
-		return this.Get(userId).Agreed;
+		return this.Cache.TryGetValue(userId, out bool agreed) && agreed;
 	}
 }

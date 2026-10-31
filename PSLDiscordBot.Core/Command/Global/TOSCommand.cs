@@ -14,21 +14,31 @@ public class TOSCommand : GuestCommandBase
 
 	public override async Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
 	{
-		TemporaryTOSAgreementService.TOSAgreementRecord tosRecord = this._temporaryTOSAgreementService.Get(arg.User.Id);
-		if (tosRecord.Read)
+		await arg.QuickReply(x => x.Components = new ComponentBuilderV2()
+			.WithActionRow([new ButtonBuilder()
+				.WithCustomId(this.CreateComponentId([]))
+				.WithStyle(ButtonStyle.Success)
+				.WithLabel(this._localization[PSLGuestCommandKey.TOSAgreeButtonLabel], arg)])
+			.Build(),
+			this._localization[PSLGuestCommandKey.TOSContent]);
+	}
+
+	public override async Task HandleInteraction(SocketInteraction arg, object executer)
+	{
+		if (arg is not SocketMessageComponent component) return;
+
+		await component.DeferAsync(this.IsEphemeral);
+
+		using DataBaseService.DbDataRequester requester = this._dataBaseService.NewRequester();
+		UserData? data = await requester.GetUserDataDirectlyAsync(component.User.Id);
+
+		this._temporaryTOSAgreementService.Set(arg.User.Id, true);
+
+		if (data is not null)
 		{
-			this._temporaryTOSAgreementService.Set(arg.User.Id, new(true, true));
-			if (data is not null)
-			{
-				data.TOSAgreementLevel = this._config.Value.CurrentTOSAgreementLevel;
-				await requester.AddOrReplaceUserDataAsync(data);
-			}
-			await arg.QuickReply(this._localization[PSLGuestCommandKey.TOSAgreed], data is not null);
+			data.TOSAgreementLevel = this._config.Value.CurrentTOSAgreementLevel;
+			await requester.AddOrReplaceUserDataAsync(data);
 		}
-		else
-		{
-			this._temporaryTOSAgreementService.Set(arg.User.Id, new(false, true));
-			await arg.QuickReply(this._localization[PSLGuestCommandKey.TOSContent]);
-		}
+		await component.QuickReply(x => x.Components = null, this._localization[PSLGuestCommandKey.TOSAgreed], data is not null);
 	}
 }

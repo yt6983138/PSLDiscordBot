@@ -55,5 +55,6 @@ public static partial class PSLGuestCommandKey
 
 	public static partial string TOSAgreed { get; }
 	public static partial string TOSContent { get; }
+	public static partial string TOSAgreeButtonLabel { get; }
 	#endregion
 }
