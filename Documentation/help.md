@@ -6,9 +6,9 @@ Note: Requires a TapTap cloud save, or use the bot's local score system instead.
 First time here? Follow these steps:
 1. Use `/tos`, read it and press the button to agree. You can't register before that.
 2. Pick one way to register:
- - `/account register qrcode`: link your cloud save with a QR code.
- - `/account register token`: link your cloud save with a token, if you already have one and don't want to go through the login process.
- - `/account register local`: no cloud save? Use the local score system.
+  - `/account register qrcode`: link your cloud save with a QR code.
+  - `/account register token`: link your cloud save with a token, if you already have one and don't want to go through the login process.
+  - `/account register local`: no cloud save? Use the local score system.
 3. (Optional) Use `/set-precision` if you want to see your scores more accurately.
 4. Now you can use `/get-scores` or `/get-photo`. Wanna share your stats? Run `/about-me`.
 5. (Optional) Run `/set-public-visibility true` to show up on `/leaderboard` and let others view your scores with the `generate_for` option of `/get-photo` and `/song-scores`. It's off by default.
