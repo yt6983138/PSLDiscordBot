@@ -152,7 +152,12 @@ public class PSLPlugin : IPlugin
 			.AddSingleton<AliasService>()
 			.AddSingleton<LocalWorkflowStore<LocalScoreDraft>>()
 			.AddSingleton<LocalWorkflowStore<StagedLocalImport>>()
-			.AddSingleton<LocalImportService>();
+			.AddSingleton<LocalImportService>()
+			.AddSingleton<RegisteredConstraint>()
+			.AddSingleton<TosConstraint>()
+			.AddSingleton<AdminConstraint>()
+			.AddSingleton<AliasAdminConstraint>()
+			.AddSingleton<AliasAdminStrictConstraint>();
 
 		hostBuilder.Services.AddAssemblyToMvc(this);
 	}

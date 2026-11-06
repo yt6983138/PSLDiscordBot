@@ -6,6 +6,7 @@ global using PhigrosLibraryCSharp;
 global using PhigrosLibraryCSharp.CloudSave;
 global using PhigrosLibraryCSharp.CloudSave.HttpModels;
 global using PhigrosLibraryCSharp.CloudSave.Login;
+global using PSLDiscordBot.Core.Command.Constraints;
 global using PSLDiscordBot.Core.Command.Global.Base;
 global using PSLDiscordBot.Core.Localization;
 global using PSLDiscordBot.Core.Models;
