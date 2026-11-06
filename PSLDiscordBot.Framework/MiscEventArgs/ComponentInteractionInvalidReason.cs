@@ -5,7 +5,5 @@ public enum ComponentInteractionInvalidReason
 	None,
 	MalformedId,
 	UsedNonce,
-	ExpiredProcess,
-	CommandNotFound,
-	CommandNotSupported
+	CommandNotFound
 }

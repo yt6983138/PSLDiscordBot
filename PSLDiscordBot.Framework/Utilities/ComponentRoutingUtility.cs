@@ -1,16 +1,14 @@
 using Discord;
-using Discord.WebSocket;
-using PSLDiscordBot.Framework.CommandBase;
 using PSLDiscordBot.Framework.MiscEventArgs;
+using System.Buffers.Binary;
 using System.Diagnostics.CodeAnalysis;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 
 namespace PSLDiscordBot.Framework.Utilities;
 
 /// <summary>
-/// Format: {nonce}{tag}encrypted({MemoryPackedIdentifier}{payload}){0xff} <br/>
+/// Format: {nonce}{tag}encrypted({type id}{payload}){0xff} <br/>
 /// all binary, then base16384 encoded. all those effort are done to prevent user from forging/replaying button click payloads.
 /// </summary>
 public static class ComponentRoutingUtility
@@ -26,34 +24,9 @@ public static class ComponentRoutingUtility
 		}
 	}
 
-	private record struct MemoryPackedIdentifier(int ProcessId, long TypeKey)
-	{
-		public static readonly int Size = sizeof(MemoryPackedIdentifier);
-
-		public readonly void Pack(Span<byte> buffer)
-		{
-			if (buffer.Length < Size)
-				throw new ArgumentException($"Buffer must be at least {Size} bytes long.", nameof(buffer));
-			BitConverter.TryWriteBytes(buffer.Slice(0, sizeof(int)), this.ProcessId);
-			BitConverter.TryWriteBytes(buffer.Slice(sizeof(int), sizeof(long)), this.TypeKey);
-		}
-		public static bool Unpack(ReadOnlySpan<byte> buffer, out MemoryPackedIdentifier identifier)
-		{
-			identifier = default;
-
-			if (buffer.Length < Size)
-				return false;
-
-			int processId = BitConverter.ToInt32(buffer.Slice(0, sizeof(int)));
-			long typeKey = BitConverter.ToInt64(buffer.Slice(sizeof(int), sizeof(long)));
-			identifier = new(processId, typeKey);
-			return true;
-		}
-	}
-
 	private const int TagSize = 12;
+	private static readonly int TypeKeySize = sizeof(nint);
 
-	private static readonly int _processId = Environment.ProcessId;
 	private static readonly AesGcm _aes;
 
 	static ComponentRoutingUtility()
@@ -61,12 +34,6 @@ public static class ComponentRoutingUtility
 		byte[] key = new byte[16];
 		RandomNumberGenerator.Fill(key);
 		_aes = new(key, TagSize);
-	}
-
-	private static MemoryPackedIdentifier CreateIdentifier(Type type)
-	{
-		long typeKey = type.TypeHandle.Value;
-		return new(_processId, typeKey);
 	}
 
 	[DoesNotReturn]
@@ -78,13 +45,13 @@ public static class ComponentRoutingUtility
 	public static string CreateComponentId(Type type, ReadOnlySpan<byte> payload)
 	{
 		// a quick check to prevent stack overflow
-		if (payload.Length > 200) ThrowTooLongPayload();
+		if (payload.Length > 150) ThrowTooLongPayload();
 
-		Span<byte> plainText = stackalloc byte[MemoryPackedIdentifier.Size + payload.Length];
+		Span<byte> plainText = stackalloc byte[TypeKeySize + payload.Length];
 		Span<byte> allCipherText = stackalloc byte[NoncePacker.Size + TagSize + plainText.Length + 1];
 
-		CreateIdentifier(type).Pack(plainText);
-		payload.CopyTo(plainText[MemoryPackedIdentifier.Size..]);
+		BinaryPrimitives.WriteIntPtrLittleEndian(plainText, type.TypeHandle.Value);
+		payload.CopyTo(plainText[TypeKeySize..]);
 
 		Span<byte> nonce = allCipherText[..NoncePacker.Size];
 		Span<byte> tag = allCipherText[NoncePacker.Size..(NoncePacker.Size + TagSize)];
@@ -96,7 +63,7 @@ public static class ComponentRoutingUtility
 
 		string customId = Base16384CJK.Encode(allCipherText);
 		if (customId.Length > ComponentBuilder.MaxCustomIdLength)
-			throw new ArgumentException($"The routed custom ID exceeds Discord's {ComponentBuilder.MaxCustomIdLength}-character limit.", nameof(payload));
+			ThrowTooLongPayload();
 
 		return customId;
 	}
@@ -110,14 +77,6 @@ public static class ComponentRoutingUtility
 		return payload!;
 	}
 
-	public static bool SupportsComponents(Type type)
-	{
-		MethodInfo? method = type.GetMethod(nameof(BasicCommandBase.HandleInteraction),
-			[typeof(SocketInteraction), typeof(object)]);
-		return method is not null && method.DeclaringType != typeof(BasicCommandBase)
-			&& method.GetBaseDefinition().DeclaringType == typeof(BasicCommandBase);
-	}
-
 	public static ComponentInteractionInvalidReason Parse(string? customId, out Type? type, out NoncePacker nonce, out byte[]? payload)
 	{
 		type = null;
@@ -127,7 +86,7 @@ public static class ComponentRoutingUtility
 			return reason;
 
 		type = Type.GetTypeFromHandle(RuntimeTypeHandle.FromIntPtr(typeKey));
-		if (type is null || !SupportsComponents(type))
+		if (type is null)
 			return ComponentInteractionInvalidReason.MalformedId;
 
 		return ComponentInteractionInvalidReason.None;
@@ -147,7 +106,7 @@ public static class ComponentRoutingUtility
 			return ComponentInteractionInvalidReason.MalformedId;
 
 		int endIndex = fullCipherText.LastIndexOf((byte)0xFF);
-		if (endIndex < NoncePacker.Size + TagSize + MemoryPackedIdentifier.Size)
+		if (endIndex < NoncePacker.Size + TagSize + TypeKeySize)
 			return ComponentInteractionInvalidReason.MalformedId;
 
 		ReadOnlySpan<byte> nonce = fullCipherText[..NoncePacker.Size];
@@ -164,18 +123,14 @@ public static class ComponentRoutingUtility
 			return ComponentInteractionInvalidReason.MalformedId;
 		}
 
-		if (plainText.Length < MemoryPackedIdentifier.Size)
+		if (plainText.Length < TypeKeySize)
 			return ComponentInteractionInvalidReason.MalformedId;
 
-		MemoryPackedIdentifier.Unpack(plainText, out MemoryPackedIdentifier identifier);
+		typeKey = BinaryPrimitives.ReadIntPtrLittleEndian(plainText);
 		nonceOut = NoncePacker.FromSpan(nonce);
 
-		if (identifier.ProcessId != _processId)
-			return ComponentInteractionInvalidReason.ExpiredProcess;
-
-		typeKey = (nint)identifier.TypeKey;
-		payload = new byte[plainText.Length - MemoryPackedIdentifier.Size];
-		plainText[MemoryPackedIdentifier.Size..].CopyTo(payload);
+		payload = new byte[plainText.Length - TypeKeySize];
+		plainText[TypeKeySize..].CopyTo(payload);
 		return ComponentInteractionInvalidReason.None;
 	}
 }

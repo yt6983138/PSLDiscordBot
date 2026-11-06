@@ -361,10 +361,6 @@ internal class CommandResolveService : ICommandResolveService, IPrivilegedComman
 			{
 				invalidReason = ComponentInteractionInvalidReason.CommandNotFound;
 			}
-			else if (!ComponentRoutingUtility.SupportsComponents(commandType))
-			{
-				invalidReason = ComponentInteractionInvalidReason.CommandNotSupported;
-			}
 			else
 			{
 				command = this._program.App.Services.GetKeyedService<BasicCommandBase>(commandType);
