@@ -59,6 +59,7 @@ public class SetMemorableScoreCommand : CommandBase
 		miscInfo.MemorableScoreThoughts = thoughts;
 
 		await requester.SetOrReplaceMiscInfo(miscInfo);
+		await requester.SaveChangesAsync();
 
 		await arg.QuickReplyWithAttachments([PSLUtils.ToAttachment(
 				GetScoresCommand.ScoresFormatter(arg, [score], 0, this._phigrosService.NonMultiLanguageInfos, 1, data!, this._localization, false, false),

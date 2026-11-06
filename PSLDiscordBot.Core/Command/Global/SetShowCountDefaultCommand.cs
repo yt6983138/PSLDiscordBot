@@ -26,6 +26,7 @@ public class SetShowCountDefaultCommand : CommandBase
 			?? new(arg.User.Id);
 		miscInfo.DefaultGetPhotoShowCount = arg.GetIntegerOptionAsInt32(this._localization[PSLNormalCommandKey.SetShowCountDefaultOptionCountName]);
 		await requester.SetOrReplaceMiscInfo(miscInfo);
+		await requester.SaveChangesAsync();
 
 		await arg.QuickReply(this._localization[PSLCommonMessageKey.OperationDone]);
 	}

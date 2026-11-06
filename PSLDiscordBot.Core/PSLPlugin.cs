@@ -225,6 +225,7 @@ public class PSLPlugin : IPlugin
 		   100,
 		   true)).Wait();
 #endif
+		database.SaveChanges();
 	}
 
 	void IPlugin.Unload(WebApplication host, bool isSafeUnload)

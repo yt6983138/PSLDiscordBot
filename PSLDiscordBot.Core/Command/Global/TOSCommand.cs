@@ -40,5 +40,6 @@ public class TOSCommand : GuestCommandBase
 			await requester.AddOrReplaceUserDataAsync(data);
 		}
 		await component.QuickReply(x => x.Components = null, this._localization[PSLGuestCommandKey.TOSAgreed], data is not null);
+			await requester.SaveChangesAsync();
 	}
 }

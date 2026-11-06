@@ -28,6 +28,7 @@ public class SetPrecisionCommand : CommandBase
 		using DataBaseService.DbDataRequester requester = this._dataBaseService.NewRequester();
 		data!.ShowFormat = sb.ToString();
 		await requester.AddOrReplaceUserDataAsync(data);
+		await requester.SaveChangesAsync();
 		await arg.QuickReply(this._localization[PSLCommonMessageKey.OperationDone]);
 	}
 }

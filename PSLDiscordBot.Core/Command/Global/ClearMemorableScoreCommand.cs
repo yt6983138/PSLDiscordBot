@@ -18,7 +18,11 @@ public class ClearMemorableScoreCommand : CommandBase
 		MiscInfo? info = await requester.GetMiscInfoAsync(arg.User.Id);
 		info?.MemorableScore = null;
 		info?.MemorableScoreThoughts = null;
-		if (info is not null) await requester.SetOrReplaceMiscInfo(info);
+		if (info is not null)
+		{
+			await requester.SetOrReplaceMiscInfo(info);
+			await requester.SaveChangesAsync();
+		}
 
 		await arg.QuickReply(this._localization[PSLNormalCommandKey.ClearMemorableScoreSuccess]);
 	}

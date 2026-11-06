@@ -24,6 +24,7 @@ public class SetPublicVisibilityCommand : CommandBase
 		using DataBaseService.DbDataRequester requester = this._dataBaseService.NewRequester();
 		data!.PublicVisibility = isPublic;
 		await requester.AddOrReplaceUserDataAsync(data);
+		await requester.SaveChangesAsync();
 		if (!isPublic)
 		{
 			await requester.RemoveLeaderboardEntryAsync(data.UserId);
