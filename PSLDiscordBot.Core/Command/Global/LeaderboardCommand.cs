@@ -81,6 +81,7 @@ public class LeaderboardCommand : CommandBase
 		int userIndex = entries.FindIndex(x => x.UserId == data!.UserId);
 		LeaderboardEntry userEntry = entries[userIndex];
 
+		// TODO: use localized string overload for constructor and remove all those
 		string? difficultyString = difficulty == DifficultyAll ? DifficultyAllString : difficulty.ToString();
 		List<string> titles = [
 			this._localization[PSLNormalCommandKey.LeaderboardRankTitle][arg.UserLocale],
