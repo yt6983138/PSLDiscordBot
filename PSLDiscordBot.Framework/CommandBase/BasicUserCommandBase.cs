@@ -25,5 +25,5 @@ public abstract class BasicUserCommandBase
 		this.EventId = new(2_11451400 + EventIdCount++, this.GetType().Name);
 	}
 
-	public abstract Task Execute(SocketUserCommand arg, object executer);
+	public abstract Task Execute(SocketUserCommand arg);
 }

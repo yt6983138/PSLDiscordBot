@@ -21,11 +21,12 @@ public class SetPrecisionCommand : CommandBase
 			maxValue: 100,
 			minValue: 1);
 
-	public override async Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
+	public override async Task RootCallback(SocketSlashCommand arg, UserData? data)
 	{
 		StringBuilder sb = new(".");
 		sb.Append('0', arg.GetIntegerOptionAsInt32(this._localization[PSLNormalCommandKey.SetPrecisionOptionPrecisionName]));
-		data.ShowFormat = sb.ToString();
+		using DataBaseService.DbDataRequester requester = this._dataBaseService.NewRequester();
+		data!.ShowFormat = sb.ToString();
 		await requester.AddOrReplaceUserDataAsync(data);
 		await arg.QuickReply(this._localization[PSLCommonMessageKey.OperationDone]);
 	}

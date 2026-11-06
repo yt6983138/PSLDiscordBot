@@ -19,7 +19,7 @@ public class SongInfoCommand : GuestCommandBase
 	public override SlashCommandBuilder CompleteBuilder => this.BasicBuilder
 		.AddSongSearchOption(this._localization);
 
-	public override async Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
+	public override async Task RootCallback(SocketSlashCommand arg, UserData? data)
 	{
 		List<SongSearchResult> foundAlias = this._aliasService.SearchSong(arg,
 			arg.GetSongSearchOption(this._localization));

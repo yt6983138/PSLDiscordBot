@@ -17,11 +17,12 @@ public class SetPublicVisibilityCommand : CommandBase
 			this._localization[PSLNormalCommandKey.SetPublicVisibilityOptionVisibilityDescription],
 			isRequired: true);
 
-	public override async Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
+	public override async Task RootCallback(SocketSlashCommand arg, UserData? data)
 	{
 		bool isPublic = arg.GetOption<bool>(this._localization[PSLNormalCommandKey.SetPublicVisibilityOptionVisibilityName]);
 
-		data.PublicVisibility = isPublic;
+		using DataBaseService.DbDataRequester requester = this._dataBaseService.NewRequester();
+		data!.PublicVisibility = isPublic;
 		await requester.AddOrReplaceUserDataAsync(data);
 		if (!isPublic)
 		{

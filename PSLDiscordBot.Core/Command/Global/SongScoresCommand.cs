@@ -24,8 +24,9 @@ public class SongScoresCommand : CommandBase
 		.AddIndexOption(this._localization)
 		.AddGenerateForOption(this._localization);
 
-	public override async Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
+	public override async Task RootCallback(SocketSlashCommand arg, UserData? data)
 	{
+		using DataBaseService.DbDataRequester requester = this._dataBaseService.NewRequester();
 		string search = arg.GetSongSearchOption(this._localization);
 		int index = arg.GetIndexOption(this._localization);
 		IUser? generateFor = arg.GetGenerateForOption(this._localization);
@@ -48,10 +49,10 @@ public class SongScoresCommand : CommandBase
 			return;
 		}
 
-		ISaveContext? context = await this._saveService.TryHandleAndFetchAsync(generateForUserData ?? data, arg, index);
+		ISaveContext? context = await this._saveService.TryHandleAndFetchAsync(generateForUserData ?? data!, arg, index);
 		if (context is null) return;
 		GameRecord save = context.ReadGameRecord();
-		PlayerInfo outerUserInfo = await this._saveService.GetPlayerInfoAsync(generateForUserData ?? data, context);
+		PlayerInfo outerUserInfo = await this._saveService.GetPlayerInfoAsync(generateForUserData ?? data!, context);
 
 		this._phigrosService.GetCompleteScores(save, out List<CompleteScore> _, out List<CompleteScore>? scoresToShow, out double rks);
 		scoresToShow = scoresToShow
@@ -90,7 +91,7 @@ public class SongScoresCommand : CommandBase
 
 		using CancellationTokenSource cts = this._config.Value.GetRenderTimeoutCTS();
 		(TextMap_Anonymous, ImageMap_Anonymous) maps = this._imageGenerator.CreateMaps(
-			generateForUserData ?? data,
+			generateForUserData ?? data!,
 			context,
 			outerUserInfo,
 			extraArg);
@@ -113,7 +114,7 @@ public class SongScoresCommand : CommandBase
 						rks,
 						this._phigrosService.NonMultiLanguageInfos,
 						int.MaxValue,
-						data,
+						data!,
 						this._localization,
 						false,
 						false),

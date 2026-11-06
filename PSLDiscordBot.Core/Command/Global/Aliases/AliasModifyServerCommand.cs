@@ -20,7 +20,7 @@ public class AliasModifyServerCommand : CommandBase
 		.AddAliasForSongOption(this._localization)
 		.AddAliasToOperateOption(this._localization);
 
-	public override async Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
+	public override async Task RootCallback(SocketSlashCommand arg, UserData? data)
 	{
 		AliasModifyOperation operation = arg.GetAliasOperationOption(this._localization);
 		string forSong = arg.GetAliasForSongOption(this._localization);

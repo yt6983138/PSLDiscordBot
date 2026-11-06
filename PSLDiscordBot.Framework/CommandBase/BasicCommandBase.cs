@@ -45,9 +45,9 @@ public abstract class BasicCommandBase
 		return ComponentRoutingUtility.CreateComponentId(this.GetType(), payload);
 	}
 
-	public abstract Task Execute(SocketSlashCommand arg, object executer);
+	public abstract Task Execute(SocketSlashCommand arg);
 
-	public virtual Task HandleInteraction(SocketInteraction arg, object executer)
+	public virtual Task HandleInteraction(SocketInteraction arg)
 	{
 		return Task.FromException(new NotSupportedException("This command does not handle message components."));
 	}

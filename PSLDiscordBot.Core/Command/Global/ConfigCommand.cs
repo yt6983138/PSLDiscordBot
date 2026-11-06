@@ -40,7 +40,7 @@ public class ConfigCommand : AdminCommandBase
 
 	// this was commented out at 4a663ce46b322fb3dfd43617c3d74a43a11c380f for some reason (i cant remember why even i did it lmao)
 	// might be useful in the future so i just keep it here
-	public override async Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
+	public override async Task RootCallback(SocketSlashCommand arg, UserData? data)
 	{
 		await Task.CompletedTask;
 		//string propertyName = arg.GetOption<string>("property_or_action");

@@ -38,14 +38,14 @@ public class MoreRksCommand : CommandBase
 			minValue: 1,
 			isRequired: false);
 
-	public override async Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
+	public override async Task RootCallback(SocketSlashCommand arg, UserData? data)
 	{
 		int count = arg.GetIntegerOptionAsInt32OrDefault(this._localization[PSLNormalCommandKey.MoreRksOptionCountName], 10);
 		// this will later be set to value for single song, but now it is for entire calulated rks
 		double giveLeastRks = arg.GetOptionOrDefault(this._localization[PSLNormalCommandKey.MoreRksOptionGetAtLeastName], -1d);
 		int index = arg.GetIndexOption(this._localization);
 
-		ISaveContext? context = await this._saveService.TryHandleAndFetchAsync(data, arg, index);
+		ISaveContext? context = await this._saveService.TryHandleAndFetchAsync(data!, arg, index);
 		if (context is null) return;
 		GameRecord save = context.ReadGameRecord();
 		this._phigrosService.GetCompleteScores(save, out List<CompleteScore>? scores, out double rks);
@@ -116,7 +116,7 @@ public class MoreRksCommand : CommandBase
 		stringBuilder.AppendLine(
 			Smart.Format(
 				this._localization[PSLNormalCommandKey.MoreRksIntro][arg.UserLocale],
-				(rks + (giveLeastRks / 30d)).ToString(data.ShowFormat)));
+				(rks + (giveLeastRks / 30d)).ToString(data!.ShowFormat)));
 
 		ColumnTextBuilder columnTextBuilder = new(arg, [
 			this._localization[PSLNormalCommandKey.MoreRksNumberTitle],

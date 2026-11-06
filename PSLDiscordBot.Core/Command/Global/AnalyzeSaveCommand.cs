@@ -34,7 +34,7 @@ public class AnalyzeSaveCommand : AdminCommandBase
 			"International mode",
 			isRequired: true);
 
-	public override async Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
+	public override async Task RootCallback(SocketSlashCommand arg, UserData? data)
 	{
 		ulong userId = arg.User.Id;
 		string token = arg.GetOption<string>("token");

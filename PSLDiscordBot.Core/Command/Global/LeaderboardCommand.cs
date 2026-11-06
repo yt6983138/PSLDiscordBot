@@ -68,17 +68,17 @@ public class LeaderboardCommand : CommandBase
 			.WithMaxValue(114514)
 			.WithRequired(false)));
 
-	public override async Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
+	public override async Task RootCallback(SocketSlashCommand arg, UserData? data)
 	{
 		GetRankUsingParameters(arg, this._localization, out ByWhat byWhat, out Difficulty? difficulty, out SocketSlashCommandDataOption? otherOptions);
 		long count = otherOptions?.GetOptionOrDefault<long>(this._localization[PSLNormalCommandKey.LeaderboardOptionCountName], 50) ?? 50;
 
-		List<LeaderboardEntry>? entries = await PrepareLeaderboardEntries(arg, this._localization, this._leaderboardService, data);
+		List<LeaderboardEntry>? entries = await PrepareLeaderboardEntries(arg, this._localization, this._leaderboardService, data!);
 		if (entries is null) return;
 
 		Dictionary<ulong, object> sortedData = SortLeaderboardEntryWithOptions(entries, byWhat, difficulty);
 
-		int userIndex = entries.FindIndex(x => x.UserId == data.UserId);
+		int userIndex = entries.FindIndex(x => x.UserId == data!.UserId);
 		LeaderboardEntry userEntry = entries[userIndex];
 
 		string? difficultyString = difficulty == DifficultyAll ? DifficultyAllString : difficulty.ToString();
@@ -128,7 +128,7 @@ public class LeaderboardCommand : CommandBase
 			}
 			else if (comparedData is IFormattable formattableData) // double, floats
 			{
-				row.WithUserFormatStringAdded(data, formattableData);
+				row.WithUserFormatStringAdded(data!, formattableData);
 			}
 			else if (comparedData is Challenge challenge)
 			{
@@ -150,7 +150,7 @@ public class LeaderboardCommand : CommandBase
 		string statisticString = byWhat switch
 		{
 			ByWhat.RKS
-				=> userEntry.AnalyzedData.RKS.ToString(data.ShowFormat),
+				=> userEntry.AnalyzedData.RKS.ToString(data!.ShowFormat),
 
 			ByWhat.Money
 				=> userEntry.AnalyzedData.Money.ToString(),
@@ -160,7 +160,7 @@ public class LeaderboardCommand : CommandBase
 				.GetFormatted(arg.UserLocale, userEntry.AnalyzedData.ChallengeRank),
 
 			ByWhat.Accuracy or ByWhat.AverageScore
-				=> ((double)sortedData[userEntry.UserId]).ToString(data.ShowFormat),
+				=> ((double)sortedData[userEntry.UserId]).ToString(data!.ShowFormat),
 
 			ByWhat.Count or ByWhat.TotalScore
 				=> sortedData[userEntry.UserId].ToString()!,
@@ -460,7 +460,7 @@ public class LeaderboardCommand : CommandBase
 			isRequired: false);
 
 	// TODO: localize this entire thing
-	public override async Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
+	public override async Task RootCallback(SocketSlashCommand arg, UserData? data)
 	{
 		int count = arg.GetIntegerOptionAsInt32OrDefault("count", 50);
 		GetRankUsingParameters(arg, out ByWhat byWhat, out Difficulty? difficulty, out ScoreStatus? scoreStatus);

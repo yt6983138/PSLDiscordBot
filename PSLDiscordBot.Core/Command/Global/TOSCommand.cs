@@ -12,7 +12,7 @@ public class TOSCommand : GuestCommandBase
 
 	public override SlashCommandBuilder CompleteBuilder => this.BasicBuilder;
 
-	public override async Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
+	public override async Task RootCallback(SocketSlashCommand arg, UserData? data)
 	{
 		await arg.QuickReply(x => x.Components = new ComponentBuilderV2()
 			.WithActionRow([new ButtonBuilder()
@@ -23,7 +23,7 @@ public class TOSCommand : GuestCommandBase
 			this._localization[PSLGuestCommandKey.TOSContent]);
 	}
 
-	public override async Task HandleInteraction(SocketInteraction arg, object executer)
+	public override async Task HandleInteraction(SocketInteraction arg)
 	{
 		if (arg is not SocketMessageComponent component) return;
 

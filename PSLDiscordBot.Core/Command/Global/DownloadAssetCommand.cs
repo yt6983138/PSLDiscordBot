@@ -30,7 +30,7 @@ public class DownloadAssetCommand : GuestCommandBase
 			choices: BuilderUtility.CreateChoicesFromEnum<Difficulty>(),
 			isRequired: false);
 
-	public override async Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
+	public override async Task RootCallback(SocketSlashCommand arg, UserData? data)
 	{
 		List<SongSearchResult> foundAlias = this._aliasService.SearchSong(arg, arg.GetSongSearchOption(this._localization));
 
