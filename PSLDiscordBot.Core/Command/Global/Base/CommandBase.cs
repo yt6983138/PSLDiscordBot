@@ -1,27 +1,28 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace PSLDiscordBot.Core.Command.Global.Base;
+
 public abstract class CommandBase : BasicCommandBase
 {
-	public delegate Task Router<T>(SocketSlashCommandDataOption option, T? context);
-	public delegate Task Router(SocketSlashCommandDataOption option);
-	public record struct RouteInfo(OneOf<string, LocalizedString> Name, Router Router);
-	public record struct RouteInfo<T>(OneOf<string, LocalizedString> Name, Router<T> Router);
-
 	#region Injection
-	protected readonly IOptions<Config> _config;
-	protected readonly DataBaseService _dataBaseService;
-	protected readonly LocalizationService _localization;
-	protected readonly ILogger _logger;
-	protected readonly PhigrosService _phigrosService;
-	protected readonly TemporaryTOSAgreementService _temporaryTOSAgreementService;
-	protected readonly AliasService _aliasService;
-	protected readonly IServiceProvider _serviceProvider;
+	protected internal readonly IOptions<Config> _config;
+	protected internal readonly DataBaseService _dataBaseService;
+	protected internal readonly LocalizationService _localization;
+	protected internal readonly ILogger _logger;
+	protected internal readonly PhigrosService _phigrosService;
+	protected internal readonly TemporaryTOSAgreementService _temporaryTOSAgreementService;
+	protected internal readonly AliasService _aliasService;
+	protected internal readonly IServiceProvider _serviceProvider;
+	protected internal readonly RegisteredConstraint _registeredConstraint;
+	protected internal readonly TosConstraint _tosConstraint;
 	#endregion
+
+	private readonly Lazy<IReadOnlyList<CommandNode>> _children;
 
 	public CommandBase(IServiceProvider provider)
 		: base()
 	{
+		this._children = new(this.CreateChildren);
 		this._serviceProvider = provider;
 		this._logger = provider.GetRequiredService<ILoggerFactory>().CreateLogger(this.GetType());
 		this._config = provider.GetRequiredService<IOptions<Config>>();
@@ -30,6 +31,8 @@ public abstract class CommandBase : BasicCommandBase
 		this._phigrosService = provider.GetRequiredService<PhigrosService>();
 		this._temporaryTOSAgreementService = provider.GetRequiredService<TemporaryTOSAgreementService>();
 		this._aliasService = provider.GetRequiredService<AliasService>();
+		this._registeredConstraint = provider.GetRequiredService<RegisteredConstraint>();
+		this._tosConstraint = provider.GetRequiredService<TosConstraint>();
 	}
 
 
@@ -41,135 +44,117 @@ public abstract class CommandBase : BasicCommandBase
 	public abstract OneOf<string, LocalizedString> PSLName { get; }
 	public abstract OneOf<string, LocalizedString> PSLDescription { get; }
 
-	public virtual bool RequireTOSAcceptance => true;
+	/// <summary>
+	/// Constraints applied to the command itself and all its subcommands, in order. Defaults to registered and TOS,
+	/// a command that needs less must opt out explicitly.
+	/// </summary>
+	public virtual IReadOnlyList<IConstraint> MasterConstraints => [this._registeredConstraint, this._tosConstraint];
+
+	/// <summary>
+	/// The subcommands and subcommand groups of this command, created once on first use. Empty for a flat command.
+	/// </summary>
+	public IReadOnlyList<CommandNode> Children => this._children.Value;
+
+	/// <summary>
+	/// Creates the nodes with <see langword="new"/>. The order here is the order Discord shows.
+	/// Called once on first use, never from the constructor, because derived fields are not set yet.
+	/// </summary>
+	protected virtual IReadOnlyList<CommandNode> CreateChildren() => [];
 
 	protected override SlashCommandBuilder BasicBuilder
 	{
 		get
 		{
+			SlashCommandBuilder builder = base.BasicBuilder;
 			if (this.PSLName.IsValue2)
 			{
-				base.BasicBuilder.WithNameLocalizations(this.PSLName.Value2);
+				builder.WithNameLocalizations(this.PSLName.Value2);
 			}
 			if (this.PSLDescription.IsValue2)
 			{
-				base.BasicBuilder.WithDescriptionLocalizations(this.PSLDescription.Value2);
+				builder.WithDescriptionLocalizations(this.PSLDescription.Value2);
 			}
-			return base.BasicBuilder;
+			foreach (CommandNode child in this.Children)
+			{
+				builder.AddOption(child switch
+				{
+					SubcommandGroupNode group => group.CompleteBuilder,
+					SubcommandNode leaf => leaf.CompleteBuilder
+				});
+			}
+			return builder;
 		}
 	}
 
-	public abstract Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer);
-	public override async Task Execute(SocketSlashCommand arg, object executer)
+	/// <summary>
+	/// Entry point of a flat command, not called when the command has node children.
+	/// </summary>
+	public virtual Task RootCallback(SocketSlashCommand arg, UserData? data)
 	{
+		throw new NotSupportedException($"{this.GetType().Name} does not implement {nameof(this.RootCallback)}.");
+	}
+	public sealed override async Task Execute(SocketSlashCommand arg)
+	{
+		// resolving happens before the deferral, so an unmatched path throws to the error handler
+		(SubcommandGroupNode? group, SubcommandNode? leaf, SocketSlashCommandDataOption? leafOption) =
+			this.Children.Count > 0 ? this.ResolveLeaf(arg) : default;
+
 		using DataBaseService.DbDataRequester requester = this._dataBaseService.NewRequester();
-		await arg.DeferAsync(ephemeral: this.IsEphemeral);
-		UserData? userData = await this.CheckHasRegisteredAndReply(arg, requester);
-		if (userData is null)
-			return;
+		await arg.DeferAsync(ephemeral: leaf?.IsEphemeral ?? this.IsEphemeral);
+		UserData? userData = await requester.GetUserDataDirectlyAsync(arg.User.Id);
 
-		bool hasAgreedTos = userData.TOSAgreementLevel >= this._config.Value.CurrentTOSAgreementLevel
-			|| this._temporaryTOSAgreementService.HasAgreed(arg.User.Id);
-
-		if (!hasAgreedTos && this.RequireTOSAcceptance)
+		if (!await CheckConstraints(this.MasterConstraints, arg, userData)
+			|| (group is not null && !await CheckConstraints(group.Constraints, arg, userData))
+			|| (leaf is not null && !await CheckConstraints(leaf.Constraints, arg, userData)))
 		{
-			await arg.QuickReply(this._localization[PSLCommonKey.CommandBaseTOSNotAgreed]);
 			return;
 		}
 
-		await this.Callback(arg, userData, requester, executer);
+		if (leaf is null)
+			await this.RootCallback(arg, userData);
+		else
+			await leaf.Callback(arg, leafOption, userData);
 	}
 
-	public async Task<UserData?> CheckHasRegisteredAndReply(SocketSlashCommand task, DataBaseService.DbDataRequester requester)
+	private static async Task<bool> CheckConstraints(IReadOnlyList<IConstraint> constraints, SocketSlashCommand arg, UserData? data)
 	{
-		ulong userId = task.User.Id;
-
-		UserData? userData = await requester.GetUserDataDirectlyAsync(userId);
-		if (userData is null)
+		foreach (IConstraint constraint in constraints)
 		{
-			await task.QuickReply(this._localization[PSLCommonKey.CommandBaseNotRegistered][task.UserLocale]);
-			return null;
+			if (!await constraint.Check(arg, data))
+				return false;
 		}
-		return userData;
-	}
-	public async Task<bool> CheckIfUserIsAdminAndRespond(SocketSlashCommand command)
-	{
-		if (command.User.Id == this._config.Value.AdminUserId)
-			return true;
-
-		await command.QuickReply(this._localization[PSLCommonKey.AdminCommandBasePermissionDenied][command.UserLocale]);
-		return false;
+		return true;
 	}
 
-	private static bool StringEqualsStringOrLocalized(string str, OneOf<string, LocalizedString> target)
+	private (SubcommandGroupNode? Group, SubcommandNode Leaf, SocketSlashCommandDataOption LeafOption) ResolveLeaf(SocketSlashCommand arg)
 	{
-		if (target.IsValue2)
-			return str == target.Value2.Default;
+		SocketSlashCommandDataOption? first = arg.Data.Options.FirstOrDefault();
+		CommandNode node = this.MatchNode(this.Children, first);
+		if (node is SubcommandNode topLeaf)
+			return (null, topLeaf, first!);
 
-		return str == target.Value1;
+		SubcommandGroupNode group = (SubcommandGroupNode)node;
+		SocketSlashCommandDataOption? second = first!.Options.FirstOrDefault();
+		SubcommandNode leaf = (SubcommandNode)this.MatchNode(group.Children, second);
+		return (group, leaf, second!);
 	}
 
-	public static RouteInfo RouteToSubcommand(OneOf<string, LocalizedString> groupName, params IEnumerable<RouteInfo> routes)
+	private CommandNode MatchNode(IEnumerable<CommandNode> nodes, SocketSlashCommandDataOption? option)
 	{
-		return new(groupName, option => RouteSubCommand(option, routes));
-	}
-	public static RouteInfo<T> RouteToSubcommand<T>(OneOf<string, LocalizedString> groupName, T? context = default, params IEnumerable<RouteInfo<T>> routes)
-	{
-		return new(groupName, (option, ctx) => RouteSubCommand(option, ctx, routes));
-	}
+		if (option is null)
+			throw new InvalidOperationException($"{this.Name} was invoked without a subcommand option, registered commands may be out of date.");
 
-	public static async Task RouteSubCommandGroup(SocketSlashCommandData command, params IEnumerable<RouteInfo> routes)
-	{
-		foreach (RouteInfo item in routes)
+		foreach (CommandNode node in nodes)
 		{
-			SocketSlashCommandDataOption? optionMatching = command.Options.FirstOrDefault(x => StringEqualsStringOrLocalized(x.Name, item.Name));
-			if (optionMatching is null) continue;
+			if (node.Name != option.Name) continue;
 
-			if (optionMatching.Type != ApplicationCommandOptionType.SubCommandGroup)
-				throw new ArgumentException($"Option {optionMatching.Name} is not a subcommand group");
-
-			await item.Router.Invoke(optionMatching);
+			ApplicationCommandOptionType expected = node is SubcommandGroupNode
+				? ApplicationCommandOptionType.SubCommandGroup
+				: ApplicationCommandOptionType.SubCommand;
+			if (option.Type != expected)
+				throw new InvalidOperationException($"Option {option.Name} of {this.Name} is {option.Type} but {expected} was expected, registered commands may be out of date.");
+			return node;
 		}
-	}
-	public static Task RouteSubCommandGroup<T>(SocketSlashCommandData command, T? context = default, params IEnumerable<RouteInfo<T>> routes)
-	{
-		return RouteSubCommandGroup(command, routes.Select(x => new RouteInfo(x.Name, y => x.Router.Invoke(y, context))));
-	}
-
-	public static async Task RouteSubCommand(SocketSlashCommandData command, params IEnumerable<RouteInfo> routes)
-	{
-		foreach (RouteInfo item in routes)
-		{
-			SocketSlashCommandDataOption? optionMatching = command.Options.FirstOrDefault(x => StringEqualsStringOrLocalized(x.Name, item.Name));
-			if (optionMatching is null) continue;
-
-			if (optionMatching.Type != ApplicationCommandOptionType.SubCommand)
-				throw new ArgumentException($"Option {optionMatching.Name} is not a subcommand");
-
-			await item.Router.Invoke(optionMatching);
-		}
-	}
-	public static Task RouteSubCommand<T>(SocketSlashCommandData command, T? context = default, params IEnumerable<RouteInfo<T>> routes)
-	{
-		return RouteSubCommand(command, routes.Select(x => new RouteInfo(x.Name, y => x.Router.Invoke(y, context))));
-	}
-
-	// its quite annoying that SocketSlashCommandData and SocketSlashCommandDataOption have the almost same structure but no common interface or base class
-	public static async Task RouteSubCommand(SocketSlashCommandDataOption option, params IEnumerable<RouteInfo> routes)
-	{
-		foreach (RouteInfo item in routes)
-		{
-			SocketSlashCommandDataOption? optionMatching = option.Options.FirstOrDefault(x => StringEqualsStringOrLocalized(x.Name, item.Name));
-			if (optionMatching is null) continue;
-
-			if (optionMatching.Type != ApplicationCommandOptionType.SubCommand)
-				throw new ArgumentException($"Option {optionMatching.Name} is not a subcommand");
-
-			await item.Router.Invoke(optionMatching);
-		}
-	}
-	public static Task RouteSubCommand<T>(SocketSlashCommandDataOption option, T? context = default, params IEnumerable<RouteInfo<T>> routes)
-	{
-		return RouteSubCommand(option, routes.Select(x => new RouteInfo(x.Name, y => x.Router.Invoke(y, context))));
+		throw new InvalidOperationException($"{this.Name} has no subcommand {option.Name}, registered commands may be out of date.");
 	}
 }

@@ -4,7 +4,7 @@ using System.Text;
 namespace PSLDiscordBot.Core.Command.Global;
 
 [AddToGlobal]
-public class SongInfoCommand : GuestCommandBase
+public class SongInfoCommand : CommandBase
 {
 	public SongInfoCommand(IServiceProvider provider) : base(provider)
 	{
@@ -14,6 +14,8 @@ public class SongInfoCommand : GuestCommandBase
 
 	public override OneOf<string, LocalizedString> PSLName => this._localization[PSLGuestCommandKey.SongInfoName];
 	public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLGuestCommandKey.SongInfoDescription];
+
+	public override IReadOnlyList<IConstraint> MasterConstraints => [];
 
 	// TODO: add an option to specify the difficulty to get the illustration for
 	public override SlashCommandBuilder CompleteBuilder => this.BasicBuilder

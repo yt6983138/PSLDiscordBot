@@ -3,7 +3,7 @@
 namespace PSLDiscordBot.Core.Command.Global;
 
 [AddToGlobal]
-public class HelpCommand : GuestCommandBase
+public class HelpCommand : CommandBase
 {
 	public HelpCommand(IServiceProvider provider) : base(provider)
 	{
@@ -11,6 +11,8 @@ public class HelpCommand : GuestCommandBase
 
 	public override OneOf<string, LocalizedString> PSLName => this._localization[PSLGuestCommandKey.HelpName];
 	public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLGuestCommandKey.HelpDescription];
+
+	public override IReadOnlyList<IConstraint> MasterConstraints => [];
 
 	public override SlashCommandBuilder CompleteBuilder => this.BasicBuilder;
 

@@ -1,7 +1,7 @@
 ﻿namespace PSLDiscordBot.Core.Command.Global;
 
 [AddToGlobal]
-public class ReportProblemCommand : GuestCommandBase
+public class ReportProblemCommand : CommandBase
 {
 	private readonly BugReportHandlerService _bugReportHandlerService;
 
@@ -13,6 +13,8 @@ public class ReportProblemCommand : GuestCommandBase
 
 	public override OneOf<string, LocalizedString> PSLName => this._localization[PSLGuestCommandKey.ReportProblemName];
 	public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLGuestCommandKey.ReportProblemDescription];
+
+	public override IReadOnlyList<IConstraint> MasterConstraints => [];
 
 	public override SlashCommandBuilder CompleteBuilder => this.BasicBuilder
 		.AddOption(

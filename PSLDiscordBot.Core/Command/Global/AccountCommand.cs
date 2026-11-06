@@ -3,7 +3,7 @@ using System.Diagnostics;
 namespace PSLDiscordBot.Core.Command.Global;
 
 [AddToGlobal]
-public class AccountCommand : GuestCommandBase
+public partial class AccountCommand : CommandBase
 {
 	public class QRCodeDataModel : CompleteQRCodeData
 	{
@@ -52,111 +52,19 @@ public class AccountCommand : GuestCommandBase
 	public override OneOf<string, LocalizedString> PSLName => this._localization[PSLAccountCommandKey.AccountName];
 	public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLAccountCommandKey.AccountDescription];
 
-	public override bool RequireTOSAcceptance => true;
+	public override IReadOnlyList<IConstraint> MasterConstraints => [this._tosConstraint];
 
-	public override SlashCommandBuilder CompleteBuilder => this.BasicBuilder
-		.AddOption(new SlashCommandOptionBuilder()
-			.WithName(this._localization[PSLAccountCommandKey.AccountRegisterGroupName])
-			.WithDescription(this._localization[PSLAccountCommandKey.AccountRegisterGroupDescription])
-			.WithType(ApplicationCommandOptionType.SubCommandGroup)
-			.AddOption(new SlashCommandOptionBuilder()
-				.WithName(this._localization[PSLAccountCommandKey.AccountRegisterQrCodeName])
-				.WithDescription(this._localization[PSLAccountCommandKey.AccountRegisterQrCodeDescription])
-				.WithType(ApplicationCommandOptionType.SubCommand)
-				.AddOption(
-					this._localization[PSLGuestCommandKey.LoginOptionIsInternationalName],
-					ApplicationCommandOptionType.Boolean,
-					this._localization[PSLGuestCommandKey.LoginOptionIsInternationalDescription],
-					isRequired: true))
-			.AddOption(new SlashCommandOptionBuilder()
-				.WithName(this._localization[PSLAccountCommandKey.AccountRegisterTokenName])
-				.WithDescription(this._localization[PSLAccountCommandKey.AccountRegisterTokenDescription])
-				.WithType(ApplicationCommandOptionType.SubCommand)
-				.AddOption(
-					this._localization[PSLAccountCommandKey.AccountRegisterTokenOptionTokenName],
-					ApplicationCommandOptionType.String,
-					this._localization[PSLAccountCommandKey.AccountRegisterTokenOptionTokenDescription],
-					isRequired: true,
-					maxLength: 25,
-					minLength: 25)
-				.AddOption(
-					this._localization[PSLGuestCommandKey.LoginOptionIsInternationalName],
-					ApplicationCommandOptionType.Boolean,
-					this._localization[PSLGuestCommandKey.LoginOptionIsInternationalDescription],
-					isRequired: true))
-			.AddOption(new SlashCommandOptionBuilder()
-				.WithName(this._localization[PSLAccountCommandKey.AccountRegisterLocalName])
-				.WithDescription(this._localization[PSLAccountCommandKey.AccountRegisterLocalDescription])
-				.WithType(ApplicationCommandOptionType.SubCommand)))
-		.AddOption(new SlashCommandOptionBuilder()
-			.WithName(this._localization[PSLAccountCommandKey.AccountSwitchGroupName])
-			.WithDescription(this._localization[PSLAccountCommandKey.AccountSwitchGroupDescription])
-			.WithType(ApplicationCommandOptionType.SubCommandGroup)
-			.AddOption(new SlashCommandOptionBuilder()
-				.WithName(this._localization[PSLAccountCommandKey.AccountSwitchCloudName])
-				.WithDescription(this._localization[PSLAccountCommandKey.AccountSwitchCloudDescription])
-				.WithType(ApplicationCommandOptionType.SubCommand))
-			.AddOption(new SlashCommandOptionBuilder()
-				.WithName(this._localization[PSLAccountCommandKey.AccountSwitchLocalName])
-				.WithDescription(this._localization[PSLAccountCommandKey.AccountSwitchLocalDescription])
-				.WithType(ApplicationCommandOptionType.SubCommand)))
-		.AddOption(new SlashCommandOptionBuilder()
-			.WithName(this._localization[PSLAccountCommandKey.AccountDeleteName])
-			.WithDescription(this._localization[PSLAccountCommandKey.AccountDeleteDescription])
-			.WithType(ApplicationCommandOptionType.SubCommand))
-		.AddOption(new SlashCommandOptionBuilder()
-			.WithName(this._localization[PSLAccountCommandKey.AccountStatusName])
-			.WithDescription(this._localization[PSLAccountCommandKey.AccountStatusDescription])
-			.WithType(ApplicationCommandOptionType.SubCommand));
+	public override SlashCommandBuilder CompleteBuilder => this.BasicBuilder;
 
-	public override async Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
-	{
-		await RouteSubCommandGroup(arg.Data,
-			[RouteToSubcommand(this._localization[PSLAccountCommandKey.AccountRegisterGroupName],
-				new RouteInfo(this._localization[PSLAccountCommandKey.AccountRegisterQrCodeName], option => this.HandleRegisterQrCode(arg, data, option)),
-				new RouteInfo(this._localization[PSLAccountCommandKey.AccountRegisterTokenName], option => this.HandleRegisterToken(arg, data, option)),
-				new RouteInfo(this._localization[PSLAccountCommandKey.AccountRegisterLocalName], _ => this.HandleRegisterLocal(arg, data))),
-			RouteToSubcommand(this._localization[PSLAccountCommandKey.AccountSwitchGroupName],
-				new RouteInfo(this._localization[PSLAccountCommandKey.AccountSwitchCloudName], _ => this.HandleSwitchCloud(arg, data)),
-				new RouteInfo(this._localization[PSLAccountCommandKey.AccountSwitchLocalName], _ => this.HandleSwitchLocal(arg, data)))]);
-		await RouteSubCommand(arg.Data,
-			[new RouteInfo(this._localization[PSLAccountCommandKey.AccountDeleteName], _ => this.HandleDelete(arg, data)),
-			new RouteInfo(this._localization[PSLAccountCommandKey.AccountStatusName], _ => this.HandleStatus(arg, data, requester))]);
-	}
+	protected override IReadOnlyList<CommandNode> CreateChildren() =>
+	[
+		new RegisterGroup(this),
+		new SwitchGroup(this),
+		new DeleteNode(this),
+		new StatusNode(this),
+	];
 
-	private async Task HandleStatus(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester)
-	{
-		if (data is null)
-		{
-			await arg.QuickReply(this._localization[PSLCommonKey.CommandBaseNotRegistered]);
-			return;
-		}
-
-		bool hasLocalCollection = await requester.HasLocalSaveAsync(arg.User.Id);
-		await arg.QuickReply(
-			this._localization[PSLAccountCommandKey.AccountStatusReply],
-			new AccountStatusModel(data.IsLocal, data.HasCloudBinding, data.IsInternational, data.Token, hasLocalCollection));
-	}
-
-	private async Task HandleDelete(SocketSlashCommand arg, UserData? data)
-	{
-		if (data is null)
-		{
-			await arg.QuickReply(this._localization[PSLCommonKey.CommandBaseNotRegistered]);
-			return;
-		}
-
-		// nothing is deleted here; the confirmation button re-checks state in HandleInteraction
-		MessageComponent controls = new ComponentBuilderV2()
-			.WithActionRow([new ButtonBuilder()
-				.WithCustomId(this.CreateComponentId([DeleteConfirmComponentKind]))
-				.WithLabel(this._localization[PSLAccountCommandKey.AccountDeleteConfirmButton], arg)
-				.WithStyle(ButtonStyle.Danger)])
-			.Build();
-		await arg.QuickReply(message => message.Components = controls, this._localization[PSLAccountCommandKey.AccountDeleteWarning]);
-	}
-
-	public override async Task HandleInteraction(SocketInteraction arg, object executer)
+	public override async Task HandleInteraction(SocketInteraction arg)
 	{
 		if (arg is not SocketMessageComponent component) return;
 
@@ -166,7 +74,7 @@ public class AccountCommand : GuestCommandBase
 		await component.DeferAsync(this.IsEphemeral);
 
 		// re-check the current state instead of trusting the warning shown earlier
-		using (DataBaseService.DbDataRequester requester = this._dataBaseService.NewRequester(saveAutomatically: false))
+		using (DataBaseService.DbDataRequester requester = this._dataBaseService.NewRequester())
 		{
 			UserData? userData = await requester.GetUserDataDirectlyAsync(arg.User.Id);
 			if (userData is null)
@@ -188,51 +96,6 @@ public class AccountCommand : GuestCommandBase
 		await component.QuickReply(message => message.Components = null, this._localization[PSLAccountCommandKey.AccountDeleteSuccess]);
 	}
 
-	private async Task HandleRegisterLocal(SocketSlashCommand arg, UserData? data)
-	{
-		if (data is not null)
-		{
-			await arg.QuickReply(this._localization[PSLAccountCommandKey.AccountRegisterLocalAlreadyRegistered]);
-			return;
-		}
-		await this.StartLocalAndReplyAsync(arg);
-	}
-
-	private async Task HandleSwitchLocal(SocketSlashCommand arg, UserData? data)
-	{
-		if (data is null)
-		{
-			await arg.QuickReply(this._localization[PSLCommonKey.CommandBaseNotRegistered]);
-			return;
-		}
-		if (data.IsLocal)
-		{
-			await arg.QuickReply(this._localization[PSLAccountCommandKey.AccountSwitchLocalAlreadyLocal]);
-			return;
-		}
-		await this.StartLocalAndReplyAsync(arg);
-	}
-
-	private async Task HandleSwitchCloud(SocketSlashCommand arg, UserData? data)
-	{
-		if (data is null)
-		{
-			await arg.QuickReply(this._localization[PSLCommonKey.CommandBaseNotRegistered]);
-			return;
-		}
-		if (!data.IsLocal)
-		{
-			await arg.QuickReply(this._localization[PSLAccountCommandKey.AccountSwitchCloudAlreadyCloud]);
-			return;
-		}
-		if (!await this._saveService.UseCloudAsync(arg.User.Id))
-		{
-			await arg.QuickReply(this._localization[PSLAccountCommandKey.AccountSwitchCloudNoBinding]);
-			return;
-		}
-		await arg.QuickReply(this._localization[PSLAccountCommandKey.AccountSwitchCloudSuccess]);
-	}
-
 	private async Task StartLocalAndReplyAsync(SocketSlashCommand arg)
 	{
 		await this._saveService.StartLocalAsync(arg.User.Id, this._config.Value.CurrentTOSAgreementLevel, GetInitialNickname(arg.User));
@@ -247,53 +110,6 @@ public class AccountCommand : GuestCommandBase
 		return user is IGuildUser guildUser
 			? guildUser.DisplayName
 			: user.GlobalName ?? user.Username;
-	}
-
-	private async Task HandleRegisterQrCode(SocketSlashCommand arg, UserData? data, SocketSlashCommandDataOption option)
-	{
-		bool isInternational = option.GetOptionOrDefault(this._localization[PSLGuestCommandKey.LoginOptionIsInternationalName], false);
-		bool chinaMode = !isInternational;
-
-		CompleteQRCodeData qrCode = await TapTapHelper.RequestLoginQrCode(useChinaEndpoint: chinaMode);
-		DateTime stopAt = DateTime.Now + new TimeSpan(0, 0, qrCode.ExpiresInSeconds - 15);
-		await arg.QuickReply(this._localization[PSLAccountCommandKey.AccountRegisterQrCodeBegin], new QRCodeDataModel(qrCode, isInternational));
-		string? token = await ListenQrCodeChange(qrCode, chinaMode, stopAt);
-
-		if (token is null)
-		{
-			await arg.QuickReply(this._localization[PSLAccountCommandKey.AccountRegisterQrCodeTimedOut]);
-			return;
-		}
-
-		UserData userData = new(arg.User.Id, token, isInternational, this._config.Value.CurrentTOSAgreementLevel, false);
-		_ = await userData.SaveCache.GetPlayerInfoAsync();
-		await this.ActivateCloudAndReplyAsync(arg, data, userData);
-	}
-
-	private async Task HandleRegisterToken(SocketSlashCommand arg, UserData? data, SocketSlashCommandDataOption option)
-	{
-		string token = option.GetOptionOrDefault<string>(this._localization[PSLAccountCommandKey.AccountRegisterTokenOptionTokenName]) ?? "";
-
-		if (!Save.IsSemanticallyValidToken(token))
-		{
-			await arg.QuickReply(this._localization[PSLAccountCommandKey.AccountRegisterTokenInvalid]);
-			return;
-		}
-
-		UserData tmp = new(
-			arg.User.Id,
-			token,
-			option.GetOptionOrDefault(this._localization[PSLGuestCommandKey.LoginOptionIsInternationalName], false),
-			this._config.Value.CurrentTOSAgreementLevel,
-			false);
-
-		// the fetching process will reply if theres some sort of error
-		// the temporary token is not the user's active binding yet, so it must not enter the cloud-fetched leaderboard hook
-		SaveContext? fetched = await this._saveService.TryHandleCloudAsync(tmp.SaveCache, arg, 0, false, raiseFetchedHook: false);
-		if (fetched is null)
-			return;
-
-		await this.ActivateCloudAndReplyAsync(arg, data, tmp);
 	}
 
 	private async Task ActivateCloudAndReplyAsync(SocketSlashCommand arg, UserData? existing, UserData userData)

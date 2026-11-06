@@ -1,7 +1,7 @@
 namespace PSLDiscordBot.Core.Command.Global.Template;
 
 //[AddToGlobal]
-public class ExampleComponentCommand : GuestCommandBase
+public class ExampleComponentCommand : CommandBase
 {
 	public ExampleComponentCommand(IServiceProvider provider) : base(provider)
 	{
@@ -9,6 +9,8 @@ public class ExampleComponentCommand : GuestCommandBase
 
 	public override OneOf<string, LocalizedString> PSLName => "example-component";
 	public override OneOf<string, LocalizedString> PSLDescription => "Example of component routing.";
+
+	public override IReadOnlyList<IConstraint> MasterConstraints => [];
 
 	public override SlashCommandBuilder CompleteBuilder => this.BasicBuilder;
 

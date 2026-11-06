@@ -13,56 +13,146 @@ public partial class LocalCommand
 		Unavailable,
 	}
 
-	private async Task HandleScoreSet(SocketSlashCommand arg, UserData data, SocketSlashCommandDataOption option)
+	private sealed class ScoreGroup : SubcommandGroupNode
 	{
-		string search = option.GetOptionOrDefault<string>(this._localization[PSLCommonOptionKey.SongSearchOptionName]) ?? "";
-		Difficulty difficulty = (Difficulty)option.GetIntegerOptionAsInt32OrDefault(this._localization[PSLLocalCommandKey.LocalScoreDifficultyOptionName]);
-		long score = option.GetOptionOrDefault<long>(this._localization[PSLLocalCommandKey.LocalScoreScoreOptionName], -1);
-		float accuracy = (float)option.GetOptionOrDefault(this._localization[PSLLocalCommandKey.LocalScoreAccuracyOptionName], double.NaN);
-		bool isFc = option.GetOptionOrDefault<bool>(this._localization[PSLLocalCommandKey.LocalScoreFcOptionName]);
+		private readonly LocalCommand _root;
 
-		if (score == 1_000_000)
+		public ScoreGroup(LocalCommand root) : base(root)
 		{
-			if (accuracy < 100.0f)
-			{
-				await arg.QuickReply(this._localization[PSLLocalCommandKey.LocalScoreInvalidAccuracy]);
-				return;
-			}
-			else if (!isFc)
-			{
-				await arg.QuickReply(this._localization[PSLLocalCommandKey.LocalScoreInvalidFc]);
-				return;
-			}
-		}
-		if (accuracy == 100.0f)
-		{
-			if (score < 1_000_000)
-			{
-				await arg.QuickReply(this._localization[PSLLocalCommandKey.LocalScoreInvalidScore]);
-				return;
-			}
-			else if (!isFc)
-			{
-				await arg.QuickReply(this._localization[PSLLocalCommandKey.LocalScoreInvalidFc]);
-				return;
-			}
+			this._root = root;
 		}
 
-		UserData? localData = await this.GetLocalUserOrReplyAsync(arg, data);
-		if (localData is null) return;
+		public override OneOf<string, LocalizedString> PSLName => this._localization[PSLLocalCommandKey.LocalScoreGroupName];
+		public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLLocalCommandKey.LocalScoreGroupDescription];
 
-		await this.BeginScoreEditAsync(arg, localData, search, new(difficulty, false, (int)score, (float)accuracy, isFc, []));
+		protected override IReadOnlyList<SubcommandNode> CreateChildren() =>
+		[
+			new ScoreSetNode(this._root),
+			new ScoreRemoveNode(this._root),
+		];
 	}
 
-	private async Task HandleScoreRemove(SocketSlashCommand arg, UserData data, SocketSlashCommandDataOption option)
+	private sealed class ScoreSetNode : SubcommandNode
 	{
-		string search = option.GetOptionOrDefault<string>(this._localization[PSLCommonOptionKey.SongSearchOptionName]) ?? "";
-		Difficulty difficulty = (Difficulty)option.GetIntegerOptionAsInt32OrDefault(this._localization[PSLLocalCommandKey.LocalScoreDifficultyOptionName]);
+		private readonly LocalCommand _root;
 
-		UserData? localData = await this.GetLocalUserOrReplyAsync(arg, data);
-		if (localData is null) return;
+		public ScoreSetNode(LocalCommand root) : base(root)
+		{
+			this._root = root;
+		}
 
-		await this.BeginScoreEditAsync(arg, localData, search, new(difficulty, true, 0, 0, false, []));
+		public override OneOf<string, LocalizedString> PSLName => this._localization[PSLLocalCommandKey.LocalScoreSetName];
+		public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLLocalCommandKey.LocalScoreSetDescription];
+
+		public override SlashCommandOptionBuilder CompleteBuilder => this.BasicBuilder
+			.AddOption(
+				this._localization[PSLCommonOptionKey.SongSearchOptionName],
+				ApplicationCommandOptionType.String,
+				this._localization[PSLCommonOptionKey.SongSearchOptionDescription],
+				isRequired: true)
+			.AddOption(
+				this._localization[PSLLocalCommandKey.LocalScoreDifficultyOptionName],
+				ApplicationCommandOptionType.Integer,
+				this._localization[PSLLocalCommandKey.LocalScoreDifficultyOptionDescription],
+				isRequired: true,
+				choices: BuilderUtility.CreateChoicesFromEnum<Difficulty>())
+			.AddOption(
+				this._localization[PSLLocalCommandKey.LocalScoreScoreOptionName],
+				ApplicationCommandOptionType.Integer,
+				this._localization[PSLLocalCommandKey.LocalScoreScoreOptionDescription],
+				isRequired: true,
+				minValue: 0,
+				maxValue: 1_000_000)
+			.AddOption(
+				this._localization[PSLLocalCommandKey.LocalScoreAccuracyOptionName],
+				ApplicationCommandOptionType.Number,
+				this._localization[PSLLocalCommandKey.LocalScoreAccuracyOptionDescription],
+				isRequired: true,
+				minValue: 0,
+				maxValue: 100)
+			.AddOption(
+				this._localization[PSLLocalCommandKey.LocalScoreFcOptionName],
+				ApplicationCommandOptionType.Boolean,
+				this._localization[PSLLocalCommandKey.LocalScoreFcOptionDescription],
+				isRequired: true);
+
+		public override async Task Callback(SocketSlashCommand arg, SocketSlashCommandDataOption option, UserData? data)
+		{
+			string search = option.GetOptionOrDefault<string>(this._localization[PSLCommonOptionKey.SongSearchOptionName]) ?? "";
+			Difficulty difficulty = (Difficulty)option.GetIntegerOptionAsInt32OrDefault(this._localization[PSLLocalCommandKey.LocalScoreDifficultyOptionName]);
+			long score = option.GetOptionOrDefault<long>(this._localization[PSLLocalCommandKey.LocalScoreScoreOptionName], -1);
+			float accuracy = (float)option.GetOptionOrDefault(this._localization[PSLLocalCommandKey.LocalScoreAccuracyOptionName], double.NaN);
+			bool isFc = option.GetOptionOrDefault<bool>(this._localization[PSLLocalCommandKey.LocalScoreFcOptionName]);
+
+			if (score == 1_000_000)
+			{
+				if (accuracy < 100.0f)
+				{
+					await arg.QuickReply(this._localization[PSLLocalCommandKey.LocalScoreInvalidAccuracy]);
+					return;
+				}
+				else if (!isFc)
+				{
+					await arg.QuickReply(this._localization[PSLLocalCommandKey.LocalScoreInvalidFc]);
+					return;
+				}
+			}
+			if (accuracy == 100.0f)
+			{
+				if (score < 1_000_000)
+				{
+					await arg.QuickReply(this._localization[PSLLocalCommandKey.LocalScoreInvalidScore]);
+					return;
+				}
+				else if (!isFc)
+				{
+					await arg.QuickReply(this._localization[PSLLocalCommandKey.LocalScoreInvalidFc]);
+					return;
+				}
+			}
+
+			UserData? localData = await this._root.GetLocalUserOrReplyAsync(arg, data!);
+			if (localData is null) return;
+
+			await this._root.BeginScoreEditAsync(arg, localData, search, new(difficulty, false, (int)score, (float)accuracy, isFc, []));
+		}
+	}
+
+	private sealed class ScoreRemoveNode : SubcommandNode
+	{
+		private readonly LocalCommand _root;
+
+		public ScoreRemoveNode(LocalCommand root) : base(root)
+		{
+			this._root = root;
+		}
+
+		public override OneOf<string, LocalizedString> PSLName => this._localization[PSLLocalCommandKey.LocalScoreRemoveName];
+		public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLLocalCommandKey.LocalScoreRemoveDescription];
+
+		public override SlashCommandOptionBuilder CompleteBuilder => this.BasicBuilder
+			.AddOption(
+				this._localization[PSLCommonOptionKey.SongSearchOptionName],
+				ApplicationCommandOptionType.String,
+				this._localization[PSLCommonOptionKey.SongSearchOptionDescription],
+				isRequired: true)
+			.AddOption(
+				this._localization[PSLLocalCommandKey.LocalScoreDifficultyOptionName],
+				ApplicationCommandOptionType.Integer,
+				this._localization[PSLLocalCommandKey.LocalScoreDifficultyOptionDescription],
+				isRequired: true,
+				choices: BuilderUtility.CreateChoicesFromEnum<Difficulty>());
+
+		public override async Task Callback(SocketSlashCommand arg, SocketSlashCommandDataOption option, UserData? data)
+		{
+			string search = option.GetOptionOrDefault<string>(this._localization[PSLCommonOptionKey.SongSearchOptionName]) ?? "";
+			Difficulty difficulty = (Difficulty)option.GetIntegerOptionAsInt32OrDefault(this._localization[PSLLocalCommandKey.LocalScoreDifficultyOptionName]);
+
+			UserData? localData = await this._root.GetLocalUserOrReplyAsync(arg, data!);
+			if (localData is null) return;
+
+			await this._root.BeginScoreEditAsync(arg, localData, search, new(difficulty, true, 0, 0, false, []));
+		}
 	}
 
 	/// <summary>
@@ -105,7 +195,7 @@ public partial class LocalCommand
 		await arg.QuickReply(message => message.Components = controls, this._localization[PSLLocalCommandKey.LocalScorePickSongPrompt]);
 	}
 
-	public override async Task HandleInteraction(SocketInteraction arg, object executer)
+	public override async Task HandleInteraction(SocketInteraction arg)
 	{
 		if (arg is not SocketMessageComponent component) return;
 

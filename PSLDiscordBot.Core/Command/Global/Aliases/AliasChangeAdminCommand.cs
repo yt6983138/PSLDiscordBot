@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 using PSLDiscordBot.Core.Models.SongAlias;
 
 namespace PSLDiscordBot.Core.Command.Global.Aliases;
@@ -12,15 +12,23 @@ public class AliasChangeAdminCommand : CommandBase
 		Remove
 	}
 
-	private readonly PSLPlugin _pslPlugin;
+	private readonly AliasAdminStrictConstraint _aliasAdminStrictConstraint;
 
 	public AliasChangeAdminCommand(IServiceProvider provider) : base(provider)
 	{
-		this._pslPlugin = provider.GetRequiredService<PSLPlugin>();
+		this._aliasAdminStrictConstraint = provider.GetRequiredService<AliasAdminStrictConstraint>();
 	}
 
 	public override OneOf<string, LocalizedString> PSLName => "alias-change-admin";
 	public override OneOf<string, LocalizedString> PSLDescription => "[Server super admin command] Add or remove admin role from the server table";
+
+	// the strict check runs last to keep today's rejection order; ADR 0008 moves it to the admin-role leaf
+	public override IReadOnlyList<IConstraint> MasterConstraints =>
+	[
+		this._registeredConstraint,
+		this._tosConstraint,
+		this._aliasAdminStrictConstraint
+	];
 
 	public override InteractionContextType[] InteractionContextTypes => [InteractionContextType.Guild];
 	public override ApplicationIntegrationType[] IntegrationTypes => [ApplicationIntegrationType.GuildInstall];
@@ -42,14 +50,6 @@ public class AliasChangeAdminCommand : CommandBase
 	{
 		Operation operation = arg.GetOption<Operation>("operation");
 		IRole role = arg.GetOption<IRole>("target");
-
-		SocketGuildUser guildUser = (SocketGuildUser)arg.User;
-		if (!guildUser.GuildPermissions.Administrator
-			&& guildUser.Id != this._pslPlugin.AdminUser?.Id)
-		{
-			await arg.QuickReply(this._localization[PSLCommonKey.AdminCommandBasePermissionDenied]);
-			return;
-		}
 
 		using AliasService.StaticTableRequester staticRequester = this._aliasService.GetStaticTableRequester();
 		AliasTableAttribute attribute = staticRequester.GetTableAttributeOrDefault(AliasTableIdType.Server, arg.GuildId.EnsureNotNull());
