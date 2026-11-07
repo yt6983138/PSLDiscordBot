@@ -141,14 +141,6 @@ public sealed class DataBaseService
 		{
 			return this.Leaderboard.Where(x => x.UserId == userId).ExecuteDeleteAsync();
 		}
-		public async Task<LeaderboardEntry?> GetLeaderboardEntryAsync(ulong userId)
-		{
-			return await this.Leaderboard.FindAsync(userId);
-		}
-		public async Task<List<LeaderboardEntry>> GetAllLeaderboardEntriesAsync()
-		{
-			return await this.Leaderboard.AsNoTracking().ToListAsync();
-		}
 		#endregion
 
 		#region Finalize

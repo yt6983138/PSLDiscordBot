@@ -34,7 +34,7 @@ public class LeaderboardService
 
 	/// <summary>
 	/// Removes a stale cloud entry after a committed local activation or deletion. Runs under the leaderboard lock so it
-	/// cannot interleave with a publish that re-checked eligibility before the commit.
+	/// cannot interleave with a publish that is still in progress.
 	/// </summary>
 	private async void SaveService_OnCloudRankingInvalidated(object? sender, ulong userId)
 	{
@@ -86,9 +86,9 @@ public class LeaderboardService
 	{
 		using ScopedSemaphoreSlim.Scope _ = await this._fullLeaderboardOperationLock.EnterScopeAsync();
 		using DataBaseService.DbDataRequester requester = this._dataBase.NewRequester();
-		// filter at read time too, so leftovers from an interrupted removal are never published
+		// filter at read time too, so leftovers from an interrupted removal or a visibility change are never published
 		return await requester.Leaderboard
-			.Where(x => requester.UserData.Any(u => u.UserId == x.UserId && (u.AccountMode & AccountMode.Local) == 0 && u.Token != null))
+			.Where(x => requester.UserData.Any(u => u.UserId == x.UserId && u.PublicVisibility && (u.AccountMode & AccountMode.Local) == 0 && u.Token != null))
 			.ToListAsync();
 	}
 
@@ -186,10 +186,6 @@ public class LeaderboardService
 
 		using ScopedSemaphoreSlim.Scope _ = await this._fullLeaderboardOperationLock.EnterScopeAsync(ct);
 		using DataBaseService.DbDataRequester requester = this._dataBase.NewRequester();
-		// the user may have switched to local mode while the analysis ran
-		if (!await requester.UserData.AnyAsync(x => x.UserId == userId && (x.AccountMode & AccountMode.Local) == 0 && x.Token != null, ct))
-			return;
-
 		await requester.Leaderboard.AddOrUpdate(entry);
 		await requester.SaveChangesAsync(ct);
 	}
@@ -232,13 +228,6 @@ public class LeaderboardService
 		using ScopedSemaphoreSlim.Scope _ = await this._fullLeaderboardOperationLock.EnterScopeAsync(ct);
 		using (DataBaseService.DbDataRequester requester2 = this._dataBase.NewRequester())
 		{
-			// users who switched to local mode during the refresh must not be published from stale cloud analysis
-			HashSet<ulong> cloudUserIds = (await requester2.UserData
-				.Where(x => (x.AccountMode & AccountMode.Local) == 0 && x.Token != null)
-				.Select(x => x.UserId)
-				.ToListAsync(ct)).ToHashSet();
-			entries.RemoveAll(x => !cloudUserIds.Contains(x.UserId));
-
 			await requester2.Leaderboard.ExecuteDeleteAsync(ct);
 			await requester2.Leaderboard.AddRangeAsync(entries, ct);
 			await requester2.SaveChangesAsync(ct);
