@@ -178,7 +178,7 @@ public class SaveService
 	/// </summary>
 	public async Task StartLocalAsync(ulong userId, int tosAgreementLevel, string initialNickname)
 	{
-		using DataBaseService.DbDataRequester requester = this._dataBaseService.NewRequester(saveAutomatically: false);
+		using DataBaseService.DbDataRequester requester = this._dataBaseService.NewRequester();
 		await using IDbContextTransaction transaction = await requester.Database.BeginTransactionAsync();
 
 		UserData? userData = await requester.GetUserDataDirectlyAsync(userId);
@@ -202,7 +202,7 @@ public class SaveService
 	/// </summary>
 	public async Task EnsureLocalSaveAsync(ulong userId, string initialNickname)
 	{
-		using DataBaseService.DbDataRequester requester = this._dataBaseService.NewRequester(saveAutomatically: false);
+		using DataBaseService.DbDataRequester requester = this._dataBaseService.NewRequester();
 		await using IDbContextTransaction transaction = await requester.Database.BeginTransactionAsync();
 
 		if (!await requester.HasLocalSaveAsync(userId))
@@ -220,7 +220,7 @@ public class SaveService
 	/// <returns>False when the user has no retained cloud binding; nothing changes.</returns>
 	public async Task<bool> UseCloudAsync(ulong userId)
 	{
-		using DataBaseService.DbDataRequester requester = this._dataBaseService.NewRequester(saveAutomatically: false);
+		using DataBaseService.DbDataRequester requester = this._dataBaseService.NewRequester();
 		await using IDbContextTransaction transaction = await requester.Database.BeginTransactionAsync();
 
 		UserData? userData = await requester.GetUserDataDirectlyAsync(userId);
@@ -241,7 +241,7 @@ public class SaveService
 	/// </summary>
 	public async Task ActivateCloudAsync(UserData authenticated)
 	{
-		using DataBaseService.DbDataRequester requester = this._dataBaseService.NewRequester(saveAutomatically: false);
+		using DataBaseService.DbDataRequester requester = this._dataBaseService.NewRequester();
 		await using IDbContextTransaction transaction = await requester.Database.BeginTransactionAsync();
 
 		UserData? userData = await requester.GetUserDataDirectlyAsync(authenticated.UserId);
@@ -267,7 +267,7 @@ public class SaveService
 	/// </summary>
 	public async Task DeleteAccountAsync(ulong userId)
 	{
-		using DataBaseService.DbDataRequester requester = this._dataBaseService.NewRequester(saveAutomatically: false);
+		using DataBaseService.DbDataRequester requester = this._dataBaseService.NewRequester();
 		await using IDbContextTransaction transaction = await requester.Database.BeginTransactionAsync();
 
 		await requester.DeleteLocalSaveAsync(userId);

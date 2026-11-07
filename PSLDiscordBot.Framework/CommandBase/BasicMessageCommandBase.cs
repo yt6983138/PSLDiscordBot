@@ -25,5 +25,5 @@ public abstract class BasicMessageCommandBase
 		this.EventId = new(1_11451400 + EventIdCount++, this.GetType().Name);
 	}
 
-	public abstract Task Execute(SocketMessageCommand arg, object executer);
+	public abstract Task Execute(SocketMessageCommand arg);
 }

@@ -4,7 +4,7 @@ using System.Text;
 namespace PSLDiscordBot.Core.Command.Global;
 
 [AddToGlobal]
-public class SongInfoCommand : GuestCommandBase
+public class SongInfoCommand : CommandBase
 {
 	public SongInfoCommand(IServiceProvider provider) : base(provider)
 	{
@@ -15,11 +15,13 @@ public class SongInfoCommand : GuestCommandBase
 	public override OneOf<string, LocalizedString> PSLName => this._localization[PSLGuestCommandKey.SongInfoName];
 	public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLGuestCommandKey.SongInfoDescription];
 
+	public override IReadOnlyList<IConstraint> MasterConstraints => [];
+
 	// TODO: add an option to specify the difficulty to get the illustration for
 	public override SlashCommandBuilder CompleteBuilder => this.BasicBuilder
 		.AddSongSearchOption(this._localization);
 
-	public override async Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
+	public override async Task RootCallback(SocketSlashCommand arg, UserData? data)
 	{
 		List<SongSearchResult> foundAlias = this._aliasService.SearchSong(arg,
 			arg.GetSongSearchOption(this._localization));

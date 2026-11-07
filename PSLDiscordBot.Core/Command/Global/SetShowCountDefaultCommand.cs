@@ -19,12 +19,14 @@ public class SetShowCountDefaultCommand : CommandBase
 			minValue: 0,
 			maxValue: int.MaxValue);
 
-	public override async Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
+	public override async Task RootCallback(SocketSlashCommand arg, UserData? data)
 	{
+		using DataBaseService.DbDataRequester requester = this._dataBaseService.NewRequester();
 		MiscInfo miscInfo = await requester.GetMiscInfoAsync(arg.User.Id)
 			?? new(arg.User.Id);
 		miscInfo.DefaultGetPhotoShowCount = arg.GetIntegerOptionAsInt32(this._localization[PSLNormalCommandKey.SetShowCountDefaultOptionCountName]);
 		await requester.SetOrReplaceMiscInfo(miscInfo);
+		await requester.SaveChangesAsync();
 
 		await arg.QuickReply(this._localization[PSLCommonMessageKey.OperationDone]);
 	}

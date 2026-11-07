@@ -14,10 +14,10 @@ public class GetTimeIndexCommand : CommandBase
 
 	public override SlashCommandBuilder CompleteBuilder => this.BasicBuilder;
 
-	public override async Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
+	public override async Task RootCallback(SocketSlashCommand arg, UserData? data)
 	{
 		// save indexes are cloud-only; local collections have none and must not touch the cloud client
-		if (data.IsLocal)
+		if (data!.IsLocal)
 		{
 			await arg.QuickReply(this._localization[PSLCommonKey.SaveHandlerOnWrongAccountMode]);
 			return;

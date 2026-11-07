@@ -30,10 +30,10 @@ public class GetScoresCommand : CommandBase
 			minValue: 1,
 			maxValue: 114514);
 
-	public override async Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
+	public override async Task RootCallback(SocketSlashCommand arg, UserData? data)
 	{
 		int index = arg.GetIndexOption(this._localization);
-		ISaveContext? context = await this._saveService.TryHandleAndFetchAsync(data, arg, index);
+		ISaveContext? context = await this._saveService.TryHandleAndFetchAsync(data!, arg, index);
 		if (context is null) return;
 		GameRecord save = context.ReadGameRecord();
 
@@ -42,7 +42,7 @@ public class GetScoresCommand : CommandBase
 			save,
 			this._phigrosService.NonMultiLanguageInfos,
 			arg.GetIntegerOptionAsInt32OrDefault(this._localization[PSLNormalCommandKey.GetScoresOptionCountName], 28),
-			data,
+			data!,
 			this._localization,
 			this._phigrosService);
 

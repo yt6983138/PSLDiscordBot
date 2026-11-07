@@ -19,7 +19,7 @@ public sealed class LocalSaveStore
 	public async Task<LocalSaveData?> LoadAsync(ulong userId)
 	{
 		LocalSaveEntity? entity;
-		using (DataBaseService.DbDataRequester requester = this._dataBaseService.NewRequester(saveAutomatically: false))
+		using (DataBaseService.DbDataRequester requester = this._dataBaseService.NewRequester())
 		{
 			entity = await requester.GetLocalSaveAsync(userId);
 		}
@@ -35,7 +35,7 @@ public sealed class LocalSaveStore
 
 	public async Task<LocalSaveEntity> UpsertAsync(LocalSaveEntity entity)
 	{
-		using DataBaseService.DbDataRequester requester = this._dataBaseService.NewRequester(saveAutomatically: false);
+		using DataBaseService.DbDataRequester requester = this._dataBaseService.NewRequester();
 		LocalSaveEntity persisted = await requester.UpsertLocalSaveAsync(entity);
 		await requester.SaveChangesAsync();
 		return persisted;

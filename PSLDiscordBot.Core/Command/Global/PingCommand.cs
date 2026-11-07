@@ -4,7 +4,7 @@ using System.Text;
 namespace PSLDiscordBot.Core.Command.Global;
 
 [AddToGlobal]
-public class PingCommand : GuestCommandBase
+public class PingCommand : CommandBase
 {
 	private static readonly Dictionary<string, List<Uri>> _domainsToCheck = new()
 	{
@@ -21,11 +21,13 @@ public class PingCommand : GuestCommandBase
 	public override OneOf<string, LocalizedString> PSLName => this._localization[PSLGuestCommandKey.PingName];
 	public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLGuestCommandKey.PingDescription];
 
+	public override IReadOnlyList<IConstraint> MasterConstraints => [];
+
 	public override bool IsEphemeral => false;
 
 	public override SlashCommandBuilder CompleteBuilder => this.BasicBuilder;
 
-	public override async Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
+	public override async Task RootCallback(SocketSlashCommand arg, UserData? data)
 	{
 		const int TestCount = 5;
 		const string Indention = "    ";

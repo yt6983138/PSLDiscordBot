@@ -69,11 +69,9 @@ public class GetPhotoCommand : CommandBase
 			isRequired: false)
 		.AddGenerateForOption(this._localization);
 
-	public override async Task Callback(SocketSlashCommand arg,
-		UserData data,
-		DataBaseService.DbDataRequester requester,
-		object executer)
+	public override async Task RootCallback(SocketSlashCommand arg, UserData? data)
 	{
+		using DataBaseService.DbDataRequester requester = this._dataBaseService.NewRequester();
 		int index = arg.GetIndexOption(this._localization);
 		int count = arg.GetIntegerOptionAsInt32OrDefault(this._localization[PSLNormalCommandKey.GetPhotoOptionCountName],
 			(await requester.GetMiscInfoAsync(arg.User.Id))?.DefaultGetPhotoShowCount ?? 30);
@@ -148,9 +146,9 @@ public class GetPhotoCommand : CommandBase
 			this._coolDownService.Set(arg.User.Id);
 		}
 
-		ISaveContext? context = await this._saveService.TryHandleAndFetchAsync(generateForUserData ?? data, arg, index);
+		ISaveContext? context = await this._saveService.TryHandleAndFetchAsync(generateForUserData ?? data!, arg, index);
 		if (context is null) return;
-		PlayerInfo playerInfo = await this._saveService.GetPlayerInfoAsync(generateForUserData ?? data, context);
+		PlayerInfo playerInfo = await this._saveService.GetPlayerInfoAsync(generateForUserData ?? data!, context);
 
 		await arg.QuickReply(this._localization[PSLNormalCommandKey.GetPhotoGenerating]);
 
@@ -161,7 +159,7 @@ public class GetPhotoCommand : CommandBase
 			using CancellationTokenSource cts = this._config.Value.GetRenderTimeoutCTS();
 
 			(textMap, ImageMap_Anonymous? imageMap) = this._imageGenerator.CreateMaps(
-				generateForUserData ?? data,
+				generateForUserData ?? data!,
 				context,
 				playerInfo,
 				new

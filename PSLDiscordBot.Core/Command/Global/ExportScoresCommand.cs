@@ -20,10 +20,10 @@ public class ExportScoresCommand : CommandBase
 	public override SlashCommandBuilder CompleteBuilder => this.BasicBuilder
 		.AddIndexOption(this._localization);
 
-	public override async Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
+	public override async Task RootCallback(SocketSlashCommand arg, UserData? data)
 	{
 		int index = arg.GetIndexOption(this._localization);
-		ISaveContext? context = await this._saveService.TryHandleAndFetchAsync(data, arg, index);
+		ISaveContext? context = await this._saveService.TryHandleAndFetchAsync(data!, arg, index);
 		if (context is null) return;
 		GameRecord save = context.ReadGameRecord();
 

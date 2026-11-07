@@ -1,7 +1,7 @@
 ﻿namespace PSLDiscordBot.Core.Command.Global;
 
 [AddToGlobal]
-public class TOSCommand : GuestCommandBase
+public class TOSCommand : CommandBase
 {
 	public TOSCommand(IServiceProvider provider) : base(provider)
 	{
@@ -10,9 +10,11 @@ public class TOSCommand : GuestCommandBase
 	public override OneOf<string, LocalizedString> PSLName => this._localization[PSLGuestCommandKey.TOSName];
 	public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLGuestCommandKey.TOSDescription];
 
+	public override IReadOnlyList<IConstraint> MasterConstraints => [];
+
 	public override SlashCommandBuilder CompleteBuilder => this.BasicBuilder;
 
-	public override async Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
+	public override async Task RootCallback(SocketSlashCommand arg, UserData? data)
 	{
 		await arg.QuickReply(x => x.Components = new ComponentBuilderV2()
 			.WithActionRow([new ButtonBuilder()
@@ -23,7 +25,7 @@ public class TOSCommand : GuestCommandBase
 			this._localization[PSLGuestCommandKey.TOSContent]);
 	}
 
-	public override async Task HandleInteraction(SocketInteraction arg, object executer)
+	public override async Task HandleInteraction(SocketInteraction arg)
 	{
 		if (arg is not SocketMessageComponent component) return;
 
@@ -38,6 +40,7 @@ public class TOSCommand : GuestCommandBase
 		{
 			data.TOSAgreementLevel = this._config.Value.CurrentTOSAgreementLevel;
 			await requester.AddOrReplaceUserDataAsync(data);
+			await requester.SaveChangesAsync();
 		}
 		await component.QuickReply(x => x.Components = null, this._localization[PSLGuestCommandKey.TOSAgreed], data is not null);
 	}

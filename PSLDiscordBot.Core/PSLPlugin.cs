@@ -152,7 +152,12 @@ public class PSLPlugin : IPlugin
 			.AddSingleton<AliasService>()
 			.AddSingleton<LocalWorkflowStore<LocalScoreDraft>>()
 			.AddSingleton<LocalWorkflowStore<StagedLocalImport>>()
-			.AddSingleton<LocalImportService>();
+			.AddSingleton<LocalImportService>()
+			.AddSingleton<RegisteredConstraint>()
+			.AddSingleton<TosConstraint>()
+			.AddSingleton<AdminConstraint>()
+			.AddSingleton<AliasAdminConstraint>()
+			.AddSingleton<AliasAdminStrictConstraint>();
 
 		hostBuilder.Services.AddAssemblyToMvc(this);
 	}
@@ -224,6 +229,7 @@ public class PSLPlugin : IPlugin
 		   Secret.IsInternational,
 		   100,
 		   true)).Wait();
+		database.SaveChanges();
 #endif
 	}
 
@@ -299,6 +305,19 @@ public class PSLPlugin : IPlugin
 	{
 		try
 		{
+			// nothing is deferred when routing failed, and the reply carries a stack trace so it must be ephemeral
+			if (!e.Arg.HasResponded)
+			{
+				try
+				{
+					await e.Arg.DeferAsync(ephemeral: true);
+				}
+				catch (Exception ex)
+				{
+					this._logger.LogWarning(EventId, ex, "Failed to defer slash command error response");
+				}
+			}
+
 			RestInteractionMessage original = await e.Arg.GetOriginalResponseAsync();
 			await this.OnException(e.Exception, e.Arg);
 			string message = this._localizationService[PSLCommonMessageKey.SlashCommandError]

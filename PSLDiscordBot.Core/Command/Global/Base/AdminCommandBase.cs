@@ -1,9 +1,14 @@
-﻿namespace PSLDiscordBot.Core.Command.Global.Base;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace PSLDiscordBot.Core.Command.Global.Base;
 public abstract class AdminCommandBase : CommandBase
 {
+	private readonly AdminConstraint _adminConstraint;
+
 	protected AdminCommandBase(IServiceProvider provider)
 		: base(provider)
 	{
+		this._adminConstraint = provider.GetRequiredService<AdminConstraint>();
 	}
 
 	public override InteractionContextType[] InteractionContextTypes =>
@@ -15,25 +20,10 @@ public abstract class AdminCommandBase : CommandBase
 		ApplicationIntegrationType.GuildInstall
 	];
 
-	public sealed override bool RequireTOSAcceptance => false;
-
-	public override async Task Execute(SocketSlashCommand arg, object executer)
-	{
-		using DataBaseService.DbDataRequester requester = this._dataBaseService.NewRequester();
-		await arg.DeferAsync(ephemeral: this.IsEphemeral);
-		if (!await this.CheckIfUserIsAdminAndRespond(arg))
-			return;
-
-		UserData? userData = await requester.GetUserDataDirectlyAsync(arg.User.Id);
-
-		await this.Callback(arg, userData, requester, executer);
-	}
 	/// <summary>
-	/// Please notice: we can not guarantee that data is not null
+	/// Extra constraints that run after the admin check. They cannot remove the base's own check.
 	/// </summary>
-	/// <param name="arg"></param>
-	/// <param name="data"></param>
-	/// <param name="executer"></param>
-	/// <returns></returns>
-	public abstract override Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer);
+	protected virtual IReadOnlyList<IConstraint> AdditionalConstraints => [];
+
+	public sealed override IReadOnlyList<IConstraint> MasterConstraints => [this._adminConstraint, .. this.AdditionalConstraints];
 }

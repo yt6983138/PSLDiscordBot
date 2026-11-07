@@ -61,51 +61,144 @@ public partial class LocalCommand
 		}
 	}
 
-	private async Task HandleImportCsv(SocketSlashCommand arg, UserData data, SocketSlashCommandDataOption option)
+	private sealed class ImportGroup : SubcommandGroupNode
 	{
-		LocalImportMode mode = (LocalImportMode)option.GetIntegerOptionAsInt32OrDefault(this._localization[PSLLocalCommandKey.LocalImportModeOptionName]);
-		ParsedLocalImport? parsed = await this.HandleCommonImports(arg, option, this._importService.ParseCSV);
-		if (parsed is null) return;
+		private readonly LocalCommand _root;
 
-		await this.HandleLocalImportAsync(arg, data, parsed, mode);
+		public ImportGroup(LocalCommand root) : base(root)
+		{
+			this._root = root;
+		}
+
+		public override OneOf<string, LocalizedString> PSLName => this._localization[PSLLocalCommandKey.LocalImportGroupName];
+		public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLLocalCommandKey.LocalImportGroupDescription];
+
+		protected override IReadOnlyList<SubcommandNode> CreateChildren() =>
+		[
+			new ImportCsvNode(this._root),
+			new ImportCloudNode(this._root),
+			new ImportAndroidNode(this._root),
+		];
+	}
+
+	private sealed class ImportCsvNode : SubcommandNode
+	{
+		private readonly LocalCommand _root;
+
+		public ImportCsvNode(LocalCommand root) : base(root)
+		{
+			this._root = root;
+		}
+
+		public override OneOf<string, LocalizedString> PSLName => this._localization[PSLLocalCommandKey.LocalImportCsvName];
+		public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLLocalCommandKey.LocalImportCsvDescription];
+
+		public override SlashCommandOptionBuilder CompleteBuilder => this.BasicBuilder
+			.AddOption(
+				this._localization[PSLLocalCommandKey.LocalImportFileOptionName],
+				ApplicationCommandOptionType.Attachment,
+				this._localization[PSLLocalCommandKey.LocalImportFileOptionDescription],
+				isRequired: true)
+			.AddOption(
+				this._localization[PSLLocalCommandKey.LocalImportModeOptionName],
+				ApplicationCommandOptionType.Integer,
+				this._localization[PSLLocalCommandKey.LocalImportModeOptionDescription],
+				isRequired: true,
+				choices: BuilderUtility.CreateChoicesFromEnum<LocalImportMode>());
+
+		public override async Task Callback(SocketSlashCommand arg, SocketSlashCommandDataOption option, UserData? data)
+		{
+			LocalImportMode mode = (LocalImportMode)option.GetIntegerOptionAsInt32OrDefault(this._localization[PSLLocalCommandKey.LocalImportModeOptionName]);
+			ParsedLocalImport? parsed = await this._root.HandleCommonImports(arg, option, this._root._importService.ParseCSV);
+			if (parsed is null) return;
+
+			await this._root.HandleLocalImportAsync(arg, data, parsed, mode);
+		}
 	}
 
 	/// <summary>
-	/// Android PlayerPrefs import entry point. Local mode is required first. See: <see cref="HandleImportCsv"/>
+	/// Android PlayerPrefs import entry point. Local mode is required first. See: <see cref="ImportCsvNode"/>
 	/// </summary>
-	private async Task HandleImportAndroid(SocketSlashCommand arg, UserData data, SocketSlashCommandDataOption option)
+	private sealed class ImportAndroidNode : SubcommandNode
 	{
-		LocalImportMode mode = (LocalImportMode)option.GetIntegerOptionAsInt32OrDefault(this._localization[PSLLocalCommandKey.LocalImportModeOptionName]);
-		ParsedLocalImport? parsed = await this.HandleCommonImports(arg, option, this._importService.ParseAndroidPlayerPref);
-		if (parsed is null) return;
+		private readonly LocalCommand _root;
 
-		await this.HandleLocalImportAsync(arg, data, parsed, mode);
+		public ImportAndroidNode(LocalCommand root) : base(root)
+		{
+			this._root = root;
+		}
+
+		public override OneOf<string, LocalizedString> PSLName => this._localization[PSLLocalCommandKey.LocalImportAndroidName];
+		public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLLocalCommandKey.LocalImportAndroidDescription];
+
+		public override SlashCommandOptionBuilder CompleteBuilder => this.BasicBuilder
+			.AddOption(
+				this._localization[PSLLocalCommandKey.LocalImportFileOptionName],
+				ApplicationCommandOptionType.Attachment,
+				this._localization[PSLLocalCommandKey.LocalImportFileOptionDescription],
+				isRequired: true)
+			.AddOption(
+				this._localization[PSLLocalCommandKey.LocalImportModeOptionName],
+				ApplicationCommandOptionType.Integer,
+				this._localization[PSLLocalCommandKey.LocalImportModeOptionDescription],
+				isRequired: true,
+				choices: BuilderUtility.CreateChoicesFromEnum<LocalImportMode>());
+
+		public override async Task Callback(SocketSlashCommand arg, SocketSlashCommandDataOption option, UserData? data)
+		{
+			LocalImportMode mode = (LocalImportMode)option.GetIntegerOptionAsInt32OrDefault(this._localization[PSLLocalCommandKey.LocalImportModeOptionName]);
+			ParsedLocalImport? parsed = await this._root.HandleCommonImports(arg, option, this._root._importService.ParseAndroidPlayerPref);
+			if (parsed is null) return;
+
+			await this._root.HandleLocalImportAsync(arg, data, parsed, mode);
+		}
 	}
 
 	/// <summary>
 	/// Imports the retained cloud binding's save into the active local collection. Local mode is required; the binding is
 	/// read without changing modes or leaderboard state, and the result goes through the common preparation/confirmation.
 	/// </summary>
-	private async Task HandleImportCloud(SocketSlashCommand arg, UserData data, SocketSlashCommandDataOption option)
+	private sealed class ImportCloudNode : SubcommandNode
 	{
-		if (!data.HasCloudBinding)
+		private readonly LocalCommand _root;
+
+		public ImportCloudNode(LocalCommand root) : base(root)
 		{
-			await arg.QuickReply(this._localization[PSLLocalCommandKey.LocalImportCloudNoBinding]);
-			return;
+			this._root = root;
 		}
 
-		LocalImportMode mode = (LocalImportMode)option.GetIntegerOptionAsInt32OrDefault(this._localization[PSLLocalCommandKey.LocalImportModeOptionName]);
-		SaveContext? save = await this._saveService.TryHandleCloudAsync(data.SaveCache, arg, raiseFetchedHook: false);
-		if (save is null) return;
+		public override OneOf<string, LocalizedString> PSLName => this._localization[PSLLocalCommandKey.LocalImportCloudName];
+		public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLLocalCommandKey.LocalImportCloudDescription];
 
-		ParsedLocalImport parsed = new(
-			[],
-			save.ReadGameRecord(),
-			await data.SaveCache.GetPlayerInfoAsync(),
-			save.ReadGameUserInfo(),
-			save.ReadGameProgress());
+		public override SlashCommandOptionBuilder CompleteBuilder => this.BasicBuilder
+			.AddOption(
+				this._localization[PSLLocalCommandKey.LocalImportModeOptionName],
+				ApplicationCommandOptionType.Integer,
+				this._localization[PSLLocalCommandKey.LocalImportModeOptionDescription],
+				isRequired: true,
+				choices: BuilderUtility.CreateChoicesFromEnum<LocalImportMode>());
 
-		await this.HandleLocalImportAsync(arg, data, parsed, mode);
+		public override async Task Callback(SocketSlashCommand arg, SocketSlashCommandDataOption option, UserData? data)
+		{
+			if (!data!.HasCloudBinding)
+			{
+				await arg.QuickReply(this._localization[PSLLocalCommandKey.LocalImportCloudNoBinding]);
+				return;
+			}
+
+			LocalImportMode mode = (LocalImportMode)option.GetIntegerOptionAsInt32OrDefault(this._localization[PSLLocalCommandKey.LocalImportModeOptionName]);
+			SaveContext? save = await this._root._saveService.TryHandleCloudAsync(data.SaveCache, arg, raiseFetchedHook: false);
+			if (save is null) return;
+
+			ParsedLocalImport parsed = new(
+				[],
+				save.ReadGameRecord(),
+				await data.SaveCache.GetPlayerInfoAsync(),
+				save.ReadGameUserInfo(),
+				save.ReadGameProgress());
+
+			await this._root.HandleLocalImportAsync(arg, data, parsed, mode);
+		}
 	}
 
 	/// <summary>

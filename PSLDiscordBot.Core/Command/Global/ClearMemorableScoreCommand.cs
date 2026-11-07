@@ -12,12 +12,17 @@ public class ClearMemorableScoreCommand : CommandBase
 
 	public override SlashCommandBuilder CompleteBuilder => this.BasicBuilder;
 
-	public override async Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
+	public override async Task RootCallback(SocketSlashCommand arg, UserData? data)
 	{
+		using DataBaseService.DbDataRequester requester = this._dataBaseService.NewRequester();
 		MiscInfo? info = await requester.GetMiscInfoAsync(arg.User.Id);
 		info?.MemorableScore = null;
 		info?.MemorableScoreThoughts = null;
-		if (info is not null) await requester.SetOrReplaceMiscInfo(info);
+		if (info is not null)
+		{
+			await requester.SetOrReplaceMiscInfo(info);
+			await requester.SaveChangesAsync();
+		}
 
 		await arg.QuickReply(this._localization[PSLNormalCommandKey.ClearMemorableScoreSuccess]);
 	}

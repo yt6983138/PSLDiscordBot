@@ -6,7 +6,7 @@ using System.Text;
 namespace PSLDiscordBot.Core.Command.Global;
 
 [AddToGlobal]
-public class DownloadAssetCommand : GuestCommandBase
+public class DownloadAssetCommand : CommandBase
 {
 	private const Difficulty UndefinedDifficulty = unchecked((Difficulty)(-1));
 
@@ -20,6 +20,8 @@ public class DownloadAssetCommand : GuestCommandBase
 	public override OneOf<string, LocalizedString> PSLName => this._localization[PSLGuestCommandKey.DownloadAssetName];
 	public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLGuestCommandKey.DownloadAssetDescription];
 
+	public override IReadOnlyList<IConstraint> MasterConstraints => [];
+
 	// TODO: add a difficulty option like song info command
 	public override SlashCommandBuilder CompleteBuilder => this.BasicBuilder
 		.AddSongSearchOption(this._localization)
@@ -30,7 +32,7 @@ public class DownloadAssetCommand : GuestCommandBase
 			choices: BuilderUtility.CreateChoicesFromEnum<Difficulty>(),
 			isRequired: false);
 
-	public override async Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
+	public override async Task RootCallback(SocketSlashCommand arg, UserData? data)
 	{
 		List<SongSearchResult> foundAlias = this._aliasService.SearchSong(arg, arg.GetSongSearchOption(this._localization));
 

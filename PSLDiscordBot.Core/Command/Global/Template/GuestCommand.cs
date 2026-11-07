@@ -1,7 +1,7 @@
 ﻿namespace PSLDiscordBot.Core.Command.Global.Template;
 
 //[AddToGlobal]
-public class ExampleGuestCommand : GuestCommandBase
+public class ExampleGuestCommand : CommandBase
 {
 	public ExampleGuestCommand(IServiceProvider provider) : base(provider)
 	{
@@ -10,10 +10,12 @@ public class ExampleGuestCommand : GuestCommandBase
 	public override OneOf<string, LocalizedString> PSLName => "example";
 	public override OneOf<string, LocalizedString> PSLDescription => "Example.";
 
+	public override IReadOnlyList<IConstraint> MasterConstraints => [];
+
 	public override SlashCommandBuilder CompleteBuilder =>
 		this.BasicBuilder;
 
-	public override async Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
+	public override async Task RootCallback(SocketSlashCommand arg, UserData? data)
 	{
 		await Task.Delay(0);
 	}

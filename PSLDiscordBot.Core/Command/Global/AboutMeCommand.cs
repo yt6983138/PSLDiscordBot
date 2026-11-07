@@ -30,8 +30,9 @@ public class AboutMeCommand : CommandBase
 		;
 
 
-	public override async Task Callback(SocketSlashCommand arg, UserData data, DataBaseService.DbDataRequester requester, object executer)
+	public override async Task RootCallback(SocketSlashCommand arg, UserData? data)
 	{
+		using DataBaseService.DbDataRequester requester = this._dataBaseService.NewRequester();
 		int index = arg.GetIndexOption(this._localization);
 		IUser? generateFor = arg.GetOptionOrDefault<IUser>(this._localization[PSLCommonOptionKey.GenerateForOptionName]);
 
@@ -46,9 +47,9 @@ public class AboutMeCommand : CommandBase
 			}
 		}
 
-		ISaveContext? context = await this._saveService.TryHandleAndFetchAsync(generateForUserData ?? data, arg, index);
+		ISaveContext? context = await this._saveService.TryHandleAndFetchAsync(generateForUserData ?? data!, arg, index);
 		if (context is null) return;
-		PlayerInfo outerUserInfo = await this._saveService.GetPlayerInfoAsync(generateForUserData ?? data, context);
+		PlayerInfo outerUserInfo = await this._saveService.GetPlayerInfoAsync(generateForUserData ?? data!, context);
 
 		MiscInfo? miscInfo;
 		if (generateForUserData is null)
@@ -58,7 +59,7 @@ public class AboutMeCommand : CommandBase
 
 		using CancellationTokenSource cts = this._config.Value.GetRenderTimeoutCTS();
 		(TextMap_Anonymous, ImageMap_Anonymous) maps = this._imageGenerator.CreateMaps(
-			generateForUserData ?? data,
+			generateForUserData ?? data!,
 			context,
 			outerUserInfo,
 			extraArguments: new

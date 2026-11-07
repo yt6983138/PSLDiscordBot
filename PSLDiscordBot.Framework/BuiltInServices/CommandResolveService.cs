@@ -273,7 +273,7 @@ internal class CommandResolveService : ICommandResolveService, IPrivilegedComman
 			return;
 		}
 
-		Task task = command.RunOnDifferentThread ? Task.Run(() => command.Execute(arg, this)) : command.Execute(arg, this);
+		Task task = command.RunOnDifferentThread ? Task.Run(() => command.Execute(arg)) : command.Execute(arg);
 		this._program.RunningTasks.AddOrUpdate(task, (object?)null, (_, _2) => null);
 
 		// prevent blocking the entire discord event handler, this happened before
@@ -301,7 +301,7 @@ internal class CommandResolveService : ICommandResolveService, IPrivilegedComman
 			return;
 		}
 
-		Task task = command.RunOnDifferentThread ? Task.Run(() => command.Execute(arg, this)) : command.Execute(arg, this);
+		Task task = command.RunOnDifferentThread ? Task.Run(() => command.Execute(arg)) : command.Execute(arg);
 		this._program.RunningTasks.AddOrUpdate(task, (object?)null, (_, _2) => null);
 
 		_ = Utils.RunWithTaskOnEnd(
@@ -328,7 +328,7 @@ internal class CommandResolveService : ICommandResolveService, IPrivilegedComman
 			return;
 		}
 
-		Task task = command.RunOnDifferentThread ? Task.Run(() => command.Execute(arg, this)) : command.Execute(arg, this);
+		Task task = command.RunOnDifferentThread ? Task.Run(() => command.Execute(arg)) : command.Execute(arg);
 		this._program.RunningTasks.AddOrUpdate(task, (object?)null, (_, _2) => null);
 
 		_ = Utils.RunWithTaskOnEnd(
@@ -361,10 +361,6 @@ internal class CommandResolveService : ICommandResolveService, IPrivilegedComman
 			{
 				invalidReason = ComponentInteractionInvalidReason.CommandNotFound;
 			}
-			else if (!ComponentRoutingUtility.SupportsComponents(commandType))
-			{
-				invalidReason = ComponentInteractionInvalidReason.CommandNotSupported;
-			}
 			else
 			{
 				command = this._program.App.Services.GetKeyedService<BasicCommandBase>(commandType);
@@ -391,8 +387,8 @@ internal class CommandResolveService : ICommandResolveService, IPrivilegedComman
 
 		BasicCommandBase resolvedCommand = command!;
 		Task task = resolvedCommand.RunOnDifferentThread
-			? Task.Run(() => resolvedCommand.HandleInteraction(arg, this))
-			: resolvedCommand.HandleInteraction(arg, this);
+			? Task.Run(() => resolvedCommand.HandleInteraction(arg))
+			: resolvedCommand.HandleInteraction(arg);
 		this._program.RunningTasks.AddOrUpdate(task, (object?)null, (_, _2) => null);
 
 		_ = Utils.RunWithTaskOnEnd(

@@ -15,7 +15,7 @@ public class RefreshLeaderboardCommand : AdminCommandBase
 
 	public override SlashCommandBuilder CompleteBuilder => this.BasicBuilder;
 
-	public override async Task Callback(SocketSlashCommand arg, UserData? data, DataBaseService.DbDataRequester requester, object executer)
+	public override async Task RootCallback(SocketSlashCommand arg, UserData? data)
 	{
 		await arg.QuickReply("refreshing, please wait...");
 		await this._leaderboardService.RefreshCache(CancellationToken.None);

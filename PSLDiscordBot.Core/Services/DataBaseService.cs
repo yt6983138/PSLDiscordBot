@@ -27,15 +27,17 @@ public sealed class DataBaseService
 		this._config = config;
 		this._logger = logger;
 		using DbDataRequester requester = this.NewRequester();
+		requester.Database.EnsureCreated();
 	}
 
 
 	/// <summary>
-	/// Should only use ONE INSTANCE per request
+	/// Should only use ONE INSTANCE per request. Nothing is saved implicitly: write methods only stage changes,
+	/// so callers must call <c>SaveChangesAsync</c> (or use an immediate <c>ExecuteDelete</c> member).
 	/// </summary>
 	/// <returns></returns>
-	public DbDataRequester NewRequester(bool saveAutomatically = true)
-		=> new(this, this._config, this._logger, saveAutomatically);
+	public DbDataRequester NewRequester()
+		=> new(this, this._config, this._logger);
 
 	public sealed class DbDataRequester : DbContext
 	{
@@ -45,11 +47,6 @@ public sealed class DataBaseService
 		private readonly IOptions<Config> _config;
 		private readonly DataBaseService _parent;
 
-		/// <summary>
-		/// note: tracking are never enabled
-		/// </summary>
-		public bool SaveAutomatically { get; set; }
-
 		public DbSet<UserData> UserData { get; set; }
 		public DbSet<MiscInfo> MiscData { get; set; }
 		public DbSet<LeaderboardEntry> Leaderboard { get; set; }
@@ -58,13 +55,11 @@ public sealed class DataBaseService
 		public static ulong UncheckedConvertToULong(long data)
 			=> unchecked((ulong)data);
 
-		internal DbDataRequester(DataBaseService parent, IOptions<Config> config, ILogger<DataBaseService> logger, bool saveAutomatically = true)
+		internal DbDataRequester(DataBaseService parent, IOptions<Config> config, ILogger<DataBaseService> logger)
 		{
 			this._parent = parent;
 			this._config = config;
 			this._logger = logger;
-			this.SaveAutomatically = saveAutomatically;
-			this.Database.EnsureCreated();
 		}
 
 		protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -159,11 +154,6 @@ public sealed class DataBaseService
 		#region Finalize
 		public override void Dispose()
 		{
-			if (this.SaveAutomatically)
-			{
-				this.SaveChanges();
-			}
-
 			GC.SuppressFinalize(this);
 
 			this._logger.LogDebug(_eventId, "{name} finalizing", nameof(DbDataRequester));
