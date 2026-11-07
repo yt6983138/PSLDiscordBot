@@ -62,14 +62,16 @@ Each discovered type is registered as a keyed singleton in the DI container (key
 ### The inheritance pattern
 
 - `BasicCommandBase`: Framework slash-command contract; no automatic Core account checks or deferral.
-  - `CommandBase`: Injects common services, requires registration and (by default) TOS acceptance, and supports localization.
-    - `GuestCommandBase`: Permits unregistered users and skips TOS checks by default; derived commands can require TOS acceptance.
-    - `AdminCommandBase`: Checks the configured admin ID and skips registration/TOS requirements. Defaults to `BotDm` context; derived commands can broaden `InteractionContextTypes` without removing the runtime admin check.
+  - `CommandBase`: Injects common services, supports localization, and runs `MasterConstraints` before the callback. The default master constraints are `RegisteredConstraint` then `TosConstraint`.
+    - A command that needs less (for example, a guest command) overrides `MasterConstraints` with a shorter list, such as `[]`. There is no separate guest base class.
+    - `AdminCommandBase`: Seals `MasterConstraints` to `AdminConstraint` (checks the configured admin ID) followed by any `AdditionalConstraints`, so registration/TOS are not required. Defaults to `BotDm` context; derived commands can broaden `InteractionContextTypes` without removing the runtime admin check.
 
-`BasicCommandBase` defines `Name`, `Description`, `CompleteBuilder`, and `Execute`. Core-based commands implement `PSLName`, `PSLDescription`, `CompleteBuilder`, and `Callback` instead of overriding `Name` or `Description`.
+`BasicCommandBase` defines `Name`, `Description`, `CompleteBuilder`, and `Execute`. Core-based commands implement `PSLName`, `PSLDescription`, and `CompleteBuilder` instead of overriding `Name` or `Description`.
 
-`CommandBase` seals the `Name` and `Description` overrides, **not `Execute()`**. Guest/Admin bases override `Execute()` to apply their own access checks. Put ordinary command logic in `Callback`; these Core bases create/dispose a database requester and call `DeferAsync()` before invoking it.
+`CommandBase` seals `Name`, `Description`, **and `Execute()`**. `Execute()` resolves the subcommand path (before deferral, so an unmatched path throws), creates a short-lived database requester only to load the caller's `UserData` (null if unregistered), calls `DeferAsync()`, checks the master, group, and leaf constraints in that order, and then calls the callback. A failing constraint sends its own reply and stops the call.
 
-Normal `CommandBase.Callback` receives registered, non-null `UserData`. Guest/Admin callbacks receive nullable `UserData`. Reuse the provided requester, and use the existing `QuickReply` / `QuickReplyWithAttachments` helpers to modify the deferred response rather than acknowledging the interaction again.
+A flat command overrides `RootCallback(SocketSlashCommand, UserData?)`. A command with subcommands overrides `CreateChildren()` to return `SubcommandNode` / `SubcommandGroupNode` instances (created once, on first use), and each leaf implements `Callback(SocketSlashCommand, SocketSlashCommandDataOption?, UserData?)`; `RootCallback` is not called for those. Nodes can add their own `Constraints`, and a leaf controls its deferral with `IsEphemeral` (default `true`, not inherited from the root or group). Nodes are long-lived singletons, so keep per-call state in locals.
 
-To add a command, start from the appropriate template in `PSLDiscordBot.Core/Command/Global/Template/`, rename it, and uncomment `[AddToGlobal]`. Implement its builder and callback while preserving the selected base's access checks.
+`UserData` is `UserData?` in every callback; it is null when the user is not registered, so use `data!` only where a registered constraint guarantees a value. The callback receives no requester: a command that needs the database creates its own with `this._dataBaseService.NewRequester()`, and nothing is saved on dispose, so every write path must call `SaveChangesAsync` explicitly (for `UserData`, `AddOrReplaceUserDataAsync` then `SaveChangesAsync`). Use the existing `QuickReply` / `QuickReplyWithAttachments` helpers to modify the deferred response rather than acknowledging the interaction again.
+
+To add a command, start from the appropriate template in `PSLDiscordBot.Core/Command/Global/Template/` (normal, guest, admin, subcommand, or component), rename it, and uncomment `[AddToGlobal]`. Implement its builder and callback while preserving the selected constraints.
