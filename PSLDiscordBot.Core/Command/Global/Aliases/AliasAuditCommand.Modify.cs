@@ -35,6 +35,12 @@ public partial class AliasAuditCommand
 				return;
 			}
 
+			if (aliasData.Aliases.Contains(newAlias))
+			{
+				await arg.QuickReply("The new alias already exists for the specified song. Choose a different alias.");
+				return;
+			}
+
 			dynamicRequester.MutateAliases(aliasData.SongId, x =>
 			{
 				x.Remove(alias);
