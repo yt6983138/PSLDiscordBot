@@ -99,9 +99,12 @@ public abstract class CommandBase : BasicCommandBase
 		(SubcommandGroupNode? group, SubcommandNode? leaf, SocketSlashCommandDataOption? leafOption) =
 			this.Children.Count > 0 ? this.ResolveLeaf(arg) : default;
 
-		using DataBaseService.DbDataRequester requester = this._dataBaseService.NewRequester();
 		await arg.DeferAsync(ephemeral: leaf?.IsEphemeral ?? this.IsEphemeral);
-		UserData? userData = await requester.GetUserDataDirectlyAsync(arg.User.Id);
+		UserData? userData;
+		using (DataBaseService.DbDataRequester requester = this._dataBaseService.NewRequester())
+		{
+			userData = await requester.GetUserDataDirectlyAsync(arg.User.Id);
+		}
 
 		if (!await CheckConstraints(this.MasterConstraints, arg, userData)
 			|| (group is not null && !await CheckConstraints(group.Constraints, arg, userData))
