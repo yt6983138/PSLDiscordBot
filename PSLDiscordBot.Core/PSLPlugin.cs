@@ -284,7 +284,7 @@ public class PSLPlugin : IPlugin<PSLPlugin>
 	private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
 	{
 		Exception ex = e.ExceptionObject.Unbox<Exception>();
-		this._logger.LogCritical(EventIdApp, ex, "Unhandled exception. Application exiting.");
+		this.LogException(LogLevel.Critical, EventIdApp, ex, "Unhandled exception. Application exiting.");
 		Environment.Exit(ex.HResult);
 	}
 
@@ -478,16 +478,27 @@ public class PSLPlugin : IPlugin<PSLPlugin>
 		}
 	}
 
+	// for logs and the admin DM only; user-facing output (e.g. StackTrace.txt) must use plain ToString, not ToStringDetailed
+	private static string ExceptionToString(Exception exception)
+	{
+		return exception is DebugArgumentNullException debugEx ? debugEx.ToStringDetailed() : exception.ToString();
+	}
+
+	// DebugArgumentNullException.ToString omits AdditionalMessage, so the detailed text is logged instead of the exception object
+	private void LogException(LogLevel level, EventId eventId, Exception exception, string message)
+	{
+		if (exception is DebugArgumentNullException)
+			this._logger.Log(level, eventId, "{message}: {exception}", message, ExceptionToString(exception));
+		else
+			this._logger.Log(level, eventId, exception, message);
+	}
+
 	private async Task OnException(
 		Exception exception,
 		SocketCommandBase? interaction = null,
 		string? interactionDescription = null)
 	{
-		this._logger.LogError(EventId, exception, "Exception received");
-		if (exception is DebugArgumentNullException debugEx && !string.IsNullOrEmpty(debugEx.AdditionalMessage))
-		{
-			this._logger.LogError(EventId, "Additional message from Phigros null checks: {msg}", debugEx.AdditionalMessage);
-		}
+		this.LogException(LogLevel.Error, EventId, exception, "Exception received");
 
 		if (this._adminContact.AdminDM is not null)
 		{
@@ -508,7 +519,7 @@ public class PSLPlugin : IPlugin<PSLPlugin>
 					? $" with option(s) `{string.Join(", ", sc.Data.Options.Select(x => $"{i++}_{x.Name}({x.Type}): {x.Value}"))}`"
 					: "";
 
-				string exceptionString = exception is DebugArgumentNullException debugEx2 ? debugEx2.ToStringDetailed() : exception.ToString();
+				string exceptionString = ExceptionToString(exception);
 
 				await Task.WhenAll(
 					this._adminContact.AdminDM.SendMessageAsync(interactionMessage),

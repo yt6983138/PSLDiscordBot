@@ -124,10 +124,16 @@ public class ChromiumPoolService
 
 		void SendLog(LogLevel level)
 		{
+			string location = FormatLocation(e.Message.Location);
 			if (e.Message.StackTrace is not null)
-				this._logger.Log(level, _pageConsoleEventId, "{msg} at {location}\n{stack}", e.Message.Text, e.Message.Location, string.Join("\n", e.Message.StackTrace));
+				this._logger.Log(level, _pageConsoleEventId, "{msg} at {location}\n{stack}", e.Message.Text, location, string.Join("\n", e.Message.StackTrace.Select(FormatLocation)));
 			else
-				this._logger.Log(level, _pageConsoleEventId, "{msg} at {location}", e.Message.Text, e.Message.Location);
+				this._logger.Log(level, _pageConsoleEventId, "{msg} at {location}", e.Message.Text, location);
+		}
+
+		static string FormatLocation(ConsoleMessageLocation? location)
+		{
+			return location is null ? "<unknown>" : $"{location.URL}:{location.LineNumber}:{location.ColumnNumber}";
 		}
 	}
 
