@@ -17,7 +17,7 @@ using System.Net.WebSockets;
 
 namespace PSLDiscordBot.Core;
 
-public class PSLPlugin : IPlugin
+public class PSLPlugin : IPlugin<PSLPlugin>
 {
 	public const string SafeLockLocation = "./SAFE_LOCK";
 
@@ -25,15 +25,15 @@ public class PSLPlugin : IPlugin
 	private static EventId EventIdInitialize { get; } = new(114510, "PSL.Initializing");
 	private static EventId EventIdApp { get; } = new(114509, "PSL.Application");
 
-	private ILogger<PSLPlugin> _logger = null!;
-	private IWritableOptions<Config> _configService = null!;
-	private Program _program = null!;
-	private IDiscordClientService _discordClientService = null!;
-	private ICommandResolveService _commandResolveService = null!;
-	private LocalizationService _localizationService = null!;
+	private readonly ILogger<PSLPlugin> _logger;
+	private readonly IWritableOptions<Config> _configService;
+	private readonly ILifetimeService _lifetimeService;
+	private readonly IServiceProvider _services;
+	private readonly IDiscordClientService _discordClientService;
+	private readonly ICommandResolveService _commandResolveService;
+	private readonly LocalizationService _localizationService;
+	private readonly AdminContactService _adminContact;
 
-	public IUser? AdminUser { get; set; }
-	public IDMChannel? AdminDM { get; set; }
 	public bool Initialized { get; private set; }
 	public DiscordRestClient RestClient => this._discordClientService.RestClient;
 
@@ -43,21 +43,35 @@ public class PSLPlugin : IPlugin
 		Smart.Default.AddExtensions(new CalculationFormatter());
 	}
 
-	public PSLPlugin()
-		: base()
+	private PSLPlugin(
+		IServiceProvider services,
+		ILifetimeService lifetimeService,
+		IDiscordClientService discordClientService,
+		ICommandResolveService commandResolveService,
+		ILogger<PSLPlugin> logger,
+		IWritableOptions<Config> configService,
+		LocalizationService localizationService,
+		AdminContactService adminContact)
 	{
+		this._services = services;
+		this._lifetimeService = lifetimeService;
+		this._discordClientService = discordClientService;
+		this._commandResolveService = commandResolveService;
+		this._logger = logger;
+		this._configService = configService;
+		this._localizationService = localizationService;
+		this._adminContact = adminContact;
 	}
 
 	#region Interface
 
 	#region Properties
 
-	string IPlugin.Name => "PSLDiscordBot Core";
-	string IPlugin.Description => "Core implementation for PSLDiscord bot";
-	Version IPlugin.Version => new(1, 3, 0, 0);
-	string IPlugin.Author => "yt6983138 aka static_void (yt6983138@gmail.com)";
+	public static string Name => "PSLDiscordBot Core";
+	public static string Description => "Core implementation for PSLDiscord bot";
+	public static string Author => "yt6983138 aka static_void (yt6983138@gmail.com)";
 
-	int IPlugin.Priority => -1;
+	public static int Priority => -1;
 
 	#endregion
 
@@ -110,7 +124,7 @@ public class PSLPlugin : IPlugin
 		(_) =>
 		{
 			this._logger.LogInformation(EventIdInitialize, "Resetting localization...");
-			LocalizationService service = this._program.App.Services.GetRequiredService<LocalizationService>();
+			LocalizationService service = this._services.GetRequiredService<LocalizationService>();
 			service.Data = service.Generate();
 			service.Save();
 		},
@@ -120,23 +134,21 @@ public class PSLPlugin : IPlugin
 		"Add non-existent localizations into the service.",
 		(_) =>
 		{
-			/// does nothing here because it needs to be done manually, see <see cref="IPlugin.Setup(WebApplication)"/>.
+			/// does nothing here because it needs to be done manually, see <see cref="Setup(WebApplication)"/>.
 		},
 		null);
 	#endregion
 
-	void IPlugin.Load(WebApplicationBuilder hostBuilder)
+	public static Task Load(WebApplicationBuilder hostBuilder)
 	{
 		File.Create(SafeLockLocation).Dispose();
-
-		AppDomain.CurrentDomain.UnhandledException += this.CurrentDomain_UnhandledException;
 
 		hostBuilder.Logging.ClearProviders();
 		hostBuilder.Host.UseNLog();
 
 		hostBuilder.Services.ConfigureWritable<Config>(hostBuilder.Configuration.GetSection("Config"));
 
-		hostBuilder.Services.AddSingleton(this)
+		hostBuilder.Services.AddSingleton<AdminContactService>()
 			.AddSingleton<DataBaseService>()
 			//.AddSingleton<ChromiumPoolService>()
 			.AddSingleton<LocalSaveStore>()
@@ -159,36 +171,48 @@ public class PSLPlugin : IPlugin
 			.AddSingleton<AliasAdminConstraint>()
 			.AddSingleton<AliasAdminStrictConstraint>();
 
-		hostBuilder.Services.AddAssemblyToMvc(this);
-	}
-	void IPlugin.ConfigureDiscordClient(WebApplicationBuilder builder, DiscordClientServiceConfig config)
-	{
+		hostBuilder.Services.AddAssemblyToMvc<PSLPlugin>();
+
 		// if no token provided, it will throw when TryStartBot is called (aka im lazy to type throw expr)
-		config.Token =
+		hostBuilder.Services.Configure<DiscordClientServiceConfig>(config =>
+		{
+			config.Token =
 #if DEBUG
-			Secret.Token;
+				Secret.Token;
 #else
-			builder.Configuration.GetRequiredSection("Config")[nameof(Config.Token)] ?? "";
+				hostBuilder.Configuration.GetRequiredSection("Config")[nameof(Config.Token)] ?? "";
 #endif
-		config.SocketConfig.GatewayIntents |= GatewayIntents.AllUnprivileged
-			^ GatewayIntents.GuildScheduledEvents
-			^ GatewayIntents.GuildInvites;
+			config.SocketConfig.GatewayIntents |= GatewayIntents.AllUnprivileged
+				^ GatewayIntents.GuildScheduledEvents
+				^ GatewayIntents.GuildInvites;
+		});
+		return Task.CompletedTask;
 	}
-	void IPlugin.Setup(WebApplication host)
+	public static Task<PSLPlugin> Setup(WebApplication host)
 	{
-		this._program = host.Services.GetRequiredService<Program>();
-		this._discordClientService = host.Services.GetRequiredService<IDiscordClientService>();
-		this._commandResolveService = host.Services.GetRequiredService<ICommandResolveService>();
-		this._logger = host.Services.GetRequiredService<ILogger<PSLPlugin>>();
-		this._configService = host.Services.GetRequiredService<IWritableOptions<Config>>();
-		this._localizationService = host.Services.GetRequiredService<LocalizationService>();
+		PSLPlugin plugin = new(
+			host.Services,
+			host.Services.GetRequiredService<ILifetimeService>(),
+			host.Services.GetRequiredService<IDiscordClientService>(),
+			host.Services.GetRequiredService<ICommandResolveService>(),
+			host.Services.GetRequiredService<ILogger<PSLPlugin>>(),
+			host.Services.GetRequiredService<IWritableOptions<Config>>(),
+			host.Services.GetRequiredService<LocalizationService>(),
+			host.Services.GetRequiredService<AdminContactService>());
+		plugin.Hook(host);
+		return Task.FromResult(plugin);
+	}
+	private void Hook(WebApplication host)
+	{
+		AppDomain.CurrentDomain.UnhandledException += this.CurrentDomain_UnhandledException;
+
 		BugReportHandlerService bugHandler = host.Services.GetRequiredService<BugReportHandlerService>();
 		host.Services.GetRequiredService<IMvcConfigurationService>().StaticFileOptions.ServeUnknownFileTypes = true;
 
 		// force it to register the event callback
 		host.Services.GetRequiredService<LeaderboardService>();
 
-		this._program.AfterMainInitialize += this.Program_AfterMainInitialize;
+		this._lifetimeService.AfterMainInitialize += this.Program_AfterMainInitialize;
 
 		this._commandResolveService.BeforeSlashCommandExecutes += this.Program_BeforeSlashCommandExecutes;
 		this._commandResolveService.OnSlashCommandError += this.CommandResolveService_OnSlashCommandError;
@@ -197,16 +221,16 @@ public class PSLPlugin : IPlugin
 
 		bugHandler.OnReportReceived += this.BugHandler_OnReportReceived;
 
-		//this._program.AddArgReceiver(this.UpdateFiles);
-		this._program.AddArgReceiver(this.ResetConfig);
-		this._program.AddArgReceiver(this.ResetConfigFull);
-		this._program.AddArgReceiver(this.ResetLocalization);
-		this._program.AddArgReceiver(this.AddNonExistentLocalizations);
+		//this._lifetimeService.AddArgReceiver(this.UpdateFiles);
+		this._lifetimeService.AddArgReceiver(this.ResetConfig);
+		this._lifetimeService.AddArgReceiver(this.ResetConfigFull);
+		this._lifetimeService.AddArgReceiver(this.ResetLocalization);
+		this._lifetimeService.AddArgReceiver(this.AddNonExistentLocalizations);
 
 		this._discordClientService.SocketClient.Ready += this.Client_Ready;
 		this._discordClientService.SocketClient.Log += this.Log;
 
-		if (this._program.ProgramArguments.Contains("--addNonExistentLocalizations"))
+		if (this._lifetimeService.ProgramArguments.Contains("--addNonExistentLocalizations"))
 		{
 			this._logger.LogInformation(EventIdInitialize, "Adding non-existent localizations...");
 			IReadOnlyDictionary<string, LocalizedString> newer = this._localizationService.Generate().LocalizedStrings;
@@ -233,17 +257,15 @@ public class PSLPlugin : IPlugin
 #endif
 	}
 
-	void IPlugin.Unload(WebApplication host, bool isSafeUnload)
+	public Task Unload(WebApplication host, bool isSafeUnload)
 	{
 		this._logger.LogInformation(EventIdApp, "Service shutting down...");
-		if (this._commandResolveService is not null)
-		{
-			this._commandResolveService.BeforeComponentInteractionExecutes -= this.Program_BeforeComponentInteractionExecutes;
-			this._commandResolveService.OnComponentInteractionError -= this.CommandResolveService_OnComponentInteractionError;
-		}
+		this._commandResolveService.BeforeComponentInteractionExecutes -= this.Program_BeforeComponentInteractionExecutes;
+		this._commandResolveService.OnComponentInteractionError -= this.CommandResolveService_OnComponentInteractionError;
 
 		if (isSafeUnload)
 			File.Delete(SafeLockLocation);
+		return Task.CompletedTask;
 	}
 
 	#endregion
@@ -266,8 +288,9 @@ public class PSLPlugin : IPlugin
 		Environment.Exit(ex.HResult);
 	}
 
-	private void Program_AfterMainInitialize(object? sender, EventArgs e)
+	private Task Program_AfterMainInitialize(object? sender, EventArgs e)
 	{
+		return Task.CompletedTask;
 	}
 	private Task Program_BeforeSlashCommandExecutes(object? sender, SlashCommandEventArgs e)
 	{
@@ -386,8 +409,6 @@ public class PSLPlugin : IPlugin
 
 	private async Task Client_Ready()
 	{
-		Program program = this._program;
-
 		if (this.Initialized) goto Final;
 
 		this._logger.LogInformation(EventIdInitialize, "Initializing bot...");
@@ -395,7 +416,7 @@ public class PSLPlugin : IPlugin
 
 		if (!this._configService.Value.DMAdminAboutErrors)
 			goto BypassAdminCheck;
-		this.AdminUser = admin;
+		this._adminContact.AdminUser = admin;
 
 		if (admin is null)
 		{
@@ -408,8 +429,8 @@ public class PSLPlugin : IPlugin
 
 		try
 		{
-			this.AdminDM = await this.AdminUser.CreateDMChannelAsync();
-			await this.AdminDM.SendMessageAsync("Bot initializing...");
+			this._adminContact.AdminDM = await admin.CreateDMChannelAsync();
+			await this._adminContact.AdminDM.SendMessageAsync("Bot initializing...");
 		}
 		catch (HttpException ex) when (ex.DiscordCode == DiscordErrorCode.CannotSendMessageToUser)
 		{
@@ -468,7 +489,7 @@ public class PSLPlugin : IPlugin
 			this._logger.LogError(EventId, "Additional message from Phigros null checks: {msg}", debugEx.AdditionalMessage);
 		}
 
-		if (this.AdminDM is not null)
+		if (this._adminContact.AdminDM is not null)
 		{
 			try
 			{
@@ -490,8 +511,8 @@ public class PSLPlugin : IPlugin
 				string exceptionString = exception is DebugArgumentNullException debugEx2 ? debugEx2.ToStringDetailed() : exception.ToString();
 
 				await Task.WhenAll(
-					this.AdminDM.SendMessageAsync(interactionMessage),
-					this.AdminDM.SendFileAsync(PSLUtils.ToStream(exceptionString), "StackTrace.txt"));
+					this._adminContact.AdminDM.SendMessageAsync(interactionMessage),
+					this._adminContact.AdminDM.SendFileAsync(PSLUtils.ToStream(exceptionString), "StackTrace.txt"));
 			}
 			catch (Exception ex)
 			{

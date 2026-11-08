@@ -11,22 +11,6 @@ public static class Utils
 		foreach (FileInfo file in source.GetFiles())
 			file.CopyTo(Path.Combine(target.FullName, file.Name), true);
 	}
-	internal static async Task RunWithTaskOnEnd(Task task, Action? toDoOnEnd = null, Action<Exception>? toDoOnCatch = null)
-	{
-		try
-		{
-			await task;
-		}
-		catch (Exception e)
-		{
-			toDoOnCatch?.Invoke(e);
-		}
-		finally
-		{
-			toDoOnEnd?.Invoke();
-		}
-
-	}
 	internal static void WriteWithColor(string dat, ConsoleColor? foreground = null, ConsoleColor? background = null)
 	{
 		ConsoleColor oldBack = Console.BackgroundColor;

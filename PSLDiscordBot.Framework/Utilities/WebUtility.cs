@@ -42,16 +42,6 @@ public static class WebUtility
 		manager.ApplicationParts.Add(new AssemblyPart(typeof(T).Assembly));
 		manager.ApplicationParts.Add(new CompiledRazorAssemblyPart(typeof(T).Assembly));
 	}
-	/// <summary>
-	/// convenience wrapper so plugins can just call services.AddAssemblyToMvc(this)
-	/// </summary>
-	/// <typeparam name="T"></typeparam>
-	/// <param name="services"></param>
-	/// <param name="_"></param>
-	public static void AddAssemblyToMvc<T>(this IServiceCollection services, T _)
-	{
-		services.AddAssemblyToMvc<T>();
-	}
 
 	public static bool OpenAPIRequireInTypeAssembly<TType>(ApiDescription apiDesc)
 	{

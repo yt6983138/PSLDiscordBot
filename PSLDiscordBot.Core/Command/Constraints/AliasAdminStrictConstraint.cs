@@ -5,7 +5,7 @@ namespace PSLDiscordBot.Core.Command.Constraints;
 /// <remarks>
 /// Registered in DI as a singleton. Resolved by <see cref="Global.Aliases.AliasChangeAdminCommand"/>, not exposed on the command or node bases.
 /// </remarks>
-public sealed class AliasAdminStrictConstraint(LocalizationService localization, AliasService aliasService, PSLPlugin pslPlugin)
-	: AliasAdminConstraint(localization, aliasService, pslPlugin, true)
+public sealed class AliasAdminStrictConstraint(LocalizationService localization, AliasService aliasService, AdminContactService adminContact)
+	: AliasAdminConstraint(localization, aliasService, adminContact, true)
 {
 }

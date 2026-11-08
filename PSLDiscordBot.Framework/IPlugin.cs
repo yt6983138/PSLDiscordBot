@@ -1,19 +1,26 @@
-﻿using PSLDiscordBot.Framework.BuiltInServices;
-
+﻿
 namespace PSLDiscordBot.Framework;
+
 public interface IPlugin
 {
-	string Name { get; }
-	string Description { get; }
-	Version Version { get; }
-	string Author { get; }
+	Task Unload(WebApplication host, bool isSafeUnload);
+}
+public interface IPlugin<TSelf> : IPlugin where TSelf : IPlugin<TSelf>
+{
+	static abstract string Name { get; }
+	static abstract string Description { get; }
+	static abstract string Author { get; }
 	/// <summary>
 	/// lower for higher priority
 	/// </summary>
-	int Priority { get; }
+	static abstract int Priority { get; }
 
-	void Load(WebApplicationBuilder hostBuilder);
-	void ConfigureDiscordClient(WebApplicationBuilder builder, DiscordClientServiceConfig config);
-	void Setup(WebApplication host);
-	void Unload(WebApplication host, bool isSafeUnload);
+	/// <summary>
+	/// Runs before the host is built, so it can only register services.
+	/// </summary>
+	static abstract Task Load(WebApplicationBuilder builder);
+	/// <summary>
+	/// Runs after the host is built, creates the plugin.
+	/// </summary>
+	static abstract Task<TSelf> Setup(WebApplication host);
 }

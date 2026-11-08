@@ -44,9 +44,6 @@ public class PhigrosService
 	public IReadOnlyDictionary<string, string> NameMap { get; }
 	public IReadOnlyDictionary<ChartConstantKey, float> ChartConstantMap { get; }
 
-	[Obsolete("should use SaveService.OnSaveContextFetched instead")]
-	public event EventHandler<SaveContextFetchEventArg>? OnSaveContextFetched;
-
 	public PhigrosService(IOptions<Config> config, SaveService saveService)
 	{
 		this._config = config.Value;
@@ -54,8 +51,6 @@ public class PhigrosService
 
 		(this.NonMultiLanguageInfos, this.MultiLanguageInfos) =
 			LoadData(this._config.NonMultiLanguageInfoLocation, this._config.MultiLanguageInfoLocationFormat);
-
-		this._saveService.OnSaveContextFetched += (sender, e) => this.OnSaveContextFetched?.Invoke(this, e);
 
 		static bool IsSpecialScore(PhigrosService self, string id)
 		{

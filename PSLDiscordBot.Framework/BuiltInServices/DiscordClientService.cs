@@ -2,6 +2,7 @@
 using Antelcat.AutoGen.ComponentModel.Diagnostic;
 using Discord.Rest;
 using Discord.WebSocket;
+using Microsoft.Extensions.Options;
 
 namespace PSLDiscordBot.Framework.BuiltInServices;
 
@@ -19,8 +20,9 @@ internal class DiscordClientService : IDiscordClientService
 	public DiscordSocketClient SocketClient { get; set; }
 	public DiscordRestClient RestClient { get; set; }
 
-	public DiscordClientService(DiscordClientServiceConfig config)
+	public DiscordClientService(IOptions<DiscordClientServiceConfig> options)
 	{
+		DiscordClientServiceConfig config = options.Value;
 		this._config = config;
 		this.SocketClient = new(config.SocketConfig);
 		this.RestClient = new(config.RestConfig);
