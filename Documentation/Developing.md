@@ -31,24 +31,24 @@ The project is laid like this:
 3. `PSLDiscordBot.Analyzer`: Roslyn analyzer and localization-key source generator
 4. `CoreRunHelper`: Launcher that stages Core assets, metadata, and plugin files for debugging
 
-The Framework references the Analyzer project as a build-time analyzer. It does not depend on Core or concrete plugins at compile time; it discovers plugins at runtime by scanning `./Plugins/` for DLLs. Other generated interfaces use Antelcat.AutoGen.
+The Framework references the Analyzer project both as an analyzer and as a normal runtime reference that flows to plugins, so the Analyzer and Roslyn ship with the bot; only projects that reference it as an analyzer (Framework, Core) run its generators. It does not depend on Core or concrete plugins at compile time; it discovers plugins at runtime by scanning `./Plugins/` for DLLs. Other generated interfaces use Antelcat.AutoGen.
 
 ## The Plugin System
-Every plugin implements `IPlugin`. The normal startup/shutdown sequence is:
-1. `IPlugin.Load(WebApplicationBuilder)`: Register services into the DI container.
-2. `IPlugin.ConfigureDiscordClient(...)`: Configure the bot token and gateway intents.
-3. `builder.Build()`: Framework builds the `WebApplication`.
-4. `Program.AfterPluginsLoaded`: Hook after host construction, before plugin setup.
-5. `IPlugin.Setup(WebApplication)`: Resolve services and hook events.
-6. Framework starts the Discord clients and applies the shared MVC middleware.
-7. `Program.AfterArgParse`: Hook after plugin arguments have been parsed and handled.
-8. `CommandResolveService.SetupEverything()`: Hook command dispatch and command-upload handling.
-9. `Program.AfterMainInitialize`: Hook immediately before `App.RunAsync`; Discord clients have already been started.
-10. `App.RunAsync()`: Run the web host until shutdown.
-11. `Program.BeforeMainExiting`: Pre-unload hook on normal host exit.
-12. `IPlugin.Unload(WebApplication, bool isSafeUnload)`: Plugin cleanup.
+Every plugin implements `IPlugin<TSelf>` (which extends `IPlugin`). It declares static `Name`, `Description`, `Author`, and `Priority`, plus static `Load` and `Setup`. The normal startup/shutdown sequence is:
+1. `TSelf.Load(WebApplicationBuilder)`: Register services into the DI container, including `Configure<DiscordClientServiceConfig>` for the bot token and gateway intents. No plugin instance exists yet; register MVC assemblies with `AddAssemblyToMvc<TSelf>()`.
+2. `builder.Build()`: Framework builds the `WebApplication`.
+3. `TSelf.Setup(WebApplication)`: Resolve services, hook events, register argument receivers, and return the plugin instance.
+4. Framework starts the Discord clients and applies the shared MVC middleware.
+5. Plugin arguments are parsed and handled.
+6. `CommandResolveService.SetupEverything()`: Hook command dispatch and command-upload handling.
+7. `ILifetimeService.AfterMainInitialize`: Raised (and awaited) immediately before `App.RunAsync`; Discord clients have already been started.
+8. `App.RunAsync()`: Run the web host until shutdown.
+9. `ILifetimeService.BeforeMainExiting`: Pre-unload hook on normal host exit.
+10. `IPlugin.Unload(WebApplication, bool isSafeUnload)`: Plugin cleanup; a throwing plugin is logged and later plugins still unload.
 
-`PluginResolveService` scans `./Plugins/` and its **immediate subdirectories only**, not deeper descendants, ignoring folders/files prefixed with `__`. Plugin entry classes must be constructible without constructor arguments. Plugins are sorted by ascending `Priority` before lifecycle calls: **lower values run earlier**.
+Lifetime events are async events (`[GenerateAsyncEvent]`, `AsyncEventHandler<T>`, namespace `PSLDiscordBot.Analyzer.AsyncEventHelper`) whose handlers run sequentially. `ILifetimeService.Track` registers running work for the shutdown drain, and `SignalHostLifetime` turns SIGINT/SIGTERM into the `ShutdownRequested` event.
+
+`PluginResolveService` scans `./Plugins/` and its **immediate subdirectories only**, not deeper descendants, ignoring folders/files prefixed with `__`. It discovers classes implementing `IPlugin<>`, keeps one plugin per assembly by convention, and logs each assembly's informational version. Plugins are sorted by ascending `Priority` before `Load` and `Setup`: **lower values run earlier**.
 
 ## The Command System
 
