@@ -77,20 +77,6 @@ public static class ComponentRoutingUtility
 		return payload!;
 	}
 
-	public static ComponentInteractionInvalidReason Parse(string? customId, out Type? type, out NoncePacker nonce, out byte[]? payload)
-	{
-		type = null;
-
-		ComponentInteractionInvalidReason reason = Parse(customId, out nint typeKey, out nonce, out payload);
-		if (reason != ComponentInteractionInvalidReason.None)
-			return reason;
-
-		type = Type.GetTypeFromHandle(RuntimeTypeHandle.FromIntPtr(typeKey));
-		if (type is null)
-			return ComponentInteractionInvalidReason.MalformedId;
-
-		return ComponentInteractionInvalidReason.None;
-	}
 	public static ComponentInteractionInvalidReason Parse(string? customId, out nint typeKey, out NoncePacker nonceOut, out byte[]? payload)
 	{
 		typeKey = default;
