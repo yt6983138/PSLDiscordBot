@@ -394,12 +394,12 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 			[AccountStatusName] = LocalizedString.CreateDefault("status"),
 			[AccountStatusDescription] = LocalizedString.CreateDefault("Show your account status and token."),
 
-			[AccountRegisterQrCodeBegin] = LocalizedString.CreateDefault("Please login using this url: {BeginUrl}\n" +
+			[AccountRegisterQrCodeBegin] = LocalizedString.CreateDefault("Please login using this url: {Url}\n" +
 				"Make sure to login with the exact credentials you used in Phigros.\n" +
 				"The page _may_ stuck at loading after you click 'grant', " +
 				"don't worry about it just close the page and the login process will continue anyway, " +
 				"after you do it this message should show that you logged in successfully. " +
-				"[Qr code for convenience](https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={EncodedBeginUrl})"),
+				"[Qr code for convenience](https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={EncodedUrl})"),
 			[AccountRegisterQrCodeTimedOut] = LocalizedString.CreateDefault("The login has been canceled due to timeout."),
 			[AccountRegisterTokenInvalid] = LocalizedString.CreateDefault("Invalid token!"),
 			[AccountRegisterCloudSuccess] = LocalizedString.CreateDefault("Registered successfully, all commands are now accessible!"),
