@@ -12,19 +12,19 @@ public class AliasAdminConstraint : IConstraint
 {
 	private readonly LocalizationService _localization;
 	private readonly AliasService _aliasService;
-	private readonly PSLPlugin _pslPlugin;
+	private readonly AdminContactService _adminContact;
 	private readonly bool _strict;
 
-	public AliasAdminConstraint(LocalizationService localization, AliasService aliasService, PSLPlugin pslPlugin)
-		: this(localization, aliasService, pslPlugin, false)
+	public AliasAdminConstraint(LocalizationService localization, AliasService aliasService, AdminContactService adminContact)
+		: this(localization, aliasService, adminContact, false)
 	{
 	}
 
-	protected AliasAdminConstraint(LocalizationService localization, AliasService aliasService, PSLPlugin pslPlugin, bool strict)
+	protected AliasAdminConstraint(LocalizationService localization, AliasService aliasService, AdminContactService adminContact, bool strict)
 	{
 		this._localization = localization;
 		this._aliasService = aliasService;
-		this._pslPlugin = pslPlugin;
+		this._adminContact = adminContact;
 		this._strict = strict;
 	}
 
@@ -37,7 +37,7 @@ public class AliasAdminConstraint : IConstraint
 		}
 
 		bool isAllowed = guildUser.GuildPermissions.Administrator
-			|| guildUser.Id == this._pslPlugin.AdminUser?.Id;
+			|| guildUser.Id == this._adminContact.AdminUser?.Id;
 		if (!isAllowed && !this._strict)
 		{
 			using AliasService.StaticTableRequester staticRequester = this._aliasService.GetStaticTableRequester();

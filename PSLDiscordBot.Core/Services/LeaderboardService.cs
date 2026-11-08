@@ -28,7 +28,7 @@ public class LeaderboardService
 		this._discordClient = discordClient;
 		this._phigrosService = phigrosService;
 
-		this._phigrosService.OnSaveContextFetched += this.PhigrosService_OnSaveContextFetched;
+		saveService.OnSaveContextFetched += this.SaveService_OnSaveContextFetched;
 		saveService.OnCloudRankingInvalidated += this.SaveService_OnCloudRankingInvalidated;
 	}
 
@@ -36,7 +36,7 @@ public class LeaderboardService
 	/// Removes a stale cloud entry after a committed local activation or deletion. Runs under the leaderboard lock so it
 	/// cannot interleave with a publish that is still in progress.
 	/// </summary>
-	private async void SaveService_OnCloudRankingInvalidated(object? sender, ulong userId)
+	private async Task SaveService_OnCloudRankingInvalidated(object? sender, ulong userId)
 	{
 		try
 		{
@@ -50,7 +50,7 @@ public class LeaderboardService
 		}
 	}
 
-	private async void PhigrosService_OnSaveContextFetched(object? sender, SaveContextFetchEventArg e)
+	private async Task SaveService_OnSaveContextFetched(object? sender, SaveContextFetchEventArg e)
 	{
 		try
 		{

@@ -12,6 +12,12 @@
 		<EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
 
 		<NoWarn>RS1035, RS1017, RS1030</NoWarn>
+
+		<Configurations>Debug;Release;SourceGenDebug</Configurations>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)' == 'SourceGenDebug'">
+		<DefineConstants>$(DefineConstants);SOURCEGENDEBUG;DEBUG</DefineConstants>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -19,5 +25,5 @@
 		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
 		<PackageReference Include="Microsoft.CodeAnalysis.Common" />
 	</ItemGroup>
-
+	
 </Project>

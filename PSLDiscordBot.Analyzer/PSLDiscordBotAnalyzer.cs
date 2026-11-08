@@ -43,16 +43,48 @@ public class PSLDiscordBotAnalyzer : DiagnosticAnalyzer
 		true,
 		description: $"The usage of {typeof(NoLongerThanAttribute).Name}, is unsupported.");
 	private static readonly DiagnosticDescriptor NoDefinitionProvidedRule = new(
-		DiagnosticId + _counter++.ToString(),
+		$"{DiagnosticId}{_counter++}",
 		$"No definition for this property",
 		$"No definition for this property",
 		"Design",
 		DiagnosticSeverity.Error,
 		true,
 		description: $"No definition for this property.");
+	internal static readonly DiagnosticDescriptor BadAsyncEventDefinitionRule = new(
+		$"{DiagnosticId}{_counter++}",
+		$"Bad async event definition",
+		$"The async event definition is invalid. Use AsyncEventHandler<> instead.",
+		"Design",
+		DiagnosticSeverity.Error,
+		true,
+		description: $"The async event definition for this event is invalid.");
+	internal static readonly DiagnosticDescriptor MultipleEventFieldDefinitionRule = new(
+		$"{DiagnosticId}{_counter++}",
+		$"Multiple definitions for event",
+		"There are {0} name definitions for this field-like event. Only 1 is supported.",
+		"Design",
+		DiagnosticSeverity.Error,
+		true,
+		description: $"The async event definition for this event is invalid.");
+	internal static readonly DiagnosticDescriptor MustBePartialRule = new(
+		$"{DiagnosticId}{_counter++}",
+		"Async event must be partial",
+		"'{0}' must be declared partial to generate the async event implementation",
+		"Design",
+		DiagnosticSeverity.Error,
+		true,
+		description: "The event and all of its containing types must be partial.");
 
-	public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } =
-		[TooLongRule, InvalidTypeRule, InvalidPropertyAccessorRule, UnsupportedUsageRule, NoDefinitionProvidedRule];
+	public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = [
+		TooLongRule,
+		InvalidTypeRule,
+		InvalidPropertyAccessorRule,
+		UnsupportedUsageRule,
+		NoDefinitionProvidedRule,
+		BadAsyncEventDefinitionRule,
+		MultipleEventFieldDefinitionRule,
+		MustBePartialRule
+	];
 
 	public override void Initialize(AnalysisContext context)
 	{

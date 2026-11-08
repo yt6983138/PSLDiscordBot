@@ -1,114 +1,83 @@
-﻿using PSLDiscordBot.Framework.BuiltInServices;
-using System.Collections.Concurrent;
-using System.Reflection;
+﻿using Microsoft.Extensions.DependencyInjection.Extensions;
+using PSLDiscordBot.Framework.BuiltInServices;
 
 namespace PSLDiscordBot.Framework;
 
 public class Program
 {
-	public static Program Instance { get; private set; }
-#if DEBUG
-		= new();
-#else
-		= null!;
-#endif
+	private readonly LifetimeService _lifetimeService;
+	private readonly PluginResolveService _pluginResolveService;
+	private readonly CommandResolveService _commandResolveService;
+	private readonly WebApplicationBuilder _builder;
 
-	private List<ArgParseInfo> _argParseInfos = [];
+	private readonly string[] _args;
 
-	private IPluginResolveService _pluginResolveService = null!;
-	private IPrivilegedCommandResolveService _commandResolveService = null!;
-	private ICoFramework? _coFramework;
-	private WebApplicationBuilder _builder = null!;
+	// startup/shutdown order: see "The Plugin System" in Documentation/Developing.md
 
-	// so basically it goes like this:
-	// plugin loading -> AfterPluginsLoaded -> plugin configure discord -> plugin.Setup calls -> ArgParsing ->
-	// AfterArgParse -> AfterCommandLoaded -> AfterMainInitialize ->
-	// (waiting for exit) -> BeforeMainExiting -> plugin unload
+	public static Task Main(string[] args) => new Program(args).MainAsync();
 
-	// during the wait, things can attach on BeforeSlashCommandExecutes,
-	// which can manipulate the commands
-
-	// plugin load behavior:
-	// search for dlls under ./Plugins/, load assemblies ->
-	// search for subfolders, then look for dlls under them (not looking deeper), load assemblies ->
-	// spawn instance of IPlugin in dlls under ./Plugins/ ->
-	// spawn instance of IPlugin in dlls found under subfolders
-	// assembly loading order: sorted by name
-	public event EventHandler<EventArgs>? AfterPluginsLoaded;
-	public event EventHandler<EventArgs>? AfterArgParse;
-	public event EventHandler<EventArgs>? AfterMainInitialize;
-	public event EventHandler<EventArgs>? BeforeMainExiting;
-
-	public CancellationTokenSource CancellationTokenSource { get; } = new();
-	public CancellationToken CancellationToken { get; private set; }
-	/// <summary>
-	/// this acts like a concurrent hash set, the value is currently not used
-	/// </summary>
-	public ConcurrentDictionary<Task, object?> RunningTasks { get; } = [];
-	public string[] ProgramArguments { get; private set; } = [];
-	public IServiceCollection AllServices => this._builder.Services;
-	public WebApplication App { get; private set; } = null!;
-
-	public static Task Main(string[] args) => new Program().MainAsync(args);
-
-	public async Task MainAsync(string[] args)
+	public Program(string[] args)
 	{
-		const string CoFrameworkLocation = "./CO_FRAMEWORK_LOCATION";
-
-		Instance = this;
-
-		this.CancellationToken = this.CancellationTokenSource.Token;
-		this.ProgramArguments = args;
-
-		if (File.Exists(CoFrameworkLocation))
-		{
-			Assembly asm = Assembly.LoadFrom(File.ReadAllText(CoFrameworkLocation));
-			Type? type = asm.GetTypes().FirstOrDefault(x => x.IsAssignableTo(typeof(ICoFramework)));
-			if (type is not null)
-				this._coFramework = (ICoFramework?)Activator.CreateInstance(type);
-		}
-
+		this._args = args;
 		this._builder = WebApplication.CreateBuilder(args);
 
-		this._commandResolveService = new CommandResolveService(this, this._builder);
-		this._pluginResolveService = new PluginResolveService();
+		this._lifetimeService = new LifetimeService(args);
+		this._commandResolveService = new(this._lifetimeService, this._builder);
+		this._pluginResolveService = new();
+	}
 
-		this._coFramework?.Initialize(this, this._builder, ref this._commandResolveService, ref this._pluginResolveService);
-
-		this._builder.Services.AddSingleton(this)
-			.AddSingleton(this._pluginResolveService)
+	private async Task MainAsync()
+	{
+		try
+		{
+			await this.RunAsync();
+		}
+		finally
+		{
+			// releases a blocked Windows SIGTERM handler, the process dies as soon as that returns
+			this._lifetimeService.SignalExitCompleted();
+		}
+	}
+	private async Task RunAsync()
+	{
+		this._builder.Services.AddSingleton<ILifetimeService>(this._lifetimeService)
+			.AddSingleton<IPluginResolveService>(this._pluginResolveService)
 			.AddSingleton<ICommandResolveService>(this._commandResolveService)
 			.AddMvc();
 
 		this._pluginResolveService.LoadAllPlugins();
-		this._pluginResolveService.LoadAll(this._builder);
+		await this._pluginResolveService.LoadAll(this._builder);
 
 		this._commandResolveService.LoadEverything();
 
-		DiscordClientServiceConfig discordConfig = new();
-		this._pluginResolveService.ConfigureDiscordClientAll(this._builder, discordConfig);
-		DiscordClientService discordClientService = new(discordConfig);
 		MvcConfigurationService mvcService = new();
 
-		this._builder.Services.AddSingleton<IDiscordClientService>(discordClientService)
+		this._builder.Services.AddSingleton<IDiscordClientService, DiscordClientService>()
 			.AddSingleton<IMvcConfigurationService>(mvcService);
 
-		this.App = this._builder.Build();
+		// after all plugin Load calls so nothing registers over it; removing the default makes the replacement the only one
+		this._builder.Services.RemoveAll<IHostLifetime>()
+			.AddSingleton<IHostLifetime>(provider => new SignalHostLifetime(
+				this._lifetimeService,
+				provider.GetRequiredService<IHostApplicationLifetime>(),
+				provider.GetRequiredService<ILogger<SignalHostLifetime>>()));
 
-		this.AfterPluginsLoaded?.Invoke(this, EventArgs.Empty);
+		WebApplication app = this._builder.Build();
+		this._lifetimeService.Attach(app.Services.GetRequiredService<IHostApplicationLifetime>());
+		this._commandResolveService.Attach(app.Services);
 
-		this._pluginResolveService.SetupAll(this.App);
-		(bool success, Exception? ex) = await discordClientService.TryStartBotAsync();
+		await this._pluginResolveService.SetupAll(app);
+		(bool success, Exception? ex) = await app.Services.GetRequiredService<IDiscordClientService>().TryStartBotAsync();
 		if (!success)
 		{
 			Console.WriteLine("Framework: Failed to start bot client. Will now unload and exit.");
 			Console.WriteLine($"Exception: {ex}");
-			this._pluginResolveService.UnloadAll(this.App, false);
-			this._coFramework?.Unload(this, this.App, false);
+			await this._pluginResolveService.UnloadAll(app, false);
 			return;
 		}
-		mvcService.ApplyMiddleware(this.App);
+		mvcService.ApplyMiddleware(app);
 
+		string[] args = this._args;
 		#region Argument parsing
 		if (args.Contains("--help"))
 		{
@@ -120,7 +89,7 @@ public class Program
 		{
 			if (args[i].StartsWith("--") && args[i].Length > 2)
 			{
-				ArgParseInfo? info = this._argParseInfos.FirstOrDefault(x => x.Name == args[i][2..]);
+				ArgParseInfo? info = this._lifetimeService.ArgParseInfos.FirstOrDefault(x => x.Name == args[i][2..]);
 				if (info is null)
 				{
 					Console.WriteLine($"No option associated with argument '{args[i]}'.");
@@ -138,7 +107,7 @@ public class Program
 			}
 			if (args[i].StartsWith('-') && args[i].Length == 2)
 			{
-				ArgParseInfo? info = this._argParseInfos.FirstOrDefault(x => x.Shortcut == args[i][1]);
+				ArgParseInfo? info = this._lifetimeService.ArgParseInfos.FirstOrDefault(x => x.Shortcut == args[i][1]);
 				if (info is null)
 				{
 					Console.WriteLine($"No option associated with shortcut '{args[i]}'.");
@@ -158,7 +127,7 @@ public class Program
 			ShowHelp();
 			return;
 		}
-		foreach (ArgParseInfo info in this._argParseInfos)
+		foreach (ArgParseInfo info in this._lifetimeService.ArgParseInfos)
 		{
 			bool debug =
 #if DEBUG
@@ -174,27 +143,20 @@ public class Program
 		void ShowHelp()
 		{
 			Console.WriteLine("--help: Show this help.");
-			foreach (ArgParseInfo info in this._argParseInfos)
+			foreach (ArgParseInfo info in this._lifetimeService.ArgParseInfos)
 				Console.WriteLine($"--{info.Name}{(info.Shortcut == ' ' ? "" : $", {info.Shortcut}")}: {info.Description}");
 		}
 		#endregion
 
-		this.AfterArgParse?.Invoke(this, EventArgs.Empty);
+		this._commandResolveService.SetupEverything();
 
-		this._commandResolveService.SetupEverything(this.App.Services.GetRequiredService<IDiscordClientService>());
+		ILogger<Program> logger = app.Services.GetRequiredService<ILogger<Program>>();
+		await this._lifetimeService.RaiseAfterMainInitializeAsync(logger);
 
-		this.AfterMainInitialize?.Invoke(this, EventArgs.Empty);
+		await app.RunAsync().ContinueWith(_ => { });
 
-		await this.App.RunAsync(this.CancellationToken).ContinueWith(_ => { });
+		await this._lifetimeService.RaiseBeforeMainExitingAsync(logger);
 
-		BeforeMainExiting?.Invoke(this, EventArgs.Empty);
-
-		this._pluginResolveService.UnloadAll(this.App, true);
-		this._coFramework?.Unload(this, this.App, false);
-	}
-
-	public void AddArgReceiver(ArgParseInfo info)
-	{
-		this._argParseInfos.Add(info);
+		await this._pluginResolveService.UnloadAll(app, true);
 	}
 }
