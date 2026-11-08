@@ -295,13 +295,13 @@ public class PSLPlugin : IPlugin<PSLPlugin>
 	private Task Program_BeforeSlashCommandExecutes(object? sender, SlashCommandEventArgs e)
 	{
 		SocketSlashCommand arg = e.SocketSlashCommand;
-		int i = 0;
+		(string commandPath, string options) = FormatInvocation(arg.Data);
 		this._logger.LogInformation(EventId,
-			"Command received: {cmdName} from: {globalName} ({id}), options: {options}",
-			arg.CommandName,
+			"Command received: {commandPath} from: {globalName} ({id}), options: {options}",
+			commandPath,
 			arg.User.GlobalName,
 			arg.User.Id,
-			string.Join(",", e.SocketSlashCommand.Data.Options.Select(x => $"{i++}_{x.Name}({x.Type}): {x.Value}")));
+			options);
 		return Task.CompletedTask;
 	}
 	private async Task Program_BeforeComponentInteractionExecutes(object? sender, ComponentInteractionEventArgs e)
@@ -479,6 +479,42 @@ public class PSLPlugin : IPlugin<PSLPlugin>
 	}
 
 	// for logs and the admin DM only; user-facing output (e.g. StackTrace.txt) must use plain ToString, not ToStringDetailed
+	/// <summary>
+	/// Builds the invoked command path (e.g. <c>account switch cloud</c>) and its leaf options for logging. Never includes attachment URLs.
+	/// </summary>
+	private static (string CommandPath, string Options) FormatInvocation(SocketSlashCommandData data)
+	{
+		List<string> path = [data.Name];
+		List<string> leaves = [];
+		IReadOnlyCollection<SocketSlashCommandDataOption> options = data.Options;
+		while (options.Count > 0)
+		{
+			SocketSlashCommandDataOption? next = null;
+			foreach (SocketSlashCommandDataOption option in options)
+			{
+				if (option.Type is ApplicationCommandOptionType.SubCommand or ApplicationCommandOptionType.SubCommandGroup)
+					next = option;
+				else
+					leaves.Add($"{option.Name}: {FormatOptionValue(option.Value)}");
+			}
+			if (next is null)
+				break;
+			path.Add(next.Name);
+			options = next.Options;
+		}
+		return (string.Join(' ', path), string.Join(", ", leaves));
+	}
+	private static string FormatOptionValue(object? value)
+	{
+		return value switch
+		{
+			IUser user => $"{user.Username} ({user.Id})",
+			IChannel channel => $"{channel.Name} ({channel.Id})",
+			IRole role => $"{role.Name} ({role.Id})",
+			IAttachment attachment => $"{attachment.Filename} ({attachment.Size} bytes)",
+			_ => value?.ToString() ?? "<null>"
+		};
+	}
 	private static string ExceptionToString(Exception exception)
 	{
 		return exception is DebugArgumentNullException debugEx ? debugEx.ToStringDetailed() : exception.ToString();
@@ -509,15 +545,17 @@ public class PSLPlugin : IPlugin<PSLPlugin>
 				ulong? channelId = interaction?.Channel.Id;
 				RestGuildChannel? channel = guild is not null && channelId is not null ? await guild.GetChannelAsync(channelId.Value)
 					: null;
+				string commandPath = interaction?.CommandName ?? "";
+				string options = "";
+				if (interaction is SocketSlashCommand sc)
+					(commandPath, options) = FormatInvocation(sc.Data);
 				string interactionMessage = interactionDescription ?? (interaction is null
 					? ""
-					: $"<@{interaction.User.Id}> sent command `{interaction.CommandName}`" +
+					: $"<@{interaction.User.Id}> sent command `{commandPath}`" +
 					$"in server {(guildId is null ? "null" : guild)} ({guildId}) " +
 					$"in channel {(channel is null ? "null" : channel.Name)} ({channelId})");
-				int i = 0;
-				interactionMessage += interaction is SocketSlashCommand sc
-					? $" with option(s) `{string.Join(", ", sc.Data.Options.Select(x => $"{i++}_{x.Name}({x.Type}): {x.Value}"))}`"
-					: "";
+				if (interaction is SocketSlashCommand)
+					interactionMessage += $" with option(s) `{options}`";
 
 				string exceptionString = ExceptionToString(exception);
 
