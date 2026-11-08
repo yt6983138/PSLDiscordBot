@@ -362,9 +362,6 @@ public partial class ImageGenerator
 
 		await cdp.DebuggerResume();
 
-		//this._logger.LogDebug(EventId, tab.); // TODO: get the url of the tab for remote layout debugging
-		//this._logger.LogDebug(EventId, "localhost:{port}{url}", this._chromiumPoolService.Chromium.CdpPort, tab.CdpInfo.DevToolsFrontendUrl);
-
 		await setReadyDebuggerTask;
 		await cdp.DebuggerResume();
 		await cdp.PageDisable(); // tell cdp to shut up, for some reason without this call no screenshot will work
@@ -394,17 +391,26 @@ public partial class ImageGenerator
 
 		using Image<Rgba32> bigImage = new(width, height);
 
-		for (int x = 0; x < (width / blockSize) + 1; x++)
+		bool scrollMode = basicHtmlImageInfo.UseXScrollWhenTooBig || basicHtmlImageInfo.UseYScrollWhenTooBig;
+
+		// in scroll mode an axis without its scroll flag is covered by a single full-size tile, so it never needs scrolling
+		bool tileX = !scrollMode || basicHtmlImageInfo.UseXScrollWhenTooBig;
+		bool tileY = !scrollMode || basicHtmlImageInfo.UseYScrollWhenTooBig;
+
+		int tileCountX = tileX ? (int)Math.Ceiling((double)width / blockSize) : 1;
+		int tileCountY = tileY ? (int)Math.Ceiling((double)height / blockSize) : 1;
+
+		for (int x = 0; x < tileCountX; x++)
 		{
-			for (int y = 0; y < (height / blockSize) + 1; y++)
+			for (int y = 0; y < tileCountY; y++)
 			{
 				int vpX = x * blockSize;
 				int vpY = y * blockSize;
 
-				int clipWidth = Math.Min(blockSize, width - vpX);
-				int clipHeight = Math.Min(blockSize, height - vpY);
+				int clipWidth = tileX ? Math.Min(blockSize, width - vpX) : width;
+				int clipHeight = tileY ? Math.Min(blockSize, height - vpY) : height;
 
-				if (basicHtmlImageInfo.UseXScrollWhenTooBig || basicHtmlImageInfo.UseYScrollWhenTooBig)
+				if (scrollMode)
 				{
 					await page.SetViewportAsync(clipWidth, clipHeight, basicHtmlImageInfo.DeviceScaleFactor);
 					await cdp.RuntimeEvaluate(
@@ -412,10 +418,11 @@ public partial class ImageGenerator
 						$"{(basicHtmlImageInfo.UseYScrollWhenTooBig ? vpY : 0)});");
 				}
 
+				// clip coordinates are page-relative, so they stay at the tile origin even after scrolling
 				screenshotOptions.Clip = new()
 				{
-					X = /*basicHtmlImageInfo.UseXScrollWhenTooBig ? 0 : */vpX,
-					Y = /*basicHtmlImageInfo.UseYScrollWhenTooBig ? 0 : */vpY,
+					X = vpX,
+					Y = vpY,
 					Width = clipWidth,
 					Height = clipHeight
 				};
