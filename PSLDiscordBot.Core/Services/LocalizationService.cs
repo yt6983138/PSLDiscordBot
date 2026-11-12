@@ -33,6 +33,7 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 		{
 			[AdminCommandBasePermissionDenied] = LocalizedString.CreateDefault("Permission denied."),
 			[CommandBaseNotRegistered] = LocalizedString.CreateDefault("You haven't logged in/linked token. Please use /account register qrcode or /account register token first (or /account register local to use local mode)."),
+			[CommandBaseInternationalDiscontinued] = LocalizedString.CreateDefault("The international (Global) cloud save service has been discontinued, so this account can no longer be used. Use `/account register qrcode` or `/account register token` with a TapTap China account, or switch to local mode with `/account`. If you archived your save before, `/transfer-to-china` and `/local-import-archive` can still use it."),
 			[CommandBaseTOSNotAgreed] = LocalizedString.CreateDefault("You have not agreed to the Terms of Service. Please read and agree to the TOS using `/tos` command in order to use commands."),
 
 			[SaveHandlerOnOutOfRange] = LocalizedString.CreateDefault("Error: Expected index less than {0}, more or equal to 0. You entered {1}."),
@@ -152,9 +153,6 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 
 			[HelpName] = LocalizedString.CreateDefault("help"),
 			[HelpDescription] = LocalizedString.CreateDefault("Show help manuals."),
-
-			[LoginOptionIsInternationalName] = LocalizedString.CreateDefault("is_international"),
-			[LoginOptionIsInternationalDescription] = LocalizedString.CreateDefault("Whether to use international server or not."),
 
 			[DownloadAssetName] = LocalizedString.CreateDefault("download-asset"),
 			[DownloadAssetDescription] = LocalizedString.CreateDefault("Download assets about song."),

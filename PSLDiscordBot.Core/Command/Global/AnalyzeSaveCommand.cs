@@ -27,19 +27,13 @@ public class AnalyzeSaveCommand : AdminCommandBase
 			"index",
 			ApplicationCommandOptionType.Integer,
 			"Index of the save.",
-			isRequired: true)
-		.AddOption(
-			"is_international",
-			ApplicationCommandOptionType.Boolean,
-			"International mode",
 			isRequired: true);
 
 	public override async Task RootCallback(SocketSlashCommand arg, UserData? data)
 	{
 		ulong userId = arg.User.Id;
 		string token = arg.GetOption<string>("token");
-		bool isInternational = arg.GetOption<bool>("is_international");
-		UserData userData = new(userId, token, isInternational, 0, false);
+		UserData userData = new(userId, token, false, 0, false);
 		int index = arg.GetIntegerOptionAsInt32OrDefault("index");
 
 		// explicit token read: not the registered account, so it must not raise the cloud-fetched (leaderboard) hook

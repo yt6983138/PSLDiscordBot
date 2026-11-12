@@ -34,22 +34,14 @@ public partial class AccountCommand
 		public override OneOf<string, LocalizedString> PSLName => this._localization[PSLAccountCommandKey.AccountRegisterQrCodeName];
 		public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLAccountCommandKey.AccountRegisterQrCodeDescription];
 
-		public override SlashCommandOptionBuilder CompleteBuilder => this.BasicBuilder
-			.AddOption(
-				this._localization[PSLGuestCommandKey.LoginOptionIsInternationalName],
-				ApplicationCommandOptionType.Boolean,
-				this._localization[PSLGuestCommandKey.LoginOptionIsInternationalDescription],
-				isRequired: true);
+		public override SlashCommandOptionBuilder CompleteBuilder => this.BasicBuilder;
 
 		public override async Task Callback(SocketSlashCommand arg, SocketSlashCommandDataOption option, UserData? data)
 		{
-			bool isInternational = option.GetOptionOrDefault(this._localization[PSLGuestCommandKey.LoginOptionIsInternationalName], false);
-			bool chinaMode = !isInternational;
-
-			CompleteQRCodeData qrCode = await TapTapHelper.RequestLoginQrCode(useChinaEndpoint: chinaMode);
+			CompleteQRCodeData qrCode = await TapTapHelper.RequestLoginQrCode(useChinaEndpoint: true);
 			DateTime stopAt = DateTime.Now + new TimeSpan(0, 0, qrCode.ExpiresInSeconds - 15);
-			await arg.QuickReply(this._localization[PSLAccountCommandKey.AccountRegisterQrCodeBegin], new QRCodeDataModel(qrCode, isInternational));
-			string? token = await ListenQrCodeChange(qrCode, chinaMode, stopAt);
+			await arg.QuickReply(this._localization[PSLAccountCommandKey.AccountRegisterQrCodeBegin], new QRCodeDataModel(qrCode, false));
+			string? token = await ListenQrCodeChange(qrCode, true, stopAt);
 
 			if (token is null)
 			{
@@ -57,7 +49,7 @@ public partial class AccountCommand
 				return;
 			}
 
-			UserData userData = new(arg.User.Id, token, isInternational, this._config.Value.CurrentTOSAgreementLevel, false);
+			UserData userData = new(arg.User.Id, token, false, this._config.Value.CurrentTOSAgreementLevel, false);
 			_ = await userData.SaveCache.GetPlayerInfoAsync();
 			await this._root.ActivateCloudAndReplyAsync(arg, data, userData);
 		}
@@ -82,12 +74,7 @@ public partial class AccountCommand
 				this._localization[PSLAccountCommandKey.AccountRegisterTokenOptionTokenDescription],
 				isRequired: true,
 				maxLength: 25,
-				minLength: 25)
-			.AddOption(
-				this._localization[PSLGuestCommandKey.LoginOptionIsInternationalName],
-				ApplicationCommandOptionType.Boolean,
-				this._localization[PSLGuestCommandKey.LoginOptionIsInternationalDescription],
-				isRequired: true);
+				minLength: 25);
 
 		public override async Task Callback(SocketSlashCommand arg, SocketSlashCommandDataOption option, UserData? data)
 		{
@@ -102,7 +89,7 @@ public partial class AccountCommand
 			UserData tmp = new(
 				arg.User.Id,
 				token,
-				option.GetOptionOrDefault(this._localization[PSLGuestCommandKey.LoginOptionIsInternationalName], false),
+				false,
 				this._config.Value.CurrentTOSAgreementLevel,
 				false);
 

@@ -15,6 +15,7 @@ public abstract class CommandBase : BasicCommandBase
 	protected internal readonly IServiceProvider _serviceProvider;
 	protected internal readonly RegisteredConstraint _registeredConstraint;
 	protected internal readonly TosConstraint _tosConstraint;
+	protected internal readonly InternationalDiscontinuedConstraint _internationalDiscontinuedConstraint;
 	#endregion
 
 	private readonly Lazy<IReadOnlyList<CommandNode>> _children;
@@ -33,6 +34,7 @@ public abstract class CommandBase : BasicCommandBase
 		this._aliasService = provider.GetRequiredService<AliasService>();
 		this._registeredConstraint = provider.GetRequiredService<RegisteredConstraint>();
 		this._tosConstraint = provider.GetRequiredService<TosConstraint>();
+		this._internationalDiscontinuedConstraint = provider.GetRequiredService<InternationalDiscontinuedConstraint>();
 	}
 
 
@@ -45,10 +47,11 @@ public abstract class CommandBase : BasicCommandBase
 	public abstract OneOf<string, LocalizedString> PSLDescription { get; }
 
 	/// <summary>
-	/// Constraints applied to the command itself and all its subcommands, in order. Defaults to registered and TOS,
-	/// a command that needs less must opt out explicitly.
+	/// Constraints applied to the command itself and all its subcommands, in order. Defaults to registered, international discontinued
+	/// and TOS, a command that needs less must opt out explicitly.
 	/// </summary>
-	public virtual IReadOnlyList<IConstraint> MasterConstraints => [this._registeredConstraint, this._tosConstraint];
+	public virtual IReadOnlyList<IConstraint> MasterConstraints
+		=> [this._registeredConstraint, this._internationalDiscontinuedConstraint, this._tosConstraint];
 
 	/// <summary>
 	/// The subcommands and subcommand groups of this command, created once on first use. Empty for a flat command.

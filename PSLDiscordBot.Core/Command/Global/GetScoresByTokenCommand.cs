@@ -32,19 +32,13 @@ public class GetScoresByTokenCommand : AdminCommandBase
 			"The count to show.",
 			isRequired: false,
 			minValue: 1,
-			maxValue: 114514)
-		.AddOption(
-			"is_international",
-			ApplicationCommandOptionType.Boolean,
-			"International mode",
-			isRequired: true);
+			maxValue: 114514);
 
 	public override async Task RootCallback(SocketSlashCommand arg, UserData? data)
 	{
 		ulong userId = arg.User.Id;
 		string token = arg.Data.Options.ElementAt(0).Value.Unbox<string>();
-		bool isInternational = arg.GetOption<bool>("is_international");
-		UserData userData = new(userId, token, isInternational, 0, false);
+		UserData userData = new(userId, token, false, 0, false);
 
 		// explicit token read: not the registered account, so it must not raise the cloud-fetched (leaderboard) hook
 		SaveContext? context = await this._saveService.TryHandleCloudAsync(userData.SaveCache, arg, arg.GetIntegerOptionAsInt32("index"), raiseFetchedHook: false);

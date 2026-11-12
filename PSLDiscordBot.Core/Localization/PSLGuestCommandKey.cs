@@ -36,11 +36,6 @@ public static partial class PSLGuestCommandKey
 	public static partial string HelpDescription { get; }
 	#endregion
 
-	#region IsInternational option (OptionUtils)
-	public static partial string LoginOptionIsInternationalName { get; }
-	public static partial string LoginOptionIsInternationalDescription { get; }
-	#endregion
-
 	#region DownloadAssetCommand
 	public static partial string DownloadAssetName { get; }
 	public static partial string DownloadAssetDescription { get; }

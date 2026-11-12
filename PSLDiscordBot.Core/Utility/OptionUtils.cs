@@ -46,21 +46,6 @@ public static class OptionUtils
 		return self.GetOptionOrDefault<IUser>(localization[PSLCommonOptionKey.GenerateForOptionName]) ?? @default;
 	}
 
-	[Obsolete(UserData.InternationalObsoleteMessage)]
-	public static SlashCommandBuilder AddIsInternationalOption(this SlashCommandBuilder self, LocalizationService localization, bool required = true)
-	{
-		return self.AddOption( // why isn't this PSLCommonOptionKey at first place
-			localization[PSLGuestCommandKey.LoginOptionIsInternationalName],
-			ApplicationCommandOptionType.Boolean,
-			localization[PSLGuestCommandKey.LoginOptionIsInternationalDescription],
-			isRequired: required);
-	}
-	[Obsolete(UserData.InternationalObsoleteMessage)]
-	public static bool GetIsInternationalOption(this SocketSlashCommand self, LocalizationService localization, bool @default = false)
-	{
-		return self.GetOptionOrDefault(localization[PSLGuestCommandKey.LoginOptionIsInternationalName], @default);
-	}
-
 	public static SlashCommandBuilder AddAliasOperationOption(this SlashCommandBuilder self, LocalizationService localization, bool required = true)
 	{
 		return self.AddOption(

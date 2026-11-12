@@ -166,6 +166,7 @@ public class PSLPlugin : IPlugin<PSLPlugin>
 			.AddSingleton<LocalWorkflowStore<StagedLocalImport>>()
 			.AddSingleton<LocalImportService>()
 			.AddSingleton<RegisteredConstraint>()
+			.AddSingleton<InternationalDiscontinuedConstraint>()
 			.AddSingleton<TosConstraint>()
 			.AddSingleton<AdminConstraint>()
 			.AddSingleton<AliasAdminConstraint>()
