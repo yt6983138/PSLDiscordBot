@@ -14,17 +14,25 @@ namespace PSLDiscordBot.Core.Services;
 public class LocalizationService : FileManagementServiceBase<LocalizationManager>
 {
 	private readonly IOptions<Config> _config;
+	private readonly ILogger<LocalizationService> _logger;
 
-	public LocalizationService(IOptions<Config> config)
+	public LocalizationService(IOptions<Config> config, ILogger<LocalizationService> logger)
 	{
 		this._config = config;
+		this._logger = logger;
 		this.LaterInitialize(this._config.Value.LocalizationLocation);
 	}
 
 	public LocalizedString this[string key]
 	{
-		get => this.Data[key];
-		set => this.Data[key] = value;
+		get
+		{
+			if (this.Data.TryGet(key, out LocalizedString? str))
+				return str;
+
+			this._logger.LogWarning("Localization key {key} is missing, using the key name", key);
+			return this.Data[key]; // manager returns a detached key-name string on miss, nothing is added
+		}
 	}
 
 	public override LocalizationManager Generate()

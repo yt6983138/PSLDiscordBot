@@ -7,17 +7,12 @@ public class LocalizedStringNewtonsoftSerializer : JsonConverter<LocalizedString
 	// handled in localization serializer if not serialized separately
 	public override LocalizedString? ReadJson(JsonReader reader, Type objectType, LocalizedString? existingValue, bool hasExistingValue, JsonSerializer serializer)
 	{
-		LocalizedString instance = new(null);
-		instance.FallBackLanguages.Clear();
-
 		if (reader.TokenType == JsonToken.Null) return null;
 
+		LocalizedString instance = new(null);
 		JToken obj = JObject.ReadFrom(reader);
-		JArray fallbackLangs = (JArray)obj[nameof(LocalizedString.FallBackLanguages)]!;
-		for (int i = 0; i < fallbackLangs.Count; i++)
-			instance.FallBackLanguages.Add(LocalizationHelper.FromCode((string)fallbackLangs[i]!));
 
-		Dictionary<string, string> strings = obj[nameof(LocalizedString.LocalizedStrings)]!.ToObject<Dictionary<string, string>>()!;
+		Dictionary<string, string> strings = obj.ToObject<Dictionary<string, string>>()!;
 		foreach (KeyValuePair<string, string> item in strings)
 		{
 			instance.LocalizedStrings.Add(LocalizationHelper.FromCode(item.Key), item.Value);
@@ -34,21 +29,10 @@ public class LocalizedStringNewtonsoftSerializer : JsonConverter<LocalizedString
 		}
 
 		writer.WriteStartObject();
+		foreach (KeyValuePair<Language, string> item in value.LocalizedStrings)
 		{
-			writer.WritePropertyName(nameof(LocalizedString.FallBackLanguages));
-			writer.WriteStartArray();
-			foreach (Language item in value.FallBackLanguages)
-				writer.WriteValue(item.GetCode());
-			writer.WriteEndArray();
-
-			writer.WritePropertyName(nameof(LocalizedString.LocalizedStrings));
-			writer.WriteStartObject();
-			foreach (KeyValuePair<Language, string> item in value.LocalizedStrings)
-			{
-				writer.WritePropertyName(item.Key.GetCode());
-				writer.WriteValue(item.Value);
-			}
-			writer.WriteEndObject();
+			writer.WritePropertyName(item.Key.GetCode());
+			writer.WriteValue(item.Value);
 		}
 		writer.WriteEndObject();
 	}
