@@ -37,6 +37,14 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 
 	public override LocalizationManager Generate()
 	{
+		return CreateDefaults();
+	}
+
+	/// <summary>
+	/// Builds the default localization data in memory. No I/O and no service state. Contains Core strings only.
+	/// </summary>
+	public static LocalizationManager CreateDefaults()
+	{
 		return new(new Dictionary<string, LocalizedString>()
 		{
 			[AdminCommandBasePermissionDenied] = LocalizedString.CreateDefault("Permission denied."),
