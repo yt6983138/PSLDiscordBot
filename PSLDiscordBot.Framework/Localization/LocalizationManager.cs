@@ -1,39 +1,31 @@
 ﻿using Newtonsoft.Json;
-using PSLDiscordBot.Framework.Utilities;
+using System.Collections.Concurrent;
+using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 
 namespace PSLDiscordBot.Framework.Localization;
 
 [JsonConverter(typeof(LocalizationNewtonsoftSerializer))]
 public class LocalizationManager
 {
-	[Flags]
-	public enum FallbackLanguageApplyWay
-	{
-		OverwriteNone = 0b00000000,
+	internal Dictionary<string, LocalizedString> _strings = [];
 
-		OverwriteIfContentNotEqual = 0b00000001,
-		OverwriteIfContentEqual = 0b00000010,
+	/// <summary>
+	/// Default fallback chain, used for every requested language that has no entry in <see cref="LanguageSpecificFallback"/>.
+	/// Replace it as a whole; never edit it in place.
+	/// </summary>
+	public ImmutableList<Language> CommonLanguageFallback { get; set; } = [Language.EnglishUS];
+	/// <summary>
+	/// Per requested language fallback chains. Chains are explicit: they do not continue into <see cref="CommonLanguageFallback"/>.
+	/// Replace values per entry or in bulk; never edit a chain in place.
+	/// </summary>
+	public ConcurrentDictionary<Language, ImmutableList<Language>> LanguageSpecificFallback { get; set; } = [];
+	public IReadOnlyDictionary<string, LocalizedString> Strings => this._strings;
 
-		OverwriteIfReferenceEqual = 0b00000100,
-		OverwriteIfReferenceNotEqual = 0b00001000,
-
-		Merge = 0b00010000,
-
-		OverwriteContentAll = OverwriteIfContentEqual | OverwriteIfContentNotEqual,
-		OverwriteAllReplaced = OverwriteIfReferenceEqual | OverwriteIfReferenceNotEqual,
-	}
-
-	internal Dictionary<string, LocalizedString> _localization = [];
-	internal List<Language> _defaultFallbackLanguages = [Language.EnglishUS];
-
-	public List<Language> DefaultFallbackLanguages => this._defaultFallbackLanguages;
-	public IReadOnlyDictionary<string, LocalizedString> LocalizedStrings => this._localization;
-
-	public LocalizedString this[string key]
-	{
-		get => this.LocalizedStrings[key];
-		set => this.Set(key, value);
-	}
+	/// <summary>
+	/// Gets the string for <paramref name="key"/>. A missing key never throws; a new detached string holding only the key name is returned.
+	/// </summary>
+	public LocalizedString this[string key] => this._strings.TryGetValue(key, out LocalizedString? str) ? str : new LocalizedString(key);
 
 	public LocalizationManager() { }
 	public LocalizationManager(IReadOnlyDictionary<string, LocalizedString> localized)
@@ -44,91 +36,92 @@ public class LocalizationManager
 		}
 	}
 
-	public void ApplyFallbackLanguagesToStrings(FallbackLanguageApplyWay way)
+	internal ImmutableList<Language> GetFallbackChain(Language language)
 	{
-		FallbackLanguageApplyWay[] members = Enum.GetValues<FallbackLanguageApplyWay>().SkipLast(2).ToArray();
-		foreach (FallbackLanguageApplyWay member in members)
-		{
-			switch (member & way)
-			{
-				case FallbackLanguageApplyWay.Merge:
-					foreach ((string? key, LocalizedString? value) in this._localization)
-						if (value.FallBackLanguages != this._defaultFallbackLanguages) value.FallBackLanguages.AddRange(this.DefaultFallbackLanguages);
-					break;
-				case FallbackLanguageApplyWay.OverwriteIfContentNotEqual:
-					foreach ((string? key, LocalizedString? value) in this._localization)
-						if (!value.FallBackLanguages.SequenceEqual(this.DefaultFallbackLanguages)) value.FallBackLanguages = this.DefaultFallbackLanguages;
-					break;
-				case FallbackLanguageApplyWay.OverwriteIfContentEqual:
-					foreach ((string? key, LocalizedString? value) in this._localization)
-						if (value.FallBackLanguages.SequenceEqual(this.DefaultFallbackLanguages)) value.FallBackLanguages = this.DefaultFallbackLanguages;
-					break;
-				case FallbackLanguageApplyWay.OverwriteIfReferenceNotEqual:
-					foreach ((string? key, LocalizedString? value) in this._localization)
-						if (value.FallBackLanguages != this._defaultFallbackLanguages) value.FallBackLanguages = this.DefaultFallbackLanguages;
-					break;
-				case FallbackLanguageApplyWay.OverwriteIfReferenceEqual:
-					foreach ((string? key, LocalizedString? value) in this._localization)
-						if (value.FallBackLanguages == this._defaultFallbackLanguages) value.FallBackLanguages = this.DefaultFallbackLanguages;
-					break;
-				case FallbackLanguageApplyWay.OverwriteNone:
-					break;
-				default:
-					throw new ArgumentException("Parameter contains unknown enum", nameof(way));
-			}
-		}
+		return this.LanguageSpecificFallback.TryGetValue(language, out ImmutableList<Language>? chain)
+			? chain
+			: this.CommonLanguageFallback;
 	}
 
+	/// <summary>
+	/// Looks up the string for <paramref name="key"/>. Unlike the indexer, a miss returns false instead of a detached key-name string; nothing is added to the manager.
+	/// </summary>
+	/// <param name="key">The key to look up.</param>
+	/// <param name="str">The attached string stored in this manager (the same instance, not a copy) when found; otherwise <see langword="null"/>.</param>
+	/// <returns><see langword="true"/> if the key exists; otherwise <see langword="false"/>.</returns>
+	public bool TryGet(string key, [MaybeNullWhen(false)] out LocalizedString str)
+	{
+		return this._strings.TryGetValue(key, out str);
+	}
+
+	/// <summary>
+	/// Attaches <paramref name="str"/>. Throws if it already has a key name or a manager reference (see <see cref="LocalizedString.CloneDetached"/>).
+	/// </summary>
 	public void Add(string key, LocalizedString str)
 	{
-		this._localization.Add(key, str);
-		str._code = key;
+		EnsureDetached(str);
+		this._strings.Add(key, str);
+		str.Attach(this, key);
 	}
-	public bool Remove(string key)
+	/// <summary>
+	/// Attaches <paramref name="str"/> under <paramref name="key"/>, detaching the string previously stored there.
+	/// Throws if <paramref name="str"/> already has a key name or a manager reference.
+	/// </summary>
+	public void Replace(string key, LocalizedString str)
 	{
-		if (this._localization.TryGetValue(key, out LocalizedString? str))
-		{
-			str._code = null;
-			this._localization.Remove(key);
-			return true;
-		}
-		return false;
+		EnsureDetached(str);
+		if (this._strings.Remove(key, out LocalizedString? old)) old.Detach();
+		this._strings.Add(key, str);
+		str.Attach(this, key);
 	}
-	public void Set(string key, LocalizedString str)
+	/// <summary>
+	/// Removes and detaches the string stored under <paramref name="key"/>.
+	/// </summary>
+	/// <returns>The detached string, or <see langword="null"/> if the key is missing.</returns>
+	public LocalizedString? Remove(string key)
 	{
-		this.Remove(key);
-		this.Add(key, str);
+		if (!this._strings.Remove(key, out LocalizedString? str)) return null;
+
+		str.Detach();
+		return str;
 	}
 	public void Clear()
 	{
-		while (this._localization.Count > 0)
-		{
-			this.Remove(this._localization.First().Key);
-		}
+		foreach (LocalizedString str in this._strings.Values) str.Detach();
+		this._strings.Clear();
 	}
 
-	public LocalizedString CreateString(Dictionary<Language, string>? localizedStrings = null)
-	{
-		LocalizedString created = new(localizedStrings ?? [], null)
-		{
-			FallBackLanguages = this.DefaultFallbackLanguages
-		};
-
-		return created;
-	}
+	/// <summary>
+	/// Creates a new string from <paramref name="localizedStrings"/> and attaches it under <paramref name="key"/> (throws if the key exists).
+	/// </summary>
 	public LocalizedString CreateAndAdd(string key, Dictionary<Language, string>? localizedStrings = null)
 	{
-		LocalizedString ret = this.CreateString(localizedStrings);
+		LocalizedString ret = LocalizedString.Create(localizedStrings ?? []);
 		this.Add(key, ret);
 		return ret;
 	}
 
+	/// <summary>
+	/// Creates a new manager with the same chains and a detached copy of every string, all attached to the new manager.
+	/// </summary>
 	public LocalizationManager DeepClone()
 	{
-		LocalizationManager @new = (LocalizationManager)this.MemberwiseClone();
-		@new._localization = this._localization.ToDictionary(x => x.Key, x => x.Value.DeepClone());
-		@new._defaultFallbackLanguages = [.. this._defaultFallbackLanguages];
+		LocalizationManager @new = new()
+		{
+			CommonLanguageFallback = this.CommonLanguageFallback,
+			LanguageSpecificFallback = new ConcurrentDictionary<Language, ImmutableList<Language>>(this.LanguageSpecificFallback)
+		};
+		foreach (KeyValuePair<string, LocalizedString> item in this._strings)
+		{
+			@new.Add(item.Key, item.Value.CloneDetached());
+		}
 
 		return @new;
+	}
+
+	private static void EnsureDetached(LocalizedString str)
+	{
+		if (!str.IsDetached)
+			throw new ArgumentException("The string already has a key name or manager reference; use CloneDetached() first.", nameof(str));
 	}
 }

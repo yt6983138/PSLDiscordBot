@@ -1,31 +1,43 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Collections.Immutable;
 
 namespace PSLDiscordBot.Framework.Localization;
 public class LocalizationNewtonsoftSerializer : JsonConverter<LocalizationManager>
 {
+	private static void WriteChain(JsonWriter writer, IEnumerable<Language> chain)
+	{
+		writer.WriteStartArray();
+		foreach (Language item in chain)
+			writer.WriteValue(item.Code);
+		writer.WriteEndArray();
+	}
+
+	private static JToken ReadRequired(JToken obj, string name)
+	{
+		return obj[name] ?? throw new JsonSerializationException($"Localization file is missing required property '{name}'.");
+	}
+
 	public override LocalizationManager? ReadJson(JsonReader reader, Type objectType, LocalizationManager? existingValue, bool hasExistingValue, JsonSerializer serializer)
 	{
 		if (reader.TokenType == JsonToken.Null) return null;
 
 		LocalizationManager ret = new();
-		ret.DefaultFallbackLanguages.Clear();
 		JToken obj = JObject.ReadFrom(reader);
 
-		string[] fallbackLangs = obj[nameof(LocalizationManager.DefaultFallbackLanguages)]!.ToObject<string[]>()!;
-		foreach (string item in fallbackLangs)
+		string[] commonFallback = ReadRequired(obj, nameof(LocalizationManager.CommonLanguageFallback)).ToObject<string[]>()!;
+		ret.CommonLanguageFallback = [.. commonFallback.Select(Language.FromCode)];
+
+		Dictionary<string, string[]> specificFallback = ReadRequired(obj, nameof(LocalizationManager.LanguageSpecificFallback)).ToObject<Dictionary<string, string[]>>()!;
+		foreach (KeyValuePair<string, string[]> item in specificFallback)
 		{
-			ret.DefaultFallbackLanguages.Add(LocalizationHelper.FromCode(item));
+			ret.LanguageSpecificFallback[Language.FromCode(item.Key)] = [.. item.Value.Select(Language.FromCode)];
 		}
 
-		Dictionary<string, JObject> localizedStrings = obj[nameof(LocalizationManager.LocalizedStrings)]!.ToObject<Dictionary<string, JObject>>()!;
+		Dictionary<string, JObject> localizedStrings = ReadRequired(obj, nameof(LocalizationManager.Strings)).ToObject<Dictionary<string, JObject>>()!;
 		foreach (KeyValuePair<string, JObject> item in localizedStrings)
 		{
-			string key = item.Key;
-			LocalizedString str = item.Value.ToObject<LocalizedString>()!;
-			if (str.FallBackLanguages.SequenceEqual(ret.DefaultFallbackLanguages))
-				str.FallBackLanguages = ret.DefaultFallbackLanguages;
-			ret.Add(key, str);
+			ret.Add(item.Key, item.Value.ToObject<LocalizedString>()!);
 		}
 
 		return ret;
@@ -41,15 +53,21 @@ public class LocalizationNewtonsoftSerializer : JsonConverter<LocalizationManage
 
 		writer.WriteStartObject();
 		{
-			writer.WritePropertyName(nameof(LocalizationManager.DefaultFallbackLanguages));
-			writer.WriteStartArray();
-			foreach (Language item in value.DefaultFallbackLanguages)
-				writer.WriteValue(item.GetCode());
-			writer.WriteEndArray();
+			writer.WritePropertyName(nameof(LocalizationManager.CommonLanguageFallback));
+			WriteChain(writer, value.CommonLanguageFallback);
 
-			writer.WritePropertyName(nameof(LocalizationManager.LocalizedStrings));
+			writer.WritePropertyName(nameof(LocalizationManager.LanguageSpecificFallback));
+			writer.WriteStartObject();
+			foreach (KeyValuePair<Language, ImmutableList<Language>> item in value.LanguageSpecificFallback)
 			{
-				serializer.Serialize(writer, value._localization);
+				writer.WritePropertyName(item.Key.Code);
+				WriteChain(writer, item.Value);
+			}
+			writer.WriteEndObject();
+
+			writer.WritePropertyName(nameof(LocalizationManager.Strings));
+			{
+				serializer.Serialize(writer, value._strings);
 			}
 		}
 		writer.WriteEndObject();

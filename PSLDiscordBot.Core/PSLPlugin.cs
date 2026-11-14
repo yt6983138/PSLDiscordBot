@@ -91,7 +91,6 @@ public class PSLPlugin : IPlugin<PSLPlugin>
 
 				c.AvatarHashMapLocation = @default.AvatarHashMapLocation;
 				c.PSLDbConnectionString = @default.PSLDbConnectionString;
-				c.HelpMDGrabLocation = @default.HelpMDGrabLocation;
 				c.DefaultChromiumTabCacheCount = @default.DefaultChromiumTabCacheCount;
 				c.ChromiumPort = @default.ChromiumPort;
 				c.ChromiumLocation = @default.ChromiumLocation;
@@ -234,12 +233,12 @@ public class PSLPlugin : IPlugin<PSLPlugin>
 		if (this._lifetimeService.ProgramArguments.Contains("--addNonExistentLocalizations"))
 		{
 			this._logger.LogInformation(EventIdInitialize, "Adding non-existent localizations...");
-			IReadOnlyDictionary<string, LocalizedString> newer = this._localizationService.Generate().LocalizedStrings;
+			IReadOnlyDictionary<string, LocalizedString> newer = this._localizationService.Generate().Strings;
 			foreach ((string key, LocalizedString value) in newer)
 			{
-				if (!this._localizationService.Data.LocalizedStrings.ContainsKey(key))
+				if (!this._localizationService.Data.Strings.ContainsKey(key))
 				{
-					this._localizationService.Data[key] = value.CloneAsNew();
+					this._localizationService.Data.Add(key, value.CloneDetached());
 				}
 			}
 			this._localizationService.Save();

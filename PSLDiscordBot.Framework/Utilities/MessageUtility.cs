@@ -21,7 +21,7 @@ public static class MessageUtility
 		LocalizedString message,
 		params object?[] format)
 	{
-		Language locale = LocalizationHelper.FromCodeOrDefault(socketSlashCommand.UserLocale);
+		Language locale = Language.FromCodeOrDefault(socketSlashCommand.UserLocale);
 		await socketSlashCommand.QuickReply(message.GetFormatted(locale, format));
 	}
 	public static Task QuickReply(
@@ -30,7 +30,7 @@ public static class MessageUtility
 		LocalizedString message,
 		params object?[] format)
 	{
-		Language locale = LocalizationHelper.FromCodeOrDefault(interaction.UserLocale);
+		Language locale = Language.FromCodeOrDefault(interaction.UserLocale);
 		return interaction.QuickReply(message.GetFormatted(locale, format), additionalModification);
 	}
 	public static Task QuickReply(
@@ -72,7 +72,7 @@ public static class MessageUtility
 		LocalizedString message,
 		params object?[] format)
 	{
-		Language locale = LocalizationHelper.FromCodeOrDefault(socketSlashCommand.UserLocale);
+		Language locale = Language.FromCodeOrDefault(socketSlashCommand.UserLocale);
 		await QuickReplyWithAttachmentsCoreAsync(
 			socketSlashCommand,
 			null,
@@ -86,7 +86,7 @@ public static class MessageUtility
 		LocalizedString message,
 		params object?[] format)
 	{
-		Language locale = LocalizationHelper.FromCodeOrDefault(interaction.UserLocale);
+		Language locale = Language.FromCodeOrDefault(interaction.UserLocale);
 		return QuickReplyWithAttachmentsCoreAsync(
 			interaction,
 			additionalModification,
