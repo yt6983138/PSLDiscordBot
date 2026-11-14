@@ -14,7 +14,7 @@ Here are some showcasing:
 <br/><img src="https://github.com/user-attachments/assets/242c450c-1306-48a0-b347-973deaad0393" width="50%" />
 
 # Getting Started
-Please visit [help.md](Documentation/help.md) for more information. If you have more questions, please use our [support Discord server](https://discord.gg/b6a4RjEnEC).
+Please visit [help.md](https://github.com/yt6983138/PSLDiscordBot.Localizations/blob/master/Documentations/Help/help.md) for more information. If you have more questions, please use our [support Discord server](https://discord.gg/b6a4RjEnEC).
 
 # [Help me pay server cost](https://afdian.com/a/psl_bot)
 
