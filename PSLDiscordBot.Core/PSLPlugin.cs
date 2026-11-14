@@ -91,7 +91,6 @@ public class PSLPlugin : IPlugin<PSLPlugin>
 
 				c.AvatarHashMapLocation = @default.AvatarHashMapLocation;
 				c.PSLDbConnectionString = @default.PSLDbConnectionString;
-				c.HelpMDGrabLocation = @default.HelpMDGrabLocation;
 				c.DefaultChromiumTabCacheCount = @default.DefaultChromiumTabCacheCount;
 				c.ChromiumPort = @default.ChromiumPort;
 				c.ChromiumLocation = @default.ChromiumLocation;

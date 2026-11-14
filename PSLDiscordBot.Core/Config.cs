@@ -35,8 +35,6 @@ public class Config
 	public string HelpMDLocation { get; set; } = "./PSL/help.md";
 	public string HelpMDMultiLanguageLocation { get; set; } = "./PSL/help_{0}.md";
 
-	public string HelpMDGrabLocation { get; set; } = "https://raw.githubusercontent.com/yt6983138/PSLDiscordBot/master/Documentation/help.md";
-
 	public int LeaderboardRefreshEachIntervalMilliseconds { get; set; } = 2000;
 
 	public int DefaultChromiumTabCacheCount { get; set; } = 5;
