@@ -15,7 +15,7 @@ public class LocalizedStringNewtonsoftSerializer : JsonConverter<LocalizedString
 		Dictionary<string, string> strings = obj.ToObject<Dictionary<string, string>>()!;
 		foreach (KeyValuePair<string, string> item in strings)
 		{
-			instance.LocalizedStrings.Add(LocalizationHelper.FromCode(item.Key), item.Value);
+			instance.LocalizedStrings.Add(Language.FromCode(item.Key), item.Value);
 		}
 
 		return instance;
@@ -31,7 +31,7 @@ public class LocalizedStringNewtonsoftSerializer : JsonConverter<LocalizedString
 		writer.WriteStartObject();
 		foreach (KeyValuePair<Language, string> item in value.LocalizedStrings)
 		{
-			writer.WritePropertyName(item.Key.GetCode());
+			writer.WritePropertyName(item.Key.Code);
 			writer.WriteValue(item.Value);
 		}
 		writer.WriteEndObject();

@@ -9,7 +9,7 @@ public class LocalizationNewtonsoftSerializer : JsonConverter<LocalizationManage
 	{
 		writer.WriteStartArray();
 		foreach (Language item in chain)
-			writer.WriteValue(item.GetCode());
+			writer.WriteValue(item.Code);
 		writer.WriteEndArray();
 	}
 
@@ -26,12 +26,12 @@ public class LocalizationNewtonsoftSerializer : JsonConverter<LocalizationManage
 		JToken obj = JObject.ReadFrom(reader);
 
 		string[] commonFallback = ReadRequired(obj, nameof(LocalizationManager.CommonLanguageFallback)).ToObject<string[]>()!;
-		ret.CommonLanguageFallback = [.. commonFallback.Select(LocalizationHelper.FromCode)];
+		ret.CommonLanguageFallback = [.. commonFallback.Select(Language.FromCode)];
 
 		Dictionary<string, string[]> specificFallback = ReadRequired(obj, nameof(LocalizationManager.LanguageSpecificFallback)).ToObject<Dictionary<string, string[]>>()!;
 		foreach (KeyValuePair<string, string[]> item in specificFallback)
 		{
-			ret.LanguageSpecificFallback[LocalizationHelper.FromCode(item.Key)] = [.. item.Value.Select(LocalizationHelper.FromCode)];
+			ret.LanguageSpecificFallback[Language.FromCode(item.Key)] = [.. item.Value.Select(Language.FromCode)];
 		}
 
 		Dictionary<string, JObject> localizedStrings = ReadRequired(obj, nameof(LocalizationManager.Strings)).ToObject<Dictionary<string, JObject>>()!;
@@ -60,7 +60,7 @@ public class LocalizationNewtonsoftSerializer : JsonConverter<LocalizationManage
 			writer.WriteStartObject();
 			foreach (KeyValuePair<Language, ImmutableList<Language>> item in value.LanguageSpecificFallback)
 			{
-				writer.WritePropertyName(item.Key.GetCode());
+				writer.WritePropertyName(item.Key.Code);
 				WriteChain(writer, item.Value);
 			}
 			writer.WriteEndObject();

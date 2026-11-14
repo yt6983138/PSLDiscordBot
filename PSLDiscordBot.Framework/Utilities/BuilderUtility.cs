@@ -38,7 +38,7 @@ public static class BuilderUtility
 		params object?[] format)
 	{
 		return builder.WithLabel(label.GetFormatted(
-			LocalizationHelper.FromCodeOrDefault(interaction.UserLocale),
+			Language.FromCodeOrDefault(interaction.UserLocale),
 			format));
 	}
 	public static ButtonBuilder WithLabel(
@@ -57,7 +57,7 @@ public static class BuilderUtility
 		params object?[] format)
 	{
 		return builder.WithPlaceholder(placeholder.GetFormatted(
-			LocalizationHelper.FromCodeOrDefault(interaction.UserLocale),
+			Language.FromCodeOrDefault(interaction.UserLocale),
 			format));
 	}
 	public static SelectMenuBuilder WithPlaceholder(
@@ -76,7 +76,7 @@ public static class BuilderUtility
 		params object?[] format)
 	{
 		return builder.WithLabel(label.GetFormatted(
-			LocalizationHelper.FromCodeOrDefault(interaction.UserLocale),
+			Language.FromCodeOrDefault(interaction.UserLocale),
 			format));
 	}
 	public static SelectMenuOptionBuilder WithLabel(
@@ -94,7 +94,7 @@ public static class BuilderUtility
 		params object?[] format)
 	{
 		return builder.WithDescription(description.GetFormatted(
-			LocalizationHelper.FromCodeOrDefault(interaction.UserLocale),
+			Language.FromCodeOrDefault(interaction.UserLocale),
 			format));
 	}
 	public static SelectMenuOptionBuilder WithDescription(

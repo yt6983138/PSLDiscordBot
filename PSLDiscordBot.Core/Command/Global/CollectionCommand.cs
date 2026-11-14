@@ -69,7 +69,7 @@ public partial class CollectionCommand : CommandBase
 	}
 	private Language GetLanguageOption(SocketSlashCommandDataOption option, SocketSlashCommand arg)
 	{
-		Language desiredLang = option.GetOptionOrDefault(this._localization[PSLNormalCommandKey.CollectionOptionLanguageName], LocalizationHelper.FromCode(arg.UserLocale));
+		Language desiredLang = option.GetOptionOrDefault(this._localization[PSLNormalCommandKey.CollectionOptionLanguageName], Language.FromCode(arg.UserLocale));
 		if (this._phigrosService.MultiLanguageInfos.ContainsKey(desiredLang))
 			return desiredLang;
 

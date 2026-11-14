@@ -73,10 +73,10 @@ public class LocalizedString : IDictionary<string, string>, IReadOnlyDictionary<
 	public string this[string key]
 	{
 		get => this.Get(key);
-		set => this.LocalizedStrings[LocalizationHelper.FromCode(key)] = value;
+		set => this.LocalizedStrings[Language.FromCode(key)] = value;
 	}
 
-	public ICollection<string> Keys => this.LocalizedStrings.Keys.Select(x => x.GetCode()).ToList();
+	public ICollection<string> Keys => this.LocalizedStrings.Keys.Select(x => x.Code).ToList();
 	public ICollection<string> Values => this.LocalizedStrings.Values;
 
 	IEnumerable<string> IReadOnlyDictionary<string, string>.Keys => this.Keys;
@@ -92,7 +92,7 @@ public class LocalizedString : IDictionary<string, string>, IReadOnlyDictionary<
 
 	public void Add(string key, string value)
 	{
-		this.LocalizedStrings.Add(LocalizationHelper.FromCode(key), value);
+		this.LocalizedStrings.Add(Language.FromCode(key), value);
 	}
 
 	public void Clear()
@@ -107,7 +107,7 @@ public class LocalizedString : IDictionary<string, string>, IReadOnlyDictionary<
 
 	public bool ContainsKey(string key)
 	{
-		return this.LocalizedStrings.ContainsKey(LocalizationHelper.FromCode(key));
+		return this.LocalizedStrings.ContainsKey(Language.FromCode(key));
 	}
 
 	public void CopyTo(KeyValuePair<string, string>[] array, int arrayIndex)
@@ -119,7 +119,7 @@ public class LocalizedString : IDictionary<string, string>, IReadOnlyDictionary<
 
 		foreach (KeyValuePair<Language, string> item in this.LocalizedStrings)
 		{
-			array[arrayIndex++] = new KeyValuePair<string, string>(item.Key.GetCode(), item.Value);
+			array[arrayIndex++] = new KeyValuePair<string, string>(item.Key.Code, item.Value);
 		}
 	}
 
@@ -130,12 +130,12 @@ public class LocalizedString : IDictionary<string, string>, IReadOnlyDictionary<
 
 	public IEnumerator<KeyValuePair<string, string>> GetEnumerator()
 	{
-		return this.LocalizedStrings.Select(x => new KeyValuePair<string, string>(x.Key.GetCode(), x.Value)).GetEnumerator();
+		return this.LocalizedStrings.Select(x => new KeyValuePair<string, string>(x.Key.Code, x.Value)).GetEnumerator();
 	}
 
 	public bool Remove(string key)
 	{
-		return this.LocalizedStrings.Remove(LocalizationHelper.FromCode(key));
+		return this.LocalizedStrings.Remove(Language.FromCode(key));
 	}
 
 	public bool Remove(KeyValuePair<string, string> item)
@@ -146,7 +146,7 @@ public class LocalizedString : IDictionary<string, string>, IReadOnlyDictionary<
 	public bool TryGetValue(string key, [MaybeNullWhen(false)] out string value)
 	{
 		value = default;
-		return LocalizationHelper.TryFromCode(key, out Language lang) && this.LocalizedStrings.TryGetValue(lang, out value);
+		return Language.TryFromCode(key, out Language lang) && this.LocalizedStrings.TryGetValue(lang, out value);
 	}
 	#endregion
 
@@ -155,7 +155,7 @@ public class LocalizedString : IDictionary<string, string>, IReadOnlyDictionary<
 	/// </summary>
 	public string Get(string key)
 	{
-		Language lang = LocalizationHelper.FromCode(key);
+		Language lang = Language.FromCode(key);
 		return this.Get(lang);
 	}
 	/// <inheritdoc cref="Get(string)"/>
@@ -197,7 +197,7 @@ public class LocalizedString : IDictionary<string, string>, IReadOnlyDictionary<
 	public Dictionary<string, string> BuildDiscordFormattedDictionary(params object?[] format)
 	{
 		return this.LocalizedStrings.ToDictionary(
-			x => x.Key.GetCode(),
+			x => x.Key.Code,
 			x => Smart.Format(x.Value, format)
 		);
 	}
@@ -254,6 +254,6 @@ public class LocalizedString : IDictionary<string, string>, IReadOnlyDictionary<
 
 	internal static KeyValuePair<Language, string> ParseLanguage(KeyValuePair<string, string> pair)
 	{
-		return new(LocalizationHelper.FromCode(pair.Key), pair.Value);
+		return new(Language.FromCode(pair.Key), pair.Value);
 	}
 }
