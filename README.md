@@ -1,3 +1,5 @@
+[![Translation status](https://hosted.weblate.org/widget/psldiscordbot/svg-badge.svg)](https://hosted.weblate.org/engage/psldiscordbot/)
+
 # Introduction
 > Note: This bot requires cloud save in order to function. Both international and China accounts are supported.
 
@@ -26,4 +28,6 @@ Since 2026/10/23, this repo now accepts AI-assisted contributions. Before this d
 
 If you are contributing to this repo, please review the [AI-Assisted Contributions Policy](AI_POLICY.md) before contributing.
 
+# Translations
 
+Translations for this bot are managed with [Weblate](https://weblate.org/) in the [PSLDiscordBot project](https://hosted.weblate.org/projects/psldiscordbot/). Want to help translate? Join via the [Weblate engage page](https://hosted.weblate.org/engage/psldiscordbot/). Thanks to Weblate for providing free libre hosting!
