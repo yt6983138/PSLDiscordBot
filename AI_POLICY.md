@@ -12,7 +12,7 @@ This policy applies to all contributions to PSLDiscordBot and PSLBotMiscPlugins,
 
 AI-assisted contributions are permitted when the contributor:
 
-- Personally reviews and understands every AI-assisted part of the contribution, can explain it, and takes full responsibility for it.
+- Reviews AI-assisted parts of the contribution with care appropriate to the risk (for example, security-sensitive, data-handling, or hard-to-reverse changes need closer review than routine or mechanical ones), can explain what was submitted, and takes full responsibility for it.
 - Checks its accuracy, security, quality, and suitability to the same standard as any other contribution.
 - Performs and accurately reports the validation appropriate for the work. Never claim that a build, test, reproduction, source check, or review occurred when it did not.
 - Has the right to submit all included material and checks for copied or incompatibly licensed content.
@@ -32,7 +32,7 @@ Routine disclosure of AI use is not required. However, a maintainer may ask when
 
 ## Automated and bulk submissions
 
-Using an interactive AI tool under active human supervision is allowed. Unattended AI agents, AI-operated accounts, and bulk or campaign-style AI-generated issues or pull requests require maintainer approval before submission.
+Using an interactive AI tool under active human supervision is allowed, provided a person reviews the output before it is submitted. Unattended AI agents, AI-operated accounts, and bulk or campaign-style AI-generated issues or pull requests require maintainer approval before submission.
 
 ## Translated text
 
@@ -40,8 +40,22 @@ AI or machine translation may be used to prepare a draft. Before translated text
 
 ## Visual, audio, and other media assets
 
-Submitted images, artwork, designs, audio, video, and similar media must not contain generative-AI-created or generative-AI-replaced content. Non-generative AI-assisted editing, such as denoising, selection or masking, and upscaling, is allowed when it does not create or replace expressive content and the contribution otherwise meets this policy.
+Submitted expressive media, such as illustrations, artwork, icons, images, textures, backgrounds, audio, video, and similar, must not contain generative-AI-created or generative-AI-replaced content. This is decided by what the content is, not by its file format: an icon written as SVG code is still an icon.
+
+The following are allowed:
+
+- Non-generative AI-assisted editing, such as denoising, selection or masking, and upscaling, when it does not create or replace expressive content.
+- AI-assisted visual design expressed as code or configuration, such as layout, styling, colour schemes, typography, and templates. It is reviewed like any other code.
+- Images rendered by such code from permitted assets. They are not generated media.
+
+AI-generated material used only as a reference and never submitted is not covered by this section.
+
+In all cases the contribution must otherwise meet this policy.
 
 ## Noncompliance
 
 Maintainers may ask questions, request additional validation, or require corrections. Contributors will normally have an opportunity to address a concern. A contribution that remains noncompliant or cannot be reviewed with sufficient confidence may be rejected or closed.
+
+## Changelog
+
+- 2026-11-15: The media rule was narrowed to expressive media (arts, icons, and similar) and now applies by content kind rather than file format, so AI-assisted visual design expressed as code or configuration is allowed. Review requirements were made proportional to risk instead of requiring personal review and understanding of every AI-assisted part. Full responsibility and accurate validation reporting are unchanged, and the rules still apply equally to maintainers and external contributors.
