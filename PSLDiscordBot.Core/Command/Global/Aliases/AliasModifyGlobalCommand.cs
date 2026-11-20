@@ -34,7 +34,7 @@ public class AliasModifyGlobalCommand : CommandBase
 	public override ValueTask<IEnumerable<AutocompleteSuggestion>> Autocomplete(AutocompleteContext context)
 	{
 		if (context.IsAliasForSongFocused(this._localization))
-			return ValueTask.FromResult(this._autocompleteSuggestionService.GetSongSuggestions(context.FocusedText));
+			return ValueTask.FromResult(this._autocompleteSuggestionService.GetSongSuggestions(context.FocusedText, context.Interaction.GuildId));
 		if (context.IsAliasToOperateFocused(this._localization))
 		{
 			if (!context.TryGetAliasRemoveSong(this._localization, out string? forSong))

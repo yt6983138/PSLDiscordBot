@@ -49,9 +49,9 @@ Edits the profile of your local save. Omitted fields are kept; at least one must
 1. `nickname`: The new nickname.
 2. `intro`: The new introduction.
 3. `avatar`: The raw avatar key; it must be a known avatar. Suggestions of avatar keys and avatar aliases appear while typing, but submitting still needs the raw avatar key.
-4. `background`: A song, given as its exact name or its id. Song suggestions from the global alias table appear while typing; picking one fills in the song id. The save always stores the song name.
+4. `background`: A song, given as its exact name or its id. Song suggestions from the aliases of the server you are in and the global alias table (the global table only in DMs) appear while typing; picking one fills in the song id. The save always stores the song name.
 
-The song option of `/local score set` and `/local score remove` shows the same song suggestions from the global alias table while typing.
+The song option of `/local score set` and `/local score remove` shows the same song suggestions (server and global aliases) while typing.
 
 The `search` option of `/collection read item` shows suggestions for the chosen language while typing; picking one fills in the item key. Typed free text still resolves as before: an exact key first, then the closest fuzzy match.
 
@@ -187,7 +187,7 @@ Search info about songs.
 > Example: `/song-info "Spasmodic"`
 
 Options:
-1. `search`: Searching strings, you can either put id, put alias, or put the song name. Suggestions from the global alias table appear while typing; picking one fills in the song id.
+1. `search`: Searching strings, you can either put id, put alias, or put the song name. Suggestions from the aliases of the server you are in and the global alias table (the global table only in DMs) appear while typing; picking one fills in the song id.
 
 ## `/song-scores <search> [index] [generate_for]`
 Get scores for a specified song(s).
@@ -195,7 +195,7 @@ Get scores for a specified song(s).
 > Example: `/song-scores "Spasmodic" 0`
 
 Options:
-1. `search`: Searching strings, you can either put id, put alias, or put the song name. Suggestions from the global alias table appear while typing; picking one fills in the song id.
+1. `search`: Searching strings, you can either put id, put alias, or put the song name. Suggestions from the aliases of the server you are in and the global alias table (the global table only in DMs) appear while typing; picking one fills in the song id.
 2. `index`: Save time converted to index, 0 is always latest. Do `/get-time-index` to get other index.
 3. `generate_for`: Generate for other user. Users without `/set-public-visibility` on won't be generated.
 
@@ -205,7 +205,7 @@ Download assets about song.
 > Example: `/download-asset "Spasmodic" 2`
 
 Options:
-1. `search`: Searching strings, you can either put id, put alias, or put the song name. Suggestions from the global alias table appear while typing; picking one fills in the song id.
+1. `search`: Searching strings, you can either put id, put alias, or put the song name. Suggestions from the aliases of the server you are in and the global alias table (the global table only in DMs) appear while typing; picking one fills in the song id.
 2. `pez_chart_type`: Select which chart to pack.
 
 ## `/ping`

@@ -1,4 +1,3 @@
-using Discord;
 using PhiInfo.Core.Models.Information;
 using System.Collections.Frozen;
 
@@ -33,18 +32,60 @@ public class AutocompleteSuggestionService
 	}
 
 	/// <summary>
-	/// Song suggestions: searches the global alias table snapshot in partial mode.
-	/// Value is the song id; name is the display name, followed by the matched alias when the hit came from one.
-	/// Empty input gives nothing. If the global alias table was not loaded yet, songs are searched without aliases
-	/// (loading it would open a <c>DbContext</c>); the table is loaded by the first command that needs it.
+	/// Song suggestions: searches the alias snapshots in partial mode, the server's table first and then the global one when
+	/// <paramref name="guildId"/> is set (a server alias wins ties, so it labels the hit), the global one alone otherwise (DMs; the default).
+	/// The inheritance chain is ignored. Value is the song id; name is the display name, followed by the matched alias when the hit came from one.
+	/// Empty input gives nothing. An alias table that was not loaded yet is skipped, so songs are still searched by id and name
+	/// (loading it would open a <c>DbContext</c>); the tables are preloaded at startup or loaded by the first command that needs them.
 	/// </summary>
-	public IEnumerable<AutocompleteSuggestion> GetSongSuggestions(string input)
+	public IEnumerable<AutocompleteSuggestion> GetSongSuggestions(string input, ulong? guildId = null)
+	{
+		IReadOnlyDictionary<string, IReadOnlyCollection<string>> global = this.GetLoadedAliasesOrEmpty(AliasTableId.Global);
+		if (guildId is null) return this.SearchSongs(input, [global]);
+
+		return this.SearchSongs(input, [this.GetLoadedAliasesOrEmpty(AliasTableId.Server(guildId.Value)), global]);
+	}
+
+	/// <summary>
+	/// Song suggestions from the server's alias table only (no global aliases), for the audit command, which only works on songs that
+	/// have a server alias: only those songs are candidates (matched by id, name or alias). Labelling is as in <see cref="GetSongSuggestions"/>.
+	/// Unlike the other song suggestions, empty input lists those songs (name only) in song order, up to
+	/// <see cref="SlashCommandOptionBuilder.MaxChoiceCount"/>. Gives nothing outside a server or when the server's table was not loaded yet.
+	/// </summary>
+	public IEnumerable<AutocompleteSuggestion> GetServerSongSuggestions(string input, ulong? guildId)
+	{
+		if (guildId is null) return [];
+		if (!this._aliasService.TryGetLoadedAliases(AliasTableId.Server(guildId.Value), out IReadOnlyDictionary<string, IReadOnlyCollection<string>>? serverAliases))
+			return [];
+
+		IEnumerable<SongInfo> songsWithAliases = this._phigrosService.NonMultiLanguageInfos.Songs
+			.Where(s => serverAliases.TryGetValue(s.Id, out IReadOnlyCollection<string>? a) && a.Count > 0);
+		if (string.IsNullOrWhiteSpace(input))
+		{
+			return songsWithAliases
+				.Take(SlashCommandOptionBuilder.MaxChoiceCount)
+				.Select(static s => new AutocompleteSuggestion(FormatName(s.Name, null), s.Id))
+				.ToArray();
+		}
+
+		return this.SearchSongs(songsWithAliases, input, [serverAliases]);
+	}
+
+	private IEnumerable<AutocompleteSuggestion> SearchSongs(
+		string input,
+		ReadOnlySpan<IReadOnlyDictionary<string, IReadOnlyCollection<string>>> aliases)
+		=> this.SearchSongs(this._phigrosService.NonMultiLanguageInfos.Songs, input, aliases);
+
+	private IEnumerable<AutocompleteSuggestion> SearchSongs(
+		IEnumerable<SongInfo> songs,
+		string input,
+		ReadOnlySpan<IReadOnlyDictionary<string, IReadOnlyCollection<string>>> aliases)
 	{
 		return Search(
-			this._phigrosService.NonMultiLanguageInfos.Songs,
+			songs,
 			static s => s.Id,
 			static s => s.Name,
-			this.GetLoadedAliasesOrEmpty(AliasTableId.Global),
+			aliases,
 			input,
 			static hit => FormatName(hit.Name, hit.FromAlias ? hit.MatchedText : null));
 	}
@@ -61,7 +102,7 @@ public class AutocompleteSuggestionService
 			this._avatarHashMapService.Data.Keys,
 			static k => k,
 			static k => k,
-			this.GetLoadedAliasesOrEmpty(AliasTableId.Avatar),
+			[this.GetLoadedAliasesOrEmpty(AliasTableId.Avatar)],
 			input,
 			static hit => hit.FromAlias ? FormatName(hit.MatchedText, hit.Key) : FormatName(hit.Key, null));
 	}
@@ -97,7 +138,7 @@ public class AutocompleteSuggestionService
 			collection.SelectMany(static f => f.Files).Where(static f => !string.IsNullOrEmpty(f.Content)),
 			static f => f.Key,
 			static f => f.Name,
-			_noAliases,
+			[_noAliases],
 			input,
 			static hit => FormatName(hit.Name, hit.Key));
 	}
@@ -114,7 +155,7 @@ public class AutocompleteSuggestionService
 		IEnumerable<T> items,
 		Func<T, string> key,
 		Func<T, string> name,
-		IReadOnlyDictionary<string, IReadOnlyCollection<string>> aliases,
+		ReadOnlySpan<IReadOnlyDictionary<string, IReadOnlyCollection<string>>> aliases,
 		string input,
 		Func<SearchHit<T>, string> formatName)
 	{
@@ -140,7 +181,8 @@ public class AutocompleteSuggestionService
 	/// <summary>
 	/// Suggestions for the alias-to-operate option of the alias modify commands: the existing aliases of the song
 	/// <paramref name="forSong"/> in <paramref name="table"/> that contain <paramref name="typed"/>. Resolves the song strictly
-	/// against the global table snapshot with <paramref name="searchThreshold"/> (exactly one match required), whatever table is listed.
+	/// with <paramref name="searchThreshold"/> (exactly one match required) against the global table snapshot, or for a server
+	/// table against that table's snapshot first and then the global one.
 	/// Gives nothing when a snapshot is not loaded yet (loading would hit the database; a table is loaded by the first command that
 	/// needs it) or the song does not resolve to exactly one match. Empty typed text lists every alias of the song.
 	/// </summary>
@@ -153,18 +195,55 @@ public class AutocompleteSuggestionService
 		if (!this._aliasService.TryGetLoadedAliases(AliasTableId.Global, out IReadOnlyDictionary<string, IReadOnlyCollection<string>>? globalAliases))
 			return [];
 
-		List<SongSearchResult> found = this._aliasService.SearchSong(this._phigrosService.NonMultiLanguageInfos, globalAliases, forSong, searchThreshold);
-		if (found.Count != 1) return [];
-
 		IReadOnlyDictionary<string, IReadOnlyCollection<string>>? tableAliases;
+		List<SongSearchResult> found;
 		if (table == AliasTableId.Global)
 		{
 			tableAliases = globalAliases;
+			found = this._aliasService.SearchSong(this._phigrosService.NonMultiLanguageInfos, globalAliases, forSong, searchThreshold);
 		}
-		else if (!this._aliasService.TryGetLoadedAliases(table, out tableAliases))
+		else if (this._aliasService.TryGetLoadedAliases(table, out tableAliases))
+		{
+			// the song may be named by a server alias, so the server table is scored first, then the global one
+			found = this._aliasService.SearchSong(this._phigrosService.NonMultiLanguageInfos, [tableAliases, globalAliases], forSong, searchThreshold);
+		}
+		else
 		{
 			return [];
 		}
+		return FilterSongAliases(found, tableAliases, typed);
+	}
+
+	/// <summary>
+	/// Suggestions for the alias option of the audit commands: the existing aliases of the song <paramref name="forSong"/> in the
+	/// server's table that contain <paramref name="typed"/>. The song is resolved strictly with <paramref name="searchThreshold"/>
+	/// (exactly one match required) against that table's snapshot only, in memory; the picked song suggestion is a song id, which
+	/// matches exactly. Gives nothing outside a server, when the server's table was not loaded yet or the song does not resolve to
+	/// exactly one match. Empty typed text lists every alias of the song.
+	/// </summary>
+	public IEnumerable<AutocompleteSuggestion> GetServerAliasSuggestions(
+		string forSong,
+		ulong? guildId,
+		string typed,
+		double searchThreshold)
+	{
+		if (guildId is null) return [];
+		if (!this._aliasService.TryGetLoadedAliases(AliasTableId.Server(guildId.Value), out IReadOnlyDictionary<string, IReadOnlyCollection<string>>? serverAliases))
+			return [];
+
+		List<SongSearchResult> found = this._aliasService.SearchSong(this._phigrosService.NonMultiLanguageInfos, serverAliases, forSong, searchThreshold);
+		return FilterSongAliases(found, serverAliases, typed);
+	}
+
+	/// <summary>
+	/// the aliases of the single resolved song in <paramref name="tableAliases"/> that contain <paramref name="typed"/> (prefix matches first)
+	/// </summary>
+	private static IEnumerable<AutocompleteSuggestion> FilterSongAliases(
+		List<SongSearchResult> found,
+		IReadOnlyDictionary<string, IReadOnlyCollection<string>> tableAliases,
+		string typed)
+	{
+		if (found.Count != 1) return [];
 
 		if (!tableAliases.TryGetValue(found[0].SongId, out IReadOnlyCollection<string>? aliases)) return [];
 

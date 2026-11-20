@@ -46,7 +46,7 @@ public partial class LocalCommand
 			if (context.IsFocused(this._localization[PSLLocalCommandKey.LocalProfileAvatarOptionName]))
 				return ValueTask.FromResult(this._autocompleteSuggestionService.GetAvatarSuggestions(context.FocusedText));
 			if (context.IsFocused(this._localization[PSLLocalCommandKey.LocalProfileBackgroundOptionName]))
-				return ValueTask.FromResult(this._autocompleteSuggestionService.GetSongSuggestions(context.FocusedText));
+				return ValueTask.FromResult(this._autocompleteSuggestionService.GetSongSuggestions(context.FocusedText, context.Interaction.GuildId));
 			return base.Autocomplete(context);
 		}
 

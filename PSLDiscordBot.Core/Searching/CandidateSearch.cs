@@ -28,12 +28,13 @@ public static class CandidateSearch
 	/// <param name="items">the searched items, in the order that decides ties</param>
 	/// <param name="key">selector for the item key (also the alias dictionary key); pass a static lambda</param>
 	/// <param name="name">selector for the item name; pass a static lambda</param>
+	/// <param name="aliases">alias sources (dictionaries keyed by item key), scored in the given order; on a tie the earlier source's alias labels the hit</param>
 	/// <returns>the number of hits written; partial mode with an empty input returns 0</returns>
 	public static int Search<T>(
 		IEnumerable<T> items,
 		Func<T, string> key,
 		Func<T, string> name,
-		IReadOnlyDictionary<string, IReadOnlyCollection<string>> aliases,
+		ReadOnlySpan<IReadOnlyDictionary<string, IReadOnlyCollection<string>>> aliases,
 		string input,
 		double threshold,
 		bool allowPartial,
@@ -51,8 +52,7 @@ public static class CandidateSearch
 		foreach (T item in items)
 		{
 			string itemKey = key(item);
-			aliases.TryGetValue(itemKey, out IReadOnlyCollection<string>? candidateAliases);
-			if (!TryScore(item, itemKey, name(item), candidateAliases, lowerInput, threshold, allowPartial, out SearchHit<T> hit)) continue;
+			if (!TryScore(item, itemKey, name(item), aliases, lowerInput, threshold, allowPartial, out SearchHit<T> hit)) continue;
 
 			// stable bounded insertion sort (K is small, Discord caps autocomplete at 25): not PriorityQueue (unstable, allocates
 			// its own heap) or MemoryExtensions.Sort (unstable, needs every hit buffered); equal scores keep candidate order
@@ -83,11 +83,12 @@ public static class CandidateSearch
 	/// </summary>
 	/// <param name="threshold">minimum fuzzy (Levenshtein) ratio, in both modes</param>
 	/// <param name="allowPartial">rank exact, prefix, substring, then fuzzy matches and match nothing for empty input; otherwise strict command scoring</param>
+	/// <param name="aliases">alias sources (dictionaries keyed by item key), scored in the given order</param>
 	public static void SearchAll<T>(
 		IEnumerable<T> items,
 		Func<T, string> key,
 		Func<T, string> name,
-		IReadOnlyDictionary<string, IReadOnlyCollection<string>> aliases,
+		ReadOnlySpan<IReadOnlyDictionary<string, IReadOnlyCollection<string>>> aliases,
 		string input,
 		double threshold,
 		bool allowPartial,
@@ -99,8 +100,7 @@ public static class CandidateSearch
 		foreach (T item in items)
 		{
 			string itemKey = key(item);
-			aliases.TryGetValue(itemKey, out IReadOnlyCollection<string>? candidateAliases);
-			if (TryScore(item, itemKey, name(item), candidateAliases, lowerInput, threshold, allowPartial, out SearchHit<T> hit))
+			if (TryScore(item, itemKey, name(item), aliases, lowerInput, threshold, allowPartial, out SearchHit<T> hit))
 				results.Add(hit);
 		}
 	}
@@ -114,7 +114,7 @@ public static class CandidateSearch
 		T item,
 		string key,
 		string name,
-		IReadOnlyCollection<string>? aliases,
+		ReadOnlySpan<IReadOnlyDictionary<string, IReadOnlyCollection<string>>> aliasSources,
 		string lowerInput,
 		double threshold,
 		bool allowPartial,
@@ -138,8 +138,10 @@ public static class CandidateSearch
 			matched = name;
 		}
 
-		if (aliases is not null)
+		foreach (IReadOnlyDictionary<string, IReadOnlyCollection<string>> source in aliasSources)
 		{
+			if (!source.TryGetValue(key, out IReadOnlyCollection<string>? aliases)) continue;
+
 			foreach (string alias in aliases)
 			{
 				double aliasScore = allowPartial

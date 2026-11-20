@@ -13,12 +13,20 @@ public partial class AliasAuditCommand
 		{
 		}
 
-		// all three nodes build their song option with isAutocomplete: true
+		// all three nodes build their song and alias options with isAutocomplete: true
 		public sealed override ValueTask<IEnumerable<AutocompleteSuggestion>> Autocomplete(AutocompleteContext context)
 		{
-			if (context.Focused.Name != OptionForSongName)
-				return base.Autocomplete(context);
-			return ValueTask.FromResult(this._autocompleteSuggestionService.GetSongSuggestions(context.FocusedText));
+			if (context.Focused.Name == OptionForSongName)
+				return ValueTask.FromResult(this._autocompleteSuggestionService.GetServerSongSuggestions(context.FocusedText, context.Interaction.GuildId));
+			if (context.Focused.Name == OptionAliasName)
+			{
+				string? forSong = context.OtherOptions.FirstOrDefault(x => x.Name == OptionForSongName)?.Value?.ToString();
+				if (string.IsNullOrWhiteSpace(forSong))
+					return ValueTask.FromResult<IEnumerable<AutocompleteSuggestion>>([]);
+				return ValueTask.FromResult(this._autocompleteSuggestionService.GetServerAliasSuggestions(
+					forSong, context.Interaction.GuildId, context.FocusedText, AliasModifyGlobalCommand.SearchThreshold));
+			}
+			return base.Autocomplete(context);
 		}
 
 		public sealed override async Task Callback(SocketSlashCommand arg, SocketSlashCommandDataOption option, UserData? data)

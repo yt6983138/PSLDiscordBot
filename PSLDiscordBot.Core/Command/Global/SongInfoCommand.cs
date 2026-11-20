@@ -46,7 +46,7 @@ public class SongInfoCommand : CommandBase
 	{
 		if (!context.IsSongSearchFocused(this._localization))
 			return base.Autocomplete(context);
-		return ValueTask.FromResult(this._autocompleteSuggestionService.GetSongSuggestions(context.FocusedText));
+		return ValueTask.FromResult(this._autocompleteSuggestionService.GetSongSuggestions(context.FocusedText, context.Interaction.GuildId));
 	}
 
 	public static StringBuilder BuildReturnQueryString(List<SongSearchResult> foundAlias, PhigrosService service)

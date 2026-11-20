@@ -431,7 +431,6 @@ public class PSLPlugin : IPlugin<PSLPlugin>
 		if (this.Initialized) goto Final;
 
 		this._logger.LogInformation(EventIdInitialize, "Initializing bot...");
-		this.WarmUpGlobalAliases();
 		IUser admin = await this._discordClientService.SocketClient.GetUserAsync(this._configService.Value.AdminUserId);
 
 		if (!this._configService.Value.DMAdminAboutErrors)
@@ -462,28 +461,48 @@ public class PSLPlugin : IPlugin<PSLPlugin>
 		}
 
 	BypassAdminCheck:
+		// alias table warmup, required for auto complete server lookups (so auto complete don't load tables, it needs to be fast)
+		AliasService aliasService = this._services.GetRequiredService<AliasService>();
+		_ = this._lifetimeService.Track(
+			Task.Run(() =>
+			{
+				foreach (AliasTableId table in new[] { AliasTableId.Global, AliasTableId.Avatar })
+					WarmUpCore(table);
+
+				List<AliasTableId> serverTables;
+				try
+				{
+					serverTables = aliasService.GetExistingServerTables();
+				}
+				catch (Exception e)
+				{
+					this._logger.LogWarning(EventIdInitialize, e, "Failed to list the existing server alias tables.");
+					return;
+				}
+
+				foreach (AliasTableId table in serverTables)
+					WarmUpCore(table);
+			}),
+			e =>
+			{
+				this._logger.LogWarning(EventIdInitialize, e, "Failed to warm up the alias tables.");
+				return Task.CompletedTask;
+			});
+
+		void WarmUpCore(AliasTableId table)
+		{
+			try
+			{
+				aliasService.GetCachedAliases(table);
+			}
+			catch (Exception e)
+			{
+				this._logger.LogWarning(EventIdInitialize, e, "Failed to warm up the {Table} alias table.", table);
+			}
+		}
 	Final:
 		this._logger.LogInformation(EventIdInitialize, "Bot started!");
 		this.Initialized = true;
-	}
-	/// <summary>
-	/// Loads the global and avatar alias tables once in the background so suggestions include aliases from startup
-	/// (autocomplete never loads tables itself). Does not block startup; a failure is logged, and the table is then
-	/// loaded by the first command that needs it.
-	/// </summary>
-	private void WarmUpGlobalAliases()
-	{
-		AliasService aliasService = this._services.GetRequiredService<AliasService>();
-		foreach (AliasTableId table in new[] { AliasTableId.Global, AliasTableId.Avatar })
-		{
-			_ = this._lifetimeService.Track(
-				Task.Run(() => aliasService.GetCachedAliases(table)),
-				e =>
-				{
-					this._logger.LogWarning(EventIdInitialize, e, "Failed to warm up the {Table} alias table.", table);
-					return Task.CompletedTask;
-				});
-		}
 	}
 	private async Task Log(LogMessage msg)
 	{

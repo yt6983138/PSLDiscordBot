@@ -25,7 +25,7 @@ Subcommands:
 - `modify <for-song> <alias> <new-alias>`: Modify an alias to a new string.
 - `remove <for-song> <alias>`: Remove an alias.
 
-Note: the `for-song` option suggests songs while typing (global aliases; the picked value is the song id).
+Note: the `for-song` option suggests only songs that have an alias in this server's table (matched by id, name or server alias; the picked value is the song id). While the field is empty it lists the first 25 of those songs in song order. The `alias` option suggests that song's aliases in this server's table (all of them while the field is empty, otherwise those containing the typed text); nothing is suggested when the song is not chosen yet, does not resolve to exactly one match, or before the server's alias table has been loaded.
 
 ### `/alias-table-info <subcommand> [options]`
 Manage information about the alias table in the current server.
@@ -53,7 +53,7 @@ Options:
 2. `for-song`: The song identifier or search term.
 3. `alias-to-operate`: The alias string to add or remove.
 
-The `for-song` option suggests songs while typing (global aliases; the picked value is the song id). When the operation is `Remove`, `alias-to-operate` suggests the chosen song's existing aliases in this server's table (all of them while the field is empty, otherwise those containing the typed text). Nothing is suggested for `Add`, when the operation is not chosen yet, when the song does not resolve to exactly one match, or before the alias tables have been loaded.
+The `for-song` option suggests songs while typing (this server's aliases and the global ones, a server alias is shown first on a tie; the picked value is the song id). When the operation is `Remove`, `alias-to-operate` suggests the chosen song's existing aliases in this server's table (all of them while the field is empty, otherwise those containing the typed text). Nothing is suggested for `Add`, when the operation is not chosen yet, when the song does not resolve to exactly one match, or before the alias tables have been loaded.
 
 ## Global Member commands
 
@@ -67,4 +67,4 @@ Options:
 2. `for-song`: The song identifier or search term.
 3. `alias-to-operate`: The alias string to add or remove.
 
-Autocomplete works as for `/alias-modify-server`, except the suggested aliases come from the global table.
+Autocomplete works as for `/alias-modify-server`, except the aliases suggested by `alias-to-operate` come from the global table.

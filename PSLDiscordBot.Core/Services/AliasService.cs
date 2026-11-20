@@ -94,6 +94,25 @@ public class AliasService
 		return count.Count > 0 && count[0] > 0;
 	}
 
+	/// <summary>
+	/// The server alias tables that already exist in the database schema (creates nothing). Meant for the startup preload.
+	/// Names that do not parse as a server table id are skipped.
+	/// </summary>
+	public List<AliasTableId> GetExistingServerTables()
+	{
+		using StaticTableRequester requester = new(this);
+		List<string> names = requester.Database
+			.SqlQuery<string>($"SELECT name AS \"Value\" FROM sqlite_master WHERE type = 'table' AND name LIKE 'Server\\_%' ESCAPE '\\'")
+			.ToList();
+
+		List<AliasTableId> tables = [];
+		foreach (string name in names)
+		{
+			if (AliasTableId.TryParse(name, out AliasTableId table) && table.IsServer) tables.Add(table);
+		}
+		return tables;
+	}
+
 	private static void RollBack(DbContext dbContext)
 	{
 		List<EntityEntry> changedEntries = dbContext.ChangeTracker.Entries()
@@ -250,6 +269,17 @@ public class AliasService
 		IReadOnlyDictionary<string, IReadOnlyCollection<string>> aliases,
 		string input,
 		double threshold = CandidateSearch.DefaultThreshold)
+		=> this.SearchSong(info, [aliases], input, threshold);
+	/// <summary>
+	/// strict search over several alias sources scored in the given order (used by autocomplete to resolve a song against
+	/// server and global aliases); <see cref="SongSearchResult.Alias"/> is taken from the first source that has the song
+	/// </summary>
+	/// <returns>A list sorted with score (high to low)</returns>
+	public List<SongSearchResult> SearchSong(
+		NonMultiLanguageInfos info,
+		ReadOnlySpan<IReadOnlyDictionary<string, IReadOnlyCollection<string>>> aliases,
+		string input,
+		double threshold = CandidateSearch.DefaultThreshold)
 	{
 		// TODO?: add different threshold for id/name and alias, not sure if needed
 
@@ -261,7 +291,13 @@ public class AliasService
 		List<SongSearchResult> results = [with(hits.Count)];
 		foreach (SearchHit<SongInfo> hit in hits)
 		{
-			IReadOnlyCollection<string> songAliases = aliases.TryGetValue(hit.Key, out IReadOnlyCollection<string>? al) ? al : [];
+			IReadOnlyCollection<string> songAliases = [];
+			foreach (IReadOnlyDictionary<string, IReadOnlyCollection<string>> source in aliases)
+			{
+				if (!source.TryGetValue(hit.Key, out IReadOnlyCollection<string>? al)) continue;
+				songAliases = al;
+				break;
+			}
 			results.Add(new(hit.Item, songAliases, hit.Score));
 		}
 
