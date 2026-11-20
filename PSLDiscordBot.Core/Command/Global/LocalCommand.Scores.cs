@@ -45,11 +45,7 @@ public partial class LocalCommand
 		public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLLocalCommandKey.LocalScoreSetDescription];
 
 		public override SlashCommandOptionBuilder CompleteBuilder => this.BasicBuilder
-			.AddOption(
-				this._localization[PSLCommonOptionKey.SongSearchOptionName],
-				ApplicationCommandOptionType.String,
-				this._localization[PSLCommonOptionKey.SongSearchOptionDescription],
-				isRequired: true)
+			.AddSongSearchOption(this._localization)
 			.AddOption(
 				this._localization[PSLLocalCommandKey.LocalScoreDifficultyOptionName],
 				ApplicationCommandOptionType.Integer,
@@ -75,6 +71,13 @@ public partial class LocalCommand
 				ApplicationCommandOptionType.Boolean,
 				this._localization[PSLLocalCommandKey.LocalScoreFcOptionDescription],
 				isRequired: true);
+
+		public override ValueTask<IEnumerable<AutocompleteSuggestion>> Autocomplete(AutocompleteContext context)
+		{
+			if (!context.IsSongSearchFocused(this._localization))
+				return base.Autocomplete(context);
+			return ValueTask.FromResult(this._autocompleteSuggestionService.GetSongSuggestions(context.FocusedText));
+		}
 
 		public override async Task Callback(SocketSlashCommand arg, SocketSlashCommandDataOption option, UserData? data)
 		{
@@ -131,17 +134,20 @@ public partial class LocalCommand
 		public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLLocalCommandKey.LocalScoreRemoveDescription];
 
 		public override SlashCommandOptionBuilder CompleteBuilder => this.BasicBuilder
-			.AddOption(
-				this._localization[PSLCommonOptionKey.SongSearchOptionName],
-				ApplicationCommandOptionType.String,
-				this._localization[PSLCommonOptionKey.SongSearchOptionDescription],
-				isRequired: true)
+			.AddSongSearchOption(this._localization)
 			.AddOption(
 				this._localization[PSLLocalCommandKey.LocalScoreDifficultyOptionName],
 				ApplicationCommandOptionType.Integer,
 				this._localization[PSLLocalCommandKey.LocalScoreDifficultyOptionDescription],
 				isRequired: true,
 				choices: BuilderUtility.CreateChoicesFromEnum<Difficulty>());
+
+		public override ValueTask<IEnumerable<AutocompleteSuggestion>> Autocomplete(AutocompleteContext context)
+		{
+			if (!context.IsSongSearchFocused(this._localization))
+				return base.Autocomplete(context);
+			return ValueTask.FromResult(this._autocompleteSuggestionService.GetSongSuggestions(context.FocusedText));
+		}
 
 		public override async Task Callback(SocketSlashCommand arg, SocketSlashCommandDataOption option, UserData? data)
 		{

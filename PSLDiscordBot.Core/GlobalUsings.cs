@@ -10,6 +10,7 @@ global using PSLDiscordBot.Core.Command.Constraints;
 global using PSLDiscordBot.Core.Command.Global.Base;
 global using PSLDiscordBot.Core.Localization;
 global using PSLDiscordBot.Core.Models;
+global using PSLDiscordBot.Core.Searching;
 global using PSLDiscordBot.Core.Services;
 global using PSLDiscordBot.Core.Utility;
 global using PSLDiscordBot.Framework;

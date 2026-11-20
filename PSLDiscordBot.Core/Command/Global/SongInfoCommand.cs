@@ -1,4 +1,4 @@
-﻿using PhiInfo.Core.Models.Information;
+using PhiInfo.Core.Models.Information;
 using System.Text;
 
 namespace PSLDiscordBot.Core.Command.Global;
@@ -40,6 +40,13 @@ public class SongInfoCommand : CommandBase
 				new(File.OpenRead(foundAlias[0].Info.GetIllustrationPath(Difficulty.EZ, IllustrationType.LowRes)), "preview.png"),
 				PSLUtils.ToAttachment(query.ToString(), "Query.txt")
 			]);
+	}
+
+	public override ValueTask<IEnumerable<AutocompleteSuggestion>> Autocomplete(AutocompleteContext context)
+	{
+		if (!context.IsSongSearchFocused(this._localization))
+			return base.Autocomplete(context);
+		return ValueTask.FromResult(this._autocompleteSuggestionService.GetSongSuggestions(context.FocusedText));
 	}
 
 	public static StringBuilder BuildReturnQueryString(List<SongSearchResult> foundAlias, PhigrosService service)

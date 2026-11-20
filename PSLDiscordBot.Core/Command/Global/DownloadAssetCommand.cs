@@ -1,4 +1,4 @@
-﻿using PhiInfo.Core.Models.Information;
+using PhiInfo.Core.Models.Information;
 using PSLDiscordBot.Framework.BuiltInServices;
 using System.IO.Compression;
 using System.Text;
@@ -31,6 +31,13 @@ public class DownloadAssetCommand : CommandBase
 			this._localization[PSLGuestCommandKey.DownloadAssetOptionDownloadPEZDescription],
 			choices: BuilderUtility.CreateChoicesFromEnum<Difficulty>(),
 			isRequired: false);
+
+	public override ValueTask<IEnumerable<AutocompleteSuggestion>> Autocomplete(AutocompleteContext context)
+	{
+		if (!context.IsSongSearchFocused(this._localization))
+			return base.Autocomplete(context);
+		return ValueTask.FromResult(this._autocompleteSuggestionService.GetSongSuggestions(context.FocusedText));
+	}
 
 	public override async Task RootCallback(SocketSlashCommand arg, UserData? data)
 	{

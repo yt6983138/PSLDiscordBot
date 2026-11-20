@@ -29,7 +29,7 @@ public partial class AliasTableInfoCommand
 		public override async Task Callback(SocketSlashCommand arg, SocketSlashCommandDataOption option, UserData? data)
 		{
 			using AliasService.StaticTableRequester staticRequester = this._aliasService.GetStaticTableRequester();
-			AliasTableAttribute tableAttribute = staticRequester.GetTableAttributeOrDefault(AliasTableIdType.Server, arg.GuildId.EnsureNotNull());
+			AliasTableAttribute tableAttribute = staticRequester.GetTableAttributeOrDefault(AliasTableId.Server(arg.GuildId.EnsureNotNull()));
 
 			Field field = option.GetOption<Field>("field");
 			string valueString = option.GetOption<string>("value");
@@ -45,14 +45,14 @@ public partial class AliasTableInfoCommand
 						break;
 					}
 
-					AliasTableAttribute targetTableAttribute = staticRequester.GetTableAttributeOrDefault(valueString);
-					if (!targetTableAttribute.AllowInheritance)
+					if (!AliasTableId.TryParse(valueString, out AliasTableId targetTable)
+						|| !staticRequester.GetTableAttributeOrDefault(targetTable).AllowInheritance)
 					{
 						await arg.QuickReply("The specified table to inherit from does not exist or does not allow inheritance. Please check the table id and try again.");
 						return;
 					}
 
-					tableAttribute.InheritsFrom = valueString;
+					tableAttribute.InheritsFrom = targetTable.ToString();
 					break;
 				case Field.OverriddenSongAliases:
 					List<string> songIds = valueString.Split(',').Select(x => x.Trim()).Where(x => !string.IsNullOrEmpty(x)).ToList();

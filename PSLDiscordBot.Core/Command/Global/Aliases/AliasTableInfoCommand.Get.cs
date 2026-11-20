@@ -16,7 +16,7 @@ public partial class AliasTableInfoCommand
 		public override async Task Callback(SocketSlashCommand arg, SocketSlashCommandDataOption option, UserData? data)
 		{
 			using AliasService.StaticTableRequester staticRequester = this._aliasService.GetStaticTableRequester();
-			AliasTableAttribute tableAttribute = staticRequester.GetTableAttributeOrDefault(AliasTableIdType.Server, arg.GuildId.EnsureNotNull());
+			AliasTableAttribute tableAttribute = staticRequester.GetTableAttributeOrDefault(AliasTableId.Server(arg.GuildId.EnsureNotNull()));
 
 			string returnString = $"""
 					## Server Alias Table Information:

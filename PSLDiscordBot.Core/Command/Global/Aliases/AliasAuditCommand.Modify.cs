@@ -14,7 +14,7 @@ public partial class AliasAuditCommand
 		public override OneOf<string, LocalizedString> PSLDescription => "Modify an alias";
 
 		public override SlashCommandOptionBuilder CompleteBuilder => this.BasicBuilder
-			.AddOption(OptionForSongName, ApplicationCommandOptionType.String, "Song to operate", isRequired: true)
+			.AddOption(OptionForSongName, ApplicationCommandOptionType.String, "Song to operate", isRequired: true, isAutocomplete: true)
 			.AddOption(OptionAliasName, ApplicationCommandOptionType.String, "Alias string to modify", isRequired: true)
 			.AddOption(OptionNewAliasName, ApplicationCommandOptionType.String, "The new alias string", isRequired: true);
 

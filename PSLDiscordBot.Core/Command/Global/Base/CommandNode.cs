@@ -16,6 +16,7 @@ public closed class CommandNode
 	protected readonly PhigrosService _phigrosService;
 	protected readonly TemporaryTOSAgreementService _temporaryTOSAgreementService;
 	protected readonly AliasService _aliasService;
+	protected readonly AutocompleteSuggestionService _autocompleteSuggestionService;
 	protected readonly IServiceProvider _serviceProvider;
 	protected readonly RegisteredConstraint _registeredConstraint;
 	protected readonly TosConstraint _tosConstraint;
@@ -43,6 +44,7 @@ public closed class CommandNode
 		this._phigrosService = root._phigrosService;
 		this._temporaryTOSAgreementService = root._temporaryTOSAgreementService;
 		this._aliasService = root._aliasService;
+		this._autocompleteSuggestionService = root._autocompleteSuggestionService;
 		this._serviceProvider = root._serviceProvider;
 		this._registeredConstraint = root._registeredConstraint;
 		this._tosConstraint = root._tosConstraint;

@@ -1,4 +1,4 @@
-﻿using PSLDiscordBot.Core.Models.SongAlias;
+using PSLDiscordBot.Core.Models.SongAlias;
 
 namespace PSLDiscordBot.Core.Command.Global.Aliases;
 
@@ -13,15 +13,23 @@ public partial class AliasAuditCommand
 		{
 		}
 
+		// all three nodes build their song option with isAutocomplete: true
+		public sealed override ValueTask<IEnumerable<AutocompleteSuggestion>> Autocomplete(AutocompleteContext context)
+		{
+			if (context.Focused.Name != OptionForSongName)
+				return base.Autocomplete(context);
+			return ValueTask.FromResult(this._autocompleteSuggestionService.GetSongSuggestions(context.FocusedText));
+		}
+
 		public sealed override async Task Callback(SocketSlashCommand arg, SocketSlashCommandDataOption option, UserData? data)
 		{
 			string forSong = option.GetOption<string>(OptionForSongName);
 			string alias = option.GetOption<string>(OptionAliasName);
 
-			SongSearchValidateResult result = await AliasModifyGlobalCommand.SearchAndValidate(arg, this._aliasService, this._localization, forSong, AliasTableIdType.Server);
+			SongSearchValidateResult result = await AliasModifyGlobalCommand.SearchAndValidate(arg, this._aliasService, this._localization, forSong, AliasTableKind.Server);
 			if (result.ShouldReturn) return;
 
-			using AliasService.DynamicTableRequester dynamicRequester = this._aliasService.GetDynamicTableRequesterAuto(arg, AliasTableIdType.Server);
+			using AliasService.DynamicTableRequester dynamicRequester = this._aliasService.GetDynamicTableRequesterAuto(arg, AliasTableKind.Server);
 			using AliasService.StaticTableRequester staticRequester = this._aliasService.GetStaticTableRequester();
 			SongAliasData? aliasData = dynamicRequester.FindAliasOrNull(result.Result.SongId);
 

@@ -161,6 +161,7 @@ public class PSLPlugin : IPlugin<PSLPlugin>
 			.AddSingleton<LeaderboardService>()
 			.AddSingleton<LargeImageCoolDownService>()
 			.AddSingleton<AliasService>()
+			.AddSingleton<AutocompleteSuggestionService>()
 			.AddSingleton<LocalWorkflowStore<LocalScoreDraft>>()
 			.AddSingleton<LocalWorkflowStore<StagedLocalImport>>()
 			.AddSingleton<LocalImportService>()
@@ -218,6 +219,7 @@ public class PSLPlugin : IPlugin<PSLPlugin>
 		this._commandResolveService.OnSlashCommandError += this.CommandResolveService_OnSlashCommandError;
 		this._commandResolveService.BeforeComponentInteractionExecutes += this.Program_BeforeComponentInteractionExecutes;
 		this._commandResolveService.OnComponentInteractionError += this.CommandResolveService_OnComponentInteractionError;
+		this._commandResolveService.OnAutocompleteError += this.CommandResolveService_OnAutocompleteError;
 
 		bugHandler.OnReportReceived += this.BugHandler_OnReportReceived;
 
@@ -262,6 +264,7 @@ public class PSLPlugin : IPlugin<PSLPlugin>
 		this._logger.LogInformation(EventIdApp, "Service shutting down...");
 		this._commandResolveService.BeforeComponentInteractionExecutes -= this.Program_BeforeComponentInteractionExecutes;
 		this._commandResolveService.OnComponentInteractionError -= this.CommandResolveService_OnComponentInteractionError;
+		this._commandResolveService.OnAutocompleteError -= this.CommandResolveService_OnAutocompleteError;
 
 		if (isSafeUnload)
 			File.Delete(SafeLockLocation);
@@ -383,6 +386,22 @@ public class PSLPlugin : IPlugin<PSLPlugin>
 			$"in server {guildId?.ToString() ?? "null"} in channel {channelId?.ToString() ?? "null"}");
 	}
 
+	/// <summary>
+	/// Errors are reported like slash/component errors (logged and DMed to the admin). Users get no error text
+	/// because an autocomplete interaction only accepts a suggestion list.
+	/// </summary>
+	private async Task CommandResolveService_OnAutocompleteError(object? sender,
+		AutocompleteInteractionExceptionEventArgs e)
+	{
+		string commandName = e.Command?.Name ?? e.Interaction.Data.CommandName;
+		string optionName = e.Interaction.Data.Current?.Name ?? "<unknown>";
+		ulong? guildId = e.Interaction.GuildId;
+		ulong? channelId = e.Interaction.Channel?.Id;
+		await this.OnException(e.Exception, interactionDescription:
+			$"<@{e.Interaction.User.Id}> used autocomplete for command `{commandName}` on option `{optionName}` " +
+			$"in server {guildId?.ToString() ?? "null"} in channel {channelId?.ToString() ?? "null"}");
+	}
+
 	private static async Task RespondToComponentAsync(
 		SocketMessageComponent interaction,
 		string message,
@@ -412,6 +431,7 @@ public class PSLPlugin : IPlugin<PSLPlugin>
 		if (this.Initialized) goto Final;
 
 		this._logger.LogInformation(EventIdInitialize, "Initializing bot...");
+		this.WarmUpGlobalAliases();
 		IUser admin = await this._discordClientService.SocketClient.GetUserAsync(this._configService.Value.AdminUserId);
 
 		if (!this._configService.Value.DMAdminAboutErrors)
@@ -445,6 +465,25 @@ public class PSLPlugin : IPlugin<PSLPlugin>
 	Final:
 		this._logger.LogInformation(EventIdInitialize, "Bot started!");
 		this.Initialized = true;
+	}
+	/// <summary>
+	/// Loads the global and avatar alias tables once in the background so suggestions include aliases from startup
+	/// (autocomplete never loads tables itself). Does not block startup; a failure is logged, and the table is then
+	/// loaded by the first command that needs it.
+	/// </summary>
+	private void WarmUpGlobalAliases()
+	{
+		AliasService aliasService = this._services.GetRequiredService<AliasService>();
+		foreach (AliasTableId table in new[] { AliasTableId.Global, AliasTableId.Avatar })
+		{
+			_ = this._lifetimeService.Track(
+				Task.Run(() => aliasService.GetCachedAliases(table)),
+				e =>
+				{
+					this._logger.LogWarning(EventIdInitialize, e, "Failed to warm up the {Table} alias table.", table);
+					return Task.CompletedTask;
+				});
+		}
 	}
 	private async Task Log(LogMessage msg)
 	{

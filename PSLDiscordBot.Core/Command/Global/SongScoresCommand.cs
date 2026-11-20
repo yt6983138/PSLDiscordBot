@@ -1,4 +1,4 @@
-﻿using PSLDiscordBot.Core.ImageGenerating;
+using PSLDiscordBot.Core.ImageGenerating;
 
 namespace PSLDiscordBot.Core.Command.Global;
 
@@ -23,6 +23,13 @@ public class SongScoresCommand : CommandBase
 		.AddSongSearchOption(this._localization)
 		.AddIndexOption(this._localization)
 		.AddGenerateForOption(this._localization);
+
+	public override ValueTask<IEnumerable<AutocompleteSuggestion>> Autocomplete(AutocompleteContext context)
+	{
+		if (!context.IsSongSearchFocused(this._localization))
+			return base.Autocomplete(context);
+		return ValueTask.FromResult(this._autocompleteSuggestionService.GetSongSuggestions(context.FocusedText));
+	}
 
 	public override async Task RootCallback(SocketSlashCommand arg, UserData? data)
 	{

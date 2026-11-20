@@ -52,7 +52,7 @@ public class AliasChangeAdminCommand : CommandBase
 		IRole role = arg.GetOption<IRole>("target");
 
 		using AliasService.StaticTableRequester staticRequester = this._aliasService.GetStaticTableRequester();
-		AliasTableAttribute attribute = staticRequester.GetTableAttributeOrDefault(AliasTableIdType.Server, arg.GuildId.EnsureNotNull());
+		AliasTableAttribute attribute = staticRequester.GetTableAttributeOrDefault(AliasTableId.Server(arg.GuildId.EnsureNotNull()));
 
 		if (operation == Operation.Add)
 		{

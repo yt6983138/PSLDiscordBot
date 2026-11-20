@@ -41,7 +41,7 @@ public class AliasAdminConstraint : IConstraint
 		if (!isAllowed && !this._strict)
 		{
 			using AliasService.StaticTableRequester staticRequester = this._aliasService.GetStaticTableRequester();
-			AliasTableAttribute tableAttribute = staticRequester.GetTableAttributeOrDefault(AliasTableIdType.Server, arg.GuildId.Value);
+			AliasTableAttribute tableAttribute = staticRequester.GetTableAttributeOrDefault(AliasTableId.Server(arg.GuildId.Value));
 			isAllowed = tableAttribute.IsUserInAdminRole(guildUser);
 		}
 		if (isAllowed)

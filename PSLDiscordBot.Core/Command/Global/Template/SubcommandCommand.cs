@@ -72,7 +72,22 @@ public class ExampleSubcommandCommand : CommandBase
 		public override OneOf<string, LocalizedString> PSLDescription => "A leaf inside a group.";
 
 		public override SlashCommandOptionBuilder CompleteBuilder => this.BasicBuilder
-			.AddOption("id", ApplicationCommandOptionType.Integer, "Some id", isRequired: true);
+			.AddOption("id", ApplicationCommandOptionType.Integer, "Some id", isRequired: true)
+			.AddOption("note", ApplicationCommandOptionType.String, "Autocompleted note", isRequired: false, isAutocomplete: true);
+
+		// called for this leaf only, after the base matched the group and leaf names. In-memory only, no state on the node.
+		public override ValueTask<IEnumerable<AutocompleteSuggestion>> Autocomplete(AutocompleteContext context)
+		{
+			if (context.Focused.Name != "note")
+				return base.Autocomplete(context);
+
+			// context.OtherOptions holds the leaf's other options, e.g. the id typed so far
+			AutocompleteOption? id = context.OtherOptions.FirstOrDefault(x => x.Name == "id");
+			return ValueTask.FromResult<IEnumerable<AutocompleteSuggestion>>(
+			[
+				new AutocompleteSuggestion($"Note for {id?.Value ?? "?"}", "note"),
+			]);
+		}
 
 		public override async Task Callback(SocketSlashCommand arg, SocketSlashCommandDataOption option, UserData? data)
 		{
