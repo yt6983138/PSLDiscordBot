@@ -197,58 +197,60 @@ public abstract class CommandBase : BasicCommandBase
 	public sealed override async Task HandleAutocomplete(SocketAutocompleteInteraction arg)
 	{
 		long start = Stopwatch.GetTimestamp();
-		try
-		{
-			List<AutocompleteOption> options = [.. arg.Data.Options];
-			AutocompleteOption focused = arg.Data.Current;
-			int index = 0;
-			SubcommandNode? leaf = null;
 
-			Task RespondUnmatchedAsync()
-			{
-				this._logger.LogWarning(
-					"Autocomplete for {command} has no matching subcommand path, registered commands may be out of date",
-					this.Name);
-				return arg.RespondAsync(this.ApplyLimits([], focused.Name));
-			}
+		List<AutocompleteOption> options = [.. arg.Data.Options];
+		AutocompleteOption focused = arg.Data.Current;
+		int index = 0;
+		SubcommandNode? leaf = null;
 
-			if (this.Children.Count > 0)
-			{
-				IEnumerable<CommandNode> nodes = this.Children;
-				if (index < options.Count && options[index].Type == ApplicationCommandOptionType.SubCommandGroup)
-				{
-					if (!TryMatchNode(nodes, options[index].Name, options[index].Type, out CommandNode? groupNode)
-						|| groupNode is not SubcommandGroupNode group)
-					{
-						await RespondUnmatchedAsync();
-						return;
-					}
-					nodes = group.Children;
-					index++;
-				}
-				if (index >= options.Count
-					|| !TryMatchNode(nodes, options[index].Name, options[index].Type, out CommandNode? leafNode)
-					|| leafNode is not SubcommandNode matched)
-				{
-					await RespondUnmatchedAsync();
-					return;
-				}
-
-				leaf = matched;
-				index++;
-			}
-
-			List<AutocompleteOption> others = options.Skip(index).Where(x => !x.Focused).ToList();
-			AutocompleteContext context = new(arg, focused, others);
-			IEnumerable<AutocompleteSuggestion> results = leaf is null ? await this.Autocomplete(context) : await leaf.Autocomplete(context);
-
-			await arg.RespondAsync(this.ApplyLimits(results, focused.Name));
-		}
-		finally
+		void LogTimeUsage()
 		{
 			this._logger.LogDebug("Autocomplete for {command} took {elapsed} ms",
 				this.Name, Stopwatch.GetElapsedTime(start).TotalMilliseconds);
 		}
+		Task RespondUnmatchedAsync()
+		{
+			this._logger.LogWarning(
+				"Autocomplete for {command} has no matching subcommand path, registered commands may be out of date",
+				this.Name);
+
+			LogTimeUsage();
+			return arg.RespondAsync(this.ApplyLimits([], focused.Name));
+		}
+
+		if (this.Children.Count > 0)
+		{
+			IEnumerable<CommandNode> nodes = this.Children;
+			if (index < options.Count && options[index].Type == ApplicationCommandOptionType.SubCommandGroup)
+			{
+				if (!TryMatchNode(nodes, options[index].Name, options[index].Type, out CommandNode? groupNode)
+					|| groupNode is not SubcommandGroupNode group)
+				{
+					await RespondUnmatchedAsync();
+					return;
+				}
+				nodes = group.Children;
+				index++;
+			}
+			if (index >= options.Count
+				|| !TryMatchNode(nodes, options[index].Name, options[index].Type, out CommandNode? leafNode)
+				|| leafNode is not SubcommandNode matched)
+			{
+				await RespondUnmatchedAsync();
+				return;
+			}
+
+			leaf = matched;
+			index++;
+		}
+
+		List<AutocompleteOption> others = options.Skip(index).Where(x => !x.Focused).ToList();
+		AutocompleteContext context = new(arg, focused, others);
+		IEnumerable<AutocompleteSuggestion> results = leaf is null ? await this.Autocomplete(context) : await leaf.Autocomplete(context);
+
+		LogTimeUsage();
+		await arg.RespondAsync(this.ApplyLimits(results, focused.Name));
+
 	}
 
 	/// <summary>
