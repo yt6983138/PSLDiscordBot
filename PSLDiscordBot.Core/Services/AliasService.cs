@@ -363,10 +363,10 @@ public class AliasService
 		DynamicTableRequester requester = new(this, table);
 		TryCreateTables(requester);
 
-		if (!this._aliasCache.ContainsKey(requester.TableId))
+		if (!this._aliasCache.ContainsKey(requester.TableId.ToString()))
 		{
 			// first loader wins; a concurrent loader or mutation that got there first is kept
-			this._aliasCache.TryAdd(requester.TableId,
+			this._aliasCache.TryAdd(requester.TableId.ToString(),
 				requester.Aliases
 					.Select(a =>
 						new KeyValuePair<string, IReadOnlyCollection<string>>(a.SongId, a.Aliases.ToArray()))
@@ -468,14 +468,14 @@ public class AliasService
 	{
 		private readonly AliasService _parent;
 
-		public string TableId { get; private init; }
+		public AliasTableId TableId { get; }
 
 		public DbSet<SongAliasData> Aliases { get; set; }
 
 		public DynamicTableRequester(AliasService parent, AliasTableId table)
 		{
 			this._parent = parent;
-			this.TableId = table.ToString();
+			this.TableId = table;
 		}
 
 		protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -487,7 +487,7 @@ public class AliasService
 		protected override void OnModelCreating(ModelBuilder modelBuilder)
 		{
 			modelBuilder.Entity<SongAliasData>()
-				.ToTable(this.TableId);
+				.ToTable(this.TableId.ToString());
 		}
 
 		/// <summary>
@@ -514,7 +514,7 @@ public class AliasService
 				staticRequester.SaveChanges();
 				this.SaveChanges();
 
-				this._parent.ReplaceSnapshot(this.TableId, key, newAlias.Aliases);
+				this._parent.ReplaceSnapshot(this.TableId.ToString(), key, newAlias.Aliases);
 			}
 			catch (Exception e)
 			{
@@ -555,7 +555,7 @@ public class AliasService
 
 				for (int i = 0; i < modifiedGuids.Count; i++)
 				{
-					staticRequester.AliasMetadata.Add(new(modifiedGuids[i], key, DateTime.Now)
+					staticRequester.AliasMetadata.Add(new(modifiedGuids[i], this.TableId, key, DateTime.Now)
 					{
 						OperationType = OperationType.Modify,
 						OperationData = additions[i]
@@ -576,7 +576,7 @@ public class AliasService
 			data.AliasMetadataKeys.AddRange(modifiedGuids);
 			for (int i = 0; i < modifiedGuids.Count; i++)
 			{
-				staticRequester.AliasMetadata.Add(new(modifiedGuids[i], key, DateTime.Now)
+				staticRequester.AliasMetadata.Add(new(modifiedGuids[i], this.TableId, key, DateTime.Now)
 				{
 					ParentId = null,
 					OperationType = OperationType.Modify,
@@ -588,7 +588,7 @@ public class AliasService
 			{
 				Guid newGuid = Guid.NewGuid();
 				modifiedGuids.Add(newGuid);
-				staticRequester.AliasMetadata.Add(new(newGuid, key, DateTime.Now)
+				staticRequester.AliasMetadata.Add(new(newGuid, this.TableId, key, DateTime.Now)
 				{
 					ParentId = item,
 					OperationType = OperationType.Delete
