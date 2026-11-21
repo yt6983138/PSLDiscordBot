@@ -555,7 +555,7 @@ public class AliasService
 
 				for (int i = 0; i < modifiedGuids.Count; i++)
 				{
-					staticRequester.AliasMetadata.Add(new(modifiedGuids[i], DateTime.Now)
+					staticRequester.AliasMetadata.Add(new(modifiedGuids[i], key, DateTime.Now)
 					{
 						OperationType = OperationType.Modify,
 						OperationData = additions[i]
@@ -576,7 +576,7 @@ public class AliasService
 			data.AliasMetadataKeys.AddRange(modifiedGuids);
 			for (int i = 0; i < modifiedGuids.Count; i++)
 			{
-				staticRequester.AliasMetadata.Add(new(modifiedGuids[i], DateTime.Now)
+				staticRequester.AliasMetadata.Add(new(modifiedGuids[i], key, DateTime.Now)
 				{
 					ParentId = null,
 					OperationType = OperationType.Modify,
@@ -588,7 +588,7 @@ public class AliasService
 			{
 				Guid newGuid = Guid.NewGuid();
 				modifiedGuids.Add(newGuid);
-				staticRequester.AliasMetadata.Add(new(newGuid, DateTime.Now)
+				staticRequester.AliasMetadata.Add(new(newGuid, key, DateTime.Now)
 				{
 					ParentId = item,
 					OperationType = OperationType.Delete

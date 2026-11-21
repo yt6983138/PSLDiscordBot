@@ -14,6 +14,11 @@ public class SongAliasMetadata
 {
 	public Guid AliasId { get; set; }
 	public Guid? ParentId { get; set; }
+	/// <summary>
+	/// The row key of the alias entry this record belongs to: the song id, or the avatar key in <c>Avatar_0</c>.
+	/// It does not identify the alias table.
+	/// </summary>
+	public string SongId { get; set; } = null!;
 	public ulong OperatorId { get; set; }
 	public OperationType OperationType { get; set; }
 	public DateTime OperationTime { get; set; }
@@ -38,9 +43,10 @@ public class SongAliasMetadata
 
 	private SongAliasMetadata() { }
 
-	public SongAliasMetadata(Guid aliasId, DateTime operationTime)
+	public SongAliasMetadata(Guid aliasId, string songId, DateTime operationTime)
 	{
 		this.AliasId = aliasId;
+		this.SongId = songId;
 		this.OperationTime = operationTime;
 	}
 }
