@@ -59,8 +59,10 @@ public readonly record struct AliasTableId
 	public bool KeysAreSongIds => !this.IsAvatar;
 
 	/// <summary>
-	/// Strict inverse of <see cref="ToString"/>: exactly <c>Kind_number</c> with an exact (case-sensitive) <see cref="AliasTableKind"/> name
-	/// and a canonical decimal number (no sign, spaces or leading zeros). Global and avatar tables only exist with id 0.
+	/// Parses <see cref="ToString"/> output: exactly <c>Kind_number</c> with an exact (case-sensitive) <see cref="AliasTableKind"/> name
+	/// and a decimal number of digits only (no sign, spaces or other characters). Leading zeros are accepted and normalized
+	/// (<c>Server_007</c> is <c>Server_7</c>); the canonical <see cref="ToString"/> form is what gets stored.
+	/// Global and avatar tables only exist with id 0.
 	/// Touches no database.
 	/// </summary>
 	public static bool TryParse(string? text, out AliasTableId result)
