@@ -254,3 +254,9 @@ tab_width = 4
 indent_size = 4
 end_of_line = crlf
 dotnet_style_prefer_auto_properties = true:suggestion
+
+# diagnostics
+dotnet_diagnostic.MSTEST0037.severity = warning
+dotnet_diagnostic.MSTEST0017.severity = warning
+dotnet_diagnostic.MSTEST0025.severity = warning
+dotnet_diagnostic.MSTEST0068.severity = warning
