@@ -228,7 +228,7 @@ public partial class ImageGenerator
 		if (string.IsNullOrEmpty(backgroundId))
 		{
 			formattedBgPath += "Introduction";
-			if (!gameUserInfo.BackgroundId.Contains("Introduc"))
+			if (!gameUserInfo.BackgroundId.Contains("Introduc") && !string.IsNullOrWhiteSpace(gameUserInfo.BackgroundId))
 			{
 				this._logger.LogWarning(EventId, "Failed to find background {backgroundId}, defaulting to introduction.", gameUserInfo.BackgroundId);
 			}
