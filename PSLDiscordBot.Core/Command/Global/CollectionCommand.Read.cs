@@ -76,7 +76,21 @@ public partial class CollectionCommand
 				this._localization[PSLNormalCommandKey.CollectionOptionSearchName],
 				ApplicationCommandOptionType.String,
 				this._localization[PSLNormalCommandKey.CollectionOptionSearchDescription],
-				isRequired: true));
+				isRequired: true,
+				isAutocomplete: true));
+
+		public override ValueTask<IEnumerable<AutocompleteSuggestion>> Autocomplete(AutocompleteContext context)
+		{
+			if (!context.IsFocused(this._localization[PSLNormalCommandKey.CollectionOptionSearchName]))
+				return base.Autocomplete(context);
+
+			// default exactly like GetLanguageOption: the chosen language, else the interaction locale
+			AutocompleteOption? languageOption = context.OtherOptions.FirstOrDefault(
+				x => x.Name == this._localization[PSLNormalCommandKey.CollectionOptionLanguageName].Default);
+			Language desired = languageOption?.Value is long value ? (Language)value : context.Language;
+
+			return ValueTask.FromResult(this._autocompleteSuggestionService.GetCollectionSuggestions(desired, context.FocusedText));
+		}
 
 		public override async Task Callback(SocketSlashCommand arg, SocketSlashCommandDataOption option, UserData? data)
 		{
@@ -105,9 +119,12 @@ public partial class CollectionCommand
 			searchResults.Sort();
 			searchResults.Reverse();
 
-			CollectionSearchInfo topResult = searchResults.First();
+			// a suggestion sends the exact item key, so it wins over the fuzzy order (ordinal: keys are case-sensitive ids)
+			string exactKey = option.GetOption<string>(this._localization[PSLNormalCommandKey.CollectionOptionSearchName]).Trim();
+			CollectionSearchInfo? exactResult = searchResults.FirstOrDefault(x => string.Equals(x.Item.Key, exactKey, StringComparison.Ordinal));
+			CollectionSearchInfo topResult = exactResult ?? searchResults.First();
 
-			if (searchResults.Count == 0 || topResult.Similarity < MinimumSimilarity)
+			if (searchResults.Count == 0 || (exactResult is null && topResult.Similarity < MinimumSimilarity))
 			{
 				await arg.QuickReply(this._localization[PSLNormalCommandKey.CollectionNoMatchingItemFound]);
 				return;

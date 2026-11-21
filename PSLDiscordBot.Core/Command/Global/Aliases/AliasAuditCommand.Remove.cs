@@ -14,8 +14,8 @@ public partial class AliasAuditCommand
 		public override OneOf<string, LocalizedString> PSLDescription => "Remove an alias";
 
 		public override SlashCommandOptionBuilder CompleteBuilder => this.BasicBuilder
-			.AddOption(OptionForSongName, ApplicationCommandOptionType.String, "Song to operate", isRequired: true)
-			.AddOption(OptionAliasName, ApplicationCommandOptionType.String, "Alias string to remove", isRequired: true);
+			.AddOption(OptionForSongName, ApplicationCommandOptionType.String, "Song to operate", isRequired: true, isAutocomplete: true)
+			.AddOption(OptionAliasName, ApplicationCommandOptionType.String, "Alias string to remove", isRequired: true, isAutocomplete: true);
 
 		protected override async Task HandleAsync(
 			SocketSlashCommand arg,

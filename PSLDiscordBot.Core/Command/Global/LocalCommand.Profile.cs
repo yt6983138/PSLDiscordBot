@@ -1,3 +1,5 @@
+using PhiInfo.Core.Models.Information;
+
 namespace PSLDiscordBot.Core.Command.Global;
 
 public partial class LocalCommand
@@ -30,12 +32,23 @@ public partial class LocalCommand
 				this._localization[PSLLocalCommandKey.LocalProfileAvatarOptionName],
 				ApplicationCommandOptionType.String,
 				this._localization[PSLLocalCommandKey.LocalProfileAvatarOptionDescription],
-				isRequired: false)
+				isRequired: false,
+				isAutocomplete: true)
 			.AddOption(
 				this._localization[PSLLocalCommandKey.LocalProfileBackgroundOptionName],
 				ApplicationCommandOptionType.String,
 				this._localization[PSLLocalCommandKey.LocalProfileBackgroundOptionDescription],
-				isRequired: false);
+				isRequired: false,
+				isAutocomplete: true);
+
+		public override ValueTask<IEnumerable<AutocompleteSuggestion>> Autocomplete(AutocompleteContext context)
+		{
+			if (context.IsFocused(this._localization[PSLLocalCommandKey.LocalProfileAvatarOptionName]))
+				return ValueTask.FromResult(this._autocompleteSuggestionService.GetAvatarSuggestions(context.FocusedText));
+			if (context.IsFocused(this._localization[PSLLocalCommandKey.LocalProfileBackgroundOptionName]))
+				return ValueTask.FromResult(this._autocompleteSuggestionService.GetSongSuggestions(context.FocusedText, context.Interaction.GuildId));
+			return base.Autocomplete(context);
+		}
 
 		public override async Task Callback(SocketSlashCommand arg, SocketSlashCommandDataOption option, UserData? data)
 		{
@@ -56,11 +69,17 @@ public partial class LocalCommand
 				await arg.QuickReply(this._localization[PSLLocalCommandKey.LocalProfileAvatarUnknown]);
 				return;
 			}
-			// background uses name for whatever reason, chosen by phigros
-			if (background is not null && !this._phigrosService.NonMultiLanguageInfos.Songs.Any(song => song.Name == background))
+			// background is stored by song name for whatever reason, chosen by phigros; an exact name or an exact id (what a suggestion sends) is accepted
+			if (background is not null)
 			{
-				await arg.QuickReply(this._localization[PSLLocalCommandKey.LocalProfileBackgroundUnknown]);
-				return;
+				SongInfo? song = this._phigrosService.NonMultiLanguageInfos.Songs.FirstOrDefault(s => s.Name == background)
+					?? this._phigrosService.NonMultiLanguageInfos.Songs.FirstOrDefault(s => s.Id == background);
+				if (song is null)
+				{
+					await arg.QuickReply(this._localization[PSLLocalCommandKey.LocalProfileBackgroundUnknown]);
+					return;
+				}
+				background = song.Name;
 			}
 
 			UserData? localData = await this._root.GetLocalUserOrReplyAsync(arg, data!);

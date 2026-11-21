@@ -29,4 +29,12 @@ public abstract class SubcommandNode : CommandNode
 	/// <param name="option">The matched subcommand option, which holds this subcommand's own options.</param>
 	/// <param name="data">The user's data, null if the user is not registered.</param>
 	public abstract Task Callback(SocketSlashCommand arg, SocketSlashCommandDataOption option, UserData? data);
+
+	/// <summary>
+	/// Suggestions for the focused option of this leaf. In-memory only: no <c>DbContext</c>, no <c>UserData</c> read,
+	/// no constraints, no deferral, and no per-call state on the node. Limits are applied by <see cref="CommandBase"/>.
+	/// Expected to complete synchronously. The default returns no suggestions.
+	/// </summary>
+	public virtual ValueTask<IEnumerable<AutocompleteSuggestion>> Autocomplete(AutocompleteContext context)
+		=> ValueTask.FromResult<IEnumerable<AutocompleteSuggestion>>([]);
 }

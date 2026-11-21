@@ -15,12 +15,12 @@ internal partial class CommandResolveService : ICommandResolveService
 {
 	private readonly ILifetimeService _lifetimeService;
 	private readonly WebApplicationBuilder _applicationBuilder;
-	private IServiceProvider? _services;
 	private IDiscordClientService? _discordClientService;
 	private ILogger<CommandResolveService>? _logger;
 
-	private IServiceProvider Services => this._services
-		?? throw new InvalidOperationException("The service provider is only available after the host is built.");
+	private IServiceProvider Services { get => field
+		?? throw new InvalidOperationException("The service provider is only available after the host is built."); set;
+	}
 
 	/// <summary>
 	/// Raised for every slash command before it is looked up and executed, subscribers run one after another.
@@ -45,6 +45,20 @@ internal partial class CommandResolveService : ICommandResolveService
 	public partial event AsyncEventHandler<ComponentInteractionEventArgs> BeforeComponentInteractionExecutes;
 	[GenerateAsyncEvent]
 	public partial event AsyncEventHandler<ComponentInteractionExceptionEventArgs> OnComponentInteractionError;
+
+	/// <summary>
+	/// Raised for every autocomplete interaction before the command's handler runs, subscribers run one after another.
+	/// Setting <see cref="AutocompleteInteractionEventArgs.Canceled"/> stops the handler and nothing is sent, so the interaction expires.
+	/// Subscribers cannot send text, an autocomplete interaction only accepts a suggestion list.
+	/// </summary>
+	[GenerateAsyncEvent]
+	public partial event AsyncEventHandler<AutocompleteInteractionEventArgs> BeforeAutocompleteExecutes;
+	/// <summary>
+	/// Raised when a handler throws, including Discord.Net's <see cref="TimeoutException"/> for a late reply.
+	/// The framework sends nothing itself.
+	/// </summary>
+	[GenerateAsyncEvent]
+	public partial event AsyncEventHandler<AutocompleteInteractionExceptionEventArgs> OnAutocompleteError;
 
 	[GenerateAsyncEvent]
 	public partial event AsyncEventHandler<EventHandlerError> OnEventHandlerError;
@@ -120,7 +134,7 @@ internal partial class CommandResolveService : ICommandResolveService
 	}
 	internal void Attach(IServiceProvider services)
 	{
-		this._services = services;
+		this.Services = services;
 		this._logger = services.GetRequiredService<ILogger<CommandResolveService>>();
 	}
 	internal void SetupEverything()
@@ -131,6 +145,7 @@ internal partial class CommandResolveService : ICommandResolveService
 		this._discordClientService.SocketClient.MessageCommandExecuted += this.SocketClient_MessageCommandExecuted;
 		this._discordClientService.SocketClient.ButtonExecuted += this.SocketClient_ComponentExecuted;
 		this._discordClientService.SocketClient.SelectMenuExecuted += this.SocketClient_ComponentExecuted;
+		this._discordClientService.SocketClient.AutocompleteExecuted += this.SocketClient_AutocompleteExecuted;
 		this._lifetimeService.BeforeMainExiting += this.Program_BeforeMainExiting;
 
 		this._discordClientService.SocketClient.Ready += async () =>
@@ -358,6 +373,28 @@ internal partial class CommandResolveService : ICommandResolveService
 			e => this.InvokeAll(this._asyncEvent_OnComponentInteractionError, new(e, arg, resolvedCommand)));
 		return;
 	}
+	private async Task SocketClient_AutocompleteExecuted(SocketAutocompleteInteraction arg)
+	{
+		BasicCommandBase? command = this.GetAllGlobalCommands()
+			.FirstOrDefault(x => x.Name == arg.Data.CommandName);
+
+		AutocompleteInteractionEventArgs eventArgs = new(arg, command);
+		await this.InvokeAll(this._asyncEvent_BeforeAutocompleteExecutes, eventArgs);
+
+		if (eventArgs.Canceled || command is null)
+			return;
+
+		// Discord.Net's gateway event loop is sequential: while one handler blocks, every later gateway event
+		// waits (other interactions, messages, heartbeat acks; long enough and the client reconnects).
+		// Autocomplete fires per keystroke and its search is CPU work, so keep it off that loop.
+		// RunOnDifferentThread describes the slash command run, not autocomplete.
+		Task task = Task.Run(() => command.HandleAutocomplete(arg));
+
+		_ = this._lifetimeService.Track(
+			task,
+			e => this.InvokeAll(this._asyncEvent_OnAutocompleteError, new(e, arg, command)));
+		return;
+	}
 	// the async wrapper turns a synchronous throw into a faulted task, so it reaches Track and the error hooks
 	private static Task StartCommand(bool runOnDifferentThread, Func<Task> start)
 	{
@@ -372,6 +409,7 @@ internal partial class CommandResolveService : ICommandResolveService
 
 		this._discordClientService.SocketClient.ButtonExecuted -= this.SocketClient_ComponentExecuted;
 		this._discordClientService.SocketClient.SelectMenuExecuted -= this.SocketClient_ComponentExecuted;
+		this._discordClientService.SocketClient.AutocompleteExecuted -= this.SocketClient_AutocompleteExecuted;
 		return Task.CompletedTask;
 	}
 	#endregion

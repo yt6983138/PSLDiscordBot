@@ -1,4 +1,4 @@
-﻿using PSLDiscordBot.Core.Models.SongAlias;
+using PSLDiscordBot.Core.Models.SongAlias;
 using System.Diagnostics.CodeAnalysis;
 
 namespace PSLDiscordBot.Core.Command.Global.Aliases;
@@ -31,16 +31,30 @@ public class AliasModifyGlobalCommand : CommandBase
 		.AddAliasForSongOption(this._localization)
 		.AddAliasToOperateOption(this._localization);
 
+	public override ValueTask<IEnumerable<AutocompleteSuggestion>> Autocomplete(AutocompleteContext context)
+	{
+		if (context.IsAliasForSongFocused(this._localization))
+			return ValueTask.FromResult(this._autocompleteSuggestionService.GetSongSuggestions(context.FocusedText, context.Interaction.GuildId));
+		if (context.IsAliasToOperateFocused(this._localization))
+		{
+			if (!context.TryGetAliasRemoveSong(this._localization, out string? forSong))
+				return ValueTask.FromResult<IEnumerable<AutocompleteSuggestion>>([]);
+			return ValueTask.FromResult(this._autocompleteSuggestionService.GetAliasToOperateSuggestions(
+				forSong, AliasTableId.Global, context.FocusedText, SearchThreshold));
+		}
+		return base.Autocomplete(context);
+	}
+
 	public override async Task RootCallback(SocketSlashCommand arg, UserData? data)
 	{
 		AliasModifyOperation operation = arg.GetAliasOperationOption(this._localization);
 		string forSong = arg.GetAliasForSongOption(this._localization);
 		string alias = arg.GetAliasToOperateOption(this._localization);
 
-		SongSearchValidateResult result = await SearchAndValidate(arg, this._aliasService, this._localization, forSong, AliasTableIdType.Global);
+		SongSearchValidateResult result = await SearchAndValidate(arg, this._aliasService, this._localization, forSong, AliasTableKind.Global);
 		if (result.ShouldReturn) return;
 
-		using AliasService.DynamicTableRequester dynamicRequester = this._aliasService.GetDynamicTableRequesterAuto(arg, AliasTableIdType.Global);
+		using AliasService.DynamicTableRequester dynamicRequester = this._aliasService.GetDynamicTableRequesterAuto(arg, AliasTableKind.Global);
 		using AliasService.StaticTableRequester staticRequester = this._aliasService.GetStaticTableRequester();
 
 		SongAliasData newAlias;
@@ -79,13 +93,13 @@ public class AliasModifyGlobalCommand : CommandBase
 		AliasService aliasService,
 		LocalizationService localization,
 		string forSong,
-		AliasTableIdType tableType)
+		AliasTableKind tableKind)
 	{
-		ulong tableId = tableType == AliasTableIdType.Server ? arg.GuildId.EnsureNotNull() : 0;
+		AliasTableId table = tableKind == AliasTableKind.Server ? AliasTableId.Server(arg.GuildId.EnsureNotNull()) : AliasTableId.Global;
+		ulong tableId = table.Id;
 
 		List<SongSearchResult> found = aliasService.SearchSong(
-			tableType,
-			tableId,
+			table,
 			forSong,
 			SearchThreshold);
 		if (found.Count == 0)

@@ -15,6 +15,15 @@ public abstract class BasicCommandBase
 	[NoLongerThan(SlashCommandBuilder.MaxDescriptionLength)]
 	public abstract string Description { get; }
 	public virtual bool IsEphemeral => true;
+	/// <summary>
+	/// When <see langword="false"/>, the command starts on Discord.Net's gateway event loop, which is sequential:
+	/// until the command reaches its first real await, every later gateway event waits (other interactions,
+	/// messages, heartbeat acks; blocking long enough makes the client reconnect). The rest runs after the
+	/// first await and does not hold the loop.
+	/// Set <see langword="true"/> for commands that do noticeable synchronous work before their first await;
+	/// the command then starts on the thread pool.
+	/// Applies to the slash command and its component interactions; autocomplete always runs on the thread pool.
+	/// </summary>
 	public virtual bool RunOnDifferentThread => false;
 
 	public virtual InteractionContextType[] InteractionContextTypes =>
@@ -50,5 +59,16 @@ public abstract class BasicCommandBase
 	public virtual Task HandleInteraction(SocketInteraction arg)
 	{
 		return Task.FromException(new NotSupportedException("This command does not handle message components."));
+	}
+
+	/// <summary>
+	/// Called for every autocomplete interaction of this command, always on a thread pool thread.
+	/// The only valid reply is <see cref="SocketAutocompleteInteraction.RespondAsync(IEnumerable{AutocompleteResult}, RequestOptions)"/>,
+	/// and it must happen within 3 seconds. Discord only sends autocomplete for options built with <c>isAutocomplete: true</c>.
+	/// The default sends nothing.
+	/// </summary>
+	public virtual Task HandleAutocomplete(SocketAutocompleteInteraction arg)
+	{
+		return Task.CompletedTask;
 	}
 }
