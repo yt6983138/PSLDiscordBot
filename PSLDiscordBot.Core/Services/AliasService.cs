@@ -243,7 +243,7 @@ public class AliasService
 	/// <param name="info"></param>
 	/// <param name="input"></param>
 	/// <param name="threshold"></param>
-	/// <returns></returns>
+	/// <returns>A list sorted with score (high to low); ties by key/name match first, then song id (ordinal)</returns>
 	public List<SongSearchResult> SearchSong(
 		AliasTableId table,
 		NonMultiLanguageInfos info,
@@ -263,7 +263,7 @@ public class AliasService
 	/// <param name="aliases"></param>
 	/// <param name="input"></param>
 	/// <param name="threshold"></param>
-	/// <returns>A list sorted with score (high to low)</returns>
+	/// <returns>A list sorted with score (high to low); ties by key/name match first, then song id (ordinal)</returns>
 	public List<SongSearchResult> SearchSong(
 		NonMultiLanguageInfos info,
 		IReadOnlyDictionary<string, IReadOnlyCollection<string>> aliases,
@@ -274,7 +274,7 @@ public class AliasService
 	/// strict search over several alias sources scored in the given order (used by autocomplete to resolve a song against
 	/// server and global aliases); <see cref="SongSearchResult.Alias"/> is taken from the first source that has the song
 	/// </summary>
-	/// <returns>A list sorted with score (high to low)</returns>
+	/// <returns>A list sorted with score (high to low); ties by key/name match first, then earlier alias source, then song id (ordinal)</returns>
 	public List<SongSearchResult> SearchSong(
 		NonMultiLanguageInfos info,
 		ReadOnlySpan<IReadOnlyDictionary<string, IReadOnlyCollection<string>>> aliases,
@@ -283,10 +283,12 @@ public class AliasService
 	{
 		// TODO?: add different threshold for id/name and alias, not sure if needed
 
-		// strict mode: every match collected in song order, then sorted by score high to low; List.Sort is unstable,
-		// so ties are not guaranteed to keep song order
+		// strict mode: every match collected in song order, then sorted with CandidateSearch.CompareStrict; the order is total
+		// (score high to low, key/name before alias, earlier alias source first, then song id), so it does not depend on
+		// List.Sort being unstable
 		List<SearchHit<SongInfo>> hits = [];
 		CandidateSearch.SearchAll(info.Songs, static s => s.Id, static s => s.Name, aliases, input, threshold: threshold, allowPartial: false, hits);
+		hits.Sort(CandidateSearch.CompareStrict);
 
 		List<SongSearchResult> results = [with(hits.Count)];
 		foreach (SearchHit<SongInfo> hit in hits)
@@ -301,8 +303,29 @@ public class AliasService
 			results.Add(new(hit.Item, songAliases, hit.Score));
 		}
 
-		results.Sort(static (x, y) => y.Score.CompareTo(x.Score));
 		return results;
+	}
+
+	/// <summary>
+	/// Checks whether <paramref name="alias"/> may be added to song <paramref name="songId"/> in <paramref name="table"/>, from
+	/// the in-memory snapshot of that table only; no other alias table is read (no global table for server adds, no other servers'
+	/// tables, no <c>InheritsFrom</c> walk). Rejects a duplicate on the song, any song's id or name (the target's included), and
+	/// another song's alias in the same table.
+	/// </summary>
+	/// <param name="replacing">alias being replaced (audit modify); only that stored entry in the table is ignored, so a case-only rename is allowed, while an identical string or another case variant is a duplicate</param>
+	/// <exception cref="ArgumentException">for the avatar table</exception>
+	public AliasConflictResult ValidateNewAlias(AliasTableId table, string songId, string alias, string? replacing = null)
+	{
+		if (table.IsAvatar) throw new ArgumentException("Avatar tables are not supported.", nameof(table));
+
+		return AliasConflictCheck.Check(
+			this._phigrosService.NonMultiLanguageInfos.Songs,
+			static s => s.Id,
+			static s => s.Name,
+			songId,
+			alias,
+			replacing,
+			this.GetCachedAliases(table));
 	}
 
 	public StaticTableRequester GetStaticTableRequester()
@@ -340,10 +363,10 @@ public class AliasService
 		DynamicTableRequester requester = new(this, table);
 		TryCreateTables(requester);
 
-		if (!this._aliasCache.ContainsKey(requester.TableId))
+		if (!this._aliasCache.ContainsKey(requester.TableId.ToString()))
 		{
 			// first loader wins; a concurrent loader or mutation that got there first is kept
-			this._aliasCache.TryAdd(requester.TableId,
+			this._aliasCache.TryAdd(requester.TableId.ToString(),
 				requester.Aliases
 					.Select(a =>
 						new KeyValuePair<string, IReadOnlyCollection<string>>(a.SongId, a.Aliases.ToArray()))
@@ -445,14 +468,14 @@ public class AliasService
 	{
 		private readonly AliasService _parent;
 
-		public string TableId { get; private init; }
+		public AliasTableId TableId { get; }
 
 		public DbSet<SongAliasData> Aliases { get; set; }
 
 		public DynamicTableRequester(AliasService parent, AliasTableId table)
 		{
 			this._parent = parent;
-			this.TableId = table.ToString();
+			this.TableId = table;
 		}
 
 		protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -464,7 +487,7 @@ public class AliasService
 		protected override void OnModelCreating(ModelBuilder modelBuilder)
 		{
 			modelBuilder.Entity<SongAliasData>()
-				.ToTable(this.TableId);
+				.ToTable(this.TableId.ToString());
 		}
 
 		/// <summary>
@@ -491,7 +514,7 @@ public class AliasService
 				staticRequester.SaveChanges();
 				this.SaveChanges();
 
-				this._parent.ReplaceSnapshot(this.TableId, key, newAlias.Aliases);
+				this._parent.ReplaceSnapshot(this.TableId.ToString(), key, newAlias.Aliases);
 			}
 			catch (Exception e)
 			{
@@ -532,7 +555,7 @@ public class AliasService
 
 				for (int i = 0; i < modifiedGuids.Count; i++)
 				{
-					staticRequester.AliasMetadata.Add(new(modifiedGuids[i], DateTime.Now)
+					staticRequester.AliasMetadata.Add(new(modifiedGuids[i], this.TableId, key, DateTime.Now)
 					{
 						OperationType = OperationType.Modify,
 						OperationData = additions[i]
@@ -553,7 +576,7 @@ public class AliasService
 			data.AliasMetadataKeys.AddRange(modifiedGuids);
 			for (int i = 0; i < modifiedGuids.Count; i++)
 			{
-				staticRequester.AliasMetadata.Add(new(modifiedGuids[i], DateTime.Now)
+				staticRequester.AliasMetadata.Add(new(modifiedGuids[i], this.TableId, key, DateTime.Now)
 				{
 					ParentId = null,
 					OperationType = OperationType.Modify,
@@ -565,7 +588,7 @@ public class AliasService
 			{
 				Guid newGuid = Guid.NewGuid();
 				modifiedGuids.Add(newGuid);
-				staticRequester.AliasMetadata.Add(new(newGuid, DateTime.Now)
+				staticRequester.AliasMetadata.Add(new(newGuid, this.TableId, key, DateTime.Now)
 				{
 					ParentId = item,
 					OperationType = OperationType.Delete

@@ -41,7 +41,7 @@ public class AliasModifyServerCommand : CommandBase
 		string forSong = arg.GetAliasForSongOption(this._localization);
 		string alias = arg.GetAliasToOperateOption(this._localization);
 
-		SongSearchValidateResult result = await AliasModifyGlobalCommand.SearchAndValidate(arg, this._aliasService, this._localization, forSong, AliasTableKind.Global);
+		SongSearchValidateResult result = await AliasModifyGlobalCommand.SearchAndValidate(arg, this._aliasService, this._localization, forSong, AliasTableKind.Server);
 		if (result.ShouldReturn) return;
 
 		using AliasService.DynamicTableRequester dynamicRequester = this._aliasService.GetDynamicTableRequesterAuto(arg, AliasTableKind.Server);
@@ -50,11 +50,9 @@ public class AliasModifyServerCommand : CommandBase
 		SongAliasData newAlias;
 		if (operation == AliasModifyOperation.Add)
 		{
-			if (result.Result.Alias.Contains(alias))
-			{
-				await arg.QuickReply(this._localization[PSLAliasRelatedKey.Shared.MessageAlreadyAdded], result.Result.Alias);
+			AliasConflictResult conflict = this._aliasService.ValidateNewAlias(AliasTableId.Server(arg.GuildId.EnsureNotNull()), result.Result.SongId, alias);
+			if (await AliasModifyGlobalCommand.ReplyIfRejected(arg, this._localization, this._phigrosService, conflict, result.Result.Alias))
 				return;
-			}
 
 			dynamicRequester.MutateAliases(result.Result.SongId, x => x.Add(alias), out List<Guid>? guids, out newAlias);
 			await staticRequester.MutateMetadataExisting(guids[0], x => x.OperatorId = arg.User.Id);

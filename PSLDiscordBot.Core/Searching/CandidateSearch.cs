@@ -46,7 +46,7 @@ public static class CandidateSearch
 		// (Levenshtein.GetRatio(string, string) calls ToCharArray() on both, GetRatio<T>(T[], T[]) uses the array length so an
 		// oversized pooled buffer cannot be passed), and a manual char-array lowering benchmarked much slower than ToLowerInvariant
 		// for few KB less allocation out of 200+ KB.
-		string lowerInput = input.ToLowerInvariant();
+		string lowerInput = Normalize(input);
 
 		int destFillCount = 0;
 		foreach (T item in items)
@@ -95,7 +95,7 @@ public static class CandidateSearch
 		List<SearchHit<T>> results)
 	{
 		if (allowPartial && string.IsNullOrWhiteSpace(input)) return;
-		string lowerInput = input.ToLowerInvariant(); // plain ToLowerInvariant, see Search
+		string lowerInput = Normalize(input);
 
 		foreach (T item in items)
 		{
@@ -124,13 +124,13 @@ public static class CandidateSearch
 		double minimum = allowPartial ? 0 : threshold;
 
 		double best = allowPartial
-			? PartialScore(lowerInput, key.ToLowerInvariant(), threshold)
+			? PartialScore(lowerInput, Normalize(key), threshold)
 			: StrictScore(lowerInput, key);
 		string matched = key;
-		bool fromAlias = false;
+		int aliasSource = -1;
 
 		double nameScore = allowPartial
-			? PartialScore(lowerInput, name.ToLowerInvariant(), threshold)
+			? PartialScore(lowerInput, Normalize(name), threshold)
 			: StrictScore(lowerInput, name);
 		if (nameScore > best)
 		{
@@ -138,20 +138,20 @@ public static class CandidateSearch
 			matched = name;
 		}
 
-		foreach (IReadOnlyDictionary<string, IReadOnlyCollection<string>> source in aliasSources)
+		for (int sourceIndex = 0; sourceIndex < aliasSources.Length; sourceIndex++)
 		{
-			if (!source.TryGetValue(key, out IReadOnlyCollection<string>? aliases)) continue;
+			if (!aliasSources[sourceIndex].TryGetValue(key, out IReadOnlyCollection<string>? aliases)) continue;
 
 			foreach (string alias in aliases)
 			{
 				double aliasScore = allowPartial
-					? PartialScore(lowerInput, alias.ToLowerInvariant(), threshold)
+					? PartialScore(lowerInput, Normalize(alias), threshold)
 					: StrictScore(lowerInput, alias);
 				if (aliasScore > best)
 				{
 					best = aliasScore;
 					matched = alias;
-					fromAlias = true;
+					aliasSource = sourceIndex;
 				}
 			}
 		}
@@ -161,21 +161,47 @@ public static class CandidateSearch
 			hit = default;
 			return false;
 		}
-		hit = new(item, key, name, best, matched, fromAlias);
+		hit = new(item, key, name, best, matched, aliasSource);
 		return true;
 	}
 
 	/// <summary>
-	/// command scoring: <paramref name="input"/> is lowercased but <paramref name="source"/> is not for the exact check
-	/// (known quirk, PSLDiscordBot#73, waiting for future fix)
+	/// the normalization search applies to input and candidate text (plain <see cref="string.ToLowerInvariant"/>); use it for
+	/// every case-insensitive comparison that must agree with search
 	/// </summary>
+	public static string Normalize(string text)
+	{
+		return text.ToLowerInvariant();
+	}
+
+	/// <summary>
+	/// total order for strict results: score high to low, then rank (key or name, then alias source 0, 1, ...), then key ordinal
+	/// </summary>
+	public static int CompareStrict<T>(SearchHit<T> left, SearchHit<T> right)
+	{
+		int byScore = right.Score.CompareTo(left.Score);
+		if (byScore != 0) return byScore;
+
+		int byRank = left.AliasSource.CompareTo(right.AliasSource); // -1 (key or name) sorts first
+		if (byRank != 0) return byRank;
+
+		return string.CompareOrdinal(left.Key, right.Key);
+	}
+
+	/// <summary>
+	/// strict command scoring; its tested spec is: a case-insensitive exact match scores 1, the threshold is the minimum
+	/// score, fragments and clearly different input do not match and near misses do. The half-length gate and the exact
+	/// scores below 1 are implementation details and may be tuned
+	/// </summary>
+	/// <param name="input">already lowercased</param>
 	private static double StrictScore(string input, string source)
 	{
-		if (input == source) return 1;
+		string lowerSource = Normalize(source);
+		if (input == lowerSource) return 1;
 		// if the input is less than half the length of the source, it's probably not a match
-		if (input.Length < source.Length >> 1) return 0;
+		if (input.Length < lowerSource.Length >> 1) return 0;
 
-		return Levenshtein.GetRatio(input, source.ToLowerInvariant());
+		return Levenshtein.GetRatio(input, lowerSource);
 	}
 
 	/// <returns>tier base plus sub-score, or -1 for no match</returns>
