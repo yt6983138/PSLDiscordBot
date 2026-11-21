@@ -13,6 +13,8 @@ public static partial class PSLAliasRelatedKey
 		public static partial string MessageAlreadyAdded { get; }
 		public static partial string MessageNotExist { get; }
 		public static partial string MessageSuccess { get; }
+		public static partial string MessageTakenByOtherSong { get; }
+		public static partial string MessageEqualsSongIdOrName { get; }
 
 		public static partial string OptionOperationName { get; }
 		public static partial string OptionOperationDescription { get; }

@@ -60,11 +60,9 @@ public class AliasModifyGlobalCommand : CommandBase
 		SongAliasData newAlias;
 		if (operation == AliasModifyOperation.Add)
 		{
-			if (result.Result.Alias.Contains(alias))
-			{
-				await arg.QuickReply(this._localization[PSLAliasRelatedKey.Shared.MessageAlreadyAdded], result.Result.Alias);
+			AliasConflictResult conflict = this._aliasService.ValidateNewAlias(AliasTableId.Global, result.Result.SongId, alias);
+			if (await ReplyIfRejected(arg, this._localization, this._phigrosService, conflict, result.Result.Alias))
 				return;
-			}
 
 			dynamicRequester.MutateAliases(result.Result.SongId, x => x.Add(alias), out List<Guid>? guids, out newAlias);
 			await staticRequester.MutateMetadataExisting(guids[0], x => x.OperatorId = arg.User.Id);
@@ -87,6 +85,35 @@ public class AliasModifyGlobalCommand : CommandBase
 			newAlias.Aliases);
 	}
 
+	/// <summary>
+	/// Replies with the matching rejection message when the conflict result forbids the add.
+	/// </summary>
+	/// <returns><see langword="true"/> if a reply was sent and the caller must return.</returns>
+	public static async Task<bool> ReplyIfRejected(
+		SocketSlashCommand arg,
+		LocalizationService localization,
+		PhigrosService phigrosService,
+		AliasConflictResult conflict,
+		IEnumerable<string> songAliases)
+	{
+		switch (conflict.Kind)
+		{
+			case AliasConflictKind.DuplicateOnSameSong:
+				await arg.QuickReply(localization[PSLAliasRelatedKey.Shared.MessageAlreadyAdded], songAliases);
+				return true;
+			case AliasConflictKind.TakenByOtherSong:
+				await arg.QuickReply(localization[PSLAliasRelatedKey.Shared.MessageTakenByOtherSong],
+					conflict.StoredAlias,
+					phigrosService.NonMultiLanguageInfos.GetSongInfoById(conflict.OtherKey!).Name);
+				return true;
+			case AliasConflictKind.EqualsSongIdOrName:
+				await arg.QuickReply(localization[PSLAliasRelatedKey.Shared.MessageEqualsSongIdOrName],
+					phigrosService.NonMultiLanguageInfos.GetSongInfoById(conflict.OtherKey!).Name);
+				return true;
+			default:
+				return false;
+		}
+	}
 
 	public static async Task<SongSearchValidateResult> SearchAndValidate(
 		SocketSlashCommand arg,

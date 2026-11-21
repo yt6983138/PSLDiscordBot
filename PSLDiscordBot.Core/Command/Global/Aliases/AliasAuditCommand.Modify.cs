@@ -35,9 +35,11 @@ public partial class AliasAuditCommand
 				return;
 			}
 
-			if (aliasData.Aliases.Contains(newAlias))
+			// only the server table is checked; the replaced alias is excluded so a case-only rename is allowed
+			AliasConflictResult conflict = this._aliasService.ValidateNewAlias(
+				AliasTableId.Server(arg.GuildId.EnsureNotNull()), aliasData.SongId, newAlias, replacing: alias);
+			if (await AliasModifyGlobalCommand.ReplyIfRejected(arg, this._localization, this._phigrosService, conflict, aliasData.Aliases))
 			{
-				await arg.QuickReply("The new alias already exists for the specified song. Choose a different alias.");
 				return;
 			}
 

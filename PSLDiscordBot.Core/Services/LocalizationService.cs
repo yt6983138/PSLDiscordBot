@@ -104,10 +104,12 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 
 			[AliasShared.OptionOperationName] = LocalizedString.CreateDefault("operation"),
 			[AliasShared.OptionOperationDescription] = LocalizedString.CreateDefault("The operation to perform on the alias."),
-			[AliasShared.MessageAlreadyAdded] = LocalizedString.CreateDefault("Sorry, this alias has already been added, either as global or inherited. Alias that already exists: \n" +
+			[AliasShared.MessageAlreadyAdded] = LocalizedString.CreateDefault("Sorry, this alias has already been added. Alias that already exists: \n" +
 				"```\n{0:list:{}|\\n}\n```"),
 			[AliasShared.MessageSuccess] = LocalizedString.CreateDefault("Operation done successfully! The song `{0}` now has the following alias: \n" +
 				"```\n{1:list:{}|\\n}\n```"),
+			[AliasShared.MessageTakenByOtherSong] = LocalizedString.CreateDefault("Sorry, this alias is already taken by another song: it matches the alias `{0}` of song `{1}`."),
+			[AliasShared.MessageEqualsSongIdOrName] = LocalizedString.CreateDefault("Sorry, this alias is the same as the id or name of song `{0}`."),
 			[AliasShared.OptionForSongName] = LocalizedString.CreateDefault("for"),
 			[AliasShared.OptionForSongDescription] = LocalizedString.CreateDefault("For which song to operate, inputting a song's name, id, or other alias is allowed."),
 			[AliasShared.OptionAliasToOperateName] = LocalizedString.CreateDefault("alias"),

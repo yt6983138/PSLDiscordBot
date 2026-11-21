@@ -306,6 +306,28 @@ public class AliasService
 		return results;
 	}
 
+	/// <summary>
+	/// Checks whether <paramref name="alias"/> may be added to song <paramref name="songId"/> in <paramref name="table"/>, from
+	/// the in-memory snapshot of that table only; no other alias table is read (no global table for server adds, no other servers'
+	/// tables, no <c>InheritsFrom</c> walk). Rejects a duplicate on the song, any song's id or name (the target's included), and
+	/// another song's alias in the same table.
+	/// </summary>
+	/// <param name="replacing">alias being replaced (audit modify); only that stored entry in the table is ignored, so a case-only rename is allowed, while an identical string or another case variant is a duplicate</param>
+	/// <exception cref="ArgumentException">for the avatar table</exception>
+	public AliasConflictResult ValidateNewAlias(AliasTableId table, string songId, string alias, string? replacing = null)
+	{
+		if (table.IsAvatar) throw new ArgumentException("Avatar tables are not supported.", nameof(table));
+
+		return AliasConflictCheck.Check(
+			this._phigrosService.NonMultiLanguageInfos.Songs,
+			static s => s.Id,
+			static s => s.Name,
+			songId,
+			alias,
+			replacing,
+			this.GetCachedAliases(table));
+	}
+
 	public StaticTableRequester GetStaticTableRequester()
 	{
 		StaticTableRequester requester = new(this);
