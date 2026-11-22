@@ -5,59 +5,6 @@ namespace PSLDiscordBot.Core.Localization;
 [GenerateKeys(PSLLocalizationKey.GlobalNormalCommandNamespace, "")]
 public static partial class PSLNormalCommandKey
 {
-	#region GetTimeIndexCommand
-	public static partial string GetTimeIndexName { get; }
-	public static partial string GetTimeIndexDescription { get; }
-
-	public static partial string GetTimeIndexIndexTitle { get; }
-	public static partial string GetTimeIndexDateTitle { get; }
-	#endregion
-
-	#region ExportScoresCommand
-	public static partial string ExportScoresName { get; }
-	public static partial string ExportScoresDescription { get; }
-
-	public static partial string ExportScoresReply { get; }
-	#endregion
-
-	#region GetMoneyCommand
-	public static partial string GetMoneyName { get; }
-	public static partial string GetMoneyDescription { get; }
-
-	public static partial string GetMoneyReply { get; }
-	#endregion
-
-	#region GetScoresCommand
-	public static partial string GetScoresName { get; }
-	public static partial string GetScoresDescription { get; }
-
-	public static partial string GetScoresOptionCountName { get; }
-	public static partial string GetScoresOptionCountDescription { get; }
-
-	public static partial string GetScoresDone { get; }
-	#endregion
-
-	#region MoreRksCommand
-	public static partial string MoreRksName { get; }
-	public static partial string MoreRksDescription { get; }
-
-	public static partial string MoreRksOptionGetAtLeastName { get; }
-	public static partial string MoreRksOptionGetAtLeastDescription { get; }
-	public static partial string MoreRksOptionCountName { get; }
-	public static partial string MoreRksOptionCountDescription { get; }
-
-	public static partial string MoreRksResult { get; }
-	public static partial string MoreRksIntro { get; }
-	public static partial string MoreRksNumberTitle { get; }
-	public static partial string MoreRksNumberFormat { get; }
-	public static partial string MoreRksAccuracyChangeTitle { get; }
-	public static partial string MoreRksAccuracyChangeFormat { get; }
-	public static partial string MoreRksRksChangeTitle { get; }
-	public static partial string MoreRksRksChangeFormat { get; }
-	public static partial string MoreRksSongTitle { get; }
-	public static partial string MoreRksSongFormat { get; }
-	#endregion
-
 	#region LeaderboardCommand
 	public static partial string LeaderboardName { get; }
 	public static partial string LeaderboardDescription { get; }

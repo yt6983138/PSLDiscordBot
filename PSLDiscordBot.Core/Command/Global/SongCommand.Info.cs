@@ -3,50 +3,53 @@ using System.Text;
 
 namespace PSLDiscordBot.Core.Command.Global;
 
-[AddToGlobal]
-public class SongInfoCommand : CommandBase
+public partial class SongCommand
 {
-	public SongInfoCommand(IServiceProvider provider) : base(provider)
+	private sealed class InfoNode : SubcommandNode
 	{
-	}
-
-	public override bool IsEphemeral => false;
-
-	public override OneOf<string, LocalizedString> PSLName => this._localization[PSLGuestCommandKey.SongInfoName];
-	public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLGuestCommandKey.SongInfoDescription];
-
-	public override IReadOnlyList<IConstraint> MasterConstraints => [];
-
-	// TODO: add an option to specify the difficulty to get the illustration for
-	public override SlashCommandBuilder CompleteBuilder => this.BasicBuilder
-		.AddSongSearchOption(this._localization);
-
-	public override async Task RootCallback(SocketSlashCommand arg, UserData? data)
-	{
-		List<SongSearchResult> foundAlias = this._aliasService.SearchSong(arg,
-			arg.GetSongSearchOption(this._localization));
-
-		if (foundAlias.Count == 0)
+		public InfoNode(SongCommand root) : base(root)
 		{
-			await arg.QuickReply(this._localization[PSLCommonMessageKey.SongSearchNoMatch]);
-			return;
 		}
 
-		StringBuilder query = BuildReturnQueryString(foundAlias, this._phigrosService);
-		// UNDONE: localize those builder based messages
+		public override bool IsEphemeral => false;
 
-		await arg.QuickReplyWithAttachments($"Found {foundAlias.Count} match(es).",
-			[
-				new(File.OpenRead(foundAlias[0].Info.GetIllustrationPath(Difficulty.EZ, IllustrationType.LowRes)), "preview.png"),
-				PSLUtils.ToAttachment(query.ToString(), "Query.txt")
-			]);
-	}
+		public override OneOf<string, LocalizedString> PSLName => this._localization[PSLSongCommandKey.SongInfoName];
+		public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLSongCommandKey.SongInfoDescription];
 
-	public override ValueTask<IEnumerable<AutocompleteSuggestion>> Autocomplete(AutocompleteContext context)
-	{
-		if (!context.IsSongSearchFocused(this._localization))
-			return base.Autocomplete(context);
-		return ValueTask.FromResult(this._autocompleteSuggestionService.GetSongSuggestions(context.FocusedText, context.Interaction.GuildId));
+		// TODO: add an option to specify the difficulty to get the illustration for
+		public override SlashCommandOptionBuilder CompleteBuilder => this.BasicBuilder
+			.AddSongSearchOption(this._localization);
+
+		public override async Task Callback(SocketSlashCommand arg, SocketSlashCommandDataOption option, UserData? data)
+		{
+			List<SongSearchResult> foundAlias = this._aliasService.SearchSong(arg,
+				option.GetSongSearchOption(this._localization));
+
+			if (foundAlias.Count == 0)
+			{
+				await arg.QuickReply(this._localization[PSLCommonMessageKey.SongSearchNoMatch]);
+				return;
+			}
+
+			StringBuilder query = BuildReturnQueryString(foundAlias, this._phigrosService);
+			// The Query.txt labels stay English on purpose: localizing them isn't worth the extra
+			// translation keys.
+
+			await arg.QuickReplyWithAttachments(
+				[
+					new(File.OpenRead(foundAlias[0].Info.GetIllustrationPath(Difficulty.EZ, IllustrationType.LowRes)), "preview.png"),
+					PSLUtils.ToAttachment(query.ToString(), "Query.txt")
+				],
+				this._localization[PSLSongCommandKey.SongInfoFoundMatches],
+				foundAlias.Count);
+		}
+
+		public override ValueTask<IEnumerable<AutocompleteSuggestion>> Autocomplete(AutocompleteContext context)
+		{
+			if (!context.IsSongSearchFocused(this._localization))
+				return base.Autocomplete(context);
+			return ValueTask.FromResult(this._autocompleteSuggestionService.GetSongSuggestions(context.FocusedText, context.Interaction.GuildId));
+		}
 	}
 
 	public static StringBuilder BuildReturnQueryString(List<SongSearchResult> foundAlias, PhigrosService service)

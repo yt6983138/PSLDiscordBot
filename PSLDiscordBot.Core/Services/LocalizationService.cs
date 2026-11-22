@@ -1,6 +1,7 @@
 using PSLDiscordBot.Framework.ServiceBase;
 using static PSLDiscordBot.Core.Localization.PSLAccountCommandKey;
 using static PSLDiscordBot.Core.Localization.PSLAliasRelatedKey;
+using static PSLDiscordBot.Core.Localization.PSLCloudCommandKey;
 using static PSLDiscordBot.Core.Localization.PSLCommonKey;
 using static PSLDiscordBot.Core.Localization.PSLCommonMessageKey;
 using static PSLDiscordBot.Core.Localization.PSLCommonOptionKey;
@@ -8,7 +9,9 @@ using static PSLDiscordBot.Core.Localization.PSLGuestCommandKey;
 using static PSLDiscordBot.Core.Localization.PSLLocalCommandKey;
 using static PSLDiscordBot.Core.Localization.PSLNormalCommandKey;
 using static PSLDiscordBot.Core.Localization.PSLPhotoCommandKey;
+using static PSLDiscordBot.Core.Localization.PSLRecordsCommandKey;
 using static PSLDiscordBot.Core.Localization.PSLSettingsCommandKey;
+using static PSLDiscordBot.Core.Localization.PSLSongCommandKey;
 using AliasGlobal = PSLDiscordBot.Core.Localization.PSLAliasRelatedKey.Global;
 using AliasServer = PSLDiscordBot.Core.Localization.PSLAliasRelatedKey.Server;
 using AliasShared = PSLDiscordBot.Core.Localization.PSLAliasRelatedKey.Shared;
@@ -84,7 +87,7 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 			[ScoreFormatterUserRksIntro] = LocalizedString.CreateDefault("Your rks: {0}"),
 
 			[IndexOptionName] = LocalizedString.CreateDefault("index"),
-			[IndexOptionDescription] = LocalizedString.CreateDefault("Save time converted to index, 0 is always latest. Do /get-time-index to get other index."),
+			[IndexOptionDescription] = LocalizedString.CreateDefault("Save time converted to index, 0 is always latest. Do /cloud time-index to get other index."),
 			[SongSearchOptionDescription] = LocalizedString.CreateDefault("Searching strings, you can either put id, put alias, or put the song name."),
 			[SongSearchOptionName] = LocalizedString.CreateDefault("search"),
 			[GenerateForOptionName] = LocalizedString.CreateDefault("generate_for"),
@@ -130,9 +133,6 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 			[AliasShared.MessageNotExist] = LocalizedString.CreateDefault("Sorry, this alias does not exist! The alias you are looking for might be global or inherited. Alias that already exists in current server: \n" +
 				"```\n{0:list:{}|\\n}\n```"),
 
-			[SongInfoName] = LocalizedString.CreateDefault("song-info"),
-			[SongInfoDescription] = LocalizedString.CreateDefault("Search info about songs."),
-
 			[ReportProblemName] = LocalizedString.CreateDefault("report-problem"),
 			[ReportProblemDescription] = LocalizedString.CreateDefault("Report a problem to author."),
 			[ReportProblemOptionMessageName] = LocalizedString.CreateDefault("message"),
@@ -147,49 +147,59 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 			[PingPinging] = LocalizedString.CreateDefault("Pinging... This can take a while."),
 			[PingPingDone] = LocalizedString.CreateDefault("Ping complete, result:"),
 
-			[GetTimeIndexName] = LocalizedString.CreateDefault("get-time-index"),
-			[GetTimeIndexDescription] = LocalizedString.CreateDefault("Get save indexes, used to fetch older saves in various commands."),
-			[GetTimeIndexIndexTitle] = LocalizedString.CreateDefault("Index"),
-			[GetTimeIndexDateTitle] = LocalizedString.CreateDefault("Date"),
-
-			[ExportScoresName] = LocalizedString.CreateDefault("export-scores"),
-			[ExportScoresDescription] = LocalizedString.CreateDefault("Export all your scores as a CSV file."),
-			[ExportScoresReply] = LocalizedString.CreateDefault("You have {0} scores, now exporting..."),
-
-			[GetMoneyName] = LocalizedString.CreateDefault("get-money"),
-			[GetMoneyDescription] = LocalizedString.CreateDefault("Get amount of data/money/currency you have in Phigros."),
-			[GetMoneyReply] = LocalizedString.CreateDefault("You have {0}."),
+			[CloudName] = LocalizedString.CreateDefault("cloud"),
+			[CloudDescription] = LocalizedString.CreateDefault("Commands that only work with cloud saves."),
+			[CloudTimeIndexName] = LocalizedString.CreateDefault("time-index"),
+			[CloudTimeIndexDescription] = LocalizedString.CreateDefault("Get save indexes, used to fetch older saves in various commands."),
+			[CloudTimeIndexIndexTitle] = LocalizedString.CreateDefault("Index"),
+			[CloudTimeIndexDateTitle] = LocalizedString.CreateDefault("Date"),
 
 			[HelpName] = LocalizedString.CreateDefault("help"),
 			[HelpDescription] = LocalizedString.CreateDefault("Show help manuals."),
 
-			[DownloadAssetName] = LocalizedString.CreateDefault("download-asset"),
-			[DownloadAssetDescription] = LocalizedString.CreateDefault("Download assets about song."),
-			[DownloadAssetOptionDownloadPEZName] = LocalizedString.CreateDefault("pez_chart_type"),
-			[DownloadAssetOptionDownloadPEZDescription] = LocalizedString.CreateDefault("Select which chart to pack."),
+			[SongName] = LocalizedString.CreateDefault("song"),
+			[SongDescription] = LocalizedString.CreateDefault("Look up songs: search their info or download their assets."),
+			[SongInfoName] = LocalizedString.CreateDefault("info"),
+			[SongInfoDescription] = LocalizedString.CreateDefault("Search info about songs."),
+			[SongAssetsName] = LocalizedString.CreateDefault("assets"),
+			[SongAssetsDescription] = LocalizedString.CreateDefault("Download assets about song."),
+			[SongAssetsOptionDownloadPEZName] = LocalizedString.CreateDefault("pez_chart_type"),
+			[SongAssetsOptionDownloadPEZDescription] = LocalizedString.CreateDefault("Select which chart to pack."),
+			[SongInfoFoundMatches] = LocalizedString.CreateDefault("Found {0} match(es)."),
+			[SongAssetsFoundMatches] = LocalizedString.CreateDefault("Found {0} match(es). Assets of best match:"),
+			[SongAssetsFilesTooLarge] = LocalizedString.CreateDefault("Sorry, one or more of the files are too large to upload. Please use this in servers that have tier 2 boost."),
 
-			[GetScoresName] = LocalizedString.CreateDefault("get-scores"),
-			[GetScoresDescription] = LocalizedString.CreateDefault("Get scores in text, useful when you don't have much mobile data."),
-			[GetScoresOptionCountName] = LocalizedString.CreateDefault("count"),
-			[GetScoresOptionCountDescription] = LocalizedString.CreateDefault("Count of scores to show."),
-			[GetScoresDone] = LocalizedString.CreateDefault("Got score! Now showing..."),
+			[RecordsName] = LocalizedString.CreateDefault("records"),
+			[RecordsDescription] = LocalizedString.CreateDefault("View your scores, rks improvements and money, or export your scores."),
+			[RecordsListName] = LocalizedString.CreateDefault("list"),
+			[RecordsListDescription] = LocalizedString.CreateDefault("Get scores in text, useful when you don't have much mobile data."),
+			[RecordsListOptionCountName] = LocalizedString.CreateDefault("count"),
+			[RecordsListOptionCountDescription] = LocalizedString.CreateDefault("Count of scores to show."),
+			[RecordsListDone] = LocalizedString.CreateDefault("Got score! Now showing..."),
+			[RecordsMoneyName] = LocalizedString.CreateDefault("money"),
+			[RecordsMoneyDescription] = LocalizedString.CreateDefault("Get amount of data/money/currency you have in Phigros."),
+			[RecordsMoneyReply] = LocalizedString.CreateDefault("You have {0}."),
 
-			[MoreRksName] = LocalizedString.CreateDefault("more-rks"),
-			[MoreRksDescription] = LocalizedString.CreateDefault("Show you a list of possible chart to push to get more rks."),
-			[MoreRksOptionGetAtLeastName] = LocalizedString.CreateDefault("give_me_at_least"),
-			[MoreRksOptionGetAtLeastDescription] = LocalizedString.CreateDefault("The least rks you wanted to get from each chart. (Default: have Phigros shown +0.01)"),
-			[MoreRksOptionCountName] = LocalizedString.CreateDefault("count"),
-			[MoreRksOptionCountDescription] = LocalizedString.CreateDefault("Controls how many charts should be shown. (Default 10)"),
-			[MoreRksResult] = LocalizedString.CreateDefault("Showing {0} possible chart(s):"),
-			[MoreRksIntro] = LocalizedString.CreateDefault("Getting you to: {0}"),
-			[MoreRksNumberTitle] = LocalizedString.CreateDefault("Number"),
-			[MoreRksNumberFormat] = LocalizedString.CreateDefault("#{0:calc(+1)} {1.TargetAcc:cond:>=100?(φ)| }"),
-			[MoreRksAccuracyChangeTitle] = LocalizedString.CreateDefault("Acc. change"),
-			[MoreRksAccuracyChangeFormat] = LocalizedString.CreateDefault("{0}% -> {1}%"),
-			[MoreRksRksChangeTitle] = LocalizedString.CreateDefault("Rks change"),
-			[MoreRksRksChangeFormat] = LocalizedString.CreateDefault("{0} -> {1}"),
-			[MoreRksSongTitle] = LocalizedString.CreateDefault("For song"),
-			[MoreRksSongFormat] = LocalizedString.CreateDefault("{0} ({1.ChartConstant:.0})"),
+			[RecordsImproveName] = LocalizedString.CreateDefault("improve"),
+			[RecordsImproveDescription] = LocalizedString.CreateDefault("Show you a list of possible chart to push to get more rks."),
+			[RecordsImproveOptionGetAtLeastName] = LocalizedString.CreateDefault("give_me_at_least"),
+			[RecordsImproveOptionGetAtLeastDescription] = LocalizedString.CreateDefault("The least rks you wanted to get from each chart. (Default: have Phigros shown +0.01)"),
+			[RecordsImproveOptionCountName] = LocalizedString.CreateDefault("count"),
+			[RecordsImproveOptionCountDescription] = LocalizedString.CreateDefault("Controls how many charts should be shown. (Default 10)"),
+			[RecordsImproveResult] = LocalizedString.CreateDefault("Showing {0} possible chart(s):"),
+			[RecordsImproveIntro] = LocalizedString.CreateDefault("Getting you to: {0}"),
+			[RecordsImproveNumberTitle] = LocalizedString.CreateDefault("Number"),
+			[RecordsImproveNumberFormat] = LocalizedString.CreateDefault("#{0:calc(+1)} {1.TargetAcc:cond:>=100?(φ)| }"),
+			[RecordsImproveAccuracyChangeTitle] = LocalizedString.CreateDefault("Acc. change"),
+			[RecordsImproveAccuracyChangeFormat] = LocalizedString.CreateDefault("{0}% -> {1}%"),
+			[RecordsImproveRksChangeTitle] = LocalizedString.CreateDefault("Rks change"),
+			[RecordsImproveRksChangeFormat] = LocalizedString.CreateDefault("{0} -> {1}"),
+			[RecordsImproveSongTitle] = LocalizedString.CreateDefault("For song"),
+			[RecordsImproveSongFormat] = LocalizedString.CreateDefault("{0} ({1.ChartConstant:.0})"),
+
+			[RecordsExportName] = LocalizedString.CreateDefault("export"),
+			[RecordsExportDescription] = LocalizedString.CreateDefault("Export all your scores as a CSV file."),
+			[RecordsExportReply] = LocalizedString.CreateDefault("You have {0} scores, now exporting..."),
 
 			[TOSName] = LocalizedString.CreateDefault("tos"),
 			[TOSDescription] = LocalizedString.CreateDefault("View the Terms of Service."),
@@ -219,7 +229,7 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 			[LeaderboardRowRankFormat] = LocalizedString.CreateDefault("#{0:calc(+1)}"),
 			[LeaderboardChallengeFormat] = LocalizedString.CreateDefault("{0.Rank} {0.Level}"),
 			[LeaderboardReply] = LocalizedString.CreateDefault("You are at rank {0:calc(+1)}, with statistic of {1}:"),
-			[LeaderboardFailedToAnalyze] = LocalizedString.CreateDefault("Failed to calculate your rank on leaderboard! Please do `/get-scores` to check if your save is good."),
+			[LeaderboardFailedToAnalyze] = LocalizedString.CreateDefault("Failed to calculate your rank on leaderboard! Please do `/records list` to check if your save is good."),
 
 			[CollectionName] = LocalizedString.CreateDefault("collection"),
 			[CollectionDescription] = LocalizedString.CreateDefault("Get collection info"),
@@ -405,7 +415,7 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 			[SettingsMemorableScoreSetName] = LocalizedString.CreateDefault("set"),
 			[SettingsMemorableScoreSetDescription] = LocalizedString.CreateDefault("Sets your memorable score, shown in /photo profile."),
 			[SettingsMemorableScoreSetOptionScoreNumberName] = LocalizedString.CreateDefault("score-number"),
-			[SettingsMemorableScoreSetOptionScoreNumberDescription] = LocalizedString.CreateDefault("The score number shown in /get-scores, /photo best, aka the Number column."),
+			[SettingsMemorableScoreSetOptionScoreNumberDescription] = LocalizedString.CreateDefault("The score number shown in /records list, /photo best, aka the Number column."),
 			[SettingsMemorableScoreSetOptionScoreThoughtsName] = LocalizedString.CreateDefault("score-thoughts"),
 			[SettingsMemorableScoreSetOptionScoreThoughtsDescription] = LocalizedString.CreateDefault("Your thought about this score, like how you did it etc."),
 			[SettingsMemorableScoreSetSuccess] = LocalizedString.CreateDefault("Set memorable score successfully! Score set to: "),

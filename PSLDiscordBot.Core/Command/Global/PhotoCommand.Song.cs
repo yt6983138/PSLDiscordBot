@@ -96,7 +96,7 @@ public partial class PhotoCommand
 
 			FileAttachment[] attachments = [new(image, "ScoreAnalysis.png"),
 					PSLUtils.ToAttachment(
-						GetScoresCommand.ScoresFormatter(
+						ScoresFormatterUtils.ScoresFormatter(
 							arg,
 							scoresToShow,
 							rks,

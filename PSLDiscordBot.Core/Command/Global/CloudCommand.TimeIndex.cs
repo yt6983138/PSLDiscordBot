@@ -2,43 +2,45 @@ using System.Text;
 
 namespace PSLDiscordBot.Core.Command.Global;
 
-[AddToGlobal]
-public class GetTimeIndexCommand : CommandBase
+public partial class CloudCommand
 {
-	public GetTimeIndexCommand(IServiceProvider provider) : base(provider)
+	private sealed class TimeIndexNode : SubcommandNode
 	{
-	}
-
-	public override OneOf<string, LocalizedString> PSLName => this._localization[PSLNormalCommandKey.GetTimeIndexName];
-	public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLNormalCommandKey.GetTimeIndexDescription];
-
-	public override SlashCommandBuilder CompleteBuilder => this.BasicBuilder;
-
-	public override async Task RootCallback(SocketSlashCommand arg, UserData? data)
-	{
-		// save indexes are cloud-only; local collections have none and must not touch the cloud client
-		if (data!.IsLocal)
+		public TimeIndexNode(CloudCommand root) : base(root)
 		{
-			await arg.QuickReply(this._localization[PSLCommonKey.SaveHandlerOnWrongAccountMode]);
-			return;
 		}
 
-		List<SaveInfo> saves = (await data.SaveCache.GetSaveInfoFromCloudAsync()).Results;
+		public override OneOf<string, LocalizedString> PSLName => this._localization[PSLCloudCommandKey.CloudTimeIndexName];
+		public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLCloudCommandKey.CloudTimeIndexDescription];
 
-		StringBuilder sb = new("```\n");
-		ColumnTextBuilder builder = new(arg, [
-			this._localization[PSLNormalCommandKey.GetTimeIndexIndexTitle],
-			this._localization[PSLNormalCommandKey.GetTimeIndexDateTitle]]);
+		public override SlashCommandOptionBuilder CompleteBuilder => this.BasicBuilder;
 
-		for (int i = 0; i < saves.Count; i++)
+		public override async Task Callback(SocketSlashCommand arg, SocketSlashCommandDataOption option, UserData? data)
 		{
-			builder.WithRow([
-				i.ToString(),
-				saves[i].ModifiedAt.Time.ToString()]);
-		}
-		builder.Build(sb);
-		sb.AppendLine("```");
+			// save indexes are cloud-only; local collections have none and must not touch the cloud client
+			if (data!.IsLocal)
+			{
+				await arg.QuickReply(this._localization[PSLCommonKey.SaveHandlerOnWrongAccountMode]);
+				return;
+			}
 
-		await arg.QuickReply(sb.ToString());
+			List<SaveInfo> saves = (await data.SaveCache.GetSaveInfoFromCloudAsync()).Results;
+
+			StringBuilder sb = new("```\n");
+			ColumnTextBuilder builder = new(arg, [
+				this._localization[PSLCloudCommandKey.CloudTimeIndexIndexTitle],
+				this._localization[PSLCloudCommandKey.CloudTimeIndexDateTitle]]);
+
+			for (int i = 0; i < saves.Count; i++)
+			{
+				builder.WithRow([
+					i.ToString(),
+					saves[i].ModifiedAt.Time.ToString()]);
+			}
+			builder.Build(sb);
+			sb.AppendLine("```");
+
+			await arg.QuickReply(sb.ToString());
+		}
 	}
 }

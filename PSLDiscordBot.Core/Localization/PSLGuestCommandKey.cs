@@ -5,11 +5,6 @@ namespace PSLDiscordBot.Core.Localization;
 [GenerateKeys(PSLLocalizationKey.GlobalGuestCommandNamespace, "")]
 public static partial class PSLGuestCommandKey
 {
-	#region SongInfoCommand
-	public static partial string SongInfoName { get; }
-	public static partial string SongInfoDescription { get; }
-	#endregion
-
 	#region ReportProblemCommand
 	public static partial string ReportProblemName { get; }
 	public static partial string ReportProblemDescription { get; }
@@ -34,14 +29,6 @@ public static partial class PSLGuestCommandKey
 	#region HelpCommand
 	public static partial string HelpName { get; }
 	public static partial string HelpDescription { get; }
-	#endregion
-
-	#region DownloadAssetCommand
-	public static partial string DownloadAssetName { get; }
-	public static partial string DownloadAssetDescription { get; }
-
-	public static partial string DownloadAssetOptionDownloadPEZName { get; }
-	public static partial string DownloadAssetOptionDownloadPEZDescription { get; }
 	#endregion
 
 	#region TOSCommand

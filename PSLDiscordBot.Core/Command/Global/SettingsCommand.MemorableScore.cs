@@ -82,7 +82,7 @@ public partial class SettingsCommand
 			await requester.SaveChangesAsync();
 
 			await arg.QuickReplyWithAttachments([PSLUtils.ToAttachment(
-					GetScoresCommand.ScoresFormatter(arg, [score], 0, this._phigrosService.NonMultiLanguageInfos, 1, data!, this._localization, false, false),
+					ScoresFormatterUtils.ScoresFormatter(arg, [score], 0, this._phigrosService.NonMultiLanguageInfos, 1, data!, this._localization, false, false),
 					"Score.txt")],
 					this._localization[PSLSettingsCommandKey.SettingsMemorableScoreSetSuccess]);
 		}

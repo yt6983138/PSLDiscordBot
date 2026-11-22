@@ -15,6 +15,9 @@ internal static class PSLLocalizationKey
 	internal const string GlobalAccountCommandNamespace = $"{GlobalCommandNamespace}.Account.";
 	internal const string GlobalSettingsCommandNamespace = $"{GlobalCommandNamespace}.Settings.";
 	internal const string GlobalPhotoCommandNamespace = $"{GlobalCommandNamespace}.Photo.";
+	internal const string GlobalRecordsCommandNamespace = $"{GlobalCommandNamespace}.Records.";
+	internal const string GlobalCloudCommandNamespace = $"{GlobalCommandNamespace}.Cloud.";
+	internal const string GlobalSongCommandNamespace = $"{GlobalCommandNamespace}.Song.";
 	internal const string AliasNamespace = $"{GlobalCommandNamespace}.Alias.";
 	internal const string AliasSharedNamespace = $"{AliasNamespace}Shared.";
 	internal const string AliasGlobalNamespace = $"{AliasNamespace}Global.";
