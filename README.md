@@ -10,7 +10,7 @@ This is **P**higros **S**core **L**ookup Discord bot (we call it PSLDiscordBot),
 Here are some showcasing:
 - `/photo best`, huge thanks to discord user Foxtrot for rework!
 <br/><img src="https://github.com/user-attachments/assets/03a8c9d4-cca7-4398-85ec-3e9d6e138ff3" width="40%" />
-- `/get-scores`
+- `/records list`
 <br/><img src="https://github.com/yt6983138/PSLDiscordBot/assets/83499886/5aa82534-e8c1-41d7-9637-626032242d4b" width="50%" />
 - `/photo profile`
 <br/><img src="https://github.com/user-attachments/assets/242c450c-1306-48a0-b347-973deaad0393" width="50%" />
