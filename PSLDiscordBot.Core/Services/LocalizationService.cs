@@ -7,6 +7,10 @@ using static PSLDiscordBot.Core.Localization.PSLCommonOptionKey;
 using static PSLDiscordBot.Core.Localization.PSLGuestCommandKey;
 using static PSLDiscordBot.Core.Localization.PSLLocalCommandKey;
 using static PSLDiscordBot.Core.Localization.PSLNormalCommandKey;
+using static PSLDiscordBot.Core.Localization.PSLPhotoCommandKey;
+using static PSLDiscordBot.Core.Localization.PSLSettingsCommandKey;
+using AliasGlobal = PSLDiscordBot.Core.Localization.PSLAliasRelatedKey.Global;
+using AliasServer = PSLDiscordBot.Core.Localization.PSLAliasRelatedKey.Server;
 using AliasShared = PSLDiscordBot.Core.Localization.PSLAliasRelatedKey.Shared;
 
 namespace PSLDiscordBot.Core.Services;
@@ -84,7 +88,7 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 			[SongSearchOptionDescription] = LocalizedString.CreateDefault("Searching strings, you can either put id, put alias, or put the song name."),
 			[SongSearchOptionName] = LocalizedString.CreateDefault("search"),
 			[GenerateForOptionName] = LocalizedString.CreateDefault("generate_for"),
-			[GenerateForOptionDescription] = LocalizedString.CreateDefault("Generate for other user. Users without `/set-public-visibility` on won't be generated."),
+			[GenerateForOptionDescription] = LocalizedString.CreateDefault("Generate for other user. Users without `/settings visibility` on won't be generated."),
 
 			[SongSearchNoMatch] = LocalizedString.CreateDefault("Sorry, nothing matched your query."),
 			[OperationDone] = LocalizedString.CreateDefault("The operation has done successfully."),
@@ -93,17 +97,23 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 			[SlashCommandError] = LocalizedString.CreateDefault("This exception has been caught by global handler. Use `/report-problem` to report. Exception:"),
 			[ImageGenerated] = LocalizedString.CreateDefault("Generated!"),
 			[ImageGeneratedForOther] = LocalizedString.CreateDefault("Generated for `{0.User.GlobalName}`, aka `{0.Data.UserInfo.NickName}`"),
-			[GenerateForNoPermission] = LocalizedString.CreateDefault("Sorry, the user you specified does not exist or does not have `/set-public-visibility` turned on."),
+			[GenerateForNoPermission] = LocalizedString.CreateDefault("Sorry, the user you specified does not exist or does not have `/settings visibility` turned on."),
 
-			[ModifyGlobalName] = LocalizedString.CreateDefault("alias-modify-global"),
-			[ModifyGlobalDescription] = LocalizedString.CreateDefault("Add or remove alias of a song globally"),
+			[AliasGlobal.Name] = LocalizedString.CreateDefault("alias-global"),
+			[AliasGlobal.Description] = LocalizedString.CreateDefault("Add or remove alias of a song globally"),
+			[AliasGlobal.AddName] = LocalizedString.CreateDefault("add"),
+			[AliasGlobal.AddDescription] = LocalizedString.CreateDefault("Add a global alias to a song."),
+			[AliasGlobal.RemoveName] = LocalizedString.CreateDefault("remove"),
+			[AliasGlobal.RemoveDescription] = LocalizedString.CreateDefault("Remove a global alias from a song."),
 
-			[ModifyServerName] = LocalizedString.CreateDefault("alias-modify-server"),
-			[ModifyServerDescription] = LocalizedString.CreateDefault("Add or remove alias of a song for this server"),
-			[ModifyServerNotOwner] = LocalizedString.CreateDefault("You must be the one who added the alias to remove it for this server."),
+			[AliasServer.Name] = LocalizedString.CreateDefault("alias-server"),
+			[AliasServer.Description] = LocalizedString.CreateDefault("Add or remove alias of a song for this server"),
+			[AliasServer.AddName] = LocalizedString.CreateDefault("add"),
+			[AliasServer.AddDescription] = LocalizedString.CreateDefault("Add an alias to a song for this server."),
+			[AliasServer.RemoveName] = LocalizedString.CreateDefault("remove"),
+			[AliasServer.RemoveDescription] = LocalizedString.CreateDefault("Remove an alias you added from a song for this server."),
+			[AliasServer.RemoveNotOwner] = LocalizedString.CreateDefault("You must be the one who added the alias to remove it for this server."),
 
-			[AliasShared.OptionOperationName] = LocalizedString.CreateDefault("operation"),
-			[AliasShared.OptionOperationDescription] = LocalizedString.CreateDefault("The operation to perform on the alias."),
 			[AliasShared.MessageAlreadyAdded] = LocalizedString.CreateDefault("Sorry, this alias has already been added. Alias that already exists: \n" +
 				"```\n{0:list:{}|\\n}\n```"),
 			[AliasShared.MessageSuccess] = LocalizedString.CreateDefault("Operation done successfully! The song `{0}` now has the following alias: \n" +
@@ -120,24 +130,8 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 			[AliasShared.MessageNotExist] = LocalizedString.CreateDefault("Sorry, this alias does not exist! The alias you are looking for might be global or inherited. Alias that already exists in current server: \n" +
 				"```\n{0:list:{}|\\n}\n```"),
 
-			[SongScoresSongNotPlayed] = LocalizedString.CreateDefault("Sorry, you seems haven't played the songs you have been searching for."),
-			[SongScoresQueryResult] = LocalizedString.CreateDefault("You looked for song `{0}`, showing..."),
-			[SongScoresQueryResultForOther] = LocalizedString.CreateDefault("You looked for song `{0}`, showing for `{1.User.GlobalName}`, aka `{1.Data.UserInfo.NickName}`..."),
-			[SongScoresName] = LocalizedString.CreateDefault("song-scores"),
-			[SongScoresDescription] = LocalizedString.CreateDefault("Get scores for a specified song(s)."),
-
 			[SongInfoName] = LocalizedString.CreateDefault("song-info"),
 			[SongInfoDescription] = LocalizedString.CreateDefault("Search info about songs."),
-
-			[SetShowCountDefaultName] = LocalizedString.CreateDefault("set-show-count-default"),
-			[SetShowCountDefaultDescription] = LocalizedString.CreateDefault("Set the default show count for /get-photo."),
-			[SetShowCountDefaultOptionCountName] = LocalizedString.CreateDefault("count"),
-			[SetShowCountDefaultOptionCountDescription] = LocalizedString.CreateDefault("The default count going to be set."),
-
-			[SetPrecisionName] = LocalizedString.CreateDefault("set-precision"),
-			[SetPrecisionDescription] = LocalizedString.CreateDefault("Set precision of value shown on commands that fetch your scores."),
-			[SetPrecisionOptionPrecisionName] = LocalizedString.CreateDefault("precision"),
-			[SetPrecisionOptionPrecisionDescription] = LocalizedString.CreateDefault("Precision. Put 1 to get acc like 99.1, 2 to get acc like 99.12, repeat."),
 
 			[ReportProblemName] = LocalizedString.CreateDefault("report-problem"),
 			[ReportProblemDescription] = LocalizedString.CreateDefault("Report a problem to author."),
@@ -152,9 +146,6 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 			[PingDescription] = LocalizedString.CreateDefault("Check the availability of the core services."),
 			[PingPinging] = LocalizedString.CreateDefault("Pinging... This can take a while."),
 			[PingPingDone] = LocalizedString.CreateDefault("Ping complete, result:"),
-
-			[AboutMeName] = LocalizedString.CreateDefault("about-me"),
-			[AboutMeDescription] = LocalizedString.CreateDefault("Get info about you in game."),
 
 			[GetTimeIndexName] = LocalizedString.CreateDefault("get-time-index"),
 			[GetTimeIndexDescription] = LocalizedString.CreateDefault("Get save indexes, used to fetch older saves in various commands."),
@@ -183,28 +174,6 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 			[GetScoresOptionCountDescription] = LocalizedString.CreateDefault("Count of scores to show."),
 			[GetScoresDone] = LocalizedString.CreateDefault("Got score! Now showing..."),
 
-			[GetPhotoName] = LocalizedString.CreateDefault("get-photo"),
-			[GetPhotoDescription] = LocalizedString.CreateDefault("Get summary photo of your scores."),
-			[GetPhotoOptionCountName] = LocalizedString.CreateDefault("count"),
-			[GetPhotoOptionCountDescription] = LocalizedString.CreateDefault("Counts to show. (Default: 30, or set through /set-count-or-default)"),
-			[GetPhotoOptionLowerBoundName] = LocalizedString.CreateDefault("lower_bound"),
-			[GetPhotoOptionLowerBoundDescription] = LocalizedString.CreateDefault("The lower bound of the show range. ex. lower_bound: 69 and count: 42 show scores from 69 to 110."),
-			[GetPhotoOptionGradesToShowName] = LocalizedString.CreateDefault("show_what_grades"),
-			[GetPhotoOptionGradesToShowDescription] = LocalizedString.CreateDefault("Change what grades to show. Default: Show all. Use comma-separated list, ex. S, Phi, Vu, Fc, False."),
-			[GetPhotoOptionCCFilterLowerBoundName] = LocalizedString.CreateDefault("cc_lower_bound"),
-			[GetPhotoOptionCCFilterLowerBoundDescription] = LocalizedString.CreateDefault("Change the lower bound of scores' CC to show. Inclusive."),
-			[GetPhotoOptionCCFilterHigherBoundName] = LocalizedString.CreateDefault("cc_higher_bound"),
-			[GetPhotoOptionCCFilterHigherBoundDescription] = LocalizedString.CreateDefault("Change the higher bound of scores' CC to show. Inclusive."),
-			[GetPhotoOptionDifficultiesToShowName] = LocalizedString.CreateDefault("show_what_difficulties"),
-			[GetPhotoOptionDifficultiesToShowDescription] = LocalizedString.CreateDefault("Change what difficulties to show. Default: Show all. Use comma-separated list, ex. EZ, IN, Legacy."),
-			[GetPhotoFailedParsingGrades] = LocalizedString.CreateDefault("Failed to parse showing grades. Valid values: {0}"),
-			[GetPhotoFailedParsingDifficulty] = LocalizedString.CreateDefault("Failed to parse showing difficulties. Valid values: {0}"),
-			[GetPhotoImageTooBig] = LocalizedString.CreateDefault("Sorry, the channel you are requesting this from does not allow me to send images larger than 10mb :(\n" +
-				"Please either use count lower or equal to {0} or find other servers with boost."),
-			[GetPhotoStillInCoolDown] = LocalizedString.CreateDefault("Sorry, due to memory issues there is a cooldown when count is larger than {0}, {1} remain."),
-			[GetPhotoGenerating] = LocalizedString.CreateDefault("Making right now, this can take a bit of time..."),
-			[GetPhotoError] = LocalizedString.CreateDefault("Error occurred during uploading:"),
-
 			[MoreRksName] = LocalizedString.CreateDefault("more-rks"),
 			[MoreRksDescription] = LocalizedString.CreateDefault("Show you a list of possible chart to push to get more rks."),
 			[MoreRksOptionGetAtLeastName] = LocalizedString.CreateDefault("give_me_at_least"),
@@ -222,30 +191,11 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 			[MoreRksSongTitle] = LocalizedString.CreateDefault("For song"),
 			[MoreRksSongFormat] = LocalizedString.CreateDefault("{0} ({1.ChartConstant:.0})"),
 
-			[SetMemorableScoreName] = LocalizedString.CreateDefault("set-memorable-score"),
-			[SetMemorableScoreDescription] = LocalizedString.CreateDefault("Sets your memorable score, shown in /about-me."),
-			[SetMemorableScoreOptionScoreNumberName] = LocalizedString.CreateDefault("score-number"),
-			[SetMemorableScoreOptionScoreNumberDescription] = LocalizedString.CreateDefault("The score number shown in /get-scores, /get-photo, aka the Number column."),
-			[SetMemorableScoreOptionScoreThoughtsName] = LocalizedString.CreateDefault("score-thoughts"),
-			[SetMemorableScoreOptionScoreThoughtsDescription] = LocalizedString.CreateDefault("Your thought about this score, like how you did it etc."),
-			[SetMemorableSuccess] = LocalizedString.CreateDefault("Set memorable score successfully! Score set to: "),
-			[SetMemorableNoValidScore] = LocalizedString.CreateDefault("You do not have a valid score with the number you specified!"),
-
-			[ClearMemorableScoreName] = LocalizedString.CreateDefault("clear-memorable-score"),
-			[ClearMemorableScoreDescription] = LocalizedString.CreateDefault("Clear the memorable score."),
-			[ClearMemorableScoreSuccess] = LocalizedString.CreateDefault("Your memorable score has been cleared!"),
-
 			[TOSName] = LocalizedString.CreateDefault("tos"),
 			[TOSDescription] = LocalizedString.CreateDefault("View the Terms of Service."),
 			[TOSAgreed] = LocalizedString.CreateDefault("You have consented to the Terms of Service{0:cond:|, please do /account register qrcode, /account register token or /account register local in 15 mins to start using the bot}. Thank you for your cooperation."),
 			[TOSContent] = LocalizedString.CreateDefault("Please view it [here](https://github.com/yt6983138/PSLDiscordBot/blob/master/Documentation/TermsOfServiceV3.md), once you are done, please click `I consent` button to consent to the Terms of Service."),
 			[TOSAgreeButtonLabel] = LocalizedString.CreateDefault("I consent"),
-
-			[SetPublicVisibilityName] = LocalizedString.CreateDefault("set-public-visibility"),
-			[SetPublicVisibilityDescription] = LocalizedString.CreateDefault("Set whether your scores or statistics is visible to public or not."),
-			[SetPublicVisibilityOptionVisibilityName] = LocalizedString.CreateDefault("visibility"),
-			[SetPublicVisibilityOptionVisibilityDescription] = LocalizedString.CreateDefault("Whether your data is visible to public or not."),
-			[SetPublicVisibilitySuccess] = LocalizedString.CreateDefault("Your public visibility has been set successfully."),
 
 			[LeaderboardName] = LocalizedString.CreateDefault("leaderboard"),
 			[LeaderboardDescription] = LocalizedString.CreateDefault("Displays the leaderboard."),
@@ -358,12 +308,12 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 			[LocalCurrencyTibOptionDescription] = LocalizedString.CreateDefault("TiB units, 0 to 1023"),
 			[LocalCurrencyPibOptionName] = LocalizedString.CreateDefault("pib"),
 			[LocalCurrencyPibOptionDescription] = LocalizedString.CreateDefault("PiB units, 0 to 1023"),
-			[LocalProfileNothingSupplied] = LocalizedString.CreateDefault("Supply at least one option to change. Current values are shown by /about-me."),
+			[LocalProfileNothingSupplied] = LocalizedString.CreateDefault("Supply at least one option to change. Current values are shown by /photo profile."),
 			[LocalProfileAvatarUnknown] = LocalizedString.CreateDefault("That avatar is not in the known avatar list."),
 			[LocalProfileBackgroundUnknown] = LocalizedString.CreateDefault("That background is not in the known background list."),
 			[LocalProfileSaved] = LocalizedString.CreateDefault("Profile updated."),
 			[LocalChallengeSaved] = LocalizedString.CreateDefault("Challenge updated."),
-			[LocalCurrencyNothingSupplied] = LocalizedString.CreateDefault("Supply at least one currency unit to change. Current values are shown by /about-me."),
+			[LocalCurrencyNothingSupplied] = LocalizedString.CreateDefault("Supply at least one currency unit to change. Current values are shown by /photo profile."),
 			[LocalCurrencySaved] = LocalizedString.CreateDefault("Currency updated."),
 			[LocalEditNoChange] = LocalizedString.CreateDefault("Nothing changed: the save already has these values."),
 			[LocalImportPreview] = LocalizedString.CreateDefault("Import report: {0.AddedCount} charts added, {0.ReplacedCount} replaced, {0.KeptCount} kept, {0.RemovedCount} removed, {0.OverlapCount} existing charts overlap, {0.IssueCount} issues found.{0.ChangedNonScoreModels.Count:cond:>0?\nExisting non-score data that will change: {0.ChangedNonScoreModels:list:{}|, }.|}{0.IssueCount:cond:>0?\nIssues are listed in the attached report.|}"),
@@ -434,6 +384,73 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 				"Local collection: {HasLocalCollection:cond:present|none}\n" +
 				"International server: {IsInternational:cond:yes|no}\n" +
 				"{HasCloudBinding:cond:Your token: {Token:substr(0,5)}{Token:substr(5):||{}||} (Click to reveal, DO NOT show it to other people.)|}"),
+
+			[SettingsName] = LocalizedString.CreateDefault("settings"),
+			[SettingsDescription] = LocalizedString.CreateDefault("Manage your settings."),
+			[SettingsVisibilityName] = LocalizedString.CreateDefault("visibility"),
+			[SettingsVisibilityDescription] = LocalizedString.CreateDefault("Set whether your scores or statistics is visible to public or not."),
+			[SettingsVisibilityOptionVisibilityName] = LocalizedString.CreateDefault("visibility"),
+			[SettingsVisibilityOptionVisibilityDescription] = LocalizedString.CreateDefault("Whether your data is visible to public or not."),
+			[SettingsVisibilitySuccess] = LocalizedString.CreateDefault("Your public visibility has been set successfully."),
+			[SettingsPrecisionName] = LocalizedString.CreateDefault("precision"),
+			[SettingsPrecisionDescription] = LocalizedString.CreateDefault("Set precision of value shown on commands that fetch your scores."),
+			[SettingsPrecisionOptionPrecisionName] = LocalizedString.CreateDefault("precision"),
+			[SettingsPrecisionOptionPrecisionDescription] = LocalizedString.CreateDefault("Precision. Put 1 to get acc like 99.1, 2 to get acc like 99.12, repeat."),
+			[SettingsShowCountName] = LocalizedString.CreateDefault("show-count"),
+			[SettingsShowCountDescription] = LocalizedString.CreateDefault("Set the default show count for /photo best."),
+			[SettingsShowCountOptionCountName] = LocalizedString.CreateDefault("count"),
+			[SettingsShowCountOptionCountDescription] = LocalizedString.CreateDefault("The default count going to be set."),
+			[SettingsMemorableScoreGroupName] = LocalizedString.CreateDefault("memorable-score"),
+			[SettingsMemorableScoreGroupDescription] = LocalizedString.CreateDefault("Manage your memorable score."),
+			[SettingsMemorableScoreSetName] = LocalizedString.CreateDefault("set"),
+			[SettingsMemorableScoreSetDescription] = LocalizedString.CreateDefault("Sets your memorable score, shown in /photo profile."),
+			[SettingsMemorableScoreSetOptionScoreNumberName] = LocalizedString.CreateDefault("score-number"),
+			[SettingsMemorableScoreSetOptionScoreNumberDescription] = LocalizedString.CreateDefault("The score number shown in /get-scores, /photo best, aka the Number column."),
+			[SettingsMemorableScoreSetOptionScoreThoughtsName] = LocalizedString.CreateDefault("score-thoughts"),
+			[SettingsMemorableScoreSetOptionScoreThoughtsDescription] = LocalizedString.CreateDefault("Your thought about this score, like how you did it etc."),
+			[SettingsMemorableScoreSetSuccess] = LocalizedString.CreateDefault("Set memorable score successfully! Score set to: "),
+			[SettingsMemorableScoreSetNoValidScore] = LocalizedString.CreateDefault("You do not have a valid score with the number you specified!"),
+			[SettingsMemorableScoreClearName] = LocalizedString.CreateDefault("clear"),
+			[SettingsMemorableScoreClearDescription] = LocalizedString.CreateDefault("Clear the memorable score."),
+			[SettingsMemorableScoreClearSuccess] = LocalizedString.CreateDefault("Your memorable score has been cleared!"),
+			[SettingsViewName] = LocalizedString.CreateDefault("view"),
+			[SettingsViewDescription] = LocalizedString.CreateDefault("View your current settings."),
+			[SettingsViewReply] = LocalizedString.CreateDefault("Public visibility: {IsPublic:cond:on|off}\n" +
+				"Precision: {ShowFormat}{IsDefaultShowFormat:cond: (default)|}\n" +
+				"Default show count: {ShowCount}{IsDefaultShowCount:cond: (default)|}\n" +
+				"Memorable score: {HasMemorableScore:cond:see attachment|not set}\n" +
+				"{HasMemorableScore:cond:Thoughts: {Thoughts}|}"),
+
+			[PhotoName] = LocalizedString.CreateDefault("photo"),
+			[PhotoDescription] = LocalizedString.CreateDefault("Generate photos of your scores and profile."),
+			[PhotoBestName] = LocalizedString.CreateDefault("best"),
+			[PhotoBestDescription] = LocalizedString.CreateDefault("Get summary photo of your scores."),
+			[PhotoBestOptionCountName] = LocalizedString.CreateDefault("count"),
+			[PhotoBestOptionCountDescription] = LocalizedString.CreateDefault("Counts to show. (Default: 30, or set through /settings show-count)"),
+			[PhotoBestOptionLowerBoundName] = LocalizedString.CreateDefault("lower_bound"),
+			[PhotoBestOptionLowerBoundDescription] = LocalizedString.CreateDefault("The lower bound of the show range. ex. lower_bound: 69 and count: 42 show scores from 69 to 110."),
+			[PhotoBestOptionGradesToShowName] = LocalizedString.CreateDefault("show_what_grades"),
+			[PhotoBestOptionGradesToShowDescription] = LocalizedString.CreateDefault("Change what grades to show. Default: Show all. Use comma-separated list, ex. S, Phi, Vu, Fc, False."),
+			[PhotoBestOptionCCFilterLowerBoundName] = LocalizedString.CreateDefault("cc_lower_bound"),
+			[PhotoBestOptionCCFilterLowerBoundDescription] = LocalizedString.CreateDefault("Change the lower bound of scores' CC to show. Inclusive."),
+			[PhotoBestOptionCCFilterHigherBoundName] = LocalizedString.CreateDefault("cc_higher_bound"),
+			[PhotoBestOptionCCFilterHigherBoundDescription] = LocalizedString.CreateDefault("Change the higher bound of scores' CC to show. Inclusive."),
+			[PhotoBestOptionDifficultiesToShowName] = LocalizedString.CreateDefault("show_what_difficulties"),
+			[PhotoBestOptionDifficultiesToShowDescription] = LocalizedString.CreateDefault("Change what difficulties to show. Default: Show all. Use comma-separated list, ex. EZ, IN, Legacy."),
+			[PhotoBestFailedParsingGrades] = LocalizedString.CreateDefault("Failed to parse showing grades. Valid values: {0}"),
+			[PhotoBestFailedParsingDifficulty] = LocalizedString.CreateDefault("Failed to parse showing difficulties. Valid values: {0}"),
+			[PhotoBestImageTooBig] = LocalizedString.CreateDefault("Sorry, the channel you are requesting this from does not allow me to send images larger than 10mb :(\n" +
+				"Please either use count lower or equal to {0} or find other servers with boost."),
+			[PhotoBestStillInCoolDown] = LocalizedString.CreateDefault("Sorry, due to memory issues there is a cooldown when count is larger than {0}, {1} remain."),
+			[PhotoBestGenerating] = LocalizedString.CreateDefault("Making right now, this can take a bit of time..."),
+			[PhotoBestError] = LocalizedString.CreateDefault("Error occurred during uploading:"),
+			[PhotoProfileName] = LocalizedString.CreateDefault("profile"),
+			[PhotoProfileDescription] = LocalizedString.CreateDefault("Get info about you in game."),
+			[PhotoSongName] = LocalizedString.CreateDefault("song"),
+			[PhotoSongDescription] = LocalizedString.CreateDefault("Get scores for a specified song(s)."),
+			[PhotoSongSongNotPlayed] = LocalizedString.CreateDefault("Sorry, you seems haven't played the songs you have been searching for."),
+			[PhotoSongQueryResult] = LocalizedString.CreateDefault("You looked for song `{0}`, showing..."),
+			[PhotoSongQueryResultForOther] = LocalizedString.CreateDefault("You looked for song `{0}`, showing for `{1.User.GlobalName}`, aka `{1.Data.UserInfo.NickName}`..."),
 
 			// [] = LocalizedString.CreateDefault(""),
 		});

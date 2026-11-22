@@ -1,6 +1,4 @@
-﻿using PSLDiscordBot.Core.Command.Global.Aliases;
-using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
+﻿using System.Diagnostics.CodeAnalysis;
 
 namespace PSLDiscordBot.Core.Utility;
 
@@ -16,6 +14,25 @@ public static class OptionUtils
 			minValue: 0);
 	}
 	public static int GetIndexOption(this SocketSlashCommand self, LocalizationService localization, int @default = default)
+	{
+		return self.GetIntegerOptionAsInt32OrDefault(localization[PSLCommonOptionKey.IndexOptionName], @default);
+	}
+	/// <summary>
+	/// Nested-builder variant of <see cref="AddIndexOption(SlashCommandBuilder, LocalizationService, bool)"/>.
+	/// </summary>
+	public static SlashCommandOptionBuilder AddIndexOption(this SlashCommandOptionBuilder self, LocalizationService localization, bool required = false)
+	{
+		return self.AddOption(
+			localization[PSLCommonOptionKey.IndexOptionName],
+			ApplicationCommandOptionType.Integer,
+			localization[PSLCommonOptionKey.IndexOptionDescription],
+			isRequired: required,
+			minValue: 0);
+	}
+	/// <summary>
+	/// Leaf-option variant of <see cref="GetIndexOption(SocketSlashCommand, LocalizationService, int)"/>.
+	/// </summary>
+	public static int GetIndexOption(this SocketSlashCommandDataOption self, LocalizationService localization, int @default = default)
 	{
 		return self.GetIntegerOptionAsInt32OrDefault(localization[PSLCommonOptionKey.IndexOptionName], @default);
 	}
@@ -49,6 +66,14 @@ public static class OptionUtils
 	{
 		return self.GetOptionOrDefault<string>(localization[PSLCommonOptionKey.SongSearchOptionName]) ?? @default;
 	}
+	/// <summary>
+	/// Leaf-option variant of <see cref="GetSongSearchOption(SocketSlashCommand, LocalizationService, string?)"/>.
+	/// </summary>
+	[return: NotNullIfNotNull(nameof(@default))]
+	public static string? GetSongSearchOption(this SocketSlashCommandDataOption self, LocalizationService localization, string? @default = "")
+	{
+		return self.GetOptionOrDefault<string>(localization[PSLCommonOptionKey.SongSearchOptionName]) ?? @default;
+	}
 
 	public static SlashCommandBuilder AddGenerateForOption(this SlashCommandBuilder self, LocalizationService localization, bool required = false)
 	{
@@ -62,25 +87,30 @@ public static class OptionUtils
 	{
 		return self.GetOptionOrDefault<IUser>(localization[PSLCommonOptionKey.GenerateForOptionName]) ?? @default;
 	}
-
-	public static SlashCommandBuilder AddAliasOperationOption(this SlashCommandBuilder self, LocalizationService localization, bool required = true)
+	/// <summary>
+	/// Nested-builder variant of <see cref="AddGenerateForOption(SlashCommandBuilder, LocalizationService, bool)"/>.
+	/// </summary>
+	public static SlashCommandOptionBuilder AddGenerateForOption(this SlashCommandOptionBuilder self, LocalizationService localization, bool required = false)
 	{
 		return self.AddOption(
-			localization[PSLAliasRelatedKey.Shared.OptionOperationName],
-			ApplicationCommandOptionType.Integer,
-			localization[PSLAliasRelatedKey.Shared.OptionOperationDescription],
-			isRequired: required,
-			choices: BuilderUtility.CreateChoicesFromEnum<AliasModifyOperation>());
+			localization[PSLCommonOptionKey.GenerateForOptionName],
+			ApplicationCommandOptionType.User,
+			localization[PSLCommonOptionKey.GenerateForOptionDescription],
+			isRequired: required);
 	}
-	public static AliasModifyOperation GetAliasOperationOption(this SocketSlashCommand self, LocalizationService localization, AliasModifyOperation @default = default)
+	/// <summary>
+	/// Leaf-option variant of <see cref="GetGenerateForOption(SocketSlashCommand, LocalizationService, IUser?)"/>.
+	/// </summary>
+	public static IUser? GetGenerateForOption(this SocketSlashCommandDataOption self, LocalizationService localization, IUser? @default = null)
 	{
-		return self.GetOptionOrDefault(localization[PSLAliasRelatedKey.Shared.OptionOperationName], @default);
+		return self.GetOptionOrDefault<IUser>(localization[PSLCommonOptionKey.GenerateForOptionName]) ?? @default;
 	}
 
 	/// <summary>
-	/// Built with autocomplete, so every command using it must answer <see cref="IsAliasToOperateFocused"/> by reading the song with <see cref="TryGetAliasRemoveSong"/> and passing it to <see cref="AutocompleteSuggestionService.GetAliasToOperateSuggestions"/>.
+	/// Built with autocomplete, so every node using it must answer <see cref="IsAliasToOperateFocused"/> by passing the song
+	/// (from <see cref="TryGetAliasForSong"/>) to <see cref="AutocompleteSuggestionService.GetAliasToOperateSuggestions"/>.
 	/// </summary>
-	public static SlashCommandBuilder AddAliasToOperateOption(this SlashCommandBuilder self, LocalizationService localization, bool required = true)
+	public static SlashCommandOptionBuilder AddAliasToOperateOption(this SlashCommandOptionBuilder self, LocalizationService localization, bool required = true)
 	{
 		return self.AddOption(
 			localization[PSLAliasRelatedKey.Shared.OptionAliasToOperateName],
@@ -90,15 +120,15 @@ public static class OptionUtils
 			isAutocomplete: true);
 	}
 	[return: NotNullIfNotNull(nameof(@default))]
-	public static string? GetAliasToOperateOption(this SocketSlashCommand self, LocalizationService localization, string? @default = "")
+	public static string? GetAliasToOperateOption(this SocketSlashCommandDataOption self, LocalizationService localization, string? @default = "")
 	{
 		return self.GetOptionOrDefault<string>(localization[PSLAliasRelatedKey.Shared.OptionAliasToOperateName]) ?? @default;
 	}
 
 	/// <summary>
-	/// Built with autocomplete, so every command using it must answer <see cref="IsAliasForSongFocused"/> with <see cref="AutocompleteSuggestionService.GetSongSuggestions"/>.
+	/// Built with autocomplete, so every node using it must answer <see cref="IsAliasForSongFocused"/> with <see cref="AutocompleteSuggestionService.GetSongSuggestions"/>.
 	/// </summary>
-	public static SlashCommandBuilder AddAliasForSongOption(this SlashCommandBuilder self, LocalizationService localization, bool required = true)
+	public static SlashCommandOptionBuilder AddAliasForSongOption(this SlashCommandOptionBuilder self, LocalizationService localization, bool required = true)
 	{
 		return self.AddOption(
 			localization[PSLAliasRelatedKey.Shared.OptionForSongName],
@@ -112,20 +142,12 @@ public static class OptionUtils
 	public static bool IsAliasToOperateFocused(this AutocompleteContext self, LocalizationService localization)
 		=> self.IsFocused(localization[PSLAliasRelatedKey.Shared.OptionAliasToOperateName]);
 	/// <summary>
-	/// Autocomplete-side parse of the sibling options: true only when the operation option is <see cref="AliasModifyOperation.Remove"/>
-	/// and the for-song option is non-blank, with that song text in <paramref name="forSong"/>.
+	/// Autocomplete-side parse of the sibling for-song option (for the alias remove leaves): true when the option is non-blank,
+	/// with that song text in <paramref name="forSong"/>.
 	/// </summary>
-	public static bool TryGetAliasRemoveSong(this AutocompleteContext self, LocalizationService localization, [NotNullWhen(true)] out string? forSong)
+	public static bool TryGetAliasForSong(this AutocompleteContext self, LocalizationService localization, [NotNullWhen(true)] out string? forSong)
 	{
 		forSong = null;
-		AutocompleteOption? operationOption = self.OtherOptions.FirstOrDefault(x => x.Name == localization[PSLAliasRelatedKey.Shared.OptionOperationName].Default);
-		if (operationOption?.Value is null
-			|| !long.TryParse(Convert.ToString(operationOption.Value, CultureInfo.InvariantCulture), out long operation)
-			|| operation != (long)AliasModifyOperation.Remove)
-		{
-			return false;
-		}
-
 		string? song = self.OtherOptions.FirstOrDefault(x => x.Name == localization[PSLAliasRelatedKey.Shared.OptionForSongName].Default)?.Value?.ToString();
 		if (string.IsNullOrWhiteSpace(song)) return false;
 
@@ -133,7 +155,7 @@ public static class OptionUtils
 		return true;
 	}
 	[return: NotNullIfNotNull(nameof(@default))]
-	public static string? GetAliasForSongOption(this SocketSlashCommand self, LocalizationService localization, string? @default = "")
+	public static string? GetAliasForSongOption(this SocketSlashCommandDataOption self, LocalizationService localization, string? @default = "")
 	{
 		return self.GetOptionOrDefault<string>(localization[PSLAliasRelatedKey.Shared.OptionForSongName]) ?? @default;
 	}

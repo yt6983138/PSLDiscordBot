@@ -5,36 +5,6 @@ namespace PSLDiscordBot.Core.Localization;
 [GenerateKeys(PSLLocalizationKey.GlobalNormalCommandNamespace, "")]
 public static partial class PSLNormalCommandKey
 {
-	#region SongScoresCommand
-	public static partial string SongScoresName { get; }
-	public static partial string SongScoresDescription { get; }
-
-	public static partial string SongScoresSongNotPlayed { get; }
-	public static partial string SongScoresQueryResult { get; }
-	public static partial string SongScoresQueryResultForOther { get; }
-	#endregion
-
-	#region SetShowCountDefaultCommand
-	public static partial string SetShowCountDefaultName { get; }
-	public static partial string SetShowCountDefaultDescription { get; }
-
-	public static partial string SetShowCountDefaultOptionCountName { get; }
-	public static partial string SetShowCountDefaultOptionCountDescription { get; }
-	#endregion
-
-	#region SetPrecisionCommand 
-	public static partial string SetPrecisionName { get; }
-	public static partial string SetPrecisionDescription { get; }
-
-	public static partial string SetPrecisionOptionPrecisionName { get; }
-	public static partial string SetPrecisionOptionPrecisionDescription { get; }
-	#endregion
-
-	#region AboutMeCommand
-	public static partial string AboutMeName { get; }
-	public static partial string AboutMeDescription { get; }
-	#endregion
-
 	#region GetTimeIndexCommand
 	public static partial string GetTimeIndexName { get; }
 	public static partial string GetTimeIndexDescription { get; }
@@ -67,31 +37,6 @@ public static partial class PSLNormalCommandKey
 	public static partial string GetScoresDone { get; }
 	#endregion
 
-	#region GetPhotoCommand
-	public static partial string GetPhotoName { get; }
-	public static partial string GetPhotoDescription { get; }
-
-	public static partial string GetPhotoOptionCountName { get; }
-	public static partial string GetPhotoOptionCountDescription { get; }
-	public static partial string GetPhotoOptionLowerBoundName { get; }
-	public static partial string GetPhotoOptionLowerBoundDescription { get; }
-	public static partial string GetPhotoOptionGradesToShowName { get; }
-	public static partial string GetPhotoOptionGradesToShowDescription { get; }
-	public static partial string GetPhotoOptionCCFilterLowerBoundName { get; }
-	public static partial string GetPhotoOptionCCFilterLowerBoundDescription { get; }
-	public static partial string GetPhotoOptionCCFilterHigherBoundName { get; }
-	public static partial string GetPhotoOptionCCFilterHigherBoundDescription { get; }
-	public static partial string GetPhotoOptionDifficultiesToShowName { get; }
-	public static partial string GetPhotoOptionDifficultiesToShowDescription { get; }
-
-	public static partial string GetPhotoFailedParsingGrades { get; }
-	public static partial string GetPhotoFailedParsingDifficulty { get; }
-	public static partial string GetPhotoImageTooBig { get; }
-	public static partial string GetPhotoStillInCoolDown { get; }
-	public static partial string GetPhotoGenerating { get; }
-	public static partial string GetPhotoError { get; }
-	#endregion
-
 	#region MoreRksCommand
 	public static partial string MoreRksName { get; }
 	public static partial string MoreRksDescription { get; }
@@ -111,35 +56,6 @@ public static partial class PSLNormalCommandKey
 	public static partial string MoreRksRksChangeFormat { get; }
 	public static partial string MoreRksSongTitle { get; }
 	public static partial string MoreRksSongFormat { get; }
-	#endregion
-
-	#region SetMemorableScoreCommand
-	public static partial string SetMemorableScoreName { get; }
-	public static partial string SetMemorableScoreDescription { get; }
-	public static partial string SetMemorableScoreOptionScoreNumberName { get; }
-	public static partial string SetMemorableScoreOptionScoreNumberDescription { get; }
-	public static partial string SetMemorableScoreOptionScoreThoughtsName { get; }
-	public static partial string SetMemorableScoreOptionScoreThoughtsDescription { get; }
-
-	public static partial string SetMemorableSuccess { get; }
-	public static partial string SetMemorableNoValidScore { get; }
-	#endregion
-
-	#region ClearMemorableScoreCommand
-	public static partial string ClearMemorableScoreName { get; }
-	public static partial string ClearMemorableScoreDescription { get; }
-
-	public static partial string ClearMemorableScoreSuccess { get; }
-	#endregion
-
-	#region SetPublicVisibilityCommand
-	public static partial string SetPublicVisibilityName { get; }
-	public static partial string SetPublicVisibilityDescription { get; }
-
-	public static partial string SetPublicVisibilityOptionVisibilityName { get; }
-	public static partial string SetPublicVisibilityOptionVisibilityDescription { get; }
-
-	public static partial string SetPublicVisibilitySuccess { get; }
 	#endregion
 
 	#region LeaderboardCommand
