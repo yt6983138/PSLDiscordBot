@@ -16,18 +16,32 @@ public static partial class PSLAliasRelatedKey
 		public static partial string MessageTakenByOtherSong { get; }
 		public static partial string MessageEqualsSongIdOrName { get; }
 
-		public static partial string OptionOperationName { get; }
-		public static partial string OptionOperationDescription { get; }
 		public static partial string OptionForSongName { get; }
 		public static partial string OptionForSongDescription { get; }
 		public static partial string OptionAliasToOperateName { get; }
 		public static partial string OptionAliasToOperateDescription { get; }
 	}
 
-	public static partial string ModifyGlobalName { get; }
-	public static partial string ModifyGlobalDescription { get; }
+	[GenerateKeys(PSLLocalizationKey.AliasGlobalNamespace, "")]
+	public static partial class Global
+	{
+		public static partial string Name { get; }
+		public static partial string Description { get; }
+		public static partial string AddName { get; }
+		public static partial string AddDescription { get; }
+		public static partial string RemoveName { get; }
+		public static partial string RemoveDescription { get; }
+	}
 
-	public static partial string ModifyServerName { get; }
-	public static partial string ModifyServerDescription { get; }
-	public static partial string ModifyServerNotOwner { get; }
+	[GenerateKeys(PSLLocalizationKey.AliasServerNamespace, "")]
+	public static partial class Server
+	{
+		public static partial string Name { get; }
+		public static partial string Description { get; }
+		public static partial string AddName { get; }
+		public static partial string AddDescription { get; }
+		public static partial string RemoveName { get; }
+		public static partial string RemoveDescription { get; }
+		public static partial string RemoveNotOwner { get; }
+	}
 }

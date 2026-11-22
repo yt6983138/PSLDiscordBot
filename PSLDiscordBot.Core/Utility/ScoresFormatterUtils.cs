@@ -3,52 +3,10 @@ using PhiInfo.Core.Models.Information;
 using SmartFormat;
 using System.Text;
 
-namespace PSLDiscordBot.Core.Command.Global;
+namespace PSLDiscordBot.Core.Utility;
 
-[AddToGlobal]
-public class GetScoresCommand : CommandBase
+public static class ScoresFormatterUtils
 {
-	private readonly SaveService _saveService;
-
-	public GetScoresCommand(IServiceProvider provider, SaveService saveService) : base(provider)
-	{
-		this._saveService = saveService;
-	}
-
-	public override bool IsEphemeral => false;
-
-	public override OneOf<string, LocalizedString> PSLName => this._localization[PSLNormalCommandKey.GetScoresName];
-	public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLNormalCommandKey.GetScoresDescription];
-
-	public override SlashCommandBuilder CompleteBuilder => this.BasicBuilder
-		.AddIndexOption(this._localization)
-		.AddOption(
-			this._localization[PSLNormalCommandKey.GetScoresOptionCountName],
-			ApplicationCommandOptionType.Integer,
-			this._localization[PSLNormalCommandKey.GetScoresOptionCountDescription],
-			isRequired: false,
-			minValue: 1,
-			maxValue: 114514);
-
-	public override async Task RootCallback(SocketSlashCommand arg, UserData? data)
-	{
-		int index = arg.GetIndexOption(this._localization);
-		ISaveContext? context = await this._saveService.TryHandleAndFetchAsync(data!, arg, index);
-		if (context is null) return;
-		GameRecord save = context.ReadGameRecord();
-
-		string result = ScoresFormatter(
-			arg,
-			save,
-			this._phigrosService.NonMultiLanguageInfos,
-			arg.GetIntegerOptionAsInt32OrDefault(this._localization[PSLNormalCommandKey.GetScoresOptionCountName], 28),
-			data!,
-			this._localization,
-			this._phigrosService);
-
-		await arg.QuickReplyWithAttachments([PSLUtils.ToAttachment(result, "Scores.txt")],
-			this._localization[PSLNormalCommandKey.GetScoresDone]);
-	}
 	public static string ScoresFormatter(
 		IDiscordInteraction interaction,
 		List<CompleteScore> scores,

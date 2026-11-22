@@ -4,37 +4,39 @@ using System.Globalization;
 
 namespace PSLDiscordBot.Core.Command.Global;
 
-[AddToGlobal]
-public class ExportScoresCommand : CommandBase
+public partial class RecordsCommand
 {
-	private readonly SaveService _saveService;
-
-	public ExportScoresCommand(IServiceProvider provider, SaveService saveService) : base(provider)
+	private sealed class ExportNode : SubcommandNode
 	{
-		this._saveService = saveService;
-	}
+		private readonly RecordsCommand _root;
 
-	public override OneOf<string, LocalizedString> PSLName => this._localization[PSLNormalCommandKey.ExportScoresName];
-	public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLNormalCommandKey.ExportScoresDescription];
+		public ExportNode(RecordsCommand root) : base(root)
+		{
+			this._root = root;
+		}
 
-	public override SlashCommandBuilder CompleteBuilder => this.BasicBuilder
-		.AddIndexOption(this._localization);
+		public override OneOf<string, LocalizedString> PSLName => this._localization[PSLRecordsCommandKey.RecordsExportName];
+		public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLRecordsCommandKey.RecordsExportDescription];
 
-	public override async Task RootCallback(SocketSlashCommand arg, UserData? data)
-	{
-		int index = arg.GetIndexOption(this._localization);
-		ISaveContext? context = await this._saveService.TryHandleAndFetchAsync(data!, arg, index);
-		if (context is null) return;
-		GameRecord save = context.ReadGameRecord();
+		public override SlashCommandOptionBuilder CompleteBuilder => this.BasicBuilder
+			.AddIndexOption(this._localization);
 
-		await arg.QuickReplyWithAttachments(
-			[PSLUtils.ToAttachment(
-				ExportCSV(
-					save.GetCompleteScores(this._phigrosService.ChartConstantMap, this._phigrosService.NameMap).ToList(),
-					this._phigrosService.NonMultiLanguageInfos.Songs),
-				"Export.csv")],
-			this._localization[PSLNormalCommandKey.ExportScoresReply],
-			save.Records.Count);
+		public override async Task Callback(SocketSlashCommand arg, SocketSlashCommandDataOption option, UserData? data)
+		{
+			int index = option.GetIndexOption(this._localization);
+			ISaveContext? context = await this._root._saveService.TryHandleAndFetchAsync(data!, arg, index);
+			if (context is null) return;
+			GameRecord save = context.ReadGameRecord();
+
+			await arg.QuickReplyWithAttachments(
+				[PSLUtils.ToAttachment(
+					ExportCSV(
+						save.GetCompleteScores(this._phigrosService.ChartConstantMap, this._phigrosService.NameMap).ToList(),
+						this._phigrosService.NonMultiLanguageInfos.Songs),
+					"Export.csv")],
+				this._localization[PSLRecordsCommandKey.RecordsExportReply],
+				save.Records.Count);
+		}
 	}
 
 	public static string ExportCSV(List<CompleteScore> scores, IEnumerable<SongInfo> songInfos, int countToExport = -1)

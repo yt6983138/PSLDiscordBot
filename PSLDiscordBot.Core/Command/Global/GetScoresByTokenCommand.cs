@@ -23,7 +23,7 @@ public class GetScoresByTokenCommand : AdminCommandBase
 		.AddOption(
 			"index",
 			ApplicationCommandOptionType.Integer,
-			"Save time converted to index, 0 is always latest. Do /get-time-index to get other index.",
+			"Save time converted to index, 0 is always latest. Do /cloud time-index to get other index.",
 			isRequired: true,
 			minValue: 0)
 		.AddOption(
@@ -45,7 +45,7 @@ public class GetScoresByTokenCommand : AdminCommandBase
 		if (context is null) return;
 		GameRecord save = context.ReadGameRecord();
 
-		string result = GetScoresCommand.ScoresFormatter(
+		string result = ScoresFormatterUtils.ScoresFormatter(
 			arg,
 			save,
 			this._phigrosService.NonMultiLanguageInfos,

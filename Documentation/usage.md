@@ -5,9 +5,9 @@ If you are using this for the first time, please follow the steps to set up your
 2. Use `/account register qrcode` to link your account first, you will see a parameter named `is_international`, this depends on where did you get your game. For example, on Apple store or TapTap (China) you would be using non-international account (fill `false` for this), on TapTap Global or Google Play, you would be using international account (fill `true`).
     - Alternatively, you can also use `/account register token` if you already have token and can't or don't want to go through the login process. You still need to fill out the `is_international` parameter.
     - If you don't want to link a cloud save, use `/account register local` to use the bot's local score system instead.
-3. (Optional) Set your score precision using `/set-precision`. Setting this makes the bot show score with more digits.
-4. (Optional) Make your public visibility on by running `/set-public-visibility`. Setting this makes your score available publicly on leaderboards and let people view your scores.
-5. Now, you can get your scores by using `/get-scores [index]` or `/get-photo [index]`. Also `/about-me` for summary view.
+3. (Optional) Set your score precision using `/settings precision`. Setting this makes the bot show score with more digits.
+4. (Optional) Make your public visibility on by running `/settings visibility`. Setting this makes your score available publicly on leaderboards and let people view your scores.
+5. Now, you can get your scores by using `/records list [index]` or `/photo best [index]`. Also `/photo profile` for summary view.
 
 # Command usage
 Options in angle brackets (`<>`) are _required_ options, and options in square brackets (`[]`) are _optional_ options.
@@ -58,32 +58,50 @@ The `search` option of `/collection read item` shows suggestions for the chosen 
 ## `/account status`
 Shows your account status: whether you are in cloud or local mode, whether a cloud binding and a local score collection exist, and your token (partly hidden) if you have one.
 
-## `/get-time-index`
-It prints out all your save time and index that points to it, 0 is always latest. You must do `/account register token` or `/account register qrcode` first.
+## `/records list [index] [count]`
+It gives you a table of your scores, in a TUI-style. Works with both cloud and local saves.
+
+> Example: `/records list 0 114514`
+
+Options:
+1. `index`: Save time converted to index, 0 is always latest. Do `/cloud time-index` to get other index.
+2. `count`: The number of scores to display.
+
+## `/records improve [index] [give_me_at_least] [count]`
+Show you a list of possible chart to push to get more rks. Only you can see the reply.
+
+> Example: `/records improve 0 0.01`
+
+Options:
+1. `index`: Save time converted to index, 0 is always latest. Do `/cloud time-index` to get other index.
+2. `give_me_at_least`: The least rks you wanted to get from each chart. (Default: have Phigros shown +0.01).
+3. `count`: Controls how many charts should be shown. (Default 10).
+
+## `/records export [index]`
+It gives you a CSV attachment that has all your scores. Only you can see the reply.
+
+> Example: `/records export 0`
+
+Options:
+1. `index`: Save time converted to index, 0 is always latest. Do `/cloud time-index` to get other index.
+
+## `/records money [index]`
+Get amount of data/money/currency you have in Phigros.
+
+> Example: `/records money 0`
+
+Options:
+1. `index`: Save time converted to index, 0 is always latest. Do `/cloud time-index` to get other index.
+
+## `/cloud time-index`
+It prints out all your save time and index that points to it, 0 is always latest. You must do `/account register token` or `/account register qrcode` first, and your account must be in cloud mode (local accounts get a wrong-account-mode reply). Only you can see the reply.
 
 Note: It seems like only a cloud save structure update/change would make a index change. Older save may not be supported due to missing information and different encryption algorithm.
 
-## `/export-scores [index]`
-It gives you a CSV attachment that has all your scores.
-
-> Example: `/export-scores 0`
-
-Options:
-1. `index`: Save index.
-
-## `/get-scores [index] [count]`
-It gives you a table of your scores, in a TUI-style.
-
-> Example: `/get-scores 0 114514`
-
-Options:
-1. `index`: Save index.
-2. `count`: The number of scores to display.
-
-## `/set-precision <precision>`
+## `/settings precision <precision>`
 Set precision of value shown on commands that fetch your scores.
 
-> Example: `/set-precision 5`
+> Example: `/settings precision 5`
 
 Options:
 1. `precision`: Precision. Put 1 to get acc like 99.1, 2 to get acc like 99.12, repeat.
@@ -94,74 +112,61 @@ View the Terms of Service. Press the green button below it to agree.
 ## `/account delete`
 Deletes your account from the bot (including any local save data). You will be asked to confirm with a button first. (Your settings will be wiped too!)
 
-## `/set-public-visibility <visibility>`
-Set whether your scores or statistics is visible to public or not.
+## `/settings visibility <visibility>`
+Set whether your scores or statistics is visible to public or not. Turning it off also removes you from the leaderboard.
 
-> Example: `/set-public-visibility true`
+> Example: `/settings visibility true`
 
 Options:
 1. `visibility`: Whether your data is visible to public or not.
 
-## `/set-show-count-default <count>`
-Set the default show count for `/get-photo`.
+## `/settings show-count <count>`
+Set the default show count for `/photo best`.
 
-> Example: `/set-show-count-default 30`
+> Example: `/settings show-count 30`
 
 Options:
 1. `count`: The default count going to be set.
 
-## `/set-memorable-score <score-number> <score-thoughts> [index]`
-Sets your memorable score, shown in `/about-me`.
+## `/settings memorable-score set <score-number> <score-thoughts> [index]`
+Sets your memorable score, shown in `/photo profile`.
 
-> Example: `/set-memorable-score 1 "My first Phi!"`
+> Example: `/settings memorable-score set 1 "My first Phi!"`
 
 Options:
-1. `score-number`: The score number shown in `/get-scores`, `/get-photo`, aka the Number column.
+1. `score-number`: The score number shown in `/records list`, `/photo best`, aka the Number column.
 2. `score-thoughts`: Your thought about this score, like how you did it etc.
-3. `index`: Save time converted to index, 0 is always latest. Do `/get-time-index` to get other index.
+3. `index`: Save time converted to index, 0 is always latest. Do `/cloud time-index` to get other index.
 
-## `/clear-memorable-score`
+## `/settings memorable-score clear`
 Clear the memorable score.
 
-## `/about-me [index]`
+## `/settings view`
+Shows your current settings: public visibility (on/off), score precision, the default show count for `/photo best`, and your memorable score with its thoughts. A value you never changed is shown as its default and marked `(default)` (a value explicitly set to the default also shows the mark); an unset memorable score shows "not set".
+
+## `/photo profile [index] [generate_for]`
 Get info about you in game.
 
-> Example: `/about-me 0`
+> Example: `/photo profile 0`
 
 Options:
-1. `index`: Save time converted to index, 0 is always latest. Do `/get-time-index` to get other index.
+1. `index`: Save time converted to index, 0 is always latest. Do `/cloud time-index` to get other index.
+2. `generate_for`: Generate for other user. Users without `/settings visibility` on won't be generated.
 
-## `/get-photo [index] [count] [lower_bound] [show_what_grades] [cc_lower_bound] [cc_higher_bound] [generate_for]`
+## `/photo best [index] [count] [lower_bound] [show_what_grades] [show_what_difficulties] [cc_lower_bound] [cc_higher_bound] [generate_for]`
 Get summary photo of your scores.
 
-> Example: `/get-photo 0 30`
+> Example: `/photo best 0 30`
 
 Options:
-1. `index`: Save time converted to index, 0 is always latest. Do `/get-time-index` to get other index.
-2. `count`: Counts to show. (Default: 30, or set through `/set-count-or-default`).
+1. `index`: Save time converted to index, 0 is always latest. Do `/cloud time-index` to get other index.
+2. `count`: Counts to show. (Default: 30, or set through `/settings show-count`).
 3. `lower_bound`: The lower bound of the show range. ex. `lower_bound: 69` and `count: 42` show scores from 69 to 110.
 4. `show_what_grades`: Change what grades to show. Default: Show all. Use comma-separated list, ex. `S, Phi, Vu, Fc, False`.
-5. `cc_lower_bound`: Change the lower bound of scores' CC to show. Inclusive.
-6. `cc_higher_bound`: Change the higher bound of scores' CC to show. Inclusive.
-7. `generate_for`: Generate for other user. Users without `/set-public-visibility` on won't be generated.
-
-## `/get-money [index]`
-Get amount of data/money/currency you have in Phigros.
-
-> Example: `/get-money 0`
-
-Options:
-1. `index`: Save time converted to index, 0 is always latest. Do `/get-time-index` to get other index.
-
-## `/more-rks [index] [give_me_at_least] [count]`
-Show you a list of possible chart to push to get more rks.
-
-> Example: `/more-rks 0 0.01`
-
-Options:
-1. `index`: Save time converted to index, 0 is always latest. Do `/get-time-index` to get other index.
-2. `give_me_at_least`: The least rks you wanted to get from each chart. (Default: have Phigros shown +0.01).
-3. `count`: Controls how many charts should be shown. (Default 10).
+5. `show_what_difficulties`: Change what difficulties to show. Default: Show all. Use comma-separated list, ex. `EZ, IN, Legacy`.
+6. `cc_lower_bound`: Change the lower bound of scores' CC to show. Inclusive.
+7. `cc_higher_bound`: Change the higher bound of scores' CC to show. Inclusive.
+8. `generate_for`: Generate for other user. Users without `/settings visibility` on won't be generated.
 
 ## `/leaderboard [rank-using] [count]`
 Displays the leaderboard.
@@ -181,28 +186,28 @@ Options:
     - `difficulty`: Use what difficulty to rank by (choices: `EZ`, `HD`, `IN`, `AT`, `All`).
 2. `count`: Number of entries to display, defaults to 50.
 
-## `/song-info <search>`
-Search info about songs.
+## `/song info <search>`
+Search info about songs. Usable without registering or accepting the TOS.
 
-> Example: `/song-info "Spasmodic"`
+> Example: `/song info "Spasmodic"`
 
 Options:
 1. `search`: Searching strings, you can either put id, put alias, or put the song name. Suggestions from the aliases of the server you are in and the global alias table (the global table only in DMs) appear while typing; picking one fills in the song id.
 
-## `/song-scores <search> [index] [generate_for]`
+## `/photo song <search> [index] [generate_for]`
 Get scores for a specified song(s).
 
-> Example: `/song-scores "Spasmodic" 0`
+> Example: `/photo song "Spasmodic" 0`
 
 Options:
 1. `search`: Searching strings, you can either put id, put alias, or put the song name. Suggestions from the aliases of the server you are in and the global alias table (the global table only in DMs) appear while typing; picking one fills in the song id.
-2. `index`: Save time converted to index, 0 is always latest. Do `/get-time-index` to get other index.
-3. `generate_for`: Generate for other user. Users without `/set-public-visibility` on won't be generated.
+2. `index`: Save time converted to index, 0 is always latest. Do `/cloud time-index` to get other index.
+3. `generate_for`: Generate for other user. Users without `/settings visibility` on won't be generated.
 
-## `/download-asset <search> [pez_chart_type]`
-Download assets about song.
+## `/song assets <search> [pez_chart_type]`
+Download assets about song. Usable without registering or accepting the TOS. Only you can see the reply.
 
-> Example: `/download-asset "Spasmodic" 2`
+> Example: `/song assets "Spasmodic" 2`
 
 Options:
 1. `search`: Searching strings, you can either put id, put alias, or put the song name. Suggestions from the aliases of the server you are in and the global alias table (the global table only in DMs) appear while typing; picking one fills in the song id.
@@ -214,7 +219,7 @@ Check the availability of the core services.
 ## `/report-problem <message> [attachments]`
 Report a problem to author.
 
-> Example: `/report-problem "The bot crashed when running get-scores"`
+> Example: `/report-problem "The bot crashed when running records list"`
 
 Options:
 1. `message`: Describe the issue you met/Tell what was the problem.
