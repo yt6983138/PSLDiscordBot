@@ -170,8 +170,6 @@ public partial class LocalCommand
 		public override OneOf<string, LocalizedString> PSLName => this._localization[PSLLocalCommandKey.LocalImportCloudName];
 		public override OneOf<string, LocalizedString> PSLDescription => this._localization[PSLLocalCommandKey.LocalImportCloudDescription];
 
-		public override IReadOnlyList<IConstraint> Constraints => [this._root._internationalDiscontinuedConstraint];
-
 		public override SlashCommandOptionBuilder CompleteBuilder => this.BasicBuilder
 			.AddOption(
 				this._localization[PSLLocalCommandKey.LocalImportModeOptionName],
@@ -185,6 +183,12 @@ public partial class LocalCommand
 			if (!data!.HasCloudBinding)
 			{
 				await arg.QuickReply(this._localization[PSLLocalCommandKey.LocalImportCloudNoBinding]);
+				return;
+			}
+
+			if (data.IsInternational)
+			{
+				await arg.QuickReply(this._localization[PSLCommonKey.CommandBaseInternationalDiscontinued]);
 				return;
 			}
 
