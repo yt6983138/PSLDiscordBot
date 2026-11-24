@@ -122,9 +122,9 @@ public partial class CollectionCommand
 			// a suggestion sends the exact item key, so it wins over the fuzzy order (ordinal: keys are case-sensitive ids)
 			string exactKey = option.GetOption<string>(this._localization[PSLNormalCommandKey.CollectionOptionSearchName]).Trim();
 			CollectionSearchInfo? exactResult = searchResults.FirstOrDefault(x => string.Equals(x.Item.Key, exactKey, StringComparison.Ordinal));
-			CollectionSearchInfo topResult = exactResult ?? searchResults.First();
+			CollectionSearchInfo? topResult = exactResult ?? searchResults.FirstOrDefault();
 
-			if (searchResults.Count == 0 || (exactResult is null && topResult.Similarity < MinimumSimilarity))
+			if (topResult is null || (exactResult is null && topResult.Similarity < MinimumSimilarity))
 			{
 				await arg.QuickReply(this._localization[PSLNormalCommandKey.CollectionNoMatchingItemFound]);
 				return;
