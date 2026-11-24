@@ -2,8 +2,8 @@
 If you are using this for the first time, please follow the steps to set up your account for the bot.
 
 1. Run `/tos` command to view our TOS, then press the button to accept it.
-2. Use `/account register qrcode` to link your account first, you will see a parameter named `is_international`, this depends on where did you get your game. For example, on Apple store or TapTap (China) you would be using non-international account (fill `false` for this), on TapTap Global or Google Play, you would be using international account (fill `true`).
-    - Alternatively, you can also use `/account register token` if you already have token and can't or don't want to go through the login process. You still need to fill out the `is_international` parameter.
+2. Use `/account register qrcode` to link your account first.
+    - Alternatively, you can also use `/account register token` if you already have token and can't or don't want to go through the login process.
     - If you don't want to link a cloud save, use `/account register local` to use the bot's local score system instead.
 3. (Optional) Set your score precision using `/settings precision`. Setting this makes the bot show score with more digits.
 4. (Optional) Make your public visibility on by running `/settings visibility`. Setting this makes your score available publicly on leaderboards and let people view your scores.
@@ -15,25 +15,19 @@ Options in angle brackets (`<>`) are _required_ options, and options in square b
 ## `/help`
 Prints guide for first time use.
 
-## `/account register qrcode <is_international>`
+## `/account register qrcode`
 Registers your account with the bot by logging in with TapTap through a QR code. You must register before executing commands requiring Phigros account. If you are already registered, this switches your account to the new cloud save (the old binding is overwritten).
 
-> Example: `/account register qrcode true`
+> Example: `/account register qrcode`
 
-Options:
-1. `is_international`: The value depends on your Phigros version, if you are using international version of Phigros<sup>[1]</sup>, set it to `true`.
-
-<sup>[1]</sup>: At this time of this part being written, only `Phigros (Global)` downloaded from taptap.io and version >3.14.1 is international version, otherwise it is China version.
-
-## `/account register token <token> <is_international>`
+## `/account register token <token>`
 Registers your account with the bot using token directly. If you want to find your token, please see [FindToken.md](FindToken.md). If you are already registered, this switches your account to the new cloud save (the old binding is overwritten).
 
-> Example: `/account register token abcde12345fghij67890klmpq false`
+> Example: `/account register token abcde12345fghij67890klmpq`
 
 Options:
 1. `token`: A string which has length of 25, only contains numbers and lowercase alphabets. <br/>
     - Warning: people _can_ use token to find your personal information, so do **not** leak your token! If you leaked it, logout in Phigros immediately.
-2. `is_international`: See `/account register qrcode` command for more information.
 
 ## `/account register local`
 Registers you with the bot's local score system, without linking a cloud save. Only available if you are not registered yet; if you are already registered, use `/account switch local` instead.
