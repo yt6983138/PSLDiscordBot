@@ -45,9 +45,76 @@ Edits the profile of your local save. Omitted fields are kept; at least one must
 3. `avatar`: The raw avatar key; it must be a known avatar. Suggestions of avatar keys and avatar aliases appear while typing, but submitting still needs the raw avatar key.
 4. `background`: A song, given as its exact name or its id. Song suggestions from the aliases of the server you are in and the global alias table (the global table only in DMs) appear while typing; picking one fills in the song id. The save always stores the song name.
 
-The song option of `/local score set` and `/local score remove` shows the same song suggestions (server and global aliases) while typing.
-
 The `search` option of `/collection read item` shows suggestions for the chosen language while typing; picking one fills in the item key. Typed free text still resolves as before: an exact key first, then the closest fuzzy match.
+
+## `/local challenge <color> <level>`
+Sets the challenge mode rank of your local save. Only available while your account is in local mode.
+
+> Example: `/local challenge 3 42`
+
+Options:
+1. `color`: The challenge rank color (pick from the choices).
+2. `level`: The challenge level, from 0 to 99.
+
+## `/local currency [kib] [mib] [gib] [tib] [pib]`
+Sets the data/money/currency of your local save. Omitted units are kept; at least one unit must be given. Only available while your account is in local mode.
+
+> Example: `/local currency mib 512 gib 3`
+
+Options:
+1. `kib`: KiB units, 0 to 1023.
+2. `mib`: MiB units, 0 to 1023.
+3. `gib`: GiB units, 0 to 1023.
+4. `tib`: TiB units, 0 to 1023.
+5. `pib`: PiB units, 0 to 1023.
+
+## `/local score set <search> <difficulty> <score> <accuracy> <fc>`
+Sets the record of one chart in your local collection, replacing the existing record of that chart if there is one. If several songs match the search, you get a menu to pick the one you meant, and nothing is saved until you pick. Only available while your account is in local mode.
+
+> Example: `/local score set "Spasmodic" 2 1000000 100 true`
+
+Options:
+1. `search`: Searching strings, you can either put id, put alias, or put the song name. Suggestions from the aliases of the server you are in and the global alias table (the global table only in DMs) appear while typing.
+2. `difficulty`: The chart difficulty (pick from the choices). The song must have a known chart of that difficulty.
+3. `score`: Score from 0 to 1000000.
+4. `accuracy`: Accuracy from 0 to 100.
+5. `fc`: Whether the chart was a full combo.
+
+A score of 1000000 requires 100% accuracy and the full combo flag, and 100% accuracy requires a score of 1000000 and the full combo flag; otherwise the bot rejects the input.
+
+## `/local score remove <search> <difficulty>`
+Removes the record of one chart from your local collection. Picking among several matching songs works the same as in `/local score set`. Only available while your account is in local mode.
+
+> Example: `/local score remove "Spasmodic" 2`
+
+Options:
+1. `search`: Same as in `/local score set`.
+2. `difficulty`: The chart difficulty (pick from the choices).
+
+## `/local import csv <file> <mode>`
+Imports a CSV file in the score export format (see `/records export`) into your local collection. The file must be at most 5 MiB. Works from both cloud and local mode, as long as you are registered.
+
+If the import would not touch any existing chart, remove anything, change any non-score data (like profile data) and has no problems, it is applied at once. Otherwise the bot shows a preview (charts added, replaced, kept, removed, issues found; problems are listed in an attached report) with a Proceed button, and nothing is saved until you press it within the time shown. Only you can use the button, and it applies exactly the previewed result.
+
+> Example: `/local import csv file:scores.csv mode:Upsert`
+
+Options:
+1. `file`: The CSV file to import.
+2. `mode`: How imported records are combined with your collection. Only chart records are affected by the mode; other data that comes with the import (like profile data) replaces the existing data if it differs.
+    - `Upsert`: Replace records of charts that already exist and add the missing ones; other existing records are kept.
+    - `FillMissing`: Only add charts you don't have yet.
+    - `ReplaceAll`: Use the imported records as your whole collection (existing records not in the import are removed).
+    - `KeepBetter`: For charts you already have, keep whichever record is better (by accuracy, then score, then full combo); missing charts are added.
+
+## `/local import android <file> <mode>`
+Imports an Android PlayerPrefs XML save file into your local collection. Limits, confirmation and options are the same as in `/local import csv`.
+
+> Example: `/local import android file:com.PigeonGames.Phigros.v2.playerprefs.xml mode:KeepBetter`
+
+## `/local import cloud <mode>`
+Imports the save of your linked cloud binding into your local collection. Requires a previously linked cloud save (`/account register qrcode` or `/account register token`); otherwise the bot replies that there is no cloud binding. An international (non-China) binding is rejected, because the international cloud save service has been discontinued. Your account mode and cloud binding are not changed. Confirmation and the `mode` option are the same as in `/local import csv`.
+
+> Example: `/local import cloud mode:FillMissing`
 
 ## `/account status`
 Shows your account status: whether you are in cloud or local mode, whether a cloud binding and a local score collection exist, and your token (partly hidden) if you have one.

@@ -1,4 +1,4 @@
-Chinese version](https://potent-cartwheel-e81.notion.site/Phigros-Bot-f154a4b0ea6446c28f62149587cd5f31)
+[Chinese version](https://potent-cartwheel-e81.notion.site/Phigros-Bot-f154a4b0ea6446c28f62149587cd5f31)
 # Android 
 ## Option 1
 
