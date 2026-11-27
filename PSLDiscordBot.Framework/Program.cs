@@ -63,7 +63,9 @@ public class Program
 				provider.GetRequiredService<ILogger<SignalHostLifetime>>()));
 
 		WebApplication app = this._builder.Build();
-		this._lifetimeService.Attach(app.Services.GetRequiredService<IHostApplicationLifetime>());
+		this._lifetimeService.Attach(
+			app.Services.GetRequiredService<IHostApplicationLifetime>(),
+			app.Services.GetRequiredService<ILogger<LifetimeService>>());
 		this._commandResolveService.Attach(app.Services);
 
 		await this._pluginResolveService.SetupAll(app);

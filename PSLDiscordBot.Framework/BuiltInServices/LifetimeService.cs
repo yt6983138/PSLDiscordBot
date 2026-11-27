@@ -13,6 +13,7 @@ namespace PSLDiscordBot.Framework.BuiltInServices;
 internal sealed partial class LifetimeService : ILifetimeService
 {
 	private IHostApplicationLifetime? _applicationLifetime;
+	private ILogger<LifetimeService>? _logger;
 	private readonly ManualResetEventSlim _exitCompleted = new(false);
 
 	/// <summary>
@@ -50,11 +51,12 @@ internal sealed partial class LifetimeService : ILifetimeService
 	}
 
 	/// <summary>
-	/// The host lifetime only exists after <c>Build</c>.
+	/// The host lifetime and the logger only exist after <c>Build</c>.
 	/// </summary>
-	internal void Attach(IHostApplicationLifetime applicationLifetime)
+	internal void Attach(IHostApplicationLifetime applicationLifetime, ILogger<LifetimeService> logger)
 	{
 		this._applicationLifetime = applicationLifetime;
+		this._logger = logger;
 	}
 
 	/// <summary>
@@ -72,7 +74,8 @@ internal sealed partial class LifetimeService : ILifetimeService
 	}
 	/// <summary>
 	/// Registers <paramref name="task"/> as running until it ends and <paramref name="onError"/> (if it faulted) has completed.
-	/// The returned task is the registered entry; it never faults, a throwing <paramref name="onError"/> is reported to stderr.
+	/// The returned task is the registered entry; it never faults, a throwing <paramref name="onError"/> is logged at Error (to stderr before the host is built).
+	/// After the host is disposed (once <c>RunAsync</c> returned) the logger's providers may be disposed too, so such an entry may be dropped.
 	/// Without <paramref name="onError"/>, a fault of <paramref name="task"/> is dropped silently.
 	/// </summary>
 	public Task Track(Task task, Func<Exception, Task>? onError = null)
@@ -101,7 +104,10 @@ internal sealed partial class LifetimeService : ILifetimeService
 			catch (Exception handlerException)
 			{
 				// nobody awaits the wrapper, so report instead of leaving it unobserved
-				Console.Error.WriteLine($"Error handler of a tracked task threw: {handlerException}");
+				if (this._logger is not null)
+					this._logger.LogError(handlerException, "Error handler of a tracked task threw.");
+				else // before Attach there is no logger
+					Console.Error.WriteLine($"Error handler of a tracked task threw: {handlerException}");
 			}
 		}
 		finally

@@ -220,6 +220,7 @@ public class PSLPlugin : IPlugin<PSLPlugin>
 		this._commandResolveService.BeforeComponentInteractionExecutes += this.Program_BeforeComponentInteractionExecutes;
 		this._commandResolveService.OnComponentInteractionError += this.CommandResolveService_OnComponentInteractionError;
 		this._commandResolveService.OnAutocompleteError += this.CommandResolveService_OnAutocompleteError;
+		this._commandResolveService.OnEventHandlerError += this.CommandResolveService_OnEventHandlerError;
 
 		bugHandler.OnReportReceived += this.BugHandler_OnReportReceived;
 
@@ -265,6 +266,7 @@ public class PSLPlugin : IPlugin<PSLPlugin>
 		this._commandResolveService.BeforeComponentInteractionExecutes -= this.Program_BeforeComponentInteractionExecutes;
 		this._commandResolveService.OnComponentInteractionError -= this.CommandResolveService_OnComponentInteractionError;
 		this._commandResolveService.OnAutocompleteError -= this.CommandResolveService_OnAutocompleteError;
+		this._commandResolveService.OnEventHandlerError -= this.CommandResolveService_OnEventHandlerError;
 
 		if (isSafeUnload)
 			File.Delete(SafeLockLocation);
@@ -400,6 +402,16 @@ public class PSLPlugin : IPlugin<PSLPlugin>
 		await this.OnException(e.Exception, interactionDescription:
 			$"<@{e.Interaction.User.Id}> used autocomplete for command `{commandName}` on option `{optionName}` " +
 			$"in server {guildId?.ToString() ?? "null"} in channel {channelId?.ToString() ?? "null"}");
+	}
+
+	/// <summary>
+	/// The Framework reports any throwing event handler here: before-hooks and the <c>On…Error</c> handlers
+	/// (including this plugin's own). Nothing is sent to users or the admin.
+	/// </summary>
+	private Task CommandResolveService_OnEventHandlerError(object? sender, EventHandlerError e)
+	{
+		this._logger.LogError(EventId, e.Exception, "A {handlerEventArgType} handler threw.", e.HandlerEventArgType.Name);
+		return Task.CompletedTask;
 	}
 
 	private static async Task RespondToComponentAsync(
