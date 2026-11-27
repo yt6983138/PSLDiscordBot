@@ -391,7 +391,8 @@ public class AliasService
 		protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 		{
 			optionsBuilder.UseSqlite(this._parent._config.Value.AliasDbConnectionString)
-				.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
+				.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking)
+				.UseExpressives();
 		}
 
 		public static AliasTableAttribute GetDefaultAttribute(AliasTableId table)
@@ -482,7 +483,8 @@ public class AliasService
 		{
 			optionsBuilder.UseSqlite(this._parent._config.Value.AliasDbConnectionString)
 				.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking)
-				.ReplaceService<IModelCacheKeyFactory, DynamicModelCacheKeyFactory>(); // force the model cache to consider table id
+				.ReplaceService<IModelCacheKeyFactory, DynamicModelCacheKeyFactory>() // force the model cache to consider table id
+				.UseExpressives();
 		}
 		protected override void OnModelCreating(ModelBuilder modelBuilder)
 		{

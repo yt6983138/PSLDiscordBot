@@ -5,7 +5,7 @@ namespace PSLDiscordBot.Core.Services;
 
 public class LeaderboardService
 {
-	private record struct PartialUserData(ulong UserId, string Token, bool IsInternational);
+	private record struct PartialUserData(ulong UserId, string? Token, AccountMode Account);
 
 	private readonly ILogger<LeaderboardService> _logger;
 	private readonly DataBaseService _dataBase;
@@ -13,6 +13,8 @@ public class LeaderboardService
 	private readonly IOptions<Config> _config;
 	private readonly IDiscordClientService _discordClient;
 	private readonly PhigrosService _phigrosService;
+	private readonly SaveService _saveService;
+	private readonly LocalSaveStore _localSaveStore;
 
 	public LeaderboardService(
 		ILogger<LeaderboardService> logger,
@@ -20,23 +22,26 @@ public class LeaderboardService
 		IOptions<Config> config,
 		IDiscordClientService discordClient,
 		PhigrosService phigrosService,
-		SaveService saveService)
+		SaveService saveService,
+		LocalSaveStore localSaveStore)
 	{
 		this._logger = logger;
 		this._dataBase = dataBase;
 		this._config = config;
 		this._discordClient = discordClient;
 		this._phigrosService = phigrosService;
+		this._saveService = saveService;
+		this._localSaveStore = localSaveStore;
 
 		saveService.OnSaveContextFetched += this.SaveService_OnSaveContextFetched;
-		saveService.OnCloudRankingInvalidated += this.SaveService_OnCloudRankingInvalidated;
+		saveService.OnLeaderboardEntryInvalidated += this.SaveService_OnLeaderboardEntryInvalidated;
 	}
 
 	/// <summary>
-	/// Removes a stale cloud entry after a committed local activation or deletion. Runs under the leaderboard lock so it
-	/// cannot interleave with a publish that is still in progress.
+	/// Removes the entry after a committed account deletion. Runs under the leaderboard lock so it cannot interleave
+	/// with a publish that is still in progress.
 	/// </summary>
-	private async Task SaveService_OnCloudRankingInvalidated(object? sender, ulong userId)
+	private async Task SaveService_OnLeaderboardEntryInvalidated(object? sender, ulong userId)
 	{
 		try
 		{
@@ -52,33 +57,41 @@ public class LeaderboardService
 
 	private async Task SaveService_OnSaveContextFetched(object? sender, SaveContextFetchEventArg e)
 	{
+		// only the caller's own first save is ranked; other saves are skipped without any download
+		if (e.UserId != e.Interaction.User.Id || e.Index != 0)
+			return;
+
 		try
 		{
 			using DataBaseService.DbDataRequester requester = this._dataBase.NewRequester();
-			UserData? userData = await requester.GetUserDataDirectlyAsync(e.Interaction.User.Id);
+			UserData? userData = await requester.GetUserDataDirectlyAsync(e.UserId);
 
 			if (userData is null)
 			{
-				this._logger.LogWarning("User {id} not found in database when trying to refresh leaderboard cache after save context fetched", e.Interaction.User.Id);
+				this._logger.LogWarning("User {id} not found in database when trying to refresh leaderboard cache after save context fetched", e.UserId);
 				return;
 			}
 
-			// local accounts and users without a cloud binding must never be ranked from cloud data
-			if (userData.IsLocal || !userData.HasCloudBinding)
-			{
+			// rank only from the user's active source: a cloud fetch for a local user (or the reverse) is skipped
+			bool isLocalSave = e.Save is LocalSaveData;
+			if (userData.IsLocal != isLocalSave)
 				return;
-			}
 
-			if (userData.PublicVisibility == false || !this._config.Value.AgreedTOS(userData))
-			{
+			if (!userData.CanEnterLeaderboard(this._config.Value))
 				return;
-			}
 
-			await this.RefreshForUser(userData.SaveCache, userData.UserId, userData.IsInternational, e.Interaction.User);
+			// reuse the already fetched context; only the nickname needs one extra request
+			PlayerInfo playerInfo = await e.Save.GetPlayerInfoAsync();
+			LeaderboardEntry entry = await this.AnalyzeContextAsync(e.Context, playerInfo, userData.UserId, userData.AccountMode, e.Interaction.User);
+
+			using ScopedSemaphoreSlim.Scope _ = await this._fullLeaderboardOperationLock.EnterScopeAsync();
+			using DataBaseService.DbDataRequester writeRequester = this._dataBase.NewRequester();
+			await writeRequester.Leaderboard.AddOrUpdate(entry);
+			await writeRequester.SaveChangesAsync();
 		}
 		catch (Exception ex)
 		{
-			this._logger.LogError(ex, "Failed to refresh leaderboard for user {id} using hook", e.Interaction.User.Id);
+			this._logger.LogError(ex, "Failed to refresh leaderboard for user {id} using hook", e.UserId);
 		}
 	}
 
@@ -87,88 +100,44 @@ public class LeaderboardService
 		using ScopedSemaphoreSlim.Scope _ = await this._fullLeaderboardOperationLock.EnterScopeAsync();
 		using DataBaseService.DbDataRequester requester = this._dataBase.NewRequester();
 		// filter at read time too, so leftovers from an interrupted removal or a visibility change are never published
+		HashSet<ulong> enterableUsers = await requester.UserData
+			.Where(x => x.CanEnterLeaderboard(this._config.Value))
+			.Select(x => x.UserId)
+			.ToHashSetAsync();
 		return await requester.Leaderboard
-			.Where(x => requester.UserData.Any(u => u.UserId == x.UserId && u.PublicVisibility && (u.AccountMode & AccountMode.Local) == 0 && u.Token != null))
+			.AsAsyncEnumerable()
+			.Where(x => enterableUsers.Contains(x.UserId))
 			.ToListAsync();
 	}
 
-	public Task<LeaderboardEntry?> TryAnalyzeUser(UserData user, IUser? discordUser = null, CancellationToken ct = default)
+	public async Task<LeaderboardEntry?> TryAnalyzeUser(ulong userId, string? token, AccountMode account, IUser? discordUser = null, CancellationToken ct = default)
 	{
-		if (user.IsLocal || !user.HasCloudBinding)
-			return Task.FromResult<LeaderboardEntry?>(null);
+		ISave save;
+		if (account.HasFlag(AccountMode.Local))
+			save = await this._localSaveStore.LoadAsync(userId);
+		else if (!string.IsNullOrEmpty(token) && !account.HasFlag(AccountMode.International)) // has a token + !local, must be cloud
+			save = new Save(token, false);
+		else return null;
 
-		return this.TryAnalyzeUser(user.SaveCache, user.UserId, user.IsInternational, discordUser, ct);
+		return await this.TryAnalyzeUser(save, userId, account, discordUser, ct);
 	}
-	public Task<LeaderboardEntry?> TryAnalyzeUser(ulong userId, string token, bool isInternational, IUser? discordUser = null, CancellationToken ct = default)
-	{
-		return this.TryAnalyzeUser(new(token, isInternational), userId, isInternational, discordUser, ct);
-	}
-	public async Task<LeaderboardEntry?> TryAnalyzeUser(Save save, ulong userId, bool isInternational, IUser? discordUser = null, CancellationToken ct = default)
+	/// <summary>
+	/// make sure to call this overload with correct corresponding save, recommend using <see cref="SaveService.GetSaveAsync(UserData, int, bool)"/>
+	/// </summary>
+	/// <param name="save"></param>
+	/// <param name="userId"></param>
+	/// <param name="accountFlag"></param>
+	/// <param name="discordUser"></param>
+	/// <param name="ct"></param>
+	/// <returns></returns>
+	public async Task<LeaderboardEntry?> TryAnalyzeUser(ISave save, ulong userId, AccountMode accountFlag, IUser? discordUser = null, CancellationToken ct = default)
 	{
 		this._logger.LogDebug("Analyzing leaderboard cache for user {id}", userId);
 		try
 		{
 			PlayerInfo playerInfo = await save.GetPlayerInfoAsync(ct);
-			SaveContext context = await save.GetSaveContextAsync(0, ct: ct);
-
-			GameRecord gameRecord = context.ReadGameRecord();
-			GameProgress gameProgress = context.ReadGameProgress();
-			GameSettings gameSettings = context.ReadGameSettings();
-			GameUserInfo userInfo = context.ReadGameUserInfo();
-			Summary summary = context.ReadSummary();
-
-			this._phigrosService.GetCompleteScores(gameRecord, out List<CompleteScore>? phis, out List<CompleteScore>? others, out double rks);
-
-			Dictionary<DifficultyStatus, int> achievedCounts = [];
-			Dictionary<DifficultyStatus, AverageData> averageAccuracies = [];
-			Dictionary<DifficultyStatus, AverageData> averageScores = [];
-			foreach (CompleteScore scoreData in others)
-			{
-				DifficultyStatus difficultyStatus = new(scoreData.Score.Status, scoreData.Score.Difficulty);
-				int count = achievedCounts.GetValueOrDefault(difficultyStatus) + 1;
-				AverageData acc = averageAccuracies.GetValueOrDefault(difficultyStatus);
-				AverageData score = averageScores.GetValueOrDefault(difficultyStatus);
-
-				acc = new(acc.Data + scoreData.Score.Accuracy, acc.Count + 1);
-				score = new(score.Data + scoreData.Score.Score, score.Count + 1);
-
-				achievedCounts[difficultyStatus] = count;
-				averageAccuracies[difficultyStatus] = acc;
-				averageScores[difficultyStatus] = score;
-			}
-
-			foreach ((DifficultyStatus index, int count) in achievedCounts)
-			{
-				AverageData acc = averageAccuracies[index];
-				AverageData score = averageScores[index];
-				averageAccuracies[index] = acc with { Data = acc.Data / count };
-				averageScores[index] = score with { Data = score.Data / count };
-			}
-
-			// why are they not using nullables bruh
-			discordUser ??= await this._discordClient.SocketClient.GetUserAsync(userId);
-			if (discordUser is null)
-				this._logger.LogWarning("Failed to fetch user {id} while analyzing leaderboard cache", userId);
-
-			LeaderboardEntry entry = new()
-			{
-				UserId = userId,
-				InGameNickName = playerInfo.NickName,
-				DiscordDisplayName = discordUser?.GlobalName,
-				CachedAt = DateTime.Now,
-				GameVersion = summary.GameVersion,
-				IsInternational = isInternational,
-				AnalyzedData = new()
-				{
-					RKS = rks,
-					Money = gameProgress.Money,
-					AchievedCounts = achievedCounts,
-					AverageAccuracies = averageAccuracies,
-					AverageScores = averageScores,
-					ChallengeRank = gameProgress.ChallengeModeRank
-				}
-			};
-			return entry;
+			ISaveContext context = await save.GetSaveContextAsync(0, ct: ct);
+			return await this.AnalyzeContextAsync(context, playerInfo, userId, accountFlag, discordUser);
 		}
 		catch (Exception ex)
 		{
@@ -177,17 +146,66 @@ public class LeaderboardService
 		return null;
 	}
 
-	public async Task RefreshForUser(Save save, ulong userId, bool isInternational, IUser? discordUser = null, CancellationToken ct = default)
+	private async Task<LeaderboardEntry> AnalyzeContextAsync(ISaveContext context, PlayerInfo playerInfo, ulong userId, AccountMode account, IUser? discordUser)
 	{
-		LeaderboardEntry? entry = await this.TryAnalyzeUser(save, userId, isInternational, discordUser, ct);
+		GameRecord gameRecord = context.ReadGameRecord();
+		GameProgress gameProgress = context.ReadGameProgress();
+		GameSettings gameSettings = context.ReadGameSettings();
+		GameUserInfo userInfo = context.ReadGameUserInfo();
+		Summary summary = context.ReadSummary();
 
-		if (entry is null)
-			throw new InvalidOperationException("Failed to analyze user data, cannot refresh leaderboard cache for user");
+		this._phigrosService.GetCompleteScores(gameRecord, out List<CompleteScore>? phis, out List<CompleteScore>? others, out double rks);
 
-		using ScopedSemaphoreSlim.Scope _ = await this._fullLeaderboardOperationLock.EnterScopeAsync(ct);
-		using DataBaseService.DbDataRequester requester = this._dataBase.NewRequester();
-		await requester.Leaderboard.AddOrUpdate(entry);
-		await requester.SaveChangesAsync(ct);
+		Dictionary<DifficultyStatus, int> achievedCounts = [];
+		Dictionary<DifficultyStatus, AverageData> averageAccuracies = [];
+		Dictionary<DifficultyStatus, AverageData> averageScores = [];
+		foreach (CompleteScore scoreData in others)
+		{
+			DifficultyStatus difficultyStatus = new(scoreData.Score.Status, scoreData.Score.Difficulty);
+			int count = achievedCounts.GetValueOrDefault(difficultyStatus) + 1;
+			AverageData acc = averageAccuracies.GetValueOrDefault(difficultyStatus);
+			AverageData score = averageScores.GetValueOrDefault(difficultyStatus);
+
+			acc = new(acc.Data + scoreData.Score.Accuracy, acc.Count + 1);
+			score = new(score.Data + scoreData.Score.Score, score.Count + 1);
+
+			achievedCounts[difficultyStatus] = count;
+			averageAccuracies[difficultyStatus] = acc;
+			averageScores[difficultyStatus] = score;
+		}
+
+		foreach ((DifficultyStatus index, int count) in achievedCounts)
+		{
+			AverageData acc = averageAccuracies[index];
+			AverageData score = averageScores[index];
+			averageAccuracies[index] = acc with { Data = acc.Data / count };
+			averageScores[index] = score with { Data = score.Data / count };
+		}
+
+		// why are they not using nullables bruh
+		discordUser ??= await this._discordClient.SocketClient.GetUserAsync(userId);
+		if (discordUser is null)
+			this._logger.LogWarning("Failed to fetch user {id} while analyzing leaderboard cache", userId);
+
+		LeaderboardEntry entry = new()
+		{
+			UserId = userId,
+			InGameNickName = playerInfo.NickName, // TODO: fix nullability here
+			DiscordDisplayName = discordUser?.GlobalName,
+			CachedAt = DateTime.Now,
+			GameVersion = summary.GameVersion,
+			AccountMode = account,
+			AnalyzedData = new()
+			{
+				RKS = rks,
+				Money = gameProgress.Money,
+				AchievedCounts = achievedCounts,
+				AverageAccuracies = averageAccuracies,
+				AverageScores = averageScores,
+				ChallengeRank = gameProgress.ChallengeModeRank
+			}
+		};
+		return entry;
 	}
 
 	public async Task RefreshCache(CancellationToken ct)
@@ -198,9 +216,8 @@ public class LeaderboardService
 		using (DataBaseService.DbDataRequester requester = this._dataBase.NewRequester())
 		{
 			users = await requester.UserData
-				.Where(x => x.PublicVisibility && x.TOSAgreementLevel >= this._config.Value.CurrentTOSAgreementLevel)
-				.Where(x => (x.AccountMode & AccountMode.Local) == 0 && x.Token != null)
-				.Select(x => new PartialUserData(x.UserId, x.Token!, x.IsInternational))
+				.Where(x => x.CanEnterLeaderboard(this._config.Value))
+				.Select(x => new PartialUserData(x.UserId, x.Token, x.AccountMode))
 				.ToListAsync(ct);
 		}
 
@@ -217,8 +234,13 @@ public class LeaderboardService
 			}
 			i++;
 
-			await Task.Delay(this._config.Value.LeaderboardRefreshEachIntervalMilliseconds, ct);
-			LeaderboardEntry? entry = await this.TryAnalyzeUser(item.UserId, item.Token, item.IsInternational, null, ct);
+			LeaderboardEntry? entry = await this.TryAnalyzeUser(item.UserId, item.Token, item.Account, null, ct);
+			if (!item.Account.HasFlag(AccountMode.Local))
+			{
+				// only cloud store need to do network requests, so only delay here
+				await Task.Delay(this._config.Value.LeaderboardRefreshEachIntervalMilliseconds, ct);
+			}
+
 			if (entry is not null)
 			{
 				entries.Add(entry);

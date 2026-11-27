@@ -29,6 +29,12 @@ public sealed class SaveSourceUnavailableException : Exception
 }
 
 /// <summary>
+/// Arguments of <see cref="SaveService.OnSaveContextFetched"/>. <paramref name="UserId"/> is the save owner (not
+/// necessarily the interaction user) and <paramref name="Index"/> is the save index that was read.
+/// </summary>
+public record class SaveContextFetchEventArg(ISave Save, ISaveContext Context, int Index, ulong UserId, IDiscordInteraction Interaction);
+
+/// <summary>
 /// Loads the active account's save source. Explicit loaders require the matching <see cref="AccountMode"/>; the generic
 /// loader selects the active source. Reply adapters share error handling and return null for handled failures.
 /// </summary>
@@ -40,17 +46,20 @@ public partial class SaveService
 	private readonly LocalizationService _localization;
 
 	/// <summary>
-	/// Raised after an ordinary active-cloud read succeeds through a reply adapter. Local reads and source acquisition do not raise it.
+	/// Raised after a successful read of the user's active source (cloud or local) through one of the <see cref="UserData"/>
+	/// reply adapters (<see cref="TryHandleCloudAndFetchAsync"/>, <see cref="TryHandleLocalAndFetchAsync"/>,
+	/// <see cref="TryHandleAndFetchAsync"/>). The token-only <see cref="TryHandleCloudAsync"/>, source acquisition and
+	/// the tuple loaders do not raise it.
 	/// </summary>
 	[GenerateAsyncEvent]
 	public partial event AsyncEventHandler<SaveContextFetchEventArg>? OnSaveContextFetched;
 
 	/// <summary>
-	/// Raised after a committed local activation or account deletion. The argument is the affected user ID; subscribers
-	/// must remove any cloud ranking entry for that user under their own lock.
+	/// Raised after a committed account deletion. The argument is the affected user ID; subscribers must remove any
+	/// leaderboard entry for that user under their own lock. Mode switches do not raise it.
 	/// </summary>
 	[GenerateAsyncEvent]
-	public partial event AsyncEventHandler<ulong>? OnCloudRankingInvalidated;
+	public partial event AsyncEventHandler<ulong>? OnLeaderboardEntryInvalidated;
 
 	public SaveService(ILogger<SaveService> logger, DataBaseService dataBaseService, LocalSaveStore localSaveStore, LocalizationService localization)
 	{
@@ -97,22 +106,24 @@ public partial class SaveService
 	/// Returns the active source and throws on failure. With <paramref name="requireCurrent"/> false, an absent local row
 	/// may use the retained cloud binding; present or failing sources never fall back.
 	/// </summary>
-	public async Task<ISaveContext> GetSaveAsync(UserData userData, int index = 0, bool requireCurrent = true)
+	public async Task<(ISaveContext, ISave)> GetSaveAsync(UserData userData, int index = 0, bool requireCurrent = true)
 	{
+		LocalSaveData? local = await this._localSaveStore.TryLoadAsync(userData.UserId);
+
 		if (!userData.IsLocal)
 		{
 			if (!requireCurrent && !userData.HasCloudBinding)
-				return await this.ReadLocalSaveAsync(userData.UserId);
-			return await this.ReadCloudSaveAsync(userData.SaveCache, index);
+				return (local ?? throw new SaveSourceUnavailableException(SaveSourceUnavailableReason.LocalSaveMissing), local);
+
+			return (await this.ReadCloudSaveAsync(userData.SaveCache, index), userData.SaveCache);
 		}
 
-		LocalSaveData? local = await this._localSaveStore.LoadAsync(userData.UserId);
 		if (local is not null)
-			return local;
+			return (local, local);
 		if (requireCurrent || !userData.HasCloudBinding)
 			throw new SaveSourceUnavailableException(SaveSourceUnavailableReason.LocalSaveMissing);
 
-		return await this.ReadCloudSaveAsync(userData.SaveCache, index);
+		return (await this.ReadCloudSaveAsync(userData.SaveCache, index), userData.SaveCache);
 	}
 
 	/// <summary>
@@ -126,7 +137,7 @@ public partial class SaveService
 	#endregion
 
 	#region Shared readers (no mode checks; used by explicit loaders and source acquisition)
-	internal async Task<SaveContext> ReadCloudSaveAsync(Save save, int index)
+	private async Task<SaveContext> ReadCloudSaveAsync(Save save, int index)
 	{
 		List<SaveInfo> rawSaves = (await save.GetSaveInfoFromCloudAsync()).Results;
 		if (rawSaves.Count == 0)
@@ -135,17 +146,17 @@ public partial class SaveService
 		return await save.GetSaveContextAsync(index);
 	}
 
-	internal async Task<LocalSaveData> ReadLocalSaveAsync(ulong userId)
+	[Obsolete("Use LocalSaveStore.LoadAsync instead")]
+	internal Task<LocalSaveData> ReadLocalSaveAsync(ulong userId)
 	{
-		LocalSaveData? save = await this._localSaveStore.LoadAsync(userId);
-		return save ?? throw new SaveSourceUnavailableException(SaveSourceUnavailableReason.LocalSaveMissing);
+		return this._localSaveStore.LoadAsync(userId);
 	}
 
 	/// <summary>
 	/// Commits a prepared import as the complete new local payload (last write wins); the current content is not merged.
 	/// Only the current row's dates are kept from the load. Returns false without saving when the content is unchanged.
 	/// </summary>
-	internal async Task<bool> CommitLocalImportAsync(StagedLocalImport prepared)
+	public async Task<bool> CommitLocalImportAsync(StagedLocalImport prepared)
 	{
 		LocalSaveData current = await this.ReadLocalSaveAsync(prepared.UserId);
 		if (SerializeLocalSave(current).SequenceEqual(SerializeLocalSave(prepared.Snapshot)))
@@ -177,7 +188,7 @@ public partial class SaveService
 	/// <summary>
 	/// Starts or resumes local mode. An absent user is registered with <paramref name="tosAgreementLevel"/>; an existing
 	/// row keeps its preferences, consent, and cloud binding. The default local collection is created only when none exists,
-	/// using <paramref name="initialNickname"/>. Any stale cloud ranking entry is removed. Runs in one explicit transaction.
+	/// using <paramref name="initialNickname"/>. An existing leaderboard entry is kept until the next refresh. Runs in one explicit transaction.
 	/// </summary>
 	public async Task StartLocalAsync(ulong userId, int tosAgreementLevel, string initialNickname)
 	{
@@ -196,7 +207,6 @@ public partial class SaveService
 
 		await requester.SaveChangesAsync();
 		await transaction.CommitAsync();
-		await this.RaiseCloudRankingInvalidatedAsync(userId);
 	}
 
 	/// <summary>
@@ -278,15 +288,15 @@ public partial class SaveService
 		await requester.UserData.Where(x => x.UserId == userId).ExecuteDeleteAsync();
 
 		await transaction.CommitAsync();
-		await this.RaiseCloudRankingInvalidatedAsync(userId);
+		await this.RaiseLeaderboardEntryInvalidatedAsync(userId);
 	}
 
-	private Task RaiseCloudRankingInvalidatedAsync(ulong userId)
+	private Task RaiseLeaderboardEntryInvalidatedAsync(ulong userId)
 	{
-		return this._asyncEvent_OnCloudRankingInvalidated.TryInvokeSequential(this, userId,
+		return this._asyncEvent_OnLeaderboardEntryInvalidated.TryInvokeSequential(this, userId,
 			ex =>
 			{
-				this._logger.LogError(ex, "An OnCloudRankingInvalidated subscriber threw for user {id}", userId);
+				this._logger.LogError(ex, "An OnLeaderboardEntryInvalidated subscriber threw for user {id}", userId);
 				return Task.CompletedTask;
 			});
 	}
@@ -306,18 +316,12 @@ public partial class SaveService
 	#region Reply adapters
 	/// <summary>
 	/// Cloud adapter for a <see cref="Save"/> without account-mode information. Used by commands that only hold a
-	/// token (account, analyze-save, get-scores-by-token, local import) and pass <c>raiseFetchedHook: false</c>; callers that have <see cref="UserData"/> should use <see cref="TryHandleCloudAndFetchAsync"/>.
-	/// Pass <paramref name="raiseFetchedHook"/> false for temporary tokens that are not the user's active binding.
+	/// token (account, analyze-save, get-scores-by-token, local import). It never raises the fetched hook;
+	/// callers that have <see cref="UserData"/> should use <see cref="TryHandleCloudAndFetchAsync"/>.
 	/// </summary>
-	public Task<SaveContext?> TryHandleCloudAsync(Save save, IDiscordInteraction interaction, int index = 0, bool autoThrow = true, bool raiseFetchedHook = true)
+	public Task<SaveContext?> TryHandleCloudAsync(Save save, IDiscordInteraction interaction, int index = 0, bool autoThrow = true)
 	{
-		return this.HandleAsync(interaction, autoThrow, async () =>
-		{
-			SaveContext context = await this.ReadCloudSaveAsync(save, index);
-			if (raiseFetchedHook)
-				await this.RaiseSaveContextFetched(save, context, interaction);
-			return context;
-		});
+		return this.HandleAsync(interaction, autoThrow, () => this.ReadCloudSaveAsync(save, index));
 	}
 
 	/// <summary>
@@ -332,13 +336,13 @@ public partial class SaveService
 			if (exception is not null)
 				ExceptionDispatchInfo.Throw(exception);
 
-			await this.RaiseSaveContextFetched(userData.SaveCache, context!, interaction);
+			await this.RaiseSaveContextFetched(userData.SaveCache, context!, index, userData.UserId, interaction);
 			return context!;
 		});
 	}
 
 	/// <summary>
-	/// Local adapter: requires local mode and does not raise the cloud-fetched hook.
+	/// Local adapter: requires local mode and raises the fetched hook with the local save (index 0).
 	/// </summary>
 	public Task<ISaveContext?> TryHandleLocalAndFetchAsync(UserData userData, IDiscordInteraction interaction, bool autoThrow = true)
 	{
@@ -347,20 +351,25 @@ public partial class SaveService
 			if (!userData.IsLocal)
 				throw new SaveSourceUnavailableException(SaveSourceUnavailableReason.WrongAccountMode);
 
-			return await this.ReadLocalSaveAsync(userData.UserId);
+			LocalSaveData local = await this.ReadLocalSaveAsync(userData.UserId);
+			await this.RaiseSaveContextFetched(local, local, 0, userData.UserId, interaction);
+			return local;
 		});
 	}
 
 	/// <summary>
-	/// Generic adapter for the active source. Raises the cloud-fetched hook only for active-cloud reads.
+	/// Generic adapter for the active source. Raises the fetched hook for whichever source was read: the user's
+	/// cloud save, or their local save (index 0).
 	/// </summary>
 	public Task<ISaveContext?> TryHandleAndFetchAsync(UserData userData, IDiscordInteraction interaction, int index = 0, bool autoThrow = true)
 	{
 		return this.HandleAsync(interaction, autoThrow, async () =>
 		{
-			ISaveContext context = await this.GetSaveAsync(userData, index);
-			if (!userData.IsLocal)
-				await this.RaiseSaveContextFetched(userData.SaveCache, context, interaction);
+			(ISaveContext context, _) = await this.GetSaveAsync(userData, index);
+			if (context is LocalSaveData local)
+				await this.RaiseSaveContextFetched(local, local, 0, userData.UserId, interaction);
+			else
+				await this.RaiseSaveContextFetched(userData.SaveCache, context, index, userData.UserId, interaction);
 			return context;
 		});
 	}
@@ -420,9 +429,9 @@ public partial class SaveService
 		return null;
 	}
 
-	private Task RaiseSaveContextFetched(Save save, ISaveContext context, IDiscordInteraction interaction)
+	private Task RaiseSaveContextFetched(ISave save, ISaveContext context, int index, ulong userId, IDiscordInteraction interaction)
 	{
-		return this._asyncEvent_OnSaveContextFetched.TryInvokeSequential(this, new SaveContextFetchEventArg(save, context, interaction),
+		return this._asyncEvent_OnSaveContextFetched.TryInvokeSequential(this, new SaveContextFetchEventArg(save, context, index, userId, interaction),
 			ex =>
 			{
 				this._logger.LogError(ex, "An OnSaveContextFetched subscriber threw");

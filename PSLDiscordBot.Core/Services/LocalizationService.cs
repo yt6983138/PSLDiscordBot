@@ -226,10 +226,11 @@ public class LocalizationService : FileManagementServiceBase<LocalizationManager
 			[LeaderboardTotalScoreTitle] = LocalizedString.CreateDefault("Total Score ({0})"),
 			[LeaderboardCountTitle] = LocalizedString.CreateDefault("Achieved Count ({0})"),
 			[LeaderboardMoneyTitle] = LocalizedString.CreateDefault("Money"),
-			[LeaderboardRowRankFormat] = LocalizedString.CreateDefault("#{0:calc(+1)}"),
+			[LeaderboardRowRankFormat] = LocalizedString.CreateDefault("#{0:calc(+1)}{1:cond:*|}"),
 			[LeaderboardChallengeFormat] = LocalizedString.CreateDefault("{0.Rank} {0.Level}"),
 			[LeaderboardReply] = LocalizedString.CreateDefault("You are at rank {0:calc(+1)}, with statistic of {1}:"),
 			[LeaderboardFailedToAnalyze] = LocalizedString.CreateDefault("Failed to calculate your rank on leaderboard! Please do `/records list` to check if your save is good."),
+			[LeaderboardLocalLegend] = LocalizedString.CreateDefault("* Local save: scores entered or imported by the user, not verified."),
 
 			[CollectionName] = LocalizedString.CreateDefault("collection"),
 			[CollectionDescription] = LocalizedString.CreateDefault("Get collection info"),

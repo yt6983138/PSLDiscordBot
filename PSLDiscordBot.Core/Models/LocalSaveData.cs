@@ -11,7 +11,7 @@ namespace PSLDiscordBot.Core.Models;
 /// 7-bit encoded entry count; entries ordered by ordinal name: name, native object version byte, 7-bit encoded length,
 /// bytes. <c>gameKey</c> and <c>settings</c> are discarded on ingestion and never stored.
 /// </remarks>
-public sealed class LocalSaveData : ISaveContext, IPhigrosCustomSerialization<LocalSaveData>
+public sealed class LocalSaveData : ISave, ISaveContext, IPhigrosCustomSerialization<LocalSaveData>
 {
 	private const byte FormatVersion = 1;
 	private const byte PlayerMetadataVersion = 1;
@@ -38,6 +38,37 @@ public sealed class LocalSaveData : ISaveContext, IPhigrosCustomSerialization<Lo
 	public DateTime CreationTimeUTC { get => this.PlayerInfo.CreationTime; private set => this.PlayerInfo.CreationTime = value; }
 	/// <inheritdoc/>
 	public DateTime ModificationTimeUTC { get => this.PlayerInfo.ModificationTime; private set => this.PlayerInfo.ModificationTime = value; }
+
+	#region ISave
+	/// <inheritdoc/>
+	Task<PlayerInfo> ISave.GetPlayerInfoAsync(CancellationToken ct)
+	{
+		return Task.FromResult(this.PlayerInfo);
+	}
+
+	/// <summary>
+	/// A local collection has exactly one save, so only index 0 is valid and it returns this instance.
+	/// </summary>
+	/// <remarks>
+	/// The library's <see cref="MaxValueArgumentOutOfRangeException"/> has no public constructor, so a plain
+	/// <see cref="ArgumentOutOfRangeException"/> is thrown. The save adapters never pass a local user a non-zero index here.
+	/// </remarks>
+	/// <exception cref="ArgumentOutOfRangeException">The index is not 0.</exception>
+	Task<ISaveContext> ISave.GetSaveContextAsync(int index, CancellationToken ct)
+	{
+		if (index != 0)
+			throw new ArgumentOutOfRangeException(nameof(index), index, "A local save collection only has index 0.");
+
+		return Task.FromResult<ISaveContext>(this);
+	}
+
+	/// <summary>
+	/// Nothing to release; the local save holds no unmanaged or network resources.
+	/// </summary>
+	public void Dispose()
+	{
+	}
+	#endregion
 
 	#region Read operations
 	private static PlayerInfo ReadPlayerInfo(BinaryReader reader)

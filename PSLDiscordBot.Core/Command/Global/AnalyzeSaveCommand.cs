@@ -37,7 +37,7 @@ public class AnalyzeSaveCommand : AdminCommandBase
 		int index = arg.GetIntegerOptionAsInt32OrDefault("index");
 
 		// explicit token read: not the registered account, so it must not raise the cloud-fetched (leaderboard) hook
-		SaveContext? context = await this._saveService.TryHandleCloudAsync(userData.SaveCache, arg, index, raiseFetchedHook: false);
+		SaveContext? context = await this._saveService.TryHandleCloudAsync(userData.SaveCache, arg, index);
 		if (context is null) return;
 		Summary summary = context.ReadSummary();
 		GameProgress progress = context.ReadGameProgress();

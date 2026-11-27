@@ -36,6 +36,7 @@ public static partial class PSLNormalCommandKey
 
 	public static partial string LeaderboardReply { get; }
 	public static partial string LeaderboardFailedToAnalyze { get; }
+	public static partial string LeaderboardLocalLegend { get; }
 	#endregion
 
 	#region CollectionCommand

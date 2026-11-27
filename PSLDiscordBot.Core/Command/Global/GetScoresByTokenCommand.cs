@@ -41,7 +41,7 @@ public class GetScoresByTokenCommand : AdminCommandBase
 		UserData userData = new(userId, token, false, 0, false);
 
 		// explicit token read: not the registered account, so it must not raise the cloud-fetched (leaderboard) hook
-		SaveContext? context = await this._saveService.TryHandleCloudAsync(userData.SaveCache, arg, arg.GetIntegerOptionAsInt32("index"), raiseFetchedHook: false);
+		SaveContext? context = await this._saveService.TryHandleCloudAsync(userData.SaveCache, arg, arg.GetIntegerOptionAsInt32("index"));
 		if (context is null) return;
 		GameRecord save = context.ReadGameRecord();
 

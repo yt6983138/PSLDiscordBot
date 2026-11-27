@@ -6,11 +6,9 @@ using System.Text.Json;
 namespace PSLDiscordBot.Core.Services;
 
 public record class CallbackLoginRequest(CallbackLoginData Data, Func<TapTapTokenData, Task> Callback, bool UseChinaEndpoint);
-public record class SaveContextFetchEventArg(Save Save, ISaveContext Context, IDiscordInteraction Interaction);
 public class PhigrosService
 {
 	private readonly Config _config;
-	private readonly SaveService _saveService;
 
 	private readonly Dictionary<ulong, CallbackLoginRequest> _callbackLoginRequests = [];
 	public IReadOnlyDictionary<ulong, CallbackLoginRequest> CallbackLoginRequests => this._callbackLoginRequests;
@@ -44,10 +42,9 @@ public class PhigrosService
 	public IReadOnlyDictionary<string, string> NameMap { get; }
 	public IReadOnlyDictionary<ChartConstantKey, float> ChartConstantMap { get; }
 
-	public PhigrosService(IOptions<Config> config, SaveService saveService)
+	public PhigrosService(IOptions<Config> config)
 	{
 		this._config = config.Value;
-		this._saveService = saveService;
 
 		(this.NonMultiLanguageInfos, this.MultiLanguageInfos) =
 			LoadData(this._config.NonMultiLanguageInfoLocation, this._config.MultiLanguageInfoLocationFormat);

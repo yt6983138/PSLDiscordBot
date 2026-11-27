@@ -76,9 +76,4 @@ public class Config
 		InitialHeight = 850,
 		HtmlPath = "./Assets/Misc/Html/AboutMe.html"
 	};
-
-	public bool AgreedTOS(UserData userData)
-		=> userData.TOSAgreementLevel >= this.CurrentTOSAgreementLevel;
-	public bool AgreedTOS(int level)
-		=> level >= this.CurrentTOSAgreementLevel;
 }

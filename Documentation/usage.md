@@ -230,7 +230,7 @@ Options:
 8. `generate_for`: Generate for other user. Users without `/settings visibility` on won't be generated.
 
 ## `/leaderboard [rank-using] [count]`
-Displays the leaderboard.
+Displays the leaderboard. Users whose active mode is local are ranked from their local collection (users in cloud mode are ranked from the cloud, even if they keep a local collection), if their visibility is on and they have agreed to the current terms of service. In English, their ranks are marked with `*` (translations may differ), and a legend line is added below the table.
 
 > Example: `/leaderboard rank-using rks`
 

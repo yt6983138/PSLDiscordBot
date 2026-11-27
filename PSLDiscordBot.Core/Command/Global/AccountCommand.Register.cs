@@ -95,7 +95,7 @@ public partial class AccountCommand
 
 			// the fetching process will reply if theres some sort of error
 			// the temporary token is not the user's active binding yet, so it must not enter the cloud-fetched leaderboard hook
-			SaveContext? fetched = await this._root._saveService.TryHandleCloudAsync(tmp.SaveCache, arg, 0, false, raiseFetchedHook: false);
+			SaveContext? fetched = await this._root._saveService.TryHandleCloudAsync(tmp.SaveCache, arg, 0, false);
 			if (fetched is null)
 				return;
 

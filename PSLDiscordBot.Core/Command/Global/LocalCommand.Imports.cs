@@ -193,7 +193,7 @@ public partial class LocalCommand
 			}
 
 			LocalImportMode mode = (LocalImportMode)option.GetIntegerOptionAsInt32OrDefault(this._localization[PSLLocalCommandKey.LocalImportModeOptionName]);
-			SaveContext? save = await this._root._saveService.TryHandleCloudAsync(data.SaveCache, arg, raiseFetchedHook: false);
+			SaveContext? save = await this._root._saveService.TryHandleCloudAsync(data.SaveCache, arg);
 			if (save is null) return;
 
 			ParsedLocalImport parsed = new(

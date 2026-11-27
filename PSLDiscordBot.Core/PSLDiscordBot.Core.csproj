@@ -10,6 +10,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="CsvHelper" />
+		<PackageReference Include="ExpressiveSharp.EntityFrameworkCore" />
 		<PackageReference Include="FuzzySharp" />
 		<PackageReference Include="MemoryPack" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />

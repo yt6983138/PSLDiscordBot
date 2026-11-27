@@ -48,10 +48,12 @@ public class LeaderboardCommand : CommandBase
 	}.ToFrozenSet();
 
 	private readonly LeaderboardService _leaderboardService;
+	private readonly SaveService _saveService;
 
-	public LeaderboardCommand(IServiceProvider provider, LeaderboardService leaderboardService) : base(provider)
+	public LeaderboardCommand(IServiceProvider provider, LeaderboardService leaderboardService, SaveService saveService) : base(provider)
 	{
 		this._leaderboardService = leaderboardService;
+		this._saveService = saveService;
 	}
 
 	public override OneOf<string, LocalizedString> PSLName => this._localization[PSLNormalCommandKey.LeaderboardName];
@@ -73,7 +75,7 @@ public class LeaderboardCommand : CommandBase
 		GetRankUsingParameters(arg, this._localization, out ByWhat byWhat, out Difficulty? difficulty, out SocketSlashCommandDataOption? otherOptions);
 		long count = otherOptions?.GetOptionOrDefault<long>(this._localization[PSLNormalCommandKey.LeaderboardOptionCountName], 50) ?? 50;
 
-		List<LeaderboardEntry>? entries = await PrepareLeaderboardEntries(arg, this._localization, this._leaderboardService, data!);
+		List<LeaderboardEntry>? entries = await PrepareLeaderboardEntries(arg, this._localization, this._leaderboardService, this._saveService, data!);
 		if (entries is null) return;
 
 		Dictionary<ulong, object> sortedData = SortLeaderboardEntryWithOptions(entries, byWhat, difficulty);
@@ -116,12 +118,14 @@ public class LeaderboardCommand : CommandBase
 		// currently many formats of statistics is hard coded (im lazy to create localizations one by one)
 
 		int index = 0;
+		bool hasLocalRow = false;
 		ColumnTextBuilder builder = new(titles);
 		foreach (LeaderboardEntry? item in entries.Take((int)count))
 		{
+			hasLocalRow |= item.AccountMode.HasFlag(AccountMode.Local);
 			object comparedData = sortedData[item.UserId];
 			ColumnTextBuilder.RowBuilder row = new ColumnTextBuilder.RowBuilder()
-				.WithFormatAdded(this._localization[PSLNormalCommandKey.LeaderboardRowRankFormat][arg.UserLocale], index);
+				.WithFormatAdded(this._localization[PSLNormalCommandKey.LeaderboardRowRankFormat][arg.UserLocale], index, item.AccountMode.HasFlag(AccountMode.Local));
 
 			if (comparedData is int or long or uint or ulong)
 			{
@@ -148,6 +152,10 @@ public class LeaderboardCommand : CommandBase
 		}
 
 		StringBuilder sb = builder.Build();
+		if (hasLocalRow)
+		{
+			sb.Append(this._localization[PSLNormalCommandKey.LeaderboardLocalLegend][arg.UserLocale]);
+		}
 		string statisticString = byWhat switch
 		{
 			ByWhat.RKS
@@ -172,13 +180,14 @@ public class LeaderboardCommand : CommandBase
 			this._localization[PSLNormalCommandKey.LeaderboardReply], userIndex, statisticString);
 	}
 
-	public static async Task<List<LeaderboardEntry>?> PrepareLeaderboardEntries(IDiscordInteraction arg, LocalizationService localization, LeaderboardService leaderboardService, UserData data)
+	public static async Task<List<LeaderboardEntry>?> PrepareLeaderboardEntries(IDiscordInteraction arg, LocalizationService localization, LeaderboardService leaderboardService, SaveService saveService, UserData data)
 	{
 		List<LeaderboardEntry> entries = await leaderboardService.GetEntries();
 		LeaderboardEntry? userEntry = entries.FirstOrDefault(x => x.UserId == data.UserId);
 		if (userEntry is null)
 		{
-			userEntry = await leaderboardService.TryAnalyzeUser(data);
+			(ISaveContext context, ISave save) = await saveService.GetSaveAsync(data);
+			userEntry = await leaderboardService.TryAnalyzeUser(save, data.UserId, data.AccountMode, arg.User);
 			if (userEntry is null)
 			{
 				await arg.QuickReply(localization[PSLNormalCommandKey.LeaderboardFailedToAnalyze][arg.UserLocale]);

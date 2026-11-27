@@ -65,7 +65,8 @@ public sealed class DataBaseService
 		protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 		{
 			optionsBuilder.UseSqlite(this._config.Value.PSLDbConnectionString)
-				.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
+				.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking)
+				.UseExpressives();
 		}
 
 		protected override void OnModelCreating(ModelBuilder modelBuilder)

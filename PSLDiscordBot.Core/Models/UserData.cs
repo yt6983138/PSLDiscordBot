@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using ExpressiveSharp;
+using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
@@ -61,6 +62,22 @@ public class UserData
 		get => this.AccountMode.HasFlag(AccountMode.Local);
 		set => this.AccountMode = value ? this.AccountMode | AccountMode.Local : this.AccountMode & ~AccountMode.Local;
 	}
+
+	// TODO: move all raw comparasion to this method
+	[Expressive]
+	public bool AgreedTOS(int currentTOSAgreementLevel) => this.TOSAgreementLevel >= currentTOSAgreementLevel;
+	[Expressive]
+	public bool AgreedTOS(Config config) => this.AgreedTOS(config.CurrentTOSAgreementLevel);
+
+	[Expressive(AllowBlockBody = true)]
+	public bool CanEnterLeaderboard(int currentTOSAgreementLevel)
+	{
+		return this.AgreedTOS(currentTOSAgreementLevel)
+			&& this.PublicVisibility
+			&& (this.AccountMode.HasFlag(AccountMode.Local) || !this.AccountMode.HasFlag(AccountMode.International));
+	}
+	[Expressive]
+	public bool CanEnterLeaderboard(Config config) => this.CanEnterLeaderboard(config.CurrentTOSAgreementLevel);
 
 	[NotMapped]
 	[JsonIgnore]
