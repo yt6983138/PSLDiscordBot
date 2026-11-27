@@ -55,7 +55,6 @@ public partial class ImageGenerator
 	private readonly ILoggerFactory _loggerFactory;
 
 	private ChromiumPoolService? _chromiumPoolService;
-	private int _faultCount = 0;
 
 	public IReadOnlyDictionary<string, object> SongDifficultyCount { get; }
 
@@ -304,18 +303,7 @@ public partial class ImageGenerator
 		}
 		catch (Exception ex)
 		{
-			using IDisposable _ = await this._runLock.WriterLockAsync(CancellationToken.None);
-
-			this._faultCount++;
-			this._logger.LogError(EventId, ex, "Image generator fault count: {count}", this._faultCount);
-
-			if (this._faultCount >= 3)
-			{
-				this._logger.LogWarning(EventId, "Image generator crashed multiple times, restarting Chromium...");
-				await service.RestartChromiumAsync(TimeSpan.FromSeconds(5));
-				this._faultCount = 0;
-			}
-
+			this._logger.LogError(EventId, ex, "Image generator render failed");
 			throw;
 		}
 	}
