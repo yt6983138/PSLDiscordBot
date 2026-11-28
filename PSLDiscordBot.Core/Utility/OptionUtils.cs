@@ -4,6 +4,43 @@ namespace PSLDiscordBot.Core.Utility;
 
 public static class OptionUtils
 {
+	/// <summary>
+	/// Builds the invoked command path (e.g. <c>account switch cloud</c>) and its leaf options for logging. Never includes attachment URLs.
+	/// </summary>
+	public static (string CommandPath, string Options) FormatInvocation(SocketSlashCommandData data)
+	{
+		List<string> path = [data.Name];
+		List<string> leaves = [];
+		IReadOnlyCollection<SocketSlashCommandDataOption> options = data.Options;
+		while (options.Count > 0)
+		{
+			SocketSlashCommandDataOption? next = null;
+			foreach (SocketSlashCommandDataOption option in options)
+			{
+				if (option.Type is ApplicationCommandOptionType.SubCommand or ApplicationCommandOptionType.SubCommandGroup)
+					next = option;
+				else
+					leaves.Add($"{option.Name}: {FormatOptionValue(option.Value)}");
+			}
+			if (next is null)
+				break;
+			path.Add(next.Name);
+			options = next.Options;
+		}
+		return (string.Join(' ', path), string.Join(", ", leaves));
+	}
+	private static string FormatOptionValue(object? value)
+	{
+		return value switch
+		{
+			IUser user => $"{user.Username} ({user.Id})",
+			IChannel channel => $"{channel.Name} ({channel.Id})",
+			IRole role => $"{role.Name} ({role.Id})",
+			IAttachment attachment => $"{attachment.Filename} ({attachment.Size} bytes)",
+			_ => value?.ToString() ?? "<null>"
+		};
+	}
+
 	public static SlashCommandBuilder AddIndexOption(this SlashCommandBuilder self, LocalizationService localization, bool required = false)
 	{
 		return self.AddOption(
